@@ -1,32 +1,29 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { client } from "@/lib/sanity";
+import { client, urlFor } from "@/lib/sanity";
 import { ALL_PROJECTS_QUERY, PROJECT_BY_SLUG_QUERY } from "@/lib/sanity.queries";
 import { MOCK_PROJECTS, getMockProjectBySlug } from "@/lib/mock-data";
 import { Project } from "@/types/project";
 import ProjectDetailClient from "./ProjectDetailClient";
 
-/* ── Static params generation ──────────────────────────────── */
 export async function generateStaticParams() {
   try {
     if (!client) return MOCK_PROJECTS.map((p) => ({ slug: p.slug.current }));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const projects = await client.fetch<any[]>(
-      `*[_type == "project"]{ "slug": slug.current }`
+    const projects = await client.fetch<Array<{ slug: string }>>(
+      `*[_type == "project"]{ "slug": slug.current }`,
     );
 
     if (!projects || projects.length === 0) {
       return MOCK_PROJECTS.map((p) => ({ slug: p.slug.current }));
     }
 
-    return projects.map((p) => ({ slug: p.slug }));
+    return projects.map((project) => ({ slug: project.slug }));
   } catch {
     return MOCK_PROJECTS.map((p) => ({ slug: p.slug.current }));
   }
 }
 
-/* ── Dynamic metadata ──────────────────────────────────────── */
 export async function generateMetadata({
   params,
 }: {
@@ -36,16 +33,37 @@ export async function generateMetadata({
   const project = await getProject(slug);
 
   if (!project) {
-    return { title: "Project Not Found — ESQUINA ESTUDIO™" };
+    return {
+      title: "Project Not Found",
+    };
   }
 
+  const description = `${project.category} — ${project.services}`;
+  const coverImageUrl = project.coverImage
+    ? urlFor(project.coverImage).width(1200).height(630).url()
+    : "";
+
   return {
-    title: `${project.title} — ESQUINA ESTUDIO™`,
-    description: `${project.category} — ${project.services}`,
+    title: project.title,
+    description,
+    openGraph: {
+      title: project.title,
+      description,
+      type: "article",
+      images: coverImageUrl
+        ? [
+            {
+              url: coverImageUrl,
+              width: 1200,
+              height: 630,
+              alt: project.title,
+            },
+          ]
+        : undefined,
+    },
   };
 }
 
-/* ── Data fetching helper ──────────────────────────────────── */
 async function getProject(slug: string): Promise<Project | null> {
   try {
     if (!client) {
@@ -55,7 +73,7 @@ async function getProject(slug: string): Promise<Project | null> {
     const project = await client.fetch(
       PROJECT_BY_SLUG_QUERY,
       { slug },
-      { next: { revalidate: 60 } }
+      { next: { revalidate: 60 } },
     );
 
     if (!project) {
@@ -68,7 +86,6 @@ async function getProject(slug: string): Promise<Project | null> {
   }
 }
 
-/* ── Page component ────────────────────────────────────────── */
 export default async function ProjectPage({
   params,
 }: {
@@ -81,7 +98,6 @@ export default async function ProjectPage({
     notFound();
   }
 
-  // Find prev/next projects for navigation
   let allProjects: Project[] = [];
   try {
     if (client) {
@@ -90,15 +106,14 @@ export default async function ProjectPage({
       });
     }
   } catch {
-    // ignore
+    // Fallback handled below.
   }
+
   if (!allProjects || allProjects.length === 0) {
     allProjects = MOCK_PROJECTS;
   }
 
-  const currentIndex = allProjects.findIndex(
-    (p) => p.slug.current === slug
-  );
+  const currentIndex = allProjects.findIndex((p) => p.slug.current === slug);
   const prevProject = currentIndex > 0 ? allProjects[currentIndex - 1] : null;
   const nextProject =
     currentIndex < allProjects.length - 1

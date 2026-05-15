@@ -1,25 +1,22 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion, useMotionValue, useSpring } from "framer-motion";
 
 export default function CustomCursor() {
+  const isTouchDevice =
+    typeof window !== "undefined" &&
+    window.matchMedia("(pointer: coarse)").matches;
   const [isHovering, setIsHovering] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
 
   const mouseX = useMotionValue(-100);
   const mouseY = useMotionValue(-100);
 
-  // Dot follows near-instantly
   const dotX = useSpring(mouseX, { stiffness: 1000, damping: 50, mass: 0.1 });
   const dotY = useSpring(mouseY, { stiffness: 1000, damping: 50, mass: 0.1 });
-
-  // Ring follows with a visible lag
   const ringX = useSpring(mouseX, { stiffness: 120, damping: 20, mass: 0.5 });
-  const ringY = useSpring(mouseX, { stiffness: 120, damping: 20, mass: 0.5 });
-  const ringXVal = useSpring(mouseX, { stiffness: 120, damping: 20, mass: 0.5 });
-  const ringYVal = useSpring(mouseY, { stiffness: 120, damping: 20, mass: 0.5 });
+  const ringY = useSpring(mouseY, { stiffness: 120, damping: 20, mass: 0.5 });
 
   const checkHoverable = useCallback((target: HTMLElement): boolean => {
     if (target.dataset?.cursor === "hover") return true;
@@ -30,21 +27,20 @@ export default function CustomCursor() {
   }, []);
 
   useEffect(() => {
-    // Detect touch device
     const isTouch =
       window.matchMedia("(pointer: coarse)").matches ||
       "ontouchstart" in window;
-    setIsTouchDevice(isTouch);
+
     if (isTouch) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
-      if (!isVisible) setIsVisible(true);
+    const handleMouseMove = (event: MouseEvent) => {
+      mouseX.set(event.clientX);
+      mouseY.set(event.clientY);
+      setIsVisible(true);
     };
 
-    const handleMouseOver = (e: MouseEvent) => {
-      setIsHovering(checkHoverable(e.target as HTMLElement));
+    const handleMouseOver = (event: MouseEvent) => {
+      setIsHovering(checkHoverable(event.target as HTMLElement));
     };
 
     const handleMouseLeave = () => {
@@ -66,16 +62,15 @@ export default function CustomCursor() {
       document.documentElement.removeEventListener("mouseleave", handleMouseLeave);
       document.documentElement.removeEventListener("mouseenter", handleMouseEnter);
     };
-  }, [mouseX, mouseY, isVisible, checkHoverable]);
-
-  if (isTouchDevice) return null;
+  }, [checkHoverable, mouseX, mouseY]);
 
   const dotSize = 12;
   const ringSize = isHovering ? 64 : 40;
 
+  if (isTouchDevice) return null;
+
   return (
     <>
-      {/* Dot — small filled circle */}
       <motion.div
         className="fixed top-0 left-0 pointer-events-none z-[9999] rounded-full bg-off-black"
         style={{
@@ -89,7 +84,6 @@ export default function CustomCursor() {
         }}
       />
 
-      {/* Ring — larger circle outline, follows with lag */}
       <motion.div
         className="fixed top-0 left-0 pointer-events-none z-[9999] rounded-full border border-off-black"
         animate={{
@@ -107,8 +101,8 @@ export default function CustomCursor() {
           borderWidth: { duration: 0.15 },
         }}
         style={{
-          x: ringXVal,
-          y: ringYVal,
+          x: ringX,
+          y: ringY,
           translateX: "-50%",
           translateY: "-50%",
           opacity: isVisible ? 1 : 0,

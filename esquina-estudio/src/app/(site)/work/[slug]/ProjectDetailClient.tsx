@@ -45,7 +45,7 @@ export default function ProjectDetailClient({
 
       {/* ── Prev / Next navigation ────────────────────────── */}
       <nav className="border-t border-off-black/10 px-6 md:px-12 py-12">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           {prevProject ? (
             <Link
               href={`/work/${prevProject.slug.current}`}
@@ -72,7 +72,7 @@ export default function ProjectDetailClient({
           {nextProject ? (
             <Link
               href={`/work/${nextProject.slug.current}`}
-              className="group text-right"
+              className="group text-left md:text-right"
             >
               <span className="text-[13px] text-gray-brand font-body uppercase tracking-wider block mb-2">
                 Next →

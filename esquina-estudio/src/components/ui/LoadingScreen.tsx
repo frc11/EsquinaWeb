@@ -1,23 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 
-const BRAND_TEXT = "ESQUINA ESTUDIO™";
-const PROGRESS_DURATION = 1.5; // seconds
-const EXIT_DELAY = 1800; // ms after mount to begin exit
-const HIDE_DELAY = 2600; // ms after mount to fully remove
+const BRAND_TEXT = "ESQUINA ESTUDIO\u2122";
+const PROGRESS_DURATION = 1.5;
+const EXIT_DELAY = 1800;
+const HIDE_DELAY = 2600;
 
 const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const EASE_EXIT: [number, number, number, number] = [0.76, 0, 0.24, 1];
 
 const letterVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
+  visible: (index: number) => ({
     opacity: 1,
     y: 0,
     transition: {
-      delay: 0.15 + i * 0.04,
+      delay: 0.15 + index * 0.04,
       duration: 0.4,
       ease: EASE_OUT_EXPO,
     },
@@ -27,24 +27,27 @@ const letterVariants: Variants = {
 export default function LoadingScreen() {
   const [shouldRender, setShouldRender] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
 
-  // SSR-safe: check sessionStorage inside useEffect only
   useEffect(() => {
-    const alreadyShown = sessionStorage.getItem("esquina-loading-shown");
-    if (alreadyShown) {
-      setShouldRender(false);
-      setIsVisible(false);
+    if (typeof window === "undefined") return;
+
+    try {
+      if (sessionStorage.getItem("esquina-loading-shown")) return;
+      sessionStorage.setItem("esquina-loading-shown", "true");
+    } catch {
       return;
     }
 
-    setShouldRender(true);
-    sessionStorage.setItem("esquina-loading-shown", "true");
-
+    const revealFrame = window.requestAnimationFrame(() => {
+      setShouldRender(true);
+      setIsVisible(true);
+    });
     const exitTimer = setTimeout(() => setIsExiting(true), EXIT_DELAY);
     const hideTimer = setTimeout(() => setIsVisible(false), HIDE_DELAY);
 
     return () => {
+      window.cancelAnimationFrame(revealFrame);
       clearTimeout(exitTimer);
       clearTimeout(hideTimer);
     };
@@ -61,12 +64,11 @@ export default function LoadingScreen() {
           transition={{ duration: 0.8, ease: EASE_EXIT }}
           className="fixed inset-0 z-[9998] bg-off-black flex flex-col items-center justify-center gap-8"
         >
-          {/* Staggered letter animation */}
           <div className="flex overflow-hidden" aria-hidden="true">
-            {BRAND_TEXT.split("").map((char, i) => (
+            {BRAND_TEXT.split("").map((char, index) => (
               <motion.span
-                key={`${char}-${i}`}
-                custom={i}
+                key={`${char}-${index}`}
+                custom={index}
                 variants={letterVariants}
                 initial="hidden"
                 animate="visible"
@@ -81,7 +83,6 @@ export default function LoadingScreen() {
             ))}
           </div>
 
-          {/* Progress bar */}
           <div className="w-48 md:w-64 h-[1px] bg-off-white/20 overflow-hidden">
             <motion.div
               className="h-full bg-off-white origin-left"

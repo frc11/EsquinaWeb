@@ -26,35 +26,28 @@ const lineVariants: Variants = {
 
 export default function Hero() {
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center px-6 md:px-12 py-24">
-      {/* Hero text — stagger-revealed */}
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="text-center"
-      >
+    <section className="min-h-screen flex flex-col items-center justify-center px-6 py-28 text-center md:px-12">
+      <motion.div variants={containerVariants} initial="hidden" animate="visible">
         <motion.p
           variants={lineVariants}
-          className="font-display text-[clamp(32px,5vw,40px)] uppercase leading-[1.05] tracking-tight text-off-black"
+          className="font-display text-[28px] uppercase leading-[1.05] text-off-black md:text-[40px]"
         >
           IN A WORLD FULL OF NOISE
         </motion.p>
         <motion.p
           variants={lineVariants}
-          className="font-display text-[clamp(40px,6.5vw,52px)] uppercase leading-[1.05] tracking-tight text-off-black mt-1"
+          className="mt-1 font-display text-[34px] uppercase leading-[1.05] text-off-black md:text-[52px]"
         >
           MAKE YOUR BRAND STAND OUT.
         </motion.p>
         <motion.p
           variants={lineVariants}
-          className="font-display text-[clamp(32px,5vw,40px)] uppercase leading-[1.05] tracking-tight text-off-black mt-1"
+          className="mt-1 font-display text-[28px] uppercase leading-[1.05] text-off-black md:text-[40px]"
         >
           WITH INTENTION. WITH IMPACT.
         </motion.p>
       </motion.div>
 
-      {/* CTA button */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

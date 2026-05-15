@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Project } from "@/types/project";
+import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
 import ProjectCard from "./ProjectCard";
 import InfoCard from "./InfoCard";
 
@@ -18,12 +19,10 @@ export default function WorkGrid({ projects }: WorkGridProps) {
       <InfoCard project={hoveredProject} />
 
       {/* Project image cells */}
-      {projects.map((project) => (
-        <ProjectCard
-          key={project._id}
-          project={project}
-          onHover={setHoveredProject}
-        />
+      {projects.map((project, index) => (
+        <RevealOnScroll key={project._id} delay={index * 0.1}>
+          <ProjectCard project={project} onHover={setHoveredProject} />
+        </RevealOnScroll>
       ))}
     </div>
   );
