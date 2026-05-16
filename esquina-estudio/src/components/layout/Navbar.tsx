@@ -21,16 +21,13 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav
-      className="fixed top-0 left-0 right-0 z-100 bg-off-white/95 backdrop-blur-sm border-b border-off-black/10"
-      style={{ height: 72 }}
-    >
-      <div className="flex items-center justify-between h-full px-6 lg:px-12">
+    <nav className="fixed top-0 left-0 right-0 z-100 border-none bg-off-white/95 backdrop-blur-sm">
+      <div className="relative flex h-[var(--header-height)] items-center justify-between px-12 pb-6 pt-12 lg:px-16">
         <div className="flex-shrink-0">
           <LogoScript size="md" />
         </div>
 
-        <div className="hidden md:flex items-center gap-8 ml-12">
+        <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
           {NAV_LINKS.map((link) => {
             const isActive =
               pathname === link.href || pathname.startsWith(`${link.href}/`);
@@ -39,9 +36,8 @@ export default function Navbar() {
               <HoverButton
                 key={link.href}
                 href={link.href}
-                className={`text-nav uppercase font-body font-medium tracking-wider ${
-                  isActive ? "!border-b-2 !border-off-black" : ""
-                }`}
+                underline={isActive}
+                className="text-[13px] uppercase font-body font-medium tracking-wider text-off-black"
               >
                 {link.label}
               </HoverButton>
@@ -54,11 +50,10 @@ export default function Navbar() {
         <div className="hidden md:block">
           <HoverButton
             href="/contact"
-            className={`text-nav uppercase font-body font-medium tracking-wider ${
+            underline={
               pathname === "/contact" || pathname.startsWith("/contact/")
-                ? "!border-b-2 !border-off-black"
-                : ""
-            }`}
+            }
+            className="text-[13px] uppercase font-body font-medium tracking-wider text-off-black"
           >
             CONTACT US
           </HoverButton>

@@ -98,7 +98,7 @@ export default function ServicesStack({ services }: ServicesStackProps) {
 
   return (
     <main ref={rootRef} className="bg-off-white text-off-black">
-      <section className="flex min-h-[calc(100vh-72px)] flex-col items-center justify-center px-6 py-24 text-center md:px-12">
+      <section className="flex min-h-[calc(100vh-var(--header-height))] flex-col items-center justify-center px-6 py-24 text-center md:px-12">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}

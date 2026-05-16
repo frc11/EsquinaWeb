@@ -7,6 +7,8 @@
   --color-gray: #939393;
   --cursor-size: 12px;
   --cursor-size-hover: 48px;
+  --header-height: 128px;
+  --footer-height: 480px;
 }
 
 @theme inline {
@@ -41,7 +43,7 @@
 }
 
 * {
-  cursor: none; /* Custom cursor will handle this */
+  cursor: none !important;
 }
 
 html {

@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
-import { Bebas_Neue, DM_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import CustomCursor from "@/components/ui/CustomCursor";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import "./globals.css";
 
-const bebasNeue = Bebas_Neue({
-  weight: "400",
-  subsets: ["latin"],
+const displayFont = localFont({
+  src: "../../tipografia/manrope-variable.ttf",
   variable: "--font-display",
+  weight: "300 800",
+  display: "swap",
 });
 
-const dmSans = DM_Sans({
-  subsets: ["latin"],
+const bodyFont = localFont({
+  src: "../../tipografia/manrope-variable.ttf",
   variable: "--font-body",
-  weight: ["300", "400", "500"],
+  weight: "300 800",
+  display: "swap",
 });
 
 const defaultDescription =
@@ -52,7 +54,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${bebasNeue.variable} ${dmSans.variable} antialiased`}
+      className={`${displayFont.variable} ${bodyFont.variable} antialiased`}
     >
       <body className="bg-off-white text-off-black font-body min-h-screen">
         <CustomCursor />

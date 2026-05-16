@@ -2,25 +2,32 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { client, urlFor } from "@/lib/sanity";
 import { ALL_PROJECTS_QUERY, PROJECT_BY_SLUG_QUERY } from "@/lib/sanity.queries";
-import { MOCK_PROJECTS, getMockProjectBySlug } from "@/lib/mock-data";
+import { getMockProjectBySlug } from "@/lib/mock-data";
+import {
+  LOCAL_WORK_PROJECTS,
+  getLocalProjectBySlug,
+  withLocalProjectImages,
+} from "@/lib/local-projects";
 import { Project } from "@/types/project";
 import ProjectDetailClient from "./ProjectDetailClient";
 
 export async function generateStaticParams() {
   try {
-    if (!client) return MOCK_PROJECTS.map((p) => ({ slug: p.slug.current }));
+    if (!client) {
+      return LOCAL_WORK_PROJECTS.map((p) => ({ slug: p.slug.current }));
+    }
 
     const projects = await client.fetch<Array<{ slug: string }>>(
       `*[_type == "project"]{ "slug": slug.current }`,
     );
 
     if (!projects || projects.length === 0) {
-      return MOCK_PROJECTS.map((p) => ({ slug: p.slug.current }));
+      return LOCAL_WORK_PROJECTS.map((p) => ({ slug: p.slug.current }));
     }
 
     return projects.map((project) => ({ slug: project.slug }));
   } catch {
-    return MOCK_PROJECTS.map((p) => ({ slug: p.slug.current }));
+    return LOCAL_WORK_PROJECTS.map((p) => ({ slug: p.slug.current }));
   }
 }
 
@@ -39,9 +46,12 @@ export async function generateMetadata({
   }
 
   const description = `${project.category} — ${project.services}`;
-  const coverImageUrl = project.coverImage
-    ? urlFor(project.coverImage).width(1200).height(630).url()
-    : "";
+  const coverImageUrl =
+    typeof project.coverImage === "string"
+      ? project.coverImage
+      : project.coverImage
+        ? urlFor(project.coverImage).width(1200).height(630).url()
+        : "";
 
   return {
     title: project.title,
@@ -67,7 +77,7 @@ export async function generateMetadata({
 async function getProject(slug: string): Promise<Project | null> {
   try {
     if (!client) {
-      return getMockProjectBySlug(slug) ?? null;
+      return getLocalProjectBySlug(slug) ?? getMockProjectBySlug(slug) ?? null;
     }
 
     const project = await client.fetch(
@@ -77,12 +87,12 @@ async function getProject(slug: string): Promise<Project | null> {
     );
 
     if (!project) {
-      return getMockProjectBySlug(slug) ?? null;
+      return getLocalProjectBySlug(slug) ?? getMockProjectBySlug(slug) ?? null;
     }
 
-    return project;
+    return withLocalProjectImages([project])[0];
   } catch {
-    return getMockProjectBySlug(slug) ?? null;
+    return getLocalProjectBySlug(slug) ?? getMockProjectBySlug(slug) ?? null;
   }
 }
 
@@ -110,7 +120,9 @@ export default async function ProjectPage({
   }
 
   if (!allProjects || allProjects.length === 0) {
-    allProjects = MOCK_PROJECTS;
+    allProjects = LOCAL_WORK_PROJECTS;
+  } else {
+    allProjects = withLocalProjectImages(allProjects);
   }
 
   const currentIndex = allProjects.findIndex((p) => p.slug.current === slug);

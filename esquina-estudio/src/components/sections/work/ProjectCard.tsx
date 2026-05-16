@@ -12,9 +12,12 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({ project, onHover }: ProjectCardProps) {
-  const imageUrl = project.coverImage
-    ? urlFor(project.coverImage).width(600).url()
-    : null;
+  const imageUrl =
+    typeof project.coverImage === "string"
+      ? project.coverImage
+      : project.coverImage
+        ? urlFor(project.coverImage).width(900).height(1125).url()
+        : null;
 
   return (
     <Link href={`/work/${project.slug.current}`} className="group">

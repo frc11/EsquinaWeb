@@ -1,7 +1,10 @@
 import { Metadata } from "next";
 import { client } from "@/lib/sanity";
 import { ALL_PROJECTS_QUERY } from "@/lib/sanity.queries";
-import { MOCK_PROJECTS } from "@/lib/mock-data";
+import {
+  LOCAL_WORK_PROJECTS,
+  withLocalProjectImages,
+} from "@/lib/local-projects";
 import { Project } from "@/types/project";
 import WorkGrid from "@/components/sections/work/WorkGrid";
 
@@ -13,19 +16,19 @@ export const metadata: Metadata = {
 
 async function getProjects(): Promise<Project[]> {
   try {
-    if (!client) return MOCK_PROJECTS;
+    if (!client) return LOCAL_WORK_PROJECTS;
 
     const projects = await client.fetch(ALL_PROJECTS_QUERY, {}, {
       next: { revalidate: 60 },
     });
 
     if (!projects || projects.length === 0) {
-      return MOCK_PROJECTS;
+      return LOCAL_WORK_PROJECTS;
     }
 
-    return projects;
+    return withLocalProjectImages(projects);
   } catch {
-    return MOCK_PROJECTS;
+    return LOCAL_WORK_PROJECTS;
   }
 }
 
@@ -33,7 +36,7 @@ export default async function WorkPage() {
   const projects = await getProjects();
 
   return (
-    <main className="-mt-[72px] pt-[72px]">
+    <main className="-mt-[var(--header-height)] pt-[var(--header-height)]">
       <WorkGrid projects={projects} />
     </main>
   );
