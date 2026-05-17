@@ -1,29 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { motion } from "framer-motion";
 import { Project } from "@/types/project";
-import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
 import ProjectCard from "./ProjectCard";
-import InfoCard from "./InfoCard";
 
 interface WorkGridProps {
   projects: Project[];
 }
 
+const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
+const DIRECTIONS = [
+  { x: -60, y: 0 },
+  { x: 60, y: 0 },
+  { x: 0, y: 60 },
+] as const;
+
 export default function WorkGrid({ projects }: WorkGridProps) {
-  const [hoveredProject, setHoveredProject] = useState<Project>(projects[0]);
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-off-black">
-      {/* Info card — always first cell */}
-      <InfoCard project={hoveredProject} />
+    <div className="flex flex-wrap gap-6 bg-off-white p-6">
+      {projects.map((project, index) => {
+        const initialDirection = DIRECTIONS[index % DIRECTIONS.length];
 
-      {/* Project image cells */}
-      {projects.map((project, index) => (
-        <RevealOnScroll key={project._id} delay={index * 0.1}>
-          <ProjectCard project={project} onHover={setHoveredProject} />
-        </RevealOnScroll>
-      ))}
+        return (
+          <motion.div
+            key={project._id}
+            className="h-[350px] min-w-[300px] flex-[1_1_calc(33.333%-1.5rem)] overflow-hidden cursor-none md:min-w-[calc(33.333%-1.5rem)]"
+            initial={{ opacity: 0, ...initialDirection }}
+            whileInView={{ opacity: 1, x: 0, y: 0 }}
+            viewport={{ once: true, margin: "0px 0px -100px 0px" }}
+            transition={{
+              duration: 0.8,
+              ease: EASE,
+              delay: index < 3 ? index * 0.1 : 0,
+            }}
+          >
+            <ProjectCard project={project} />
+          </motion.div>
+        );
+      })}
     </div>
   );
 }

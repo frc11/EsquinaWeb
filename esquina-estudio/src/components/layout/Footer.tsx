@@ -3,12 +3,9 @@ import HoverButton from "@/components/ui/HoverButton";
 
 export default function Footer() {
   return (
-    <footer className="h-[var(--footer-height)] border-none bg-off-white">
-      {/* Cambiamos el grid roto por flex con justify-between. 
-        Esto empuja los dos bloques hijos a los extremos.
-        items-center asegura que el botón y el logo queden alineados verticalmente.
-      */}
-      <div className="flex h-full w-full flex-row items-center justify-between px-12 py-24 lg:px-16">
+    <footer className="w-full border-none bg-off-white">
+      {/* Sacamos el h-full y bajamos el padding vertical a py-10 para que no sea gigante */}
+      <div className="flex w-full flex-row items-center justify-between px-12 py-10 lg:px-16">
 
         {/* BLOQUE IZQUIERDO: Logo + Grid de textos */}
         <div className="flex flex-row items-center justify-start gap-12 lg:gap-16">

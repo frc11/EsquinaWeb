@@ -8,22 +8,22 @@ import { urlFor } from "@/lib/sanity";
 
 interface ProjectCardProps {
   project: Project;
-  onHover: (project: Project) => void;
 }
 
-export default function ProjectCard({ project, onHover }: ProjectCardProps) {
+const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
+
+export default function ProjectCard({ project }: ProjectCardProps) {
   const imageUrl =
     typeof project.coverImage === "string"
       ? project.coverImage
       : project.coverImage
-        ? urlFor(project.coverImage).width(900).height(1125).url()
+        ? urlFor(project.coverImage).width(1200).height(1600).url()
         : null;
 
   return (
-    <Link href={`/work/${project.slug.current}`} className="group">
+    <Link href={`/work/${project.slug.current}`} className="group block h-full">
       <div
-        className="relative overflow-hidden aspect-[4/5] cursor-none"
-        onMouseEnter={() => onHover(project)}
+        className="relative h-full cursor-none overflow-hidden"
         style={{ backgroundColor: project.coverColor || "transparent" }}
       >
         {imageUrl && (
@@ -36,26 +36,40 @@ export default function ProjectCard({ project, onHover }: ProjectCardProps) {
           />
         )}
 
-        {/* Color fill fallback when no image — shows project initials */}
         {!imageUrl && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-off-white/20 font-display text-[80px] font-bold select-none">
+            <span className="select-none font-display text-[80px] font-bold text-off-white/20">
               {project.projectNumber}
             </span>
           </div>
         )}
 
-        {/* Hover overlay with project info */}
         <motion.div
-          className="absolute inset-0 bg-off-black/80 flex flex-col justify-end p-6"
+          className="absolute inset-0 flex flex-col justify-between bg-beige p-8"
           initial={{ opacity: 0 }}
           whileHover={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.6, ease: EASE }}
         >
-          <p className="text-off-white font-body text-body">{project.title}</p>
-          <p className="text-off-white/60 font-body text-[13px] mt-1">
-            {project.category}
-          </p>
+          <div className="font-body text-[17px] uppercase leading-[1.15] text-off-black">
+            <p className="leading-none">
+              {project.projectNumber}
+            </p>
+            <h2 className="mt-6 font-body text-[17px] font-medium leading-[1.15] text-off-black">
+              {project.title}
+            </h2>
+            <p className="mt-6 text-off-black">
+              {project.category}
+            </p>
+            <p className="mt-6 max-w-[220px] text-off-black">
+              {project.services}
+            </p>
+          </div>
+
+          <div className="font-body text-[17px] uppercase leading-none text-off-black">
+            <p>
+              {project.year}
+            </p>
+          </div>
         </motion.div>
       </div>
     </Link>
