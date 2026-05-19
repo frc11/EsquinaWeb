@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Original uncompressed assets
+/Asset_ Imágenes
+/Asset_ Logo
+/Asset_ Tipografía
+
