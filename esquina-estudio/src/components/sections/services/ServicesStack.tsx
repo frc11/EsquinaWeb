@@ -17,7 +17,14 @@ export interface ServiceContent {
   id: string;
   name: string;
   description: string;
-  items: string[];
+  note?: string;
+  items: Array<
+    | string
+    | {
+        main: string;
+        subs?: string[];
+      }
+  >;
 }
 
 interface ServicesStackProps {
@@ -96,6 +103,12 @@ export default function ServicesStack({ services }: ServicesStackProps) {
   return (
     <div ref={rootRef} className="overflow-visible bg-off-white text-off-black">
       <section id="services-list" aria-label="Services">
+        <div className="mx-auto mb-8 max-w-[1600px] px-6 md:px-12">
+          <h2 className="font-body text-[17px] uppercase text-off-black">
+            BRANDING PACK OPTIONS
+          </h2>
+        </div>
+
         {services.map((service, index) => {
           const isActive = activeService === service.id;
           const shouldExpand = activeService
@@ -103,16 +116,24 @@ export default function ServicesStack({ services }: ServicesStackProps) {
             : allExpanded || seenIds.has(service.id);
 
           return (
-            <ServiceItem
-              key={service.id}
-              service={service}
-              index={index}
-              isActive={isActive}
-              shouldExpand={shouldExpand}
-              allExpanded={allExpanded}
-              onSeen={handleSeen}
-              onToggle={handleToggle}
-            />
+            <div key={service.id} className="w-full">
+              {service.id === "A.S/01" && (
+                <div className="mx-auto w-full max-w-[1600px] px-6 md:px-12 mt-16 mb-8">
+                  <h2 className="font-body text-[17px] uppercase text-off-black">
+                    ADDITIONAL SERVICES
+                  </h2>
+                </div>
+              )}
+              <ServiceItem
+                service={service}
+                index={index}
+                isActive={isActive}
+                shouldExpand={shouldExpand}
+                allExpanded={allExpanded}
+                onSeen={handleSeen}
+                onToggle={handleToggle}
+              />
+            </div>
           );
         })}
       </section>
