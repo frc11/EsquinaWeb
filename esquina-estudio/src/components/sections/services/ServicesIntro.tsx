@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import HoverButton from "@/components/ui/HoverButton";
 
 const FLOATING_MEDIA = [
@@ -49,10 +49,26 @@ export default function ServicesIntro() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isPartTwo, setIsPartTwo] = useState(false);
   const [isJumping, setIsJumping] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(true);
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
   });
+
+  useEffect(() => {
+    if (isAnimating) {
+      document.body.style.overflow = "hidden";
+      document.body.style.paddingRight = "var(--scrollbar-width, 0px)";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+    };
+  }, [isAnimating]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -108,11 +124,12 @@ export default function ServicesIntro() {
       <div className="sticky top-0 h-screen w-full bg-off-white z-10">
         <motion.div
           className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
-          initial={{ opacity: 1 }}
+          initial={{ opacity: 0 }}
           animate={{
             opacity: isJumping ? 0 : isPartTwo ? 0 : 1,
             pointerEvents: isPartTwo ? "none" : "auto",
           }}
+          onAnimationComplete={() => setIsAnimating(false)}
           transition={fadeTransition}
         >
           <div className="relative flex flex-col items-center">

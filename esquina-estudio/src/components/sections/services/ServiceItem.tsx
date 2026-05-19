@@ -3,36 +3,37 @@
 import Image from "next/image";
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
-  type KeyboardEvent,
   type MouseEvent,
 } from "react";
+import { flushSync } from "react-dom";
 import {
   AnimatePresence,
   motion,
-  useInView,
   useMotionValue,
 } from "framer-motion";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import HoverButton from "@/components/ui/HoverButton";
 import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
 import type { ServiceContent } from "@/components/sections/services/ServicesStack";
 
+gsap.registerPlugin(ScrollTrigger);
+
 interface ServiceItemProps {
   service: ServiceContent;
   index: number;
-  isActive: boolean;
-  shouldExpand: boolean;
-  allExpanded: boolean;
-  onSeen: (id: string) => void;
-  onToggle: (id: string) => void;
+  isLast: boolean;
+  hasReachedEnd: boolean;
 }
 
 const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 const CONTENT_GRID =
   "grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1.4fr] gap-6 lg:gap-10 w-full pt-6 pb-16";
 const HEADER_GRID =
-  "relative w-full py-5 grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1.4fr] gap-6 lg:gap-10 items-center border-t";
+  "w-full pb-5 pt-[52px] grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1.4fr] gap-6 lg:gap-10 items-center";
 const SLIDESHOW_IMAGES = [
   "/projects/akasha.png",
   "/projects/tukumi.jpg",
@@ -43,24 +44,36 @@ const SLIDESHOW_IMAGES = [
 export default function ServiceItem({
   service,
   index,
-  isActive,
-  shouldExpand,
-  allExpanded,
-  onSeen,
-  onToggle,
+  isLast,
+  hasReachedEnd,
 }: ServiceItemProps) {
-  const ref = useRef<HTMLElement | null>(null);
+  const articleRef = useRef<HTMLElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const cursorX = useMotionValue(0);
   const cursorY = useMotionValue(0);
   const [isHovering, setIsHovering] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [hasBeenPassed, setHasBeenPassed] = useState(false);
+  const [isManuallyOpen, setIsManuallyOpen] = useState(false);
+  const [lastItemOpen, setLastItemOpen] = useState(true);
   const isDark = service.id.startsWith("A.S");
-  const isInView = useInView(ref, {
-    once: true,
-    margin: "-100px 0px -20% 0px",
-  });
+  const canToggle = hasBeenPassed || (isLast && hasReachedEnd);
+  const isEffectivelyOpen = isLast
+    ? lastItemOpen
+    : !hasBeenPassed || isManuallyOpen;
+  const headerPositionClass = isLast
+    ? "relative z-10"
+    : "sticky top-[104px] z-40";
   const leftFeatures = isDark ? service.items : service.items.slice(0, 5);
   const rightFeatures = isDark ? [] : service.items.slice(5);
+  const applicationsLabel = "Applications may include:";
+  const hasApplicationsLabel = service.description.includes(applicationsLabel);
+  const cleanDescription = hasApplicationsLabel
+    ? service.description
+      .replace(`\n\n${applicationsLabel}`, "")
+      .replace(applicationsLabel, "")
+      .trimEnd()
+    : service.description;
   const quoteHref = `/contact?service=${encodeURIComponent(
     service.name.toLowerCase(),
   )}`;
@@ -115,14 +128,43 @@ export default function ServiceItem({
     );
   };
 
-  useEffect(() => {
-    if (isInView) {
-      onSeen(service.id);
-    }
-  }, [isInView, onSeen, service.id]);
+  useLayoutEffect(() => {
+    if (isLast) return;
+
+    const article = articleRef.current;
+    if (!article) return;
+
+    const ctx = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: article,
+        start: "top bottom",
+        end: () => "bottom 104px", // DYNAMIC: Evaluates exact position at time of trigger
+        invalidateOnRefresh: true, // CRITICAL: Updates markers when previous items collapse
+        once: true,
+        onLeave: () => {
+          if (contentRef.current && !hasBeenPassed) {
+            const heightToLose = contentRef.current.getBoundingClientRect().height;
+
+            flushSync(() => {
+              setHasBeenPassed(true);
+            });
+
+            window.scrollBy({ top: -heightToLose, behavior: "instant" });
+
+            // Allow layout to settle before recalculating GSAP markers for subsequent items
+            setTimeout(() => {
+              ScrollTrigger.refresh();
+            }, 50);
+          }
+        },
+      });
+    }, article);
+
+    return () => ctx.revert();
+  }, [hasBeenPassed, isLast]);
 
   useEffect(() => {
-    if (!shouldExpand) return;
+    if (!isEffectivelyOpen) return;
 
     const timer = window.setInterval(() => {
       setCurrentImageIndex((current) =>
@@ -131,24 +173,27 @@ export default function ServiceItem({
     }, 2000);
 
     return () => window.clearInterval(timer);
-  }, [shouldExpand]);
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      onToggle(service.id);
-    }
-  };
+  }, [isEffectivelyOpen]);
 
   const handleMouseMove = (event: MouseEvent<HTMLDivElement>) => {
     cursorX.set(event.clientX + 28);
     cursorY.set(event.clientY + 28);
   };
 
+  const handleHeaderClick = (event: MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+
+    if (isLast && hasReachedEnd) {
+      setLastItemOpen((current) => !current);
+    } else if (hasBeenPassed) {
+      setIsManuallyOpen((current) => !current);
+    }
+  };
+
   return (
     <RevealOnScroll delay={index * 0.05}>
       <article
-        ref={ref}
+        ref={articleRef}
         data-service-item
         data-service-id={service.id}
         className={isDark ? "bg-off-black text-off-white" : "bg-off-white text-off-black"}
@@ -157,20 +202,19 @@ export default function ServiceItem({
         <div className="mx-auto max-w-[1600px] px-6 md:px-12">
           <div
             data-service-header
-            role="button"
-            tabIndex={0}
-            data-cursor="hover"
-            aria-expanded={shouldExpand}
-            onClick={() => onToggle(service.id)}
-            onKeyDown={handleKeyDown}
+            onClick={handleHeaderClick}
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
             onMouseMove={handleMouseMove}
-            className={`cursor-pointer outline-none ${HEADER_GRID} ${isDark
-              ? "border-off-white/20 bg-off-black"
-              : "border-off-black bg-off-white"
+            className={`${headerPositionClass} ${canToggle ? "cursor-pointer" : "cursor-default"} outline-none ${HEADER_GRID} ${isDark
+              ? "bg-off-black"
+              : "bg-off-white"
               }`}
           >
+            <div
+              className={`absolute left-0 right-0 top-8 h-[1px] ${isDark ? "bg-off-white" : "bg-off-black"
+                }`}
+            />
             <span
               className={`font-body text-[17px] uppercase leading-none opacity-100 ${isDark ? "text-off-white" : "text-off-black"
                 }`}
@@ -179,9 +223,8 @@ export default function ServiceItem({
             </span>
 
             <span
-              className={`font-display text-[30px] uppercase leading-none lg:col-span-2 ${
-                isDark ? "text-off-white" : "text-off-black"
-              }`}
+              className={`font-display text-[30px] uppercase leading-none lg:col-span-2 ${isDark ? "text-off-white" : "text-off-black"
+                }`}
             >
               {service.name}
             </span>
@@ -226,22 +269,25 @@ export default function ServiceItem({
           </div>
 
           <AnimatePresence initial={false}>
-            {shouldExpand ? (
+            {isEffectivelyOpen ? (
               <motion.div
                 key={`${service.id}-content`}
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.55, ease: EASE }}
+                transition={{
+                  duration: isLast || isManuallyOpen ? 0.55 : 0,
+                  ease: EASE,
+                }}
                 className="overflow-hidden"
               >
-                <div className={CONTENT_GRID}>
+                <div ref={contentRef} className={CONTENT_GRID}>
                   <div className="flex flex-col gap-6">
                     <p
                       className={`font-body text-[17px] leading-[1.5] whitespace-pre-line ${isDark ? "text-off-white" : "text-off-black"
                         }`}
                     >
-                      {service.description}
+                      {cleanDescription}
                     </p>
                     {service.note ? (
                       <p
@@ -253,9 +299,16 @@ export default function ServiceItem({
                     ) : null}
                   </div>
 
-                  <ul className="space-y-4 font-body text-[17px] leading-[1.45]">
-                    {leftFeatures.map(renderFeatureItem)}
-                  </ul>
+                  <div className="flex flex-col gap-4">
+                    {hasApplicationsLabel ? (
+                      <p className="font-body text-[17px] leading-none">
+                        {applicationsLabel}
+                      </p>
+                    ) : null}
+                    <ul className="space-y-4 font-body text-[17px] leading-[1.45]">
+                      {leftFeatures.map(renderFeatureItem)}
+                    </ul>
+                  </div>
 
                   {isDark ? (
                     <div aria-hidden />
@@ -293,14 +346,6 @@ export default function ServiceItem({
             ) : null}
           </AnimatePresence>
 
-          {isActive && (
-            <span className="sr-only">Only this service is currently expanded.</span>
-          )}
-          {allExpanded && (
-            <span className="sr-only">
-              All services have been revealed. Select a row to isolate it.
-            </span>
-          )}
         </div>
       </article>
     </RevealOnScroll>
