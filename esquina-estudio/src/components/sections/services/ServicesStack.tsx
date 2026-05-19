@@ -7,10 +7,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import HoverButton from "@/components/ui/HoverButton";
 import ServiceItem from "@/components/sections/services/ServiceItem";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -26,7 +24,6 @@ interface ServicesStackProps {
   services: ServiceContent[];
 }
 
-const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 const HEADER_HEIGHT = 88;
 const NAV_OFFSET = 72;
 
@@ -97,36 +94,8 @@ export default function ServicesStack({ services }: ServicesStackProps) {
   }, [seenIds, activeService]);
 
   return (
-    <main ref={rootRef} className="bg-off-white text-off-black">
-      <section className="flex min-h-[calc(100vh-var(--header-height))] flex-col items-center justify-center px-6 py-24 text-center md:px-12">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: EASE }}
-          className="max-w-5xl"
-        >
-          <h1 className="font-display text-[clamp(36px,6vw,64px)] uppercase leading-[1.02] text-off-black">
-            WE TRANSLATE IDEAS INTO LIVING IDENTITIES &mdash; CRAFTED THROUGH
-            STRATEGY, AESTHETICS AND DETAIL-ORIENTED DESIGN SYSTEMS.
-          </h1>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.6, ease: EASE }}
-          className="mt-12"
-        >
-          <HoverButton
-            href="#services-stack"
-            className="font-body text-[17px] uppercase tracking-wider"
-          >
-            DISCOVER OUR BRANDING SERVICES -&gt;
-          </HoverButton>
-        </motion.div>
-      </section>
-
-      <section id="services-stack" aria-label="Services">
+    <div ref={rootRef} className="overflow-visible bg-off-white text-off-black">
+      <section id="services-list" aria-label="Services">
         {services.map((service, index) => {
           const isActive = activeService === service.id;
           const shouldExpand = activeService
@@ -147,6 +116,6 @@ export default function ServicesStack({ services }: ServicesStackProps) {
           );
         })}
       </section>
-    </main>
+    </div>
   );
 }

@@ -10,6 +10,7 @@ export default defineConfig({
   title: "Esquina Estudio CMS",
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
   dataset: "production",
+  basePath: "/studio",
   plugins: [structureTool(), visionTool()],
   schema: {
     types: [project, funGalleryImage, service],

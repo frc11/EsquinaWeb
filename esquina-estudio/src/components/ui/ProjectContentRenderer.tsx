@@ -8,7 +8,7 @@ import { urlFor } from "@/lib/sanity";
 const ptComponents: PortableTextComponents = {
   block: {
     normal: ({ children }) => (
-      <p className="font-body text-project-text text-off-black mb-8">
+      <p className="font-body text-[30px] leading-[1.3] text-off-black mb-16">
         {children}
       </p>
     ),
@@ -26,8 +26,8 @@ function SingleMedia({ block }: { block: any }) {
 
     if (isEmbed) {
       return (
-        <figure className="mb-8">
-          <div className="relative w-full aspect-video overflow-hidden rounded-sm">
+        <figure className="w-full mb-16 relative bg-gray-brand/10">
+          <div className="relative w-full aspect-video overflow-hidden">
             <iframe
               src={video}
               title={caption || "Project video"}
@@ -47,14 +47,14 @@ function SingleMedia({ block }: { block: any }) {
 
     // Direct .mp4 file
     return (
-      <figure className="mb-8">
+      <figure className="w-full mb-16 relative bg-gray-brand/10">
         <video
           src={video}
           autoPlay
           loop
           muted
           playsInline
-          className="w-full rounded-sm"
+          className="w-full h-auto"
         />
         {caption && (
           <figcaption className="mt-2 text-[13px] text-gray-brand font-body">
@@ -77,12 +77,12 @@ function SingleMedia({ block }: { block: any }) {
 
     if (isGif) {
       return (
-        <figure className="mb-8">
+        <figure className="w-full mb-16 relative bg-gray-brand/10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
             alt={caption || "Project media"}
-            className="w-full rounded-sm"
+            className="w-full h-auto"
           />
           {caption && (
             <figcaption className="mt-2 text-[13px] text-gray-brand font-body">
@@ -94,16 +94,15 @@ function SingleMedia({ block }: { block: any }) {
     }
 
     return (
-      <figure className="mb-8">
-        <div className="relative w-full aspect-[16/10] overflow-hidden rounded-sm">
-          <Image
-            src={imageUrl}
-            alt={caption || "Project media"}
-            fill
-            sizes="(max-width: 768px) 100vw, 800px"
-            className="object-cover"
-          />
-        </div>
+      <figure className="w-full mb-16 relative bg-gray-brand/10">
+        <Image
+          src={imageUrl}
+          alt={caption || "Project media"}
+          width={1200}
+          height={800}
+          sizes="(max-width: 768px) 100vw, 800px"
+          className="w-full h-auto"
+        />
         {caption && (
           <figcaption className="mt-2 text-[13px] text-gray-brand font-body">
             {caption}
@@ -126,25 +125,25 @@ function DualMedia({ block }: { block: any }) {
   if (!leftUrl && !rightUrl) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-4 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
       {leftUrl && (
-        <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
+        <div className="relative aspect-[3/4] overflow-hidden">
           <Image
             src={leftUrl}
             alt="Project media"
             fill
-            sizes="(max-width: 768px) 50vw, 400px"
+            sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover"
           />
         </div>
       )}
       {rightUrl && (
-        <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
+        <div className="relative aspect-[3/4] overflow-hidden">
           <Image
             src={rightUrl}
             alt="Project media"
             fill
-            sizes="(max-width: 768px) 50vw, 400px"
+            sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover"
           />
         </div>
@@ -158,14 +157,14 @@ function DualMedia({ block }: { block: any }) {
 export default function ProjectContentRenderer({ content }: { content: any[] }) {
   if (!content || content.length === 0) {
     return (
-      <p className="font-body text-project-text text-gray-brand italic">
+      <p className="font-body text-[30px] leading-[1.3] text-gray-brand italic">
         Project content coming soon.
       </p>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <>
       {content.map((block, i) => {
         if (block._type === "block") {
           return (
@@ -187,6 +186,6 @@ export default function ProjectContentRenderer({ content }: { content: any[] }) 
 
         return null;
       })}
-    </div>
+    </>
   );
 }

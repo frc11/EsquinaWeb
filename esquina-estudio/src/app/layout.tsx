@@ -57,6 +57,20 @@ export default function RootLayout({
       className={`${displayFont.variable} ${bodyFont.variable} antialiased`}
     >
       <body className="bg-off-white text-off-black font-body min-h-screen">
+        <style suppressHydrationWarning>{`
+  /* Nuclear scrollbar hide */
+  ::-webkit-scrollbar {
+    display: none !important;
+    width: 0px !important;
+    height: 0px !important;
+    background: transparent !important;
+    -webkit-appearance: none !important;
+  }
+  html, body {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+`}</style>
         <CustomCursor />
         <LoadingScreen />
         {children}
