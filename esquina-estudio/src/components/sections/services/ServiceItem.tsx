@@ -8,7 +8,7 @@ import {
   useState,
   type MouseEvent,
 } from "react";
-import { flushSync } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import {
   AnimatePresence,
   motion,
@@ -27,6 +27,10 @@ interface ServiceItemProps {
   index: number;
   isLast: boolean;
   hasReachedEnd: boolean;
+  onItemPassed: (id: string) => void;
+  strictAccordionId: string | null;
+  hasInteractedInEndgame: boolean;
+  onStrictToggle: (id: string) => void;
 }
 
 const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];

@@ -50,6 +50,7 @@ export default function ServicesIntro() {
   const [isPartTwo, setIsPartTwo] = useState(false);
   const [isJumping, setIsJumping] = useState(false);
   const [isAnimating, setIsAnimating] = useState(true);
+  const [isTitleDone, setIsTitleDone] = useState(false);
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
@@ -129,7 +130,12 @@ export default function ServicesIntro() {
             opacity: isJumping ? 0 : isPartTwo ? 0 : 1,
             pointerEvents: isPartTwo ? "none" : "auto",
           }}
-          onAnimationComplete={() => setIsAnimating(false)}
+          onAnimationComplete={() => {
+            if (isTitleDone) return;
+
+            setIsTitleDone(true);
+            setIsPartTwo(true);
+          }}
           transition={fadeTransition}
         >
           <div className="relative flex flex-col items-center">
@@ -148,7 +154,7 @@ export default function ServicesIntro() {
                   setTimeout(() => {
                     const target = document.getElementById("services-list");
                     if (target) {
-                      const headerOffset = 96;
+                      const headerOffset = 140;
                       const elementPosition =
                         target.getBoundingClientRect().top;
                       const targetY =
@@ -194,6 +200,11 @@ export default function ServicesIntro() {
           animate={{
             opacity: isJumping ? 0 : isPartTwo ? 1 : 0,
             pointerEvents: isPartTwo ? "auto" : "none",
+          }}
+          onAnimationComplete={() => {
+            if (isPartTwo) {
+              setIsAnimating(false);
+            }
           }}
           transition={fadeTransition}
         >

@@ -1,8 +1,6 @@
 import { Metadata } from "next";
-import ServicesStack, {
-  type ServiceContent,
-} from "@/components/sections/services/ServicesStack";
-import ServicesIntro from "@/components/sections/services/ServicesIntro";
+import type { ServiceContent } from "@/components/sections/services/ServicesStack";
+import ServicesPageClient from "./ServicesPageClient";
 
 export const metadata: Metadata = {
   title: "Services - ESQUINA ESTUDIO(TM)",
@@ -172,10 +170,5 @@ const services: ServiceContent[] = [
 ];
 
 export default function ServicesPage() {
-  return (
-    <main className="overflow-visible bg-off-white text-off-black">
-      <ServicesIntro />
-      <ServicesStack services={services} />
-    </main>
-  );
+  return <ServicesPageClient services={services} />;
 }
