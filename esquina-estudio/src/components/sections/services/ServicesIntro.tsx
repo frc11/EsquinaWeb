@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion, useMotionValueEvent, useScroll } from "framer-motion";
+import { motion } from "framer-motion";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import HoverButton from "@/components/ui/HoverButton";
 
@@ -43,21 +43,79 @@ const FLOATING_MEDIA = [
   },
 ];
 
-const fadeTransition = { duration: 1.2 };
+const INITIAL_DELAY = 0.5;
+const INITIAL_DURATION = 1;
+const FADE_OUT_TIME = 1;
+const FADE_IN_TIME = 1;
 
 export default function ServicesIntro() {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [isPartTwo, setIsPartTwo] = useState(false);
   const [isJumping, setIsJumping] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(true);
-  const [isTitleDone, setIsTitleDone] = useState(false);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"],
-  });
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [isIntroComplete, setIsIntroComplete] = useState(false);
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
 
   useEffect(() => {
-    if (isAnimating) {
+    let touchStartY = 0;
+
+    const handleWheel = (event: WheelEvent) => {
+      if (!isInitialLoadComplete) return;
+
+      if (!hasInteracted && event.deltaY > 0) {
+        event.preventDefault();
+        setHasInteracted(true);
+      } else if (
+        hasInteracted &&
+        isIntroComplete &&
+        window.scrollY === 0 &&
+        event.deltaY < 0
+      ) {
+        event.preventDefault();
+        setHasInteracted(false);
+        setIsIntroComplete(false);
+      }
+    };
+
+    const handleTouchStart = (event: TouchEvent) => {
+      touchStartY = event.touches[0]?.clientY ?? 0;
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (!isInitialLoadComplete) return;
+
+      const touchEndY = event.touches[0]?.clientY ?? touchStartY;
+      const deltaY = touchStartY - touchEndY;
+
+      if (!hasInteracted && deltaY > 0) {
+        event.preventDefault();
+        setHasInteracted(true);
+      } else if (
+        hasInteracted &&
+        isIntroComplete &&
+        window.scrollY === 0 &&
+        deltaY < 0
+      ) {
+        event.preventDefault();
+        setHasInteracted(false);
+        setIsIntroComplete(false);
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("touchstart", handleTouchStart, {
+      passive: false,
+    });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [hasInteracted, isInitialLoadComplete, isIntroComplete]);
+
+  useEffect(() => {
+    if (!hasInteracted || !isIntroComplete) {
       document.body.style.overflow = "hidden";
       document.body.style.paddingRight = "var(--scrollbar-width, 0px)";
     } else {
@@ -69,7 +127,7 @@ export default function ServicesIntro() {
       document.body.style.overflow = "";
       document.body.style.paddingRight = "";
     };
-  }, [isAnimating]);
+  }, [hasInteracted, isIntroComplete]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -111,12 +169,6 @@ export default function ServicesIntro() {
     };
   }, []);
 
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    if (!isJumping) {
-      setIsPartTwo(latest > 0.01);
-    }
-  });
-
   return (
     <div
       className="relative h-[120vh] w-full -mt-[var(--header-height)]"
@@ -127,16 +179,25 @@ export default function ServicesIntro() {
           className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
           initial={{ opacity: 0 }}
           animate={{
-            opacity: isJumping ? 0 : isPartTwo ? 0 : 1,
-            pointerEvents: isPartTwo ? "none" : "auto",
+            opacity: isJumping ? 0 : hasInteracted ? 0 : 1,
+            pointerEvents: hasInteracted ? "none" : "auto",
           }}
           onAnimationComplete={() => {
-            if (isTitleDone) return;
-
-            setIsTitleDone(true);
-            setIsPartTwo(true);
+            if (!hasInteracted) setIsInitialLoadComplete(true);
           }}
-          transition={fadeTransition}
+          transition={{
+            duration: !isInitialLoadComplete
+              ? INITIAL_DURATION
+              : hasInteracted
+                ? FADE_OUT_TIME
+                : FADE_IN_TIME,
+            delay: !isInitialLoadComplete
+              ? INITIAL_DELAY
+              : hasInteracted
+                ? 0
+                : FADE_OUT_TIME,
+            ease: "easeInOut",
+          }}
         >
           <div className="relative flex flex-col items-center">
             <p className="font-display text-[40px] uppercase leading-[1.05] text-off-black max-w-5xl">
@@ -198,15 +259,19 @@ export default function ServicesIntro() {
           className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
           initial={{ opacity: 0 }}
           animate={{
-            opacity: isJumping ? 0 : isPartTwo ? 1 : 0,
-            pointerEvents: isPartTwo ? "auto" : "none",
+            opacity: isJumping ? 0 : hasInteracted ? 1 : 0,
+            pointerEvents: hasInteracted ? "auto" : "none",
           }}
           onAnimationComplete={() => {
-            if (isPartTwo) {
-              setIsAnimating(false);
+            if (hasInteracted) {
+              setIsIntroComplete(true);
             }
           }}
-          transition={fadeTransition}
+          transition={{
+            duration: hasInteracted ? FADE_IN_TIME : FADE_OUT_TIME,
+            delay: hasInteracted ? FADE_OUT_TIME : 0,
+            ease: "easeInOut",
+          }}
         >
           <div className="pointer-events-none absolute inset-0 z-0">
             {FLOATING_MEDIA.map((item, index) => (
