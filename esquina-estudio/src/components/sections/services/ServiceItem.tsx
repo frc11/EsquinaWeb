@@ -33,9 +33,9 @@ interface ServiceItemProps {
 
 const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 const CONTENT_GRID =
-  "grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1.4fr] gap-6 lg:gap-10 w-full pt-6 pb-16";
+  "grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1.4fr] gap-6 lg:gap-10 w-full pb-16";
 const HEADER_GRID =
-  "w-full pt-[52px] grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1.4fr] gap-6 lg:gap-10 items-center";
+  "w-full pt-[64px] grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1.4fr] gap-6 lg:gap-10 items-center";
 const SLIDESHOW_IMAGES = [
   "/projects/akasha.png",
   "/projects/tukumi.jpg",
@@ -224,7 +224,7 @@ export default function ServiceItem({
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
             onMouseMove={handleMouseMove}
-            className={`${headerPositionClass} ${hasReachedEnd ? "cursor-pointer" : "cursor-default"} outline-none ${HEADER_GRID} ${isSectionCloser ? "pb-[52px]" : "pb-5"} ${isDark
+            className={`${headerPositionClass} ${hasReachedEnd ? "cursor-pointer" : "cursor-default"} outline-none ${HEADER_GRID} ${isSectionCloser ? "pb-[32px]" : "pb-0"} ${isDark
               ? "bg-off-black"
               : "bg-off-white"
             }`}
@@ -233,6 +233,13 @@ export default function ServiceItem({
               className={`absolute left-0 right-0 top-8 z-10 h-[1px] ${isDark ? "bg-off-white" : "bg-off-black"
                 }`}
             />
+            {!isSectionCloser ? (
+              <div
+                aria-hidden="true"
+                className={`pointer-events-none absolute left-0 right-0 top-full z-0 -mt-[1px] h-[33px] ${isDark ? "bg-off-black" : "bg-off-white"
+                  }`}
+              />
+            ) : null}
 
             <span
               className={`font-body text-[17px] uppercase leading-none opacity-100 ${isDark ? "text-off-white" : "text-off-black"
@@ -342,7 +349,10 @@ export default function ServiceItem({
                 }}
                 className="overflow-hidden"
               >
-                <div ref={contentRef} className={CONTENT_GRID}>
+                <div
+                  ref={contentRef}
+                  className={`${CONTENT_GRID} ${!isSectionCloser ? "pt-[56px]" : "pt-6"}`}
+                >
                   <div className="flex flex-col gap-6">
                     <p
                       className={`font-body text-[17px] leading-[1.5] whitespace-pre-line ${isDark ? "text-off-white" : "text-off-black"
