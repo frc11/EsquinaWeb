@@ -20,7 +20,7 @@ interface ServicesStackProps {
   services: ServiceContent[];
 }
 
-function ToggleHint() {
+function ToggleHint({ isDark = false }: { isDark?: boolean }) {
   return (
     <motion.span
       initial={{ opacity: 0 }}
@@ -32,7 +32,8 @@ function ToggleHint() {
         times: [0, 0.2, 0.8, 1],
         ease: "easeInOut",
       }}
-      className="font-body text-[12px] uppercase tracking-widest text-off-black/40"
+      className={`font-body text-[12px] uppercase tracking-widest ${isDark ? "text-off-white/50" : "text-off-black/40"
+        }`}
     >
       [ CLICK SERVICE TO TOGGLE ]
     </motion.span>
@@ -105,13 +106,15 @@ export default function ServicesStack({ services }: ServicesStackProps) {
         {services.map((service, index) => (
           <div key={service.id} className="w-full">
             {service.id === "A.S/01" && (
-              <div className="mx-auto mb-8 mt-16 flex max-w-[1600px] items-baseline justify-between px-6 md:px-12">
-                <h2 className="font-body text-[17px] uppercase text-off-black">
-                  ADDITIONAL SERVICES
-                </h2>
-                <AnimatePresence>
-                  {hasReachedEnd ? <ToggleHint /> : null}
-                </AnimatePresence>
+              <div className="w-full bg-off-black pb-8 pt-16 text-off-white">
+                <div className="mx-auto flex max-w-[1600px] items-baseline justify-between px-6 md:px-12">
+                  <h2 className="font-body text-[17px] uppercase text-off-white">
+                    ADDITIONAL SERVICES
+                  </h2>
+                  <AnimatePresence>
+                    {hasReachedEnd ? <ToggleHint isDark /> : null}
+                  </AnimatePresence>
+                </div>
               </div>
             )}
             <ServiceItem

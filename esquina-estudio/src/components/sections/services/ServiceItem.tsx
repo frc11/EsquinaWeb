@@ -8,7 +8,7 @@ import {
   useState,
   type MouseEvent,
 } from "react";
-import { flushSync } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import {
   AnimatePresence,
   motion,
@@ -35,7 +35,7 @@ const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 const CONTENT_GRID =
   "grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1.4fr] gap-6 lg:gap-10 w-full pt-6 pb-16";
 const HEADER_GRID =
-  "w-full pb-5 pt-[52px] grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1.4fr] gap-6 lg:gap-10 items-center";
+  "w-full pt-[52px] grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1.4fr] gap-6 lg:gap-10 items-center";
 const SLIDESHOW_IMAGES = [
   "/projects/akasha.png",
   "/projects/tukumi.jpg",
@@ -55,16 +55,19 @@ export default function ServiceItem({
   const contentRef = useRef<HTMLDivElement | null>(null);
   const cursorX = useMotionValue(0);
   const cursorY = useMotionValue(0);
+  const [mounted, setMounted] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [hasBeenPassed, setHasBeenPassed] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
   const isDark = service.id.startsWith("A.S");
+  const isSectionCloser = service.id === "02" || isLast;
   const isEffectivelyOpen = hasReachedEnd
     ? activeAccordionId === service.id
     : !hasBeenPassed;
   const headerPositionClass = isLast
     ? "relative z-10"
-    : "sticky top-[104px] z-40";
+    : "sticky top-[115px] z-40";
   const leftFeatures = isDark ? service.items : service.items.slice(0, 5);
   const rightFeatures = isDark ? [] : service.items.slice(5);
   const applicationsLabel = "Applications may include:";
@@ -129,6 +132,12 @@ export default function ServiceItem({
     );
   };
 
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setMounted(true));
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
   useLayoutEffect(() => {
     if (isLast) return;
 
@@ -139,7 +148,7 @@ export default function ServiceItem({
       ScrollTrigger.create({
         trigger: article,
         start: "top bottom",
-        end: () => "bottom 104px", // DYNAMIC: Evaluates exact position at time of trigger
+        end: () => "bottom 128px", // DYNAMIC: Evaluates exact position at time of trigger
         invalidateOnRefresh: true, // CRITICAL: Updates markers when previous items collapse
         once: true,
         onLeave: () => {
@@ -165,7 +174,7 @@ export default function ServiceItem({
   }, [hasBeenPassed, isLast]);
 
   useEffect(() => {
-    if (!isEffectivelyOpen) return;
+    if (!isEffectivelyOpen && !isHovering) return;
 
     const timer = window.setInterval(() => {
       setCurrentImageIndex((current) =>
@@ -174,7 +183,15 @@ export default function ServiceItem({
     }, 2000);
 
     return () => window.clearInterval(timer);
-  }, [isEffectivelyOpen]);
+  }, [isEffectivelyOpen, isHovering]);
+
+  useEffect(() => {
+    if (!showWarning) return;
+
+    const timer = window.setTimeout(() => setShowWarning(false), 2000);
+
+    return () => window.clearTimeout(timer);
+  }, [showWarning]);
 
   const handleMouseMove = (event: MouseEvent<HTMLDivElement>) => {
     cursorX.set(event.clientX + 28);
@@ -186,6 +203,8 @@ export default function ServiceItem({
 
     if (hasReachedEnd) {
       onToggle(service.id);
+    } else if (hasBeenPassed && !hasReachedEnd) {
+      setShowWarning(true);
     }
   };
 
@@ -205,15 +224,16 @@ export default function ServiceItem({
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
             onMouseMove={handleMouseMove}
-            className={`${headerPositionClass} ${hasReachedEnd ? "cursor-pointer" : "cursor-default"} outline-none ${HEADER_GRID} ${isDark
+            className={`${headerPositionClass} ${hasReachedEnd ? "cursor-pointer" : "cursor-default"} outline-none ${HEADER_GRID} ${isSectionCloser ? "pb-[52px]" : "pb-5"} ${isDark
               ? "bg-off-black"
               : "bg-off-white"
-              }`}
+            }`}
           >
             <div
-              className={`absolute left-0 right-0 top-8 h-[1px] ${isDark ? "bg-off-white" : "bg-off-black"
+              className={`absolute left-0 right-0 top-8 z-10 h-[1px] ${isDark ? "bg-off-white" : "bg-off-black"
                 }`}
             />
+
             <span
               className={`font-body text-[17px] uppercase leading-none opacity-100 ${isDark ? "text-off-white" : "text-off-black"
                 }`}
@@ -222,13 +242,34 @@ export default function ServiceItem({
             </span>
 
             <span
-              className={`font-display text-[30px] uppercase leading-none lg:col-span-2 ${isDark ? "text-off-white" : "text-off-black"
+              className={`font-display text-[30px] uppercase leading-none lg:col-span-1 ${isDark ? "text-off-white" : "text-off-black"
                 }`}
             >
               {service.name}
             </span>
+            <div className="flex items-center lg:col-start-3">
+              <AnimatePresence mode="wait">
+                {showWarning && !hasReachedEnd ? (
+                  <motion.span
+                    key="warning-hint"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 1, 1, 0] }}
+                    exit={{ opacity: 0 }}
+                    transition={{
+                      duration: 2,
+                      times: [0, 0.2, 0.8, 1],
+                      ease: "easeInOut",
+                    }}
+                    className={`font-body text-[12px] uppercase tracking-widest ${isDark ? "text-off-white/50" : "text-off-black/40"
+                      }`}
+                  >
+                    [ SCROLL TO END TO UNLOCK ]
+                  </motion.span>
+                ) : null}
+              </AnimatePresence>
+            </div>
             <div
-              className="ml-auto flex w-fit justify-end"
+              className="ml-auto flex w-fit items-center justify-end"
               onClick={(event) => event.stopPropagation()}
             >
               <HoverButton
@@ -241,30 +282,51 @@ export default function ServiceItem({
               </HoverButton>
             </div>
 
-            <AnimatePresence>
-              {isHovering ? (
-                <motion.div
-                  aria-hidden
-                  className="pointer-events-none fixed left-0 top-0 z-[120] hidden h-[220px] w-[165px] md:block"
-                  style={{ x: cursorX, y: cursorY }}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0 }}
-                  transition={{ duration: 0.28, ease: EASE }}
-                >
-                  <div
-                    className={`flex h-full w-full items-center justify-center border ${isDark
-                      ? "border-off-white/20 bg-off-white/15 text-off-white"
-                      : "border-off-black/10 bg-gray-brand/30 text-gray-brand"
-                      }`}
-                  >
-                    <span className="px-4 text-center font-body text-[13px] uppercase tracking-wider">
-                      Slide de fotos
-                    </span>
-                  </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
+            {mounted
+              ? createPortal(
+                  <AnimatePresence>
+                    {isHovering && !isEffectivelyOpen ? (
+                      <motion.div
+                        aria-hidden
+                        className="pointer-events-none fixed left-0 top-0 z-[9999] hidden h-[220px] w-[165px] overflow-hidden md:block"
+                        style={{ x: cursorX, y: cursorY }}
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0 }}
+                        transition={{ duration: 0.28, ease: EASE }}
+                      >
+                        <div
+                          className={`relative h-full w-full border ${
+                            isDark
+                              ? "border-off-white/20 bg-off-black"
+                              : "border-off-black/10 bg-off-white"
+                          }`}
+                        >
+                          <AnimatePresence mode="wait">
+                            <motion.div
+                              key={SLIDESHOW_IMAGES[currentImageIndex]}
+                              className="absolute inset-0"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.8, ease: EASE }}
+                            >
+                              <Image
+                                src={SLIDESHOW_IMAGES[currentImageIndex]}
+                                alt={`${service.name} hover visual`}
+                                fill
+                                sizes="165px"
+                                className="h-full w-full object-cover"
+                              />
+                            </motion.div>
+                          </AnimatePresence>
+                        </div>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>,
+                  document.body,
+                )
+              : null}
           </div>
 
           <AnimatePresence initial={false}>
