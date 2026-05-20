@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -12,9 +12,9 @@ export interface ServiceContent {
   id: string;
   name: string;
   description: string;
-   note?: string;
+  note?: string;
   items: Array<string | { main: string; subs?: string[] }>;
-  }
+}
 
 interface ServicesStackProps {
   services: ServiceContent[];
@@ -43,27 +43,12 @@ function ToggleHint() {
 export default function ServicesStack({ services }: ServicesStackProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [hasReachedEnd, setHasReachedEnd] = useState(false);
-  const [passedIds, setPassedIds] = useState<Set<string>>(new Set());
-  const [strictAccordionId, setStrictAccordionId] = useState<string | null>(
+  const [activeAccordionId, setActiveAccordionId] = useState<string | null>(
     null,
   );
-  const [hasInteractedInEndgame, setHasInteractedInEndgame] = useState(false);
-  const showBrandingHint = Array.from(passedIds).some(
-    (id) => !id.startsWith("A.S"),
-  );
-  const showAdditionalHint = Array.from(passedIds).some((id) =>
-    id.startsWith("A.S"),
-  );
-  const handleItemPassed = useCallback((id: string) => {
-    setPassedIds((previousIds) => {
-      const nextIds = new Set(previousIds);
-      nextIds.add(id);
-      return nextIds;
-    });
-  }, []);
-  const handleStrictToggle = useCallback((id: string) => {
-    setHasInteractedInEndgame(true);
-    setStrictAccordionId((previousId) => (previousId === id ? null : id));
+  const lastServiceId = services.at(-1)?.id ?? null;
+  const handleToggle = useCallback((id: string) => {
+    setActiveAccordionId((previousId) => (previousId === id ? null : id));
   }, []);
 
   useLayoutEffect(() => {
@@ -79,23 +64,42 @@ export default function ServicesStack({ services }: ServicesStackProps) {
         trigger: lastItem,
         start: "top 104px", // Triggers exactly when Illustration hits the sticky navbar line
         once: true,
-        onEnter: () => setHasReachedEnd(true),
+        onEnter: () => {
+          setHasReachedEnd(true);
+          if (lastServiceId) {
+            setActiveAccordionId(lastServiceId);
+          }
+        },
       });
     }, root);
 
     return () => ctx.revert();
-  }, [services.length]);
+  }, [lastServiceId, services.length]);
+
+  useEffect(() => {
+    if (!hasReachedEnd || !lastServiceId) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      setActiveAccordionId(lastServiceId);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [hasReachedEnd, lastServiceId]);
 
   return (
     <div ref={rootRef} className="overflow-visible bg-off-white text-off-black">
-      <section id="services-list" aria-label="Services"
-         className="scroll-mt-[140px]"
+      <section
+        id="services-list"
+        aria-label="Services"
+        className="scroll-mt-[140px]"
       >
         <div className="mx-auto mb-8 flex max-w-[1600px] items-baseline justify-between px-6 md:px-12">
           <h2 className="font-body text-[17px] uppercase text-off-black">
             BRANDING PACK OPTIONS
           </h2>
-          <AnimatePresence>{showBrandingHint ? <ToggleHint /> : null}</AnimatePresence>
+          <AnimatePresence>
+            {hasReachedEnd ? <ToggleHint /> : null}
+          </AnimatePresence>
         </div>
 
         {services.map((service, index) => (
@@ -106,7 +110,7 @@ export default function ServicesStack({ services }: ServicesStackProps) {
                   ADDITIONAL SERVICES
                 </h2>
                 <AnimatePresence>
-                  {showAdditionalHint ? <ToggleHint /> : null}
+                  {hasReachedEnd ? <ToggleHint /> : null}
                 </AnimatePresence>
               </div>
             )}
@@ -115,10 +119,8 @@ export default function ServicesStack({ services }: ServicesStackProps) {
               index={index}
               isLast={index === services.length - 1}
               hasReachedEnd={hasReachedEnd}
-              onItemPassed={handleItemPassed}
-              strictAccordionId={strictAccordionId}
-              hasInteractedInEndgame={hasInteractedInEndgame}
-              onStrictToggle={handleStrictToggle}
+              activeAccordionId={activeAccordionId}
+              onToggle={handleToggle}
             />
           </div>
         ))}

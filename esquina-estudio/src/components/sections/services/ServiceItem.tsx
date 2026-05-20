@@ -8,7 +8,7 @@ import {
   useState,
   type MouseEvent,
 } from "react";
-import { createPortal, flushSync } from "react-dom";
+import { flushSync } from "react-dom";
 import {
   AnimatePresence,
   motion,
@@ -27,10 +27,8 @@ interface ServiceItemProps {
   index: number;
   isLast: boolean;
   hasReachedEnd: boolean;
-  onItemPassed: (id: string) => void;
-  strictAccordionId: string | null;
-  hasInteractedInEndgame: boolean;
-  onStrictToggle: (id: string) => void;
+  activeAccordionId: string | null;
+  onToggle: (id: string) => void;
 }
 
 const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
@@ -50,6 +48,8 @@ export default function ServiceItem({
   index,
   isLast,
   hasReachedEnd,
+  activeAccordionId,
+  onToggle,
 }: ServiceItemProps) {
   const articleRef = useRef<HTMLElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -58,13 +58,10 @@ export default function ServiceItem({
   const [isHovering, setIsHovering] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [hasBeenPassed, setHasBeenPassed] = useState(false);
-  const [isManuallyOpen, setIsManuallyOpen] = useState(false);
-  const [lastItemOpen, setLastItemOpen] = useState(true);
   const isDark = service.id.startsWith("A.S");
-  const canToggle = hasBeenPassed || (isLast && hasReachedEnd);
-  const isEffectivelyOpen = isLast
-    ? lastItemOpen
-    : !hasBeenPassed || isManuallyOpen;
+  const isEffectivelyOpen = hasReachedEnd
+    ? activeAccordionId === service.id
+    : !hasBeenPassed;
   const headerPositionClass = isLast
     ? "relative z-10"
     : "sticky top-[104px] z-40";
@@ -187,10 +184,8 @@ export default function ServiceItem({
   const handleHeaderClick = (event: MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
 
-    if (isLast && hasReachedEnd) {
-      setLastItemOpen((current) => !current);
-    } else if (hasBeenPassed) {
-      setIsManuallyOpen((current) => !current);
+    if (hasReachedEnd) {
+      onToggle(service.id);
     }
   };
 
@@ -210,7 +205,7 @@ export default function ServiceItem({
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
             onMouseMove={handleMouseMove}
-            className={`${headerPositionClass} ${canToggle ? "cursor-pointer" : "cursor-default"} outline-none ${HEADER_GRID} ${isDark
+            className={`${headerPositionClass} ${hasReachedEnd ? "cursor-pointer" : "cursor-default"} outline-none ${HEADER_GRID} ${isDark
               ? "bg-off-black"
               : "bg-off-white"
               }`}
@@ -280,7 +275,7 @@ export default function ServiceItem({
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{
-                  duration: isLast || isManuallyOpen ? 0.55 : 0,
+                  duration: hasReachedEnd ? 0.55 : 0,
                   ease: EASE,
                 }}
                 className="overflow-hidden"
