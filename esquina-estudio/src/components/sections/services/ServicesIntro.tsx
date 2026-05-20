@@ -1,8 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { motion, useMotionValue, useSpring } from "framer-motion";
+import {
+  type MouseEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import HoverButton from "@/components/ui/HoverButton";
 
 const FLOATING_MEDIA = [
@@ -48,6 +54,94 @@ const INITIAL_DURATION = 1;
 const FADE_OUT_TIME = 1;
 const FADE_IN_TIME = 1;
 
+type FloatingMediaItem = (typeof FLOATING_MEDIA)[number];
+
+function FloatingImage({
+  item,
+  index,
+}: {
+  item: FloatingMediaItem;
+  index: number;
+}) {
+  const imgRef = useRef<HTMLDivElement | null>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const springConfig = { stiffness: 50, damping: 15, mass: 0.5 };
+  const repelX = useSpring(x, springConfig);
+  const repelY = useSpring(y, springConfig);
+  const lockedDirection = useRef<{ x: number; y: number } | null>(null);
+
+  const handleMouseMove = (event: MouseEvent<HTMLDivElement>) => {
+    const rect = imgRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const distanceX = centerX - event.clientX;
+    const distanceY = centerY - event.clientY;
+    const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+    const triggerRadius = 100;
+
+    if (distance < triggerRadius) {
+      if (!lockedDirection.current && distance > 0) {
+        lockedDirection.current = {
+          x: distanceX / distance,
+          y: distanceY / distance,
+        };
+      }
+
+      const force = Math.min(
+        1,
+        ((triggerRadius - distance) / triggerRadius) * 1.5,
+      );
+      const maxPush = 80;
+
+      if (lockedDirection.current) {
+        x.set(lockedDirection.current.x * force * maxPush);
+        y.set(lockedDirection.current.y * force * maxPush);
+      }
+    } else {
+      lockedDirection.current = null;
+      x.set(0);
+      y.set(0);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    lockedDirection.current = null;
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      className={`pointer-events-auto absolute z-0 hover:z-50 ${item.className}`}
+      animate={{ y: [0, -25, 0], x: [0, 15, 0] }}
+      transition={{
+        duration: 8 + index * 1.5,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    >
+      <motion.div
+        ref={imgRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        style={{ x: repelX, y: repelY }}
+        className="relative h-full w-full overflow-hidden bg-gray-brand/20"
+      >
+        <Image
+          src={item.src}
+          alt={item.alt}
+          fill
+          sizes="(max-width: 768px) 42vw, 22vw"
+          className="h-full w-full object-cover"
+        />
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function ServicesIntro() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isJumping, setIsJumping] = useState(false);
@@ -59,6 +153,7 @@ export default function ServicesIntro() {
     let touchStartY = 0;
 
     const handleWheel = (event: WheelEvent) => {
+      if (isJumping) return;
       if (!isInitialLoadComplete) return;
 
       if (!hasInteracted && event.deltaY > 0) {
@@ -81,6 +176,7 @@ export default function ServicesIntro() {
     };
 
     const handleTouchMove = (event: TouchEvent) => {
+      if (isJumping) return;
       if (!isInitialLoadComplete) return;
 
       const touchEndY = event.touches[0]?.clientY ?? touchStartY;
@@ -112,22 +208,22 @@ export default function ServicesIntro() {
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
     };
-  }, [hasInteracted, isInitialLoadComplete, isIntroComplete]);
+  }, [hasInteracted, isInitialLoadComplete, isIntroComplete, isJumping]);
 
   useEffect(() => {
-    if (!hasInteracted || !isIntroComplete) {
-      document.body.style.overflow = "hidden";
-      document.body.style.paddingRight = "var(--scrollbar-width, 0px)";
-    } else {
+    if (isIntroComplete || isJumping) {
       document.body.style.overflow = "";
       document.body.style.paddingRight = "";
+    } else {
+      document.body.style.overflow = "hidden";
+      document.body.style.paddingRight = "var(--scrollbar-width, 0px)";
     }
 
     return () => {
       document.body.style.overflow = "";
       document.body.style.paddingRight = "";
     };
-  }, [hasInteracted, isIntroComplete]);
+  }, [isIntroComplete, isJumping]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -211,6 +307,8 @@ export default function ServicesIntro() {
                 className="font-body text-[17px] uppercase"
                 onClick={() => {
                   setIsJumping(true);
+                  setHasInteracted(true);
+                  setIsIntroComplete(true);
 
                   setTimeout(() => {
                     const target = document.getElementById("services-list");
@@ -273,32 +371,9 @@ export default function ServicesIntro() {
             ease: "easeInOut",
           }}
         >
-          <div className="pointer-events-none absolute inset-0 z-0">
+          <div className="absolute inset-0 z-0">
             {FLOATING_MEDIA.map((item, index) => (
-              <motion.div
-                key={item.src}
-                className={`absolute z-0 hover:z-50 ${item.className}`}
-                animate={{ y: [0, -25, 0], x: [0, 15, 0] }}
-                transition={{
-                  duration: 8 + index * 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              >
-                <motion.div
-                  className="relative h-full w-full overflow-hidden bg-gray-brand/20"
-                  whileHover={{ scale: 2.2 }}
-                  transition={{ duration: 1.5, ease: "easeOut" }}
-                >
-                  <Image
-                    src={item.src}
-                    alt={item.alt}
-                    fill
-                    sizes="(max-width: 768px) 42vw, 22vw"
-                    className="h-full w-full object-cover"
-                  />
-                </motion.div>
-              </motion.div>
+              <FloatingImage key={item.src} item={item} index={index} />
             ))}
           </div>
 

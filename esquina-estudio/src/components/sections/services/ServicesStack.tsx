@@ -103,30 +103,37 @@ export default function ServicesStack({ services }: ServicesStackProps) {
           </AnimatePresence>
         </div>
 
-        {services.map((service, index) => (
-          <div key={service.id} className="w-full">
-            {service.id === "A.S/01" && (
-              <div className="w-full bg-off-black pb-8 pt-16 text-off-white">
-                <div className="mx-auto flex max-w-[1600px] items-baseline justify-between px-6 md:px-12">
-                  <h2 className="font-body text-[17px] uppercase text-off-white">
-                    ADDITIONAL SERVICES
-                  </h2>
-                  <AnimatePresence>
-                    {hasReachedEnd ? <ToggleHint isDark /> : null}
-                  </AnimatePresence>
+        {services.map((service, index) => {
+          const isDark = service.id.startsWith("A.S");
+
+          return (
+            <div
+              key={service.id}
+              className={`w-full ${isDark ? "bg-off-black" : "bg-off-white"}`}
+            >
+              {service.id === "A.S/01" && (
+                <div className="w-full bg-off-black pb-8 pt-16 text-off-white">
+                  <div className="mx-auto flex max-w-[1600px] items-baseline justify-between px-6 md:px-12">
+                    <h2 className="font-body text-[17px] uppercase text-off-white">
+                      ADDITIONAL SERVICES
+                    </h2>
+                    <AnimatePresence>
+                      {hasReachedEnd ? <ToggleHint isDark /> : null}
+                    </AnimatePresence>
+                  </div>
                 </div>
-              </div>
-            )}
-            <ServiceItem
-              service={service}
-              index={index}
-              isLast={index === services.length - 1}
-              hasReachedEnd={hasReachedEnd}
-              activeAccordionId={activeAccordionId}
-              onToggle={handleToggle}
-            />
-          </div>
-        ))}
+              )}
+              <ServiceItem
+                service={service}
+                index={index}
+                isLast={index === services.length - 1}
+                hasReachedEnd={hasReachedEnd}
+                activeAccordionId={activeAccordionId}
+                onToggle={handleToggle}
+              />
+            </div>
+          );
+        })}
       </section>
     </div>
   );
