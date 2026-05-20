@@ -60,7 +60,7 @@ export default function HoverButton({
         aria-hidden
       />
 
-      <span className={`relative block transition-colors duration-200 ${textPaddingClass} ${textClass}`}>
+      <span className={`relative block transition-colors duration-200 ${textPaddingClass} pt-[0.5px] ${textClass}`}>
         {children}
       </span>
 

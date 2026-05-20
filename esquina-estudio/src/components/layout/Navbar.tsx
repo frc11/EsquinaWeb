@@ -37,8 +37,16 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 underline={isActive}
-                className="text-[13px] uppercase font-body font-medium tracking-wider text-off-black"
-              >
+                className={`text-[13px] uppercase font-body font-medium tracking-wider text-off-black text-center ${
+    link.label === "WORK" ? "w-[43px]" : ""
+  }${
+    link.label === "SERVICES" ? "w-[68px]" : ""
+  } ${
+    link.label === "FUN GALLERY" ? "w-[102px]" : "" // Adjust 102px up or down slightly if this one also bleeds
+  }${
+    link.label === "TEAM" ? "w-[40px]" : ""
+  }`}
+>
                 {link.label}
               </HoverButton>
             );
