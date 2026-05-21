@@ -26,6 +26,7 @@ We work closely with our clients through direct communication, making collaborat
 const headedContent = `Looking ahead, we aim to grow beyond borders. As we prepare to move to Australia, our goal is
 to expand our reach and work with clients worldwide — collaborating with people from different places, cultures, and industries.
 
+
 We're driven by the idea of helping others build something of their own — turning ideas into real, tangible brands with intention, character, and identity.`;
 
 const TEAM_REVEAL_DELAY = 0.3;

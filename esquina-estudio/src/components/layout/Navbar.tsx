@@ -19,10 +19,28 @@ const EASE_EXIT: [number, number, number, number] = [0.76, 0, 0.24, 1];
 export default function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const isFunGallery =
+    pathname === "/fun-gallery" || pathname.startsWith("/fun-gallery/");
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-100 border-none bg-off-white/95 backdrop-blur-sm">
-      <div className="relative flex h-[var(--header-height)] items-center justify-between px-12 pb-6 pt-12 lg:px-16">
+    <nav
+  className={`fixed top-0 left-0 right-0 z-[100] border-none ${
+    isFunGallery
+      ? "pointer-events-none !bg-transparent !backdrop-blur-none"
+      : "bg-off-white/95 backdrop-blur-sm"
+  }`}
+  style={
+    isFunGallery
+      ? {
+          background: "transparent",
+          backgroundColor: "transparent",
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+        }
+      : undefined
+  }
+>
+      <div className="pointer-events-auto relative flex h-[var(--header-height)] items-center justify-between px-12 pb-6 pt-12 lg:px-16">
         <div className="flex-shrink-0">
           <LogoScript size="md" />
         </div>

@@ -1,9 +1,22 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import LogoScript from "@/components/ui/LogoScript";
 import HoverButton from "@/components/ui/HoverButton";
 
 export default function Footer() {
+  const pathname = usePathname();
+  const isFunGallery =
+    pathname === "/fun-gallery" || pathname.startsWith("/fun-gallery/");
+
   return (
-    <footer className="w-full border-none bg-off-white">
+    <footer
+      className={`w-full border-none ${
+        isFunGallery
+          ? "fixed bottom-0 left-0 right-0 z-[100] bg-transparent"
+          : "bg-off-white"
+      }`}
+    >
       {/* Sacamos el h-full y bajamos el padding vertical a py-10 para que no sea gigante */}
       <div className="flex w-full flex-row items-center justify-between px-12 py-10 lg:px-16">
 

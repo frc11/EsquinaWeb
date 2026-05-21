@@ -10,7 +10,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 declare global {
   interface Window {
-    lenis: Lenis;
+    lenis?: Lenis;
   }
 }
 

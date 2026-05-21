@@ -1,34 +1,44 @@
 import { Metadata } from "next";
-import FunGallery, {
-  type FunGalleryImage,
-} from "@/components/sections/gallery/FunGallery";
+import { randomUUID } from "crypto";
+import FunGallery from "@/components/sections/gallery/FunGallery";
 import { client } from "@/lib/sanity";
-import { FUN_GALLERY_QUERY } from "@/lib/sanity.queries";
+import { FUN_GALLERY_PROJECTS_QUERY } from "@/lib/sanity.queries";
+import {
+  LOCAL_WORK_PROJECTS,
+  withLocalProjectImages,
+} from "@/lib/local-projects";
+import { Project } from "@/types/project";
 
 export const metadata: Metadata = {
   title: "Fun Gallery - ESQUINA ESTUDIO™",
   description:
     "A free-form visual gallery from ESQUINA ESTUDIO with images, references and studio moments.",
 };
+export const dynamic = "force-dynamic";
 
-async function getGalleryImages(): Promise<FunGalleryImage[]> {
+async function getGalleryProjects(): Promise<Project[]> {
   try {
-    if (!client) return [];
+    if (!client) return LOCAL_WORK_PROJECTS;
 
-    const images = await client.fetch(
-      FUN_GALLERY_QUERY,
+    const projects = await client.fetch(
+      FUN_GALLERY_PROJECTS_QUERY,
       {},
       { next: { revalidate: 60 } },
     );
 
-    return Array.isArray(images) ? images : [];
+    if (!projects || projects.length === 0) {
+      return LOCAL_WORK_PROJECTS;
+    }
+
+    return withLocalProjectImages(projects);
   } catch {
-    return [];
+    return LOCAL_WORK_PROJECTS;
   }
 }
 
 export default async function FunGalleryPage() {
-  const images = await getGalleryImages();
+  const projects = await getGalleryProjects();
+  const randomSeed = randomUUID();
 
-  return <FunGallery images={images} />;
+  return <FunGallery projects={projects} randomSeed={randomSeed} />;
 }

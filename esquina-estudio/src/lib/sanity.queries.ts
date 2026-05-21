@@ -14,6 +14,39 @@ export const PROJECT_BY_SLUG_QUERY = `
   }
 `;
 
+// Projects with every image source needed by Fun Gallery
+export const FUN_GALLERY_PROJECTS_QUERY = `
+  *[_type == "project"] | order(order asc) {
+    _id, title, slug, projectNumber, category, services, year,
+    coverImage {
+      ...,
+      asset->
+    },
+    coverColor,
+    content[] {
+      _type,
+      _key,
+      _type == "mediaItem" => {
+        caption,
+        file {
+          ...,
+          asset->
+        }
+      },
+      _type == "dualMedia" => {
+        left {
+          ...,
+          asset->
+        },
+        right {
+          ...,
+          asset->
+        }
+      }
+    }
+  }
+`;
+
 // Fun gallery images
 export const FUN_GALLERY_QUERY = `
   *[_type == "funGalleryImage"] | order(order asc) {
