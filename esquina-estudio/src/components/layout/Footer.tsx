@@ -9,14 +9,18 @@ export default function Footer() {
   const isFunGallery =
     pathname === "/fun-gallery" || pathname.startsWith("/fun-gallery/");
   const isContactForm = pathname === "/contact";
+  const isDarkRoute = pathname === "/contact/success";
+
+  const footerTone = isDarkRoute ? "dark" : "light";
+  const textClass = isDarkRoute ? "text-off-white" : "text-off-black";
 
   return (
     <footer
       className={`w-full border-none ${
         isFunGallery
           ? "fixed bottom-0 left-0 right-0 z-[100] bg-transparent"
-          : isContactForm
-            ? "fixed bottom-0 left-0 right-0 z-[100] bg-off-white"
+          : isContactForm || isDarkRoute
+            ? "fixed bottom-0 left-0 right-0 z-[100] bg-transparent"
             : "bg-off-white"
       }`}
     >
@@ -28,11 +32,11 @@ export default function Footer() {
 
           {/* 1. Logo a la izquierda */}
           <div className="flex-shrink-0">
-            <LogoScript size="sm" />
+            <LogoScript size="sm" tone={footerTone} />
           </div>
 
           {/* 2. Bloque de texto usando CSS Grid (4 columnas, 2 filas) */}
-          <div className="grid grid-cols-4 gap-x-12 gap-y-[8px] font-body text-[17px] uppercase leading-none tracking-normal text-off-black">
+          <div className={`grid grid-cols-4 gap-x-12 gap-y-[8px] font-body text-[17px] uppercase leading-none tracking-normal ${textClass}`}>
 
             {/* --- FILA 1 --- */}
             <span className="block whitespace-nowrap">BORN IN</span>
@@ -42,6 +46,7 @@ export default function Footer() {
               external
               underline
               tightUnderline
+              tone={footerTone}
               className="justify-self-start"
             >
               INSTAGRAM
@@ -56,6 +61,7 @@ export default function Footer() {
               external
               underline
               tightUnderline
+              tone={footerTone}
               className="justify-self-start"
             >
               LINKEDIN
@@ -71,7 +77,8 @@ export default function Footer() {
             href="/contact"
             underline
             tightUnderline
-            className="font-display text-[40px] uppercase leading-none tracking-normal whitespace-nowrap text-off-black"
+            tone={footerTone}
+            className={`font-display text-[40px] uppercase leading-none tracking-normal whitespace-nowrap ${textClass}`}
           >
             LET&apos;S WORK TOGETHER!
           </HoverButton>

@@ -21,13 +21,24 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const isFunGallery =
     pathname === "/fun-gallery" || pathname.startsWith("/fun-gallery/");
+  const isDarkRoute = pathname === "/contact/success";
+
+  const navTone = isDarkRoute ? "dark" : "light";
+  const linkTextClass = isDarkRoute
+    ? "text-off-white"
+    : "text-off-black";
+  const hamburgerLineClass = isDarkRoute
+    ? "bg-off-white"
+    : "bg-off-black";
 
   return (
     <nav
   className={`fixed top-0 left-0 right-0 z-[100] border-none ${
     isFunGallery
       ? "pointer-events-none !bg-transparent !backdrop-blur-none"
-      : "bg-off-white/95 backdrop-blur-sm"
+      : isDarkRoute
+        ? "bg-transparent"
+        : "bg-off-white/95 backdrop-blur-sm"
   }`}
   style={
     isFunGallery
@@ -42,7 +53,7 @@ export default function Navbar() {
 >
       <div className="pointer-events-auto relative flex h-[var(--header-height)] items-center justify-between px-12 pb-6 pt-12 lg:px-16">
         <div className="flex-shrink-0">
-          <LogoScript size="md" />
+          <LogoScript size="md" tone={navTone} />
         </div>
 
         <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
@@ -55,12 +66,13 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 underline={isActive}
-                className={`text-[13px] uppercase font-body font-medium tracking-wider text-off-black text-center ${
+                tone={navTone}
+                className={`text-[13px] uppercase font-body font-medium tracking-wider ${linkTextClass} text-center ${
     link.label === "WORK" ? "w-[43px]" : ""
   }${
     link.label === "SERVICES" ? "w-[68px]" : ""
   } ${
-    link.label === "FUN GALLERY" ? "w-[102px]" : "" // Adjust 102px up or down slightly if this one also bleeds
+    link.label === "FUN GALLERY" ? "w-[102px]" : ""
   }${
     link.label === "TEAM" ? "w-[40px]" : ""
   }`}
@@ -79,7 +91,8 @@ export default function Navbar() {
             underline={
               pathname === "/contact" || pathname.startsWith("/contact/")
             }
-            className="text-[13px] uppercase font-body font-medium tracking-wider text-off-black"
+            tone={navTone}
+            className={`text-[13px] uppercase font-body font-medium tracking-wider ${linkTextClass}`}
           >
             CONTACT US
           </HoverButton>
@@ -92,9 +105,9 @@ export default function Navbar() {
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen(true)}
         >
-          <span className="block w-6 h-[1.5px] bg-off-black" />
-          <span className="block w-6 h-[1.5px] bg-off-black" />
-          <span className="block w-4 h-[1.5px] bg-off-black" />
+          <span className={`block w-6 h-[1.5px] ${hamburgerLineClass}`} />
+          <span className={`block w-6 h-[1.5px] ${hamburgerLineClass}`} />
+          <span className={`block w-4 h-[1.5px] ${hamburgerLineClass}`} />
         </button>
       </div>
 
