@@ -13,6 +13,10 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#039;");
 }
 
+function formatOptionalValue(value?: string) {
+  return escapeHtml(value || "Not provided");
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const result = contactSchema.safeParse(body);
@@ -38,12 +42,14 @@ export async function POST(req: NextRequest) {
     <h2>New Inquiry — Esquina Estudio</h2>
     <p><strong>Name:</strong> ${escapeHtml(data.fullName)}</p>
     <p><strong>Email:</strong> ${escapeHtml(data.email)}</p>
-    <p><strong>Looking to work on:</strong> ${data.workType.map(escapeHtml).join(", ")}</p>
-    <p><strong>Business type:</strong> ${escapeHtml(data.businessType)}</p>
-    <p><strong>Industry:</strong> ${escapeHtml(data.industry)}</p>
-    <p><strong>Based in:</strong> ${escapeHtml(data.country)}</p>
-    <p><strong>Timeline:</strong> ${escapeHtml(data.timeline)}</p>
-    <p><strong>Budget:</strong> ${escapeHtml(data.budget)}</p>
+    <p><strong>Looking to work on:</strong> ${
+      data.workType?.map(escapeHtml).join(", ") || "Not provided"
+    }</p>
+    <p><strong>Business type:</strong> ${formatOptionalValue(data.businessType)}</p>
+    <p><strong>Industry:</strong> ${formatOptionalValue(data.industry)}</p>
+    <p><strong>Based in:</strong> ${formatOptionalValue(data.country)}</p>
+    <p><strong>Timeline:</strong> ${formatOptionalValue(data.timeline)}</p>
+    <p><strong>Budget:</strong> ${formatOptionalValue(data.budget)}</p>
     <p><strong>How they heard:</strong> ${escapeHtml(data.hearAbout || "—")}</p>
   `;
 

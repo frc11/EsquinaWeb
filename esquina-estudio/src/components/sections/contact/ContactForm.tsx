@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import HoverButton from "@/components/ui/HoverButton";
 import {
@@ -17,6 +18,84 @@ import type { ContactFormValues } from "@/lib/contact";
 
 type FieldError = string | undefined;
 type WorkTypeOption = (typeof WORK_TYPE_OPTIONS)[number];
+
+export const CONTACT_FORM_ID = "contact-form";
+const SELECT_SCROLL_GUTTER = 24;
+const CONTACT_EASE = [0.22, 1, 0.36, 1] as const;
+const CONTROL_TEXT_CLASS =
+  "min-h-[48px] w-full bg-transparent pl-1 font-body text-[28px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:min-h-[58px] md:text-[34px]";
+const SELECT_BUTTON_CLASS =
+  "flex min-h-[48px] w-full pl-1 items-center justify-between gap-4 bg-transparent text-left font-body text-[28px] uppercase leading-none text-off-black outline-none transition-colors duration-200 group-focus-within/contact-focus:text-off-white md:min-h-[58px] md:text-[34px]";
+const SELECT_SEARCH_CLASS =
+  "w-full bg-transparent pl-1  font-body text-[20px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:text-[22px]";
+
+const contactFieldGroupVariants: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      delayChildren: 0.24,
+      staggerChildren: 0.075,
+    },
+  },
+};
+
+const contactFieldVariants: Variants = {
+  hidden: {
+    clipPath: "inset(0 100% 0 0)",
+    filter: "blur(5px)",
+    opacity: 0,
+  },
+  visible: {
+    clipPath: "inset(0 0% 0 0)",
+    filter: "blur(0px)",
+    opacity: 1,
+    transition: {
+      clipPath: { duration: 0.82, ease: CONTACT_EASE },
+      filter: { duration: 0.62, ease: CONTACT_EASE },
+      opacity: { duration: 0.42, ease: CONTACT_EASE },
+    },
+    transitionEnd: {
+      clipPath: "none",
+      filter: "none",
+    },
+  },
+};
+
+const contactTitleVariants: Variants = {
+  hidden: {
+    clipPath: "inset(100% 0 0 0)",
+    filter: "blur(7px)",
+    opacity: 0,
+  },
+  visible: {
+    clipPath: "inset(0% 0 0 0)",
+    filter: "blur(0px)",
+    opacity: 1,
+    transition: {
+      clipPath: { duration: 1.05, ease: CONTACT_EASE },
+      filter: { duration: 0.72, ease: CONTACT_EASE },
+      opacity: { duration: 0.48, ease: CONTACT_EASE },
+    },
+  },
+};
+
+const contactAsideDetailVariants: Variants = {
+  hidden: {
+    clipPath: "inset(0 0 100% 0)",
+    filter: "blur(4px)",
+    opacity: 0,
+  },
+  visible: {
+    clipPath: "inset(0 0 0% 0)",
+    filter: "blur(0px)",
+    opacity: 1,
+    transition: {
+      delay: 0.2,
+      duration: 0.72,
+      ease: CONTACT_EASE,
+    },
+  },
+};
 
 function normalizeServiceParam(value: string) {
   return value
@@ -59,19 +138,19 @@ function FieldShell({
   error,
   children,
 }: {
-  label: string;
+  label: React.ReactNode;
   error?: FieldError;
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid gap-3 border-b border-off-black/20 py-6 md:grid-cols-[220px_1fr] md:gap-8">
-      <label className="font-body text-[17px] uppercase leading-[1.2] text-gray-brand md:text-right">
+    <div className="grid gap-3 py-5 md:grid-cols-[minmax(150px,176px)_minmax(0,420px)] md:items-center md:gap-7 md:py-7">
+      <label className="self-center font-body text-[14px] uppercase leading-[1.15] text-off-black md:text-right md:text-[16px]">
         {label}
       </label>
-      <div>
+      <div className="min-w-0 self-center">
         {children}
         {error && (
-          <p className="mt-2 font-body text-[13px] uppercase tracking-wider text-off-black">
+          <p className="mt-2 font-body text-[13px] uppercase tracking-wider text-off-black md:text-[14px]">
             {error}
           </p>
         )}
@@ -80,21 +159,246 @@ function FieldShell({
   );
 }
 
+function ContactFocusSurface({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`group/contact-focus relative isolate overflow-hidden border-b border-off-black ${className}`}
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-full translate-y-full bg-off-black transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-focus-within/contact-focus:translate-y-0 motion-reduce:transition-none"
+      />
+      <div className="relative z-10">{children}</div>
+    </div>
+  );
+}
+
+function WorkTypePill({
+  option,
+  selected,
+  onToggle,
+}: {
+  option: WorkTypeOption;
+  selected: boolean;
+  onToggle: (option: WorkTypeOption) => void;
+}) {
+  const [ripple, setRipple] = useState<{
+    id: number;
+    size: number;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 1.8;
+
+    setRipple({
+      id: window.performance.now(),
+      size,
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    });
+    onToggle(option);
+  };
+
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={handleClick}
+      className={`relative shrink-0 cursor-pointer overflow-hidden border border-off-black px-2.5 py-1.5 font-body text-[15px] uppercase leading-none transition-colors duration-150 hover:bg-off-black hover:text-off-white focus-visible:bg-off-black focus-visible:text-off-white md:text-[17px] ${
+        selected
+          ? "bg-off-black text-off-white"
+          : "bg-transparent text-off-black"
+      }`}
+    >
+      {ripple && (
+        <motion.span
+          key={ripple.id}
+          aria-hidden
+          className="pointer-events-none absolute z-0 rounded-full bg-off-white/65"
+          style={{
+            height: ripple.size,
+            left: ripple.x - ripple.size / 2,
+            top: ripple.y - ripple.size / 2,
+            width: ripple.size,
+          }}
+          initial={{ opacity: 0.45, scale: 0 }}
+          animate={{ opacity: 0, scale: 1 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          onAnimationComplete={() =>
+            setRipple((current) =>
+              current?.id === ripple.id ? null : current,
+            )
+          }
+        />
+      )}
+      <span className="relative z-10">{option}</span>
+    </button>
+  );
+}
+
+function ContactFieldReveal({
+  children,
+  reduceMotion,
+}: {
+  children: React.ReactNode;
+  reduceMotion: boolean;
+}) {
+  return (
+    <motion.div variants={reduceMotion ? undefined : contactFieldVariants}>
+      {children}
+    </motion.div>
+  );
+}
+
+function AnimatedLife({ reduceMotion }: { reduceMotion: boolean }) {
+  if (reduceMotion) {
+    return (
+      <span className="inline-block border-b-2 border-off-black font-thin">
+        LIFE
+      </span>
+    );
+  }
+
+  return (
+    <span className="relative inline-block">
+      <span className="sr-only">LIFE</span>
+      <span aria-hidden className="invisible font-semibold">
+        LIFE
+      </span>
+      <span aria-hidden className="absolute inset-0 font-normal">
+        LIFE
+      </span>
+      <motion.span
+        aria-hidden
+        className="absolute inset-0 overflow-hidden whitespace-nowrap font-medium"
+        initial={{ clipPath: "inset(0 100% 0 0)" }}
+        animate={{ clipPath: "inset(0 0% 0 0)" }}
+        transition={{
+          delay: 0.72,
+          duration: 2.15,
+          ease: CONTACT_EASE,
+        }}
+      >
+        LIFE
+      </motion.span>
+      <motion.span
+        aria-hidden
+        className="pointer-events-none absolute bottom-[0.02em] left-0 right-0 h-[2px] origin-left bg-off-black"
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{
+          delay: 0.72,
+          duration: 2.15,
+          ease: CONTACT_EASE,
+        }}
+      />
+    </span>
+  );
+}
+
+function hashCountryName(country: string) {
+  return country.split("").reduce((hash, character) => {
+    return (hash * 31 + character.charCodeAt(0)) % 997;
+  }, 7);
+}
+
+function MonochromeFlag({ country }: { country: string }) {
+  const hash = hashCountryName(country);
+  const pattern = country === "Argentina" ? "argentina" : hash % 6;
+  const circleX = 6 + (hash % 13);
+  const circleY = 5 + (hash % 5);
+
+  return (
+    <span
+      aria-hidden
+      className="relative block h-[14px] w-[22px] shrink-0 overflow-hidden border border-off-black/55 bg-off-white"
+    >
+      {pattern === "argentina" && (
+        <>
+          <span className="absolute inset-x-0 top-[4px] h-px bg-off-black/45" />
+          <span className="absolute inset-x-0 bottom-[4px] h-px bg-off-black/45" />
+          <span className="absolute left-1/2 top-1/2 h-[4px] w-[4px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-off-black/65" />
+        </>
+      )}
+      {pattern === 0 && (
+        <>
+          <span className="absolute inset-x-0 top-[4px] h-px bg-off-black/45" />
+          <span className="absolute inset-x-0 bottom-[4px] h-px bg-off-black/45" />
+        </>
+      )}
+      {pattern === 1 && (
+        <>
+          <span className="absolute inset-y-0 left-[7px] w-px bg-off-black/45" />
+          <span className="absolute inset-y-0 right-[7px] w-px bg-off-black/45" />
+        </>
+      )}
+      {pattern === 2 && (
+        <>
+          <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-off-black/45" />
+          <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-off-black/45" />
+        </>
+      )}
+      {pattern === 3 && (
+        <>
+          <span className="absolute -left-1 top-[6px] h-px w-[28px] rotate-[32deg] bg-off-black/45" />
+          <span className="absolute -left-1 top-[6px] h-px w-[28px] -rotate-[32deg] bg-off-black/35" />
+        </>
+      )}
+      {pattern === 4 && (
+        <>
+          <span className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 border-y border-off-black/45" />
+          <span
+            className="absolute h-[5px] w-[5px] rounded-full border border-off-black/65"
+            style={{ left: circleX, top: circleY }}
+          />
+        </>
+      )}
+      {pattern === 5 && (
+        <>
+          <span className="absolute inset-y-0 left-[5px] w-[3px] border-x border-off-black/45" />
+          <span className="absolute inset-x-0 bottom-[3px] h-px bg-off-black/45" />
+        </>
+      )}
+    </span>
+  );
+}
+
 function CustomSelect({
+  id,
   value,
   options,
   placeholder,
   searchable = false,
+  renderOptionMeta,
+  scrollContainerRef,
+  openSelectId,
+  setOpenSelectId,
   onChange,
 }: {
+  id: string;
   value: string;
   options: readonly string[];
   placeholder: string;
   searchable?: boolean;
+  renderOptionMeta?: (option: string) => React.ReactNode;
+  scrollContainerRef: RefObject<HTMLElement | null>;
+  openSelectId: string | null;
+  setOpenSelectId: React.Dispatch<React.SetStateAction<string | null>>;
   onChange: (value: string) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const rootRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const isOpen = openSelectId === id;
   const filteredOptions = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return options;
@@ -104,44 +408,123 @@ function CustomSelect({
     );
   }, [options, query]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      const dropdown = dropdownRef.current;
+      const scrollContainer = scrollContainerRef.current;
+
+      if (!dropdown || !scrollContainer) return;
+
+      const dropdownRect = dropdown.getBoundingClientRect();
+      const scrollRect = scrollContainer.getBoundingClientRect();
+      const overflowBelow =
+        dropdownRect.bottom - scrollRect.bottom + SELECT_SCROLL_GUTTER;
+
+      if (overflowBelow > 0) {
+        scrollContainer.scrollBy({
+          top: overflowBelow,
+          behavior: "smooth",
+        });
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [isOpen, scrollContainerRef]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+
+      if (target instanceof Node && rootRef.current?.contains(target)) {
+        return;
+      }
+
+      setOpenSelectId(null);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpenSelectId(null);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, setOpenSelectId]);
+
   return (
-    <div className="relative">
-      <button
-        type="button"
-        className="flex w-full items-center justify-between border-b border-off-black bg-transparent pb-3 text-left font-body text-[17px] uppercase outline-none transition-[border-width] focus:border-b-2"
-        onClick={() => setIsOpen((current) => !current)}
-      >
-        <span className={value ? "text-off-black" : "text-gray-brand"}>
-          {value || placeholder}
-        </span>
-        <span aria-hidden>{isOpen ? "X" : ">"}</span>
-      </button>
+    <div ref={rootRef} data-contact-select className="relative">
+      <ContactFocusSurface>
+        <button
+          type="button"
+          className={SELECT_BUTTON_CLASS}
+          onClick={() =>
+            setOpenSelectId((current) => (current === id ? null : id))
+          }
+          aria-expanded={isOpen}
+        >
+          <span
+            className={`min-w-0 flex-1 truncate transition-colors duration-200 ${
+              value
+                ? "text-off-black group-focus-within/contact-focus:text-off-white"
+                : "text-gray-brand group-focus-within/contact-focus:text-off-white/70"
+            }`}
+          >
+            {value || placeholder}
+          </span>
+          <span
+            aria-hidden
+            className="shrink-0 self-end pb-[2px] text-[18px] leading-none transition-colors duration-200 md:text-[21px]"
+          >
+            {isOpen ? "X" : ">"}
+          </span>
+        </button>
+      </ContactFocusSurface>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-[320px] overflow-y-auto border border-off-black bg-off-white p-3 shadow-sm">
+        <div
+          ref={dropdownRef}
+          className="relative z-30 mt-2 flex min-h-0 flex-col border border-off-black bg-off-white p-2"
+        >
           {searchable && (
-            <input
-              type="text"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="SEARCH"
-              className="mb-3 w-full border-b border-off-black bg-transparent pb-2 font-body text-[17px] uppercase outline-none placeholder:text-gray-brand"
-            />
+            <ContactFocusSurface className="mb-2 shrink-0">
+              <input
+                type="text"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="SEARCH"
+                className={SELECT_SEARCH_CLASS}
+              />
+            </ContactFocusSurface>
           )}
 
-          <div className="space-y-1">
+          <div
+            className={`space-y-1 overflow-y-auto overscroll-contain pr-1 ${
+              searchable ? "max-h-[320px]" : "max-h-[240px]"
+            }`}
+          >
             {filteredOptions.map((option) => (
               <button
                 key={option}
                 type="button"
-                className="block w-full px-2 py-2 text-left font-body text-[17px] uppercase transition-colors hover:bg-off-black hover:text-off-white"
+                className="flex w-full items-center justify-between gap-3 px-2 py-2 text-left font-body text-[18px] uppercase leading-none transition-colors hover:bg-off-black hover:text-off-white md:text-[20px]"
                 onClick={() => {
                   onChange(option);
-                  setIsOpen(false);
+                  setOpenSelectId(null);
                   setQuery("");
                 }}
               >
-                {option}
+                <span>{option}</span>
+                {renderOptionMeta?.(option)}
               </button>
             ))}
             {filteredOptions.length === 0 && (
@@ -156,15 +539,17 @@ function CustomSelect({
   );
 }
 
-export default function ContactForm() {
+export default function ContactForm({ service = null }: { service?: string | null }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const service = searchParams.get("service");
+  const reduceMotion = useReducedMotion();
+  const shouldReduceMotion = Boolean(reduceMotion);
+  const formScrollRef = useRef<HTMLElement>(null);
   const prefilledWorkType = useMemo(() => {
     const resolvedService = resolveWorkTypeFromService(service);
     return resolvedService ? [resolvedService] : [];
   }, [service]);
   const [submitError, setSubmitError] = useState("");
+  const [openSelectId, setOpenSelectId] = useState<string | null>(null);
 
   const {
     register,
@@ -201,6 +586,28 @@ export default function ContactForm() {
       shouldValidate: true,
     });
   }, [prefilledWorkType, setValue]);
+  const [formScrollProgress, setFormScrollProgress] = useState(0);
+
+  const updateFormScrollProgress = () => {
+    const scrollContainer = formScrollRef.current;
+    if (!scrollContainer) return;
+
+    const maxScroll = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+    const nextProgress =
+      maxScroll <= 0 ? 1 : Math.min(1, Math.max(0, scrollContainer.scrollTop / maxScroll));
+
+    setFormScrollProgress(nextProgress);
+  };
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(updateFormScrollProgress);
+
+    window.addEventListener("resize", updateFormScrollProgress);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateFormScrollProgress);
+    };
+  }, []);
 
   const toggleWorkType = (option: string) => {
     const next = workType.includes(option)
@@ -228,158 +635,302 @@ export default function ContactForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full">
-      <FieldShell
-        label="STATE YOUR FULL NAME *"
-        error={errors.fullName?.message}
-      >
-        <input
-          type="text"
-          placeholder="NAME"
-          className="w-full border-b border-off-black bg-transparent pb-3 font-body text-[17px] uppercase outline-none placeholder:text-gray-brand focus:border-b-2"
-          {...register("fullName")}
-        />
-      </FieldShell>
-
-      <FieldShell label="EMAIL ADDRESS *" error={errors.email?.message}>
-        <input
-          type="email"
-          placeholder="EMAIL"
-          className="w-full border-b border-off-black bg-transparent pb-3 font-body text-[17px] uppercase outline-none placeholder:text-gray-brand focus:border-b-2"
-          {...register("email")}
-        />
-      </FieldShell>
-
-      <FieldShell
-        label="WHAT ARE YOU LOOKING TO WORK ON? *"
-        error={errors.workType?.message}
-      >
-        <div className="flex flex-wrap gap-2">
-          {WORK_TYPE_OPTIONS.map((option) => {
-            const selected = workType.includes(option);
-
-            return (
-              <button
-                key={option}
-                type="button"
-                onClick={() => toggleWorkType(option)}
-                className={`border border-off-black px-3 py-2 font-body text-[17px] uppercase transition-colors ${
-                  selected
-                    ? "bg-off-black text-off-white"
-                    : "bg-transparent text-off-black"
-                }`}
-              >
-                {option}
-              </button>
-            );
-          })}
-        </div>
-      </FieldShell>
-
-      <FieldShell
-        label="WHAT BEST DESCRIBES YOUR BUSINESS? *"
-        error={errors.businessType?.message}
-      >
-        <CustomSelect
-          value={businessType}
-          options={BUSINESS_TYPE_OPTIONS}
-          placeholder="SELECT OPTION >"
-          onChange={(value) =>
-            setValue("businessType", value, {
-              shouldDirty: true,
-              shouldValidate: true,
-            })
-          }
-        />
-      </FieldShell>
-
-      <FieldShell
-        label="WHAT IS YOUR INDUSTRY/FIELD *"
-        error={errors.industry?.message}
-      >
-        <input
-          type="text"
-          placeholder="SHORT ANSWER"
-          className="w-full border-b border-off-black bg-transparent pb-3 font-body text-[17px] uppercase outline-none placeholder:text-gray-brand focus:border-b-2"
-          {...register("industry")}
-        />
-      </FieldShell>
-
-      <FieldShell label="WHERE ARE YOU BASED? *" error={errors.country?.message}>
-        <CustomSelect
-          value={country}
-          options={COUNTRY_OPTIONS}
-          placeholder="SELECT OPTION >"
-          searchable
-          onChange={(value) =>
-            setValue("country", value, {
-              shouldDirty: true,
-              shouldValidate: true,
-            })
-          }
-        />
-      </FieldShell>
-
-      <FieldShell
-        label="DO YOU HAVE A TIMELINE IN MIND? *"
-        error={errors.timeline?.message}
-      >
-        <CustomSelect
-          value={timeline}
-          options={TIMELINE_OPTIONS}
-          placeholder="SELECT OPTION >"
-          onChange={(value) =>
-            setValue("timeline", value, {
-              shouldDirty: true,
-              shouldValidate: true,
-            })
-          }
-        />
-      </FieldShell>
-
-      <FieldShell
-        label="WHAT IS YOUR BUDGET RANGE? *"
-        error={errors.budget?.message}
-      >
-        <CustomSelect
-          value={budget}
-          options={BUDGET_OPTIONS}
-          placeholder="SELECT OPTION >"
-          onChange={(value) =>
-            setValue("budget", value, {
-              shouldDirty: true,
-              shouldValidate: true,
-            })
-          }
-        />
-      </FieldShell>
-
-      <FieldShell label="HOW DID YOU HEAR ABOUT US?">
-        <input
-          type="text"
-          placeholder="SHORT ANSWER"
-          className="w-full border-b border-off-black bg-transparent pb-3 font-body text-[17px] uppercase outline-none placeholder:text-gray-brand focus:border-b-2"
-          {...register("hearAbout")}
-        />
-      </FieldShell>
-
-      <div className="mt-10 flex justify-end">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="disabled:opacity-50"
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-[1680px] flex-col gap-6 lg:grid lg:grid-cols-[minmax(420px,1.08fr)_minmax(560px,0.92fr)] lg:gap-[clamp(3rem,6vw,8rem)]">
+      <aside className="flex w-full max-w-[700px] flex-none flex-col self-start lg:h-full">
+        <motion.div
+          className="overflow-hidden"
+          initial={shouldReduceMotion ? false : "hidden"}
+          animate="visible"
+          variants={shouldReduceMotion ? undefined : contactTitleVariants}
         >
-          <HoverButton as="span" className="font-body text-[17px] uppercase">
-            {isSubmitting ? "SENDING..." : "SEND QUESTIONNAIRE"}
-          </HoverButton>
-        </button>
-      </div>
+          <h1 className="font-display text-[56px] font-thin uppercase leading-[0.9] md:text-[68px] lg:text-[clamp(74px,5.25vw,96px)]">
+            LET&apos;S BRING
+            <br />
+            YOUR IDEAS
+            <br />
+            TO <AnimatedLife reduceMotion={shouldReduceMotion} />
+          </h1>
+        </motion.div>
 
-      {submitError && (
-        <p className="mt-6 text-right font-body text-[13px] uppercase tracking-wider text-off-black">
-          {submitError}
-        </p>
-      )}
-    </form>
+        <motion.div
+          className="mt-9 max-w-[560px] space-y-6 overflow-hidden font-body text-[20px] uppercase leading-[1.24] md:text-[23px] lg:mt-12 lg:text-[25px]"
+          initial={shouldReduceMotion ? false : "hidden"}
+          animate="visible"
+          variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
+        >
+          <p>
+            SHARE YOUR PROJECT DETAILS
+            <br />
+            TO RECEIVE A CUSTOM PROPOSAL
+          </p>
+          <p aria-hidden className="text-[28px] leading-none md:text-[32px]">
+            &rarr;
+          </p>
+        </motion.div>
+
+        <motion.div
+          className="mt-8 w-fit lg:mt-auto"
+          initial={shouldReduceMotion ? false : "hidden"}
+          animate="visible"
+          variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
+        >
+          <button
+            type="submit"
+            form={CONTACT_FORM_ID}
+            disabled={isSubmitting}
+            className="w-fit disabled:opacity-50"
+          >
+            <HoverButton
+              as="span"
+              className="font-body text-[21px] uppercase md:text-[24px]"
+            >
+              {isSubmitting ? "SENDING..." : "SEND QUESTIONNAIRE"}
+            </HoverButton>
+          </button>
+        </motion.div>
+      </aside>
+
+      <div className="relative min-h-0 min-w-0 flex-1 bg-off-white lg:h-full lg:w-full lg:max-w-[840px] lg:justify-self-end">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-off-white px-5 pb-10 sm:px-6 md:px-8 lg:px-10"
+        >
+          <div className="mx-auto flex w-full max-w-[700px] items-center gap-4">
+            <div className="relative h-px min-w-0 flex-1 bg-off-black/20">
+              <motion.span
+                className="absolute inset-y-0 left-0 w-full origin-left bg-off-black"
+                initial={false}
+                animate={{ scaleX: formScrollProgress }}
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : { duration: 0.18, ease: CONTACT_EASE }
+                }
+              />
+            </div>
+            <span className="shrink-0 font-body text-[12px] uppercase leading-none tracking-[0.22em] text-off-black/70 md:text-[13px]">
+              {formScrollProgress >= 0.995 ? "End" : "Scroll"}
+            </span>
+          </div>
+        </div>
+
+        <section
+          ref={formScrollRef}
+          onScroll={updateFormScrollProgress}
+          data-contact-scroll
+          data-lenis-prevent
+          className="h-full min-h-0 overflow-y-auto overscroll-contain [scrollbar-gutter:stable]"
+          aria-label="Project questionnaire"
+        >
+          <div className="mx-auto min-h-full w-full max-w-[700px] px-5 pb-20 pt-14 sm:px-6 md:px-8 lg:px-10">
+            <motion.form
+              id={CONTACT_FORM_ID}
+              onSubmit={handleSubmit(onSubmit)}
+              onFocusCapture={(event) => {
+                const target = event.target;
+
+                if (
+                  target instanceof HTMLElement &&
+                  !target.closest("[data-contact-select]")
+                ) {
+                  setOpenSelectId(null);
+                }
+              }}
+              className="mx-auto w-full max-w-[720px]"
+              initial={shouldReduceMotion ? false : "hidden"}
+              animate="visible"
+              variants={shouldReduceMotion ? undefined : contactFieldGroupVariants}
+            >
+              <ContactFieldReveal reduceMotion={shouldReduceMotion}>
+                <FieldShell
+                  label={"STATE YOUR FULL NAME *"}
+                  error={errors.fullName?.message}
+                >
+                  <ContactFocusSurface>
+                    <input
+                      type="text"
+                      placeholder="NAME"
+                      className={CONTROL_TEXT_CLASS}
+                      {...register("fullName")}
+                    />
+                  </ContactFocusSurface>
+                </FieldShell>
+              </ContactFieldReveal>
+
+              <ContactFieldReveal reduceMotion={shouldReduceMotion}>
+                <FieldShell
+                  label="EMAIL ADDRESS *"
+                  error={errors.email?.message}
+                >
+                  <ContactFocusSurface>
+                    <input
+                      type="email"
+                      placeholder="EMAIL"
+                      className={CONTROL_TEXT_CLASS}
+                      {...register("email")}
+                    />
+                  </ContactFocusSurface>
+                </FieldShell>
+              </ContactFieldReveal>
+
+              <ContactFieldReveal reduceMotion={shouldReduceMotion}>
+                <FieldShell
+                  label={
+                    <>
+                      <span className="block">WHAT ARE YOU</span>
+                      <span className="block">LOOKING TO WORK ON?</span>
+                    </>
+                  }
+                  error={errors.workType?.message}
+                >
+                  <div className="flex max-w-[430px] flex-wrap gap-1.5">
+                    {WORK_TYPE_OPTIONS.map((option) => (
+                      <WorkTypePill
+                        key={option}
+                        option={option}
+                        selected={workType.includes(option)}
+                        onToggle={toggleWorkType}
+                      />
+                    ))}
+                  </div>
+                </FieldShell>
+              </ContactFieldReveal>
+
+              <ContactFieldReveal reduceMotion={shouldReduceMotion}>
+                <FieldShell label="WHAT BEST DESCRIBES YOUR BUSINESS?">
+                  <CustomSelect
+                    id="business-type"
+                    value={businessType}
+                    options={BUSINESS_TYPE_OPTIONS}
+                    placeholder="SELECT OPTION >"
+                    scrollContainerRef={formScrollRef}
+                    openSelectId={openSelectId}
+                    setOpenSelectId={setOpenSelectId}
+                    onChange={(value) =>
+                      setValue("businessType", value, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                </FieldShell>
+              </ContactFieldReveal>
+
+              <ContactFieldReveal reduceMotion={shouldReduceMotion}>
+                <FieldShell label="WHAT IS YOUR INDUSTRY/FIELD">
+                  <ContactFocusSurface>
+                    <input
+                      type="text"
+                      placeholder="SHORT ANSWER"
+                      className={CONTROL_TEXT_CLASS}
+                      {...register("industry")}
+                    />
+                  </ContactFocusSurface>
+                </FieldShell>
+              </ContactFieldReveal>
+
+              <ContactFieldReveal reduceMotion={shouldReduceMotion}>
+                <FieldShell label={<>
+                      <span className="block">WHERE ARE</span>
+                      <span className="block">YOU BASED?</span>
+                    </>}>
+                  <CustomSelect
+                    id="country"
+                    value={country}
+                    options={COUNTRY_OPTIONS}
+                    placeholder="SELECT OPTION >"
+                    searchable
+                    scrollContainerRef={formScrollRef}
+                    openSelectId={openSelectId}
+                    setOpenSelectId={setOpenSelectId}
+                    renderOptionMeta={(option) => (
+                      <MonochromeFlag country={option} />
+                    )}
+                    onChange={(value) =>
+                      setValue("country", value, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                </FieldShell>
+              </ContactFieldReveal>
+
+              <ContactFieldReveal reduceMotion={shouldReduceMotion}>
+                <FieldShell label="DO YOU HAVE A TIMELINE IN MIND?">
+                  <CustomSelect
+                    id="timeline"
+                    value={timeline}
+                    options={TIMELINE_OPTIONS}
+                    placeholder="SELECT OPTION >"
+                    scrollContainerRef={formScrollRef}
+                    openSelectId={openSelectId}
+                    setOpenSelectId={setOpenSelectId}
+                    onChange={(value) =>
+                      setValue("timeline", value, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                </FieldShell>
+              </ContactFieldReveal>
+
+              <ContactFieldReveal reduceMotion={shouldReduceMotion}>
+                <FieldShell label={<>
+                      <span className="block">WHAT IS YOUR</span>
+                      <span className="block">BUDGET RANGE?</span>
+                    </>}>
+                  <CustomSelect
+                    id="budget"
+                    value={budget}
+                    options={BUDGET_OPTIONS}
+                    placeholder="SELECT OPTION >"
+                    scrollContainerRef={formScrollRef}
+                    openSelectId={openSelectId}
+                    setOpenSelectId={setOpenSelectId}
+                    onChange={(value) =>
+                      setValue("budget", value, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                </FieldShell>
+              </ContactFieldReveal>
+
+              <ContactFieldReveal reduceMotion={shouldReduceMotion}>
+                <FieldShell label={<>
+                      <span className="block">HOW DID YOU</span>
+                      <span className="block">HEAR ABOUT US?</span>
+                    </>}>
+                  <ContactFocusSurface>
+                    <input
+                      type="text"
+                      placeholder="SHORT ANSWER"
+                      className={CONTROL_TEXT_CLASS}
+                      {...register("hearAbout")}
+                    />
+                  </ContactFocusSurface>
+                </FieldShell>
+              </ContactFieldReveal>
+
+              {submitError && (
+                <ContactFieldReveal reduceMotion={shouldReduceMotion}>
+                  <p className="mt-6 text-right font-body text-[13px] uppercase tracking-wider text-off-black">
+                    {submitError}
+                  </p>
+                </ContactFieldReveal>
+              )}
+            </motion.form>
+          </div>
+        </section>
+
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-off-white via-off-white/95 to-transparent"
+        />
+      </div>
+    </div>  
   );
 }

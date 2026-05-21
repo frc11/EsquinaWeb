@@ -233,12 +233,12 @@ export const COUNTRY_OPTIONS = [
 export const contactSchema = z.object({
   fullName: z.string().trim().min(2, "Please enter your full name"),
   email: z.string().trim().email("Please enter a valid email"),
-  workType: z.array(z.string()).min(1, "Please select at least one"),
-  businessType: z.string().min(1, "Please select an option"),
-  industry: z.string().trim().min(1, "Please describe your industry"),
-  country: z.string().min(1, "Please select your country"),
-  timeline: z.string().min(1, "Please select a timeline"),
-  budget: z.string().min(1, "Please select a budget range"),
+  workType: z.array(z.string()).optional(),
+  businessType: z.string().optional(),
+  industry: z.string().trim().optional(),
+  country: z.string().optional(),
+  timeline: z.string().optional(),
+  budget: z.string().optional(),
   hearAbout: z.string().trim().optional(),
 });
 

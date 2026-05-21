@@ -8,13 +8,16 @@ export default function Footer() {
   const pathname = usePathname();
   const isFunGallery =
     pathname === "/fun-gallery" || pathname.startsWith("/fun-gallery/");
+  const isContactForm = pathname === "/contact";
 
   return (
     <footer
       className={`w-full border-none ${
         isFunGallery
           ? "fixed bottom-0 left-0 right-0 z-[100] bg-transparent"
-          : "bg-off-white"
+          : isContactForm
+            ? "fixed bottom-0 left-0 right-0 z-[100] bg-off-white"
+            : "bg-off-white"
       }`}
     >
       {/* Sacamos el h-full y bajamos el padding vertical a py-10 para que no sea gigante */}
