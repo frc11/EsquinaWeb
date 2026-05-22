@@ -14,12 +14,13 @@ export default function SiteLayout({
     <SmoothScrollProvider>
       <RouteTransitionProvider>
         <FullLayoutTransitionShell>
-          <Navbar />
-          <main className="pt-[var(--header-height)]">
-            <PageTransitionShell>{children}</PageTransitionShell>
-          </main>
-          <Footer />
-        </FullLayoutTransitionShell>
+  <Navbar />
+  <main className="pt-[var(--header-height)]">
+    <PageTransitionShell>{children}</PageTransitionShell>
+  </main>
+</FullLayoutTransitionShell>
+
+<Footer />
       </RouteTransitionProvider>
     </SmoothScrollProvider>
   );

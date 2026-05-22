@@ -244,17 +244,6 @@ export default function Footer() {
     setFooterLock(null);
   };
 
-  if (isFunGallery) {
-    return (
-      <footer
-        className="fixed bottom-[26px] left-0 right-0 z-[100] w-full border-none bg-transparent text-off-white mix-blend-difference"
-        style={footerRouteStyle}
-      >
-        {footerContent}
-      </footer>
-    );
-  }
-
   return (
     <>
       <motion.footer
