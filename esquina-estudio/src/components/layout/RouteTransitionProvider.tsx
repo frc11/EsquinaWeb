@@ -23,6 +23,7 @@ type RouteTransitionContextValue = {
   exitDuration: number;
   isLeaving: boolean;
   navigateWithTransition: (href: string) => void;
+  pendingPathname: string | null;
 };
 
 const RouteTransitionContext =
@@ -81,6 +82,7 @@ export default function RouteTransitionProvider({
   const reduceMotion = useReducedMotion();
   const router = useRouter();
   const [leavingPathname, setLeavingPathname] = useState<string | null>(null);
+  const [pendingPathname, setPendingPathname] = useState<string | null>(null);
   const pendingHrefRef = useRef<string | null>(null);
   const navigationTimerRef = useRef<number | null>(null);
 
@@ -88,6 +90,8 @@ export default function RouteTransitionProvider({
     ? REDUCED_EXIT_DURATION
     : PAGE_EXIT_DURATION;
   const isLeaving = leavingPathname === pathname;
+  const visualPendingPathname =
+    pendingPathname === pathname ? null : pendingPathname;
 
   const clearNavigationTimer = useCallback(() => {
     if (navigationTimerRef.current === null) return;
@@ -95,6 +99,13 @@ export default function RouteTransitionProvider({
     window.clearTimeout(navigationTimerRef.current);
     navigationTimerRef.current = null;
   }, []);
+
+  const resetTransitionState = useCallback(() => {
+    clearNavigationTimer();
+    pendingHrefRef.current = null;
+    setLeavingPathname(null);
+    setPendingPathname(null);
+  }, [clearNavigationTimer]);
 
   const navigateWithTransition = useCallback(
     (href: string) => {
@@ -110,6 +121,7 @@ export default function RouteTransitionProvider({
       if (pendingHrefRef.current === routeHref) return;
 
       pendingHrefRef.current = routeHref;
+      setPendingPathname(destination.pathname);
       setLeavingPathname(pathname);
       clearNavigationTimer();
 
@@ -121,9 +133,33 @@ export default function RouteTransitionProvider({
   );
 
   useEffect(() => {
+    const completedHref = pendingHrefRef.current;
+
     pendingHrefRef.current = null;
     clearNavigationTimer();
-  }, [clearNavigationTimer, pathname]);
+
+    const frame = window.requestAnimationFrame(() => {
+      if (!completedHref) {
+        resetTransitionState();
+        return;
+      }
+
+      setLeavingPathname(null);
+      setPendingPathname(null);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [clearNavigationTimer, pathname, resetTransitionState]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      resetTransitionState();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [resetTransitionState]);
 
   useEffect(() => {
     const handleDocumentClick = (event: MouseEvent) => {
@@ -154,8 +190,14 @@ export default function RouteTransitionProvider({
       exitDuration,
       isLeaving,
       navigateWithTransition,
+      pendingPathname: visualPendingPathname,
     }),
-    [exitDuration, isLeaving, navigateWithTransition],
+    [
+      exitDuration,
+      isLeaving,
+      navigateWithTransition,
+      visualPendingPathname,
+    ],
   );
 
   return (
