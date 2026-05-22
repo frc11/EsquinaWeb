@@ -22,6 +22,7 @@ const NAV_INDICATOR_EASE: [number, number, number, number] = [
   0.65, 0, 0.15, 1,
 ];
 const NAV_INDICATOR_TIMES = [0, 0.28, 0.72, 1];
+const NAV_INDICATOR_HOME_GAP = 24;
 
 type DesktopNavHref =
   | "/work"
@@ -31,12 +32,14 @@ type DesktopNavHref =
   | "/contact";
 
 type IndicatorMeasure = {
+  kind: "home" | "tab";
   x: number;
   width: number;
   top: number;
 };
 
 type IndicatorAnimation = {
+  opacity: number | number[];
   x: number | number[];
   width: number | number[];
   top: number;
@@ -47,12 +50,17 @@ function isPathActive(pathname: string, href: DesktopNavHref) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function isHomePath(pathname: string) {
+  return pathname === "/";
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const { pendingPathname } = useRouteTransition();
   const visualPathname = pendingPathname ?? pathname;
   const [menuOpen, setMenuOpen] = useState(false);
   const desktopNavRef = useRef<HTMLDivElement>(null);
+  const desktopLogoRef = useRef<HTMLDivElement>(null);
   const desktopLinkRefs = useRef<
     Partial<Record<DesktopNavHref, HTMLSpanElement | null>>
   >({});
@@ -91,14 +99,79 @@ export default function Navbar() {
       const activeLink = activeDesktopHref
         ? desktopLinkRefs.current[activeDesktopHref]
         : null;
+      const logo = desktopLogoRef.current;
+      const baselineLink = desktopLinkRefs.current["/work"];
 
-      if (!desktopNav || !activeLink) {
+      if (!desktopNav || !baselineLink || !logo) {
         currentIndicatorRef.current = null;
         setIndicator(null);
         return;
       }
 
       const navRect = desktopNav.getBoundingClientRect();
+      const baselineRect = baselineLink.getBoundingClientRect();
+      const logoRect = logo.getBoundingClientRect();
+
+      if (
+        baselineRect.width === 0 ||
+        baselineRect.height === 0 ||
+        logoRect.width === 0
+      ) {
+        currentIndicatorRef.current = null;
+        setIndicator(null);
+        return;
+      }
+
+      const homeIndicator: IndicatorMeasure = {
+        kind: "home",
+        x: logoRect.right - navRect.left + NAV_INDICATOR_HOME_GAP,
+        width: NAV_INDICATOR_DOT_WIDTH,
+        top: baselineRect.bottom - navRect.top - 7,
+      };
+      const previousIndicator = currentIndicatorRef.current;
+
+      if (isHomePath(visualPathname)) {
+        currentIndicatorRef.current = homeIndicator;
+
+        if (
+          !animateMove ||
+          !previousIndicator ||
+          previousIndicator.kind === "home"
+        ) {
+          setIndicator({
+            ...homeIndicator,
+            opacity: 0,
+            duration: 0,
+          });
+          return;
+        }
+
+        setIndicator({
+          opacity: [1, 1, 1, 0],
+          x: [
+            previousIndicator.x,
+            previousIndicator.x,
+            homeIndicator.x,
+            homeIndicator.x,
+          ],
+          width: [
+            previousIndicator.width,
+            NAV_INDICATOR_DOT_WIDTH,
+            NAV_INDICATOR_DOT_WIDTH,
+            NAV_INDICATOR_DOT_WIDTH,
+          ],
+          top: homeIndicator.top,
+          duration: NAV_INDICATOR_DURATION,
+        });
+        return;
+      }
+
+      if (!activeLink) {
+        currentIndicatorRef.current = null;
+        setIndicator(null);
+        return;
+      }
+
       const linkRect = activeLink.getBoundingClientRect();
 
       if (linkRect.width === 0 || linkRect.height === 0) {
@@ -107,16 +180,17 @@ export default function Navbar() {
         return;
       }
 
-      const nextIndicator = {
+      const nextIndicator: IndicatorMeasure = {
+        kind: "tab",
         x: linkRect.left - navRect.left,
         width: linkRect.width,
         top: linkRect.bottom - navRect.top - 7,
       };
-      const previousIndicator = currentIndicatorRef.current;
 
       if (!animateMove || !previousIndicator) {
         setIndicator({
           ...nextIndicator,
+          opacity: 1,
           duration: 0,
         });
         currentIndicatorRef.current = nextIndicator;
@@ -132,9 +206,12 @@ export default function Navbar() {
         isSamePosition
           ? {
               ...nextIndicator,
+              opacity: 1,
               duration: 0,
             }
           : {
+              opacity:
+                previousIndicator.kind === "home" ? [0, 1, 1, 1] : 1,
               x: movingRight
                 ? [
                     previousIndicator.x,
@@ -165,7 +242,7 @@ export default function Navbar() {
 
       currentIndicatorRef.current = nextIndicator;
     },
-    [activeDesktopHref],
+    [activeDesktopHref, visualPathname],
   );
 
   useLayoutEffect(() => {
@@ -209,7 +286,7 @@ export default function Navbar() {
         ref={desktopNavRef}
         className="pointer-events-auto relative flex h-[var(--header-height)] items-center justify-between px-12 pb-6 pt-12 lg:px-16"
       >
-        <div className="flex-shrink-0">
+        <div ref={desktopLogoRef} className="flex-shrink-0">
           <LogoScript size="md" tone={navTone} />
         </div>
 
@@ -271,7 +348,11 @@ export default function Navbar() {
             className={`pointer-events-none absolute left-0 z-10 hidden h-px bg-current md:block ${linkTextClass}`}
             style={{ top: indicator.top }}
             initial={false}
-            animate={{ x: indicator.x, width: indicator.width }}
+            animate={{
+              opacity: indicator.opacity,
+              x: indicator.x,
+              width: indicator.width,
+            }}
             transition={{
               duration: indicator.duration,
               ease: NAV_INDICATOR_EASE,

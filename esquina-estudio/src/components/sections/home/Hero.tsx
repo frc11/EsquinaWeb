@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, type Variants } from "framer-motion";
+import { usePreloader } from "@/components/providers/PreloaderProvider";
 import HoverButton from "@/components/ui/HoverButton";
 
 const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
@@ -34,17 +35,19 @@ const lineVariants: Variants = {
 };
 
 export default function Hero() {
+  const { isPreloaderDone } = usePreloader();
+
   return (
     <section className="flex h-full min-h-0 flex-col items-center justify-center overflow-hidden px-6 py-4 text-center md:px-12">
       <motion.div
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        animate={{ opacity: isPreloaderDone ? 1 : 0 }}
         transition={{ duration: 0 }}
       >
         <motion.div
           variants={containerVariants}
           initial="hidden"
-          animate="visible"
+          animate={isPreloaderDone ? "visible" : "hidden"}
         >
           <motion.p
             variants={lineVariants}
@@ -68,13 +71,18 @@ export default function Hero() {
 
         <motion.div
           initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
+          animate={
+            isPreloaderDone
+              ? { y: 0, opacity: 1 }
+              : { y: 30, opacity: 0 }
+          }
           transition={{ delay: CTA_DELAY, duration: CTA_DURATION, ease: EASE }}
           className="mt-8"
         >
           <HoverButton
             href="/contact"
-            underlineDraw
+            underline={isPreloaderDone}
+            underlineDraw={isPreloaderDone}
             underlineDrawDelay={CTA_UNDERLINE_DELAY}
             className="font-display text-[24px] uppercase tracking-wider"
           >

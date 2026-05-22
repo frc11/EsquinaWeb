@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import PreloaderProvider from "@/components/providers/PreloaderProvider";
 import CustomCursor from "@/components/ui/CustomCursor";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import "./globals.css";
@@ -71,9 +72,11 @@ export default function RootLayout({
     scrollbar-width: none !important;
   }
 `}</style>
-        <CustomCursor />
-        <LoadingScreen />
-        {children}
+        <PreloaderProvider>
+          <CustomCursor />
+          <LoadingScreen />
+          {children}
+        </PreloaderProvider>
       </body>
     </html>
   );

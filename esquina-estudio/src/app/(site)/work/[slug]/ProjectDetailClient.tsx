@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useLayoutEffect, useRef } from "react";
+import { usePreloader } from "@/components/providers/PreloaderProvider";
 import { Project } from "@/types/project";
 import ProjectContentRenderer from "@/components/ui/ProjectContentRenderer";
 
@@ -17,6 +18,7 @@ export default function ProjectDetailClient({
   prevProject,
   nextProject,
 }: ProjectDetailClientProps) {
+  const { isPreloaderDone } = usePreloader();
   const pageRef = useRef<HTMLElement | null>(null);
 
   useLayoutEffect(() => {
@@ -64,7 +66,11 @@ export default function ProjectDetailClient({
       ref={pageRef}
       className="min-h-screen overflow-visible"
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={
+        isPreloaderDone
+          ? { opacity: 1, y: 0 }
+          : { opacity: 0, y: 20 }
+      }
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
       {/* ── Two-column editorial layout ──────────────────── */}

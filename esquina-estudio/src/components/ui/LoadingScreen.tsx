@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { usePreloader } from "@/components/providers/PreloaderProvider";
 import headerLogoWhite from "../../../logos/logo-header-blanco.png";
 
 const PROGRESS_DURATION_MS = 1000;
@@ -18,6 +19,12 @@ const PARTICLE_MOBILE_STEP = 5;
 const MAX_CANVAS_DPR = 2;
 const PARTICLE_SCATTER_X = 9;
 const PARTICLE_SCATTER_Y = 5;
+const PARTICLE_CANVAS_SCALE_X = 1.9;
+const PARTICLE_CANVAS_SCALE_Y = 2.5;
+const PARTICLE_CLOUD_SPREAD_X_DESKTOP = 124;
+const PARTICLE_CLOUD_SPREAD_Y_DESKTOP = 68;
+const PARTICLE_CLOUD_SPREAD_X_MOBILE = 68;
+const PARTICLE_CLOUD_SPREAD_Y_MOBILE = 42;
 const FINAL_LOGO_PROGRESS = 0.99;
 const PARTICLE_SETTLE_PROGRESS = FINAL_LOGO_PROGRESS;
 const FINAL_PARTICLE_OPACITY = 0;
@@ -157,7 +164,11 @@ function ParticleLogo({
     const buildParticles = () => {
       const rect = canvas.getBoundingClientRect();
       cssWidth = Math.max(1, rect.width);
-      cssHeight = cssWidth / (headerLogoWhite.width / headerLogoWhite.height);
+      cssHeight = Math.max(1, rect.height);
+      const logoWidth = cssWidth / PARTICLE_CANVAS_SCALE_X;
+      const logoHeight = cssHeight / PARTICLE_CANVAS_SCALE_Y;
+      const logoX = (cssWidth - logoWidth) / 2;
+      const logoY = (cssHeight - logoHeight) / 2;
 
       const dpr = Math.min(window.devicePixelRatio || 1, MAX_CANVAS_DPR);
       canvas.width = Math.round(cssWidth * dpr);
@@ -166,7 +177,7 @@ function ParticleLogo({
       sourceCanvas.height = Math.round(cssHeight);
 
       sourceContext.clearRect(0, 0, sourceCanvas.width, sourceCanvas.height);
-      sourceContext.drawImage(image, 0, 0, sourceCanvas.width, sourceCanvas.height);
+      sourceContext.drawImage(image, logoX, logoY, logoWidth, logoHeight);
 
       const pixels = sourceContext.getImageData(
         0,
@@ -176,6 +187,16 @@ function ParticleLogo({
       ).data;
       const step =
         window.innerWidth < 768 ? PARTICLE_MOBILE_STEP : PARTICLE_DESKTOP_STEP;
+      const cloudSpreadX =
+        window.innerWidth < 768
+          ? PARTICLE_CLOUD_SPREAD_X_MOBILE
+          : PARTICLE_CLOUD_SPREAD_X_DESKTOP;
+      const cloudSpreadY =
+        window.innerWidth < 768
+          ? PARTICLE_CLOUD_SPREAD_Y_MOBILE
+          : PARTICLE_CLOUD_SPREAD_Y_DESKTOP;
+      const centerX = sourceCanvas.width / 2;
+      const centerY = sourceCanvas.height / 2;
       const nextParticles: LogoParticle[] = [];
 
       for (let y = 0; y < sourceCanvas.height; y += step) {
@@ -185,13 +206,53 @@ function ParticleLogo({
 
           const seed = particleSeed(x, y);
           const scatterSeed = particleSeed(x + 41, y + 73);
+          const radiusSeed = particleSeed(x + 113, y + 29);
+          const cloudSeedX = particleSeed(x + 197, y + 151);
+          const cloudSeedY = particleSeed(x + 251, y + 199);
+          const centerOffsetX = x - centerX;
+          const centerOffsetY = y - centerY;
+          const centerDistance = Math.hypot(centerOffsetX, centerOffsetY);
+          const fallbackAngle = radiusSeed * Math.PI * 2;
+          const directionX =
+            centerDistance > 0
+              ? centerOffsetX / centerDistance
+              : Math.cos(fallbackAngle);
+          const directionY =
+            centerDistance > 0
+              ? centerOffsetY / centerDistance
+              : Math.sin(fallbackAngle);
+          const clusterX =
+            Math.sin(y * 0.11 + cloudSeedY * Math.PI * 2) *
+            cloudSpreadX *
+            0.18;
+          const clusterY =
+            Math.cos(x * 0.07 + cloudSeedX * Math.PI * 2) *
+            cloudSpreadY *
+            0.22;
+          const outwardX =
+            directionX * cloudSpreadX * (0.22 + radiusSeed * 0.34);
+          const outwardY =
+            directionY * cloudSpreadY * (0.18 + scatterSeed * 0.38);
+          const cloudX =
+            outwardX +
+            (cloudSeedX - 0.5) * cloudSpreadX +
+            clusterX;
+          const cloudY =
+            outwardY +
+            (cloudSeedY - 0.5) * cloudSpreadY +
+            clusterY;
+
           nextParticles.push({
             alpha: (alpha / 255) * (0.76 + seed * 0.24),
             baseX: x,
             baseY: y,
             phase: seed * Math.PI * 2,
-            scatterX: (seed - 0.5) * PARTICLE_SCATTER_X,
-            scatterY: (scatterSeed - 0.5) * PARTICLE_SCATTER_Y,
+            scatterX:
+              cloudX +
+              (seed - 0.5) * PARTICLE_SCATTER_X,
+            scatterY:
+              cloudY +
+              (scatterSeed - 0.5) * PARTICLE_SCATTER_Y,
             size: Math.max(0.95, step * (0.32 + seed * 0.18)),
           });
         }
@@ -227,13 +288,18 @@ function ParticleLogo({
     <canvas
       ref={canvasRef}
       aria-hidden
-      className="absolute inset-0 block h-full w-full"
+      className="absolute left-1/2 top-1/2 block -translate-x-1/2 -translate-y-1/2"
+      style={{
+        height: `${PARTICLE_CANVAS_SCALE_Y * 100}%`,
+        width: `${PARTICLE_CANVAS_SCALE_X * 100}%`,
+      }}
     />
   );
 }
 
 export default function LoadingScreen() {
   const reduceMotion = useReducedMotion();
+  const { markPreloaderDone } = usePreloader();
   const [shouldRender, setShouldRender] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -272,7 +338,10 @@ export default function LoadingScreen() {
       }
     });
     const exitTimer = setTimeout(() => setIsExiting(true), EXIT_DELAY);
-    const hideTimer = setTimeout(() => setIsVisible(false), HIDE_DELAY);
+    const hideTimer = setTimeout(() => {
+      setIsVisible(false);
+      markPreloaderDone();
+    }, HIDE_DELAY);
 
     return () => {
       window.cancelAnimationFrame(revealFrame);
@@ -280,7 +349,7 @@ export default function LoadingScreen() {
       clearTimeout(exitTimer);
       clearTimeout(hideTimer);
     };
-  }, [reduceMotion]);
+  }, [markPreloaderDone, reduceMotion]);
 
   if (!shouldRender || !isVisible) return null;
 

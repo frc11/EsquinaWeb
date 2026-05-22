@@ -1,11 +1,13 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { usePreloader } from "@/components/providers/PreloaderProvider";
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export default function ContactSuccess() {
   const reduceMotion = useReducedMotion();
+  const { isPreloaderDone } = usePreloader();
   const shouldReduceMotion = Boolean(reduceMotion);
 
   return (
@@ -21,7 +23,17 @@ export default function ContactSuccess() {
             ? { y: "0%", borderTopLeftRadius: 0, borderTopRightRadius: 0 }
             : { y: "100%", borderTopLeftRadius: "2rem", borderTopRightRadius: "2rem" }
         }
-        animate={{ y: "0%", borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
+        animate={
+          isPreloaderDone
+            ? { y: "0%", borderTopLeftRadius: 0, borderTopRightRadius: 0 }
+            : shouldReduceMotion
+              ? { y: "0%", borderTopLeftRadius: 0, borderTopRightRadius: 0 }
+              : {
+                  y: "100%",
+                  borderTopLeftRadius: "2rem",
+                  borderTopRightRadius: "2rem",
+                }
+        }
         transition={
           shouldReduceMotion
             ? { duration: 0 }
@@ -46,7 +58,11 @@ export default function ContactSuccess() {
             ? { opacity: 1, y: 0, filter: "blur(0px)" }
             : { opacity: 0, y: 16, filter: "blur(4px)" }
         }
-        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+        animate={
+          isPreloaderDone || shouldReduceMotion
+            ? { opacity: 1, y: 0, filter: "blur(0px)" }
+            : { opacity: 0, y: 16, filter: "blur(4px)" }
+        }
         transition={
           shouldReduceMotion
             ? { duration: 0 }

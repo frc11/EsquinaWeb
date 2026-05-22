@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { usePreloader } from "@/components/providers/PreloaderProvider";
 import { Project } from "@/types/project";
 import ProjectCard from "./ProjectCard";
 
@@ -16,6 +17,8 @@ const DIRECTIONS = [
 ] as const;
 
 export default function WorkGrid({ projects }: WorkGridProps) {
+  const { isPreloaderDone } = usePreloader();
+
   return (
     <div className="flex flex-wrap gap-6 bg-off-white p-6">
       {projects.map((project, index) => {
@@ -26,7 +29,11 @@ export default function WorkGrid({ projects }: WorkGridProps) {
             key={project._id}
             className="h-[350px] min-w-[300px] flex-[1_1_calc(33.333%-1.5rem)] overflow-hidden cursor-none md:min-w-[calc(33.333%-1.5rem)]"
             initial={{ opacity: 0, ...initialDirection }}
-            whileInView={{ opacity: 1, x: 0, y: 0 }}
+            whileInView={
+              isPreloaderDone
+                ? { opacity: 1, x: 0, y: 0 }
+                : { opacity: 0, ...initialDirection }
+            }
             viewport={{ once: true, margin: "0px 0px -100px 0px" }}
             transition={{
               duration: 0.8,

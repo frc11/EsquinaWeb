@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { usePreloader } from "@/components/providers/PreloaderProvider";
 import HoverButton from "@/components/ui/HoverButton";
 
 const FLOATING_MEDIA = [
@@ -143,6 +144,7 @@ function FloatingImage({
 }
 
 export default function ServicesIntro() {
+  const { isPreloaderDone } = usePreloader();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isJumping, setIsJumping] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -154,6 +156,7 @@ export default function ServicesIntro() {
 
     const handleWheel = (event: WheelEvent) => {
       if (isJumping) return;
+      if (!isPreloaderDone) return;
       if (!isInitialLoadComplete) return;
 
       if (!hasInteracted && event.deltaY > 0) {
@@ -177,6 +180,7 @@ export default function ServicesIntro() {
 
     const handleTouchMove = (event: TouchEvent) => {
       if (isJumping) return;
+      if (!isPreloaderDone) return;
       if (!isInitialLoadComplete) return;
 
       const touchEndY = event.touches[0]?.clientY ?? touchStartY;
@@ -208,7 +212,13 @@ export default function ServicesIntro() {
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
     };
-  }, [hasInteracted, isInitialLoadComplete, isIntroComplete, isJumping]);
+  }, [
+    hasInteracted,
+    isInitialLoadComplete,
+    isIntroComplete,
+    isJumping,
+    isPreloaderDone,
+  ]);
 
   useEffect(() => {
     if (isIntroComplete || isJumping) {
@@ -275,11 +285,19 @@ export default function ServicesIntro() {
           className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
           initial={{ opacity: 0 }}
           animate={{
-            opacity: isJumping ? 0 : hasInteracted ? 0 : 1,
+            opacity: !isPreloaderDone
+              ? 0
+              : isJumping
+                ? 0
+                : hasInteracted
+                  ? 0
+                  : 1,
             pointerEvents: hasInteracted ? "none" : "auto",
           }}
           onAnimationComplete={() => {
-            if (!hasInteracted) setIsInitialLoadComplete(true);
+            if (isPreloaderDone && !hasInteracted) {
+              setIsInitialLoadComplete(true);
+            }
           }}
           transition={{
             duration: !isInitialLoadComplete

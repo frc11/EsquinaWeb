@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
+import { usePreloader } from "@/components/providers/PreloaderProvider";
 import MonochromeCountryFlag from "@/components/sections/contact/MonochromeCountryFlag";
 import HoverButton from "@/components/ui/HoverButton";
 import {
@@ -260,7 +261,13 @@ function ContactFieldReveal({
   );
 }
 
-function AnimatedLife({ reduceMotion }: { reduceMotion: boolean }) {
+function AnimatedLife({
+  playAnimation,
+  reduceMotion,
+}: {
+  playAnimation: boolean;
+  reduceMotion: boolean;
+}) {
   if (reduceMotion) {
     return (
       <span className="inline-block border-b-2 border-off-black font-thin">
@@ -282,7 +289,9 @@ function AnimatedLife({ reduceMotion }: { reduceMotion: boolean }) {
         aria-hidden
         className="absolute inset-0 overflow-hidden whitespace-nowrap font-medium"
         initial={{ clipPath: "inset(0 100% 0 0)" }}
-        animate={{ clipPath: "inset(0 0% 0 0)" }}
+        animate={{
+          clipPath: playAnimation ? "inset(0 0% 0 0)" : "inset(0 100% 0 0)",
+        }}
         transition={{
           delay: 0.72,
           duration: 2.15,
@@ -295,7 +304,7 @@ function AnimatedLife({ reduceMotion }: { reduceMotion: boolean }) {
         aria-hidden
         className="pointer-events-none absolute bottom-[0.02em] left-0 right-0 h-[2px] origin-left bg-off-black"
         initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
+        animate={{ scaleX: playAnimation ? 1 : 0 }}
         transition={{
           delay: 0.72,
           duration: 2.15,
@@ -479,6 +488,7 @@ function CustomSelect({
 export default function ContactForm({ service = null }: { service?: string | null }) {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
+  const { isPreloaderDone } = usePreloader();
   const shouldReduceMotion = Boolean(reduceMotion);
   const formScrollRef = useRef<HTMLElement>(null);
   const prefilledWorkType = useMemo(() => {
@@ -577,7 +587,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
         <motion.div
           className="overflow-hidden"
           initial={shouldReduceMotion ? false : "hidden"}
-          animate="visible"
+          animate={isPreloaderDone ? "visible" : "hidden"}
           variants={shouldReduceMotion ? undefined : contactTitleVariants}
         >
           <h1 className="font-display text-[56px] font-thin uppercase leading-[0.9] md:text-[68px] lg:text-[clamp(74px,5.25vw,96px)]">
@@ -585,14 +595,18 @@ export default function ContactForm({ service = null }: { service?: string | nul
             <br />
             YOUR IDEAS
             <br />
-            TO <AnimatedLife reduceMotion={shouldReduceMotion} />
+            TO{" "}
+            <AnimatedLife
+              playAnimation={isPreloaderDone}
+              reduceMotion={shouldReduceMotion}
+            />
           </h1>
         </motion.div>
 
         <motion.div
           className="mt-9 max-w-[560px] space-y-6 overflow-hidden font-body text-[20px] uppercase leading-[1.24] md:text-[23px] lg:mt-12 lg:text-[25px]"
           initial={shouldReduceMotion ? false : "hidden"}
-          animate="visible"
+          animate={isPreloaderDone ? "visible" : "hidden"}
           variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
         >
           <p>
@@ -608,7 +622,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
         <motion.div
           className="mt-8 w-fit lg:mt-auto"
           initial={shouldReduceMotion ? false : "hidden"}
-          animate="visible"
+          animate={isPreloaderDone ? "visible" : "hidden"}
           variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
         >
           <button
@@ -675,7 +689,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
               }}
               className="mx-auto w-full max-w-[720px]"
               initial={shouldReduceMotion ? false : "hidden"}
-              animate="visible"
+              animate={isPreloaderDone ? "visible" : "hidden"}
               variants={shouldReduceMotion ? undefined : contactFieldGroupVariants}
             >
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
