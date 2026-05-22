@@ -18,14 +18,14 @@ export default function Footer() {
   const textClass =
     isFunGallery || isDarkRoute ? "text-off-white" : "text-off-black";
 
-  const footerSmallTextWeight = isFunGallery ? "font-thin" : "font-medium";
+  const footerSmallTextWeight = isFunGallery ? "font-thin" : "font-[550]";
   const footerCtaWeight = isFunGallery ? "font-thin" : "";
 
   return (
     <footer
       className={`w-full border-none ${
         useGalleryBlend
-          ? "fixed bottom-0 left-0 right-0 z-[100] bg-transparent text-off-white mix-blend-difference"
+  ? "fixed bottom-[26px] left-0 right-0 z-[100] bg-transparent text-off-white mix-blend-difference"
           : isContactForm || isDarkRoute
             ? "fixed bottom-0 left-0 right-0 z-[100] bg-transparent"
             : "bg-off-white"
@@ -48,7 +48,7 @@ export default function Footer() {
           </div>
 
           <div
-            className={`grid grid-cols-4 gap-x-12 gap-y-[8px] font-body ${footerSmallTextWeight} text-[17px] uppercase leading-none tracking-normal ${textClass}`}
+            className={`grid grid-cols-4 gap-x-12 gap-y-[8px] font-body ${footerSmallTextWeight} text-[17px] uppercase leading-none ${isFunGallery ? "tracking-[0.035em]" : "tracking-normal"} ${textClass}`}
           >
             <span className="block whitespace-nowrap">BORN IN</span>
             <span className="block whitespace-nowrap">WORKING</span>
@@ -93,7 +93,7 @@ export default function Footer() {
             tightUnderline
             tone={footerTone}
             blend={useGalleryBlend}
-            className={`font-display ${footerCtaWeight} whitespace-nowrap text-[40px] uppercase leading-none tracking-normal ${textClass}`}
+            className={`font-display ${footerCtaWeight} whitespace-nowrap text-[40px] uppercase leading-none ${isFunGallery ? "tracking-[0.02em] font-thin" : "tracking-normal"} ${textClass}`}
           >
             LET&apos;S WORK TOGETHER!
           </HoverButton>

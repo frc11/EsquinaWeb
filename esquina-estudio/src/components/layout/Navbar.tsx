@@ -74,8 +74,8 @@ export default function Navbar() {
                 tone={navTone}
                 blend={useGalleryBlend}
                 className={`text-[13px] uppercase font-body ${
-  isFunGallery ? "font-thin" : "font-medium"
-} tracking-wider ${linkTextClass} text-center ${
+  isFunGallery ? "font-thin" : "font-[480]"
+} ${isFunGallery ? "tracking-[0.09em]" : "tracking-wider"} ${linkTextClass} text-center ${
     link.label === "WORK" ? "w-[43px]" : ""
   }${
     link.label === "SERVICES" ? "w-[68px]" : ""
@@ -103,7 +103,7 @@ export default function Navbar() {
             blend={useGalleryBlend}
             className={`text-[13px] uppercase font-body ${
   isFunGallery ? "font-normal" : "font-medium"
-} tracking-wider ${linkTextClass}`}
+} ${isFunGallery ? "tracking-[0.09em]" : "tracking-wider"} ${linkTextClass}`}
           >
             CONTACT US
           </HoverButton>
