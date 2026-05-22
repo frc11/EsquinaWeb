@@ -76,9 +76,13 @@ export default function HoverButton({
         aria-hidden
       />
 
-      <span className={`relative block transition-colors duration-200 ${textPaddingClass} pt-[0.5px] ${textClass}`}>
-        {children}
-      </span>
+      <span
+  className={`relative block transition-[color,font-weight] duration-200 ${textPaddingClass} pt-[0.5px] ${textClass} ${
+    blend ? "group-hover:font-bold" : ""
+  }`}
+>
+  {children}
+</span>
 
       {underline && underlineDraw && (
         <motion.span
