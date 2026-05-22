@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import {
   motion,
   MotionValue,
@@ -10,6 +9,7 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
+import { useRouteTransition } from "@/components/layout/RouteTransitionProvider";
 import { urlFor } from "@/lib/sanity";
 import {
   Project,
@@ -314,7 +314,7 @@ function GalleryCard({
   pointerX: MotionValue<number>;
   pointerY: MotionValue<number>;
 }) {
-  const router = useRouter();
+  const { navigateWithTransition } = useRouteTransition();
   const [isLoaded, setIsLoaded] = useState(false);
   const itemParallaxX = useTransform(
     pointerX,
@@ -327,7 +327,7 @@ function GalleryCard({
 
   const handleNavigate = () => {
     if (!item.href) return;
-    router.push(item.href);
+    navigateWithTransition(item.href);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
