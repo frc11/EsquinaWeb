@@ -11,14 +11,15 @@ export default function Footer() {
   const isContactForm = pathname === "/contact";
   const isDarkRoute = pathname === "/contact/success";
 
-  const footerTone = isDarkRoute ? "dark" : "light";
-  const textClass = isDarkRoute ? "text-off-white" : "text-off-black";
+  const footerTone = isFunGallery || isDarkRoute ? "dark" : "light";
+  const textClass =
+    isFunGallery || isDarkRoute ? "text-off-white" : "text-off-black";
 
   return (
     <footer
       className={`w-full border-none ${
         isFunGallery
-          ? "fixed bottom-0 left-0 right-0 z-[100] bg-transparent"
+          ? "fixed bottom-0 left-0 right-0 z-[100] bg-transparent text-off-white mix-blend-difference"
           : isContactForm || isDarkRoute
             ? "fixed bottom-0 left-0 right-0 z-[100] bg-transparent"
             : "bg-off-white"
@@ -47,6 +48,7 @@ export default function Footer() {
               underline
               tightUnderline
               tone={footerTone}
+              blend={isFunGallery}
               className="justify-self-start"
             >
               INSTAGRAM
@@ -62,6 +64,7 @@ export default function Footer() {
               underline
               tightUnderline
               tone={footerTone}
+              blend={isFunGallery}
               className="justify-self-start"
             >
               LINKEDIN
@@ -78,6 +81,7 @@ export default function Footer() {
             underline
             tightUnderline
             tone={footerTone}
+            blend={isFunGallery}
             className={`font-display text-[40px] uppercase leading-none tracking-normal whitespace-nowrap ${textClass}`}
           >
             LET&apos;S WORK TOGETHER!

@@ -23,35 +23,40 @@ export default function Navbar() {
     pathname === "/fun-gallery" || pathname.startsWith("/fun-gallery/");
   const isDarkRoute = pathname === "/contact/success";
 
-  const navTone = isDarkRoute ? "dark" : "light";
-  const linkTextClass = isDarkRoute
+  const useGalleryBlend = isFunGallery && !menuOpen;
+  const navTone = isFunGallery || isDarkRoute ? "dark" : "light";
+  const linkTextClass = isFunGallery || isDarkRoute
     ? "text-off-white"
     : "text-off-black";
-  const hamburgerLineClass = isDarkRoute
+  const hamburgerLineClass = isFunGallery || isDarkRoute
     ? "bg-off-white"
     : "bg-off-black";
 
   return (
     <nav
-  className={`fixed top-0 left-0 right-0 z-[100] border-none ${
-    isFunGallery
-      ? "pointer-events-none !bg-transparent !backdrop-blur-none"
-      : isDarkRoute
-        ? "bg-transparent"
-        : "bg-off-white/95 backdrop-blur-sm"
-  }`}
-  style={
-    isFunGallery
-      ? {
-          background: "transparent",
-          backgroundColor: "transparent",
-          backdropFilter: "none",
-          WebkitBackdropFilter: "none",
-        }
-      : undefined
-  }
->
-      <div className="pointer-events-auto relative flex h-[var(--header-height)] items-center justify-between px-12 pb-6 pt-12 lg:px-16">
+      className={`fixed left-0 right-0 top-0 z-[100] border-none ${
+        useGalleryBlend
+          ? "pointer-events-none bg-transparent text-off-white mix-blend-difference"
+          : isFunGallery
+            ? "pointer-events-none bg-transparent"
+          : isDarkRoute
+            ? "bg-transparent"
+            : "bg-off-white/95 backdrop-blur-sm"
+      }`}
+      style={
+        isFunGallery
+          ? {
+              background: "transparent",
+              backgroundColor: "transparent",
+              backdropFilter: "none",
+              WebkitBackdropFilter: "none",
+            }
+          : undefined
+      }
+    >
+      <div
+        className="pointer-events-auto relative flex h-[var(--header-height)] items-center justify-between px-12 pb-6 pt-12 lg:px-16"
+      >
         <div className="flex-shrink-0">
           <LogoScript size="md" tone={navTone} />
         </div>
@@ -67,6 +72,7 @@ export default function Navbar() {
                 href={link.href}
                 underline={isActive}
                 tone={navTone}
+                blend={useGalleryBlend}
                 className={`text-[13px] uppercase font-body font-medium tracking-wider ${linkTextClass} text-center ${
     link.label === "WORK" ? "w-[43px]" : ""
   }${
@@ -92,6 +98,7 @@ export default function Navbar() {
               pathname === "/contact" || pathname.startsWith("/contact/")
             }
             tone={navTone}
+            blend={useGalleryBlend}
             className={`text-[13px] uppercase font-body font-medium tracking-wider ${linkTextClass}`}
           >
             CONTACT US

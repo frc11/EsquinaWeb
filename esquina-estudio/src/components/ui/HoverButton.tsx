@@ -14,6 +14,7 @@ interface HoverButtonProps {
   underlineDraw?: boolean;
   underlineDrawDelay?: number;
   tightUnderline?: boolean;
+  blend?: boolean;
   onClick?: () => void;
 }
 
@@ -28,13 +29,28 @@ export default function HoverButton({
   underlineDraw = false,
   underlineDrawDelay = 0,
   tightUnderline = false,
+  blend = false,
   onClick,
 }: HoverButtonProps) {
-  const borderClass = tone === "dark" ? "border-off-white" : "border-off-black";
-  const fillClass = tone === "dark" ? "bg-off-white" : "bg-off-black";
-  const underlineColorClass = tone === "dark" ? "bg-off-white" : "bg-off-black";
+  const borderClass = blend
+    ? "border-current"
+    : tone === "dark"
+      ? "border-off-white"
+      : "border-off-black";
+  const fillClass = blend
+    ? "bg-current"
+    : tone === "dark"
+      ? "bg-off-white"
+      : "bg-off-black";
+  const underlineColorClass = blend
+    ? "bg-current"
+    : tone === "dark"
+      ? "bg-off-white"
+      : "bg-off-black";
   const textClass =
-    tone === "dark"
+    blend
+      ? "text-current group-hover:text-off-black"
+      : tone === "dark"
       ? "text-off-white group-hover:text-off-black"
       : "text-off-black group-hover:text-off-white";
   const underlineClass = underline && !underlineDraw

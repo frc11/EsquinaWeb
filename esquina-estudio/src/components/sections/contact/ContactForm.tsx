@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
+import MonochromeCountryFlag from "@/components/sections/contact/MonochromeCountryFlag";
 import HoverButton from "@/components/ui/HoverButton";
 import {
   BUDGET_OPTIONS,
@@ -305,73 +306,6 @@ function AnimatedLife({ reduceMotion }: { reduceMotion: boolean }) {
   );
 }
 
-function hashCountryName(country: string) {
-  return country.split("").reduce((hash, character) => {
-    return (hash * 31 + character.charCodeAt(0)) % 997;
-  }, 7);
-}
-
-function MonochromeFlag({ country }: { country: string }) {
-  const hash = hashCountryName(country);
-  const pattern = country === "Argentina" ? "argentina" : hash % 6;
-  const circleX = 6 + (hash % 13);
-  const circleY = 5 + (hash % 5);
-
-  return (
-    <span
-      aria-hidden
-      className="relative block h-[14px] w-[22px] shrink-0 overflow-hidden border border-off-black/55 bg-off-white"
-    >
-      {pattern === "argentina" && (
-        <>
-          <span className="absolute inset-x-0 top-[4px] h-px bg-off-black/45" />
-          <span className="absolute inset-x-0 bottom-[4px] h-px bg-off-black/45" />
-          <span className="absolute left-1/2 top-1/2 h-[4px] w-[4px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-off-black/65" />
-        </>
-      )}
-      {pattern === 0 && (
-        <>
-          <span className="absolute inset-x-0 top-[4px] h-px bg-off-black/45" />
-          <span className="absolute inset-x-0 bottom-[4px] h-px bg-off-black/45" />
-        </>
-      )}
-      {pattern === 1 && (
-        <>
-          <span className="absolute inset-y-0 left-[7px] w-px bg-off-black/45" />
-          <span className="absolute inset-y-0 right-[7px] w-px bg-off-black/45" />
-        </>
-      )}
-      {pattern === 2 && (
-        <>
-          <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-off-black/45" />
-          <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-off-black/45" />
-        </>
-      )}
-      {pattern === 3 && (
-        <>
-          <span className="absolute -left-1 top-[6px] h-px w-[28px] rotate-[32deg] bg-off-black/45" />
-          <span className="absolute -left-1 top-[6px] h-px w-[28px] -rotate-[32deg] bg-off-black/35" />
-        </>
-      )}
-      {pattern === 4 && (
-        <>
-          <span className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 border-y border-off-black/45" />
-          <span
-            className="absolute h-[5px] w-[5px] rounded-full border border-off-black/65"
-            style={{ left: circleX, top: circleY }}
-          />
-        </>
-      )}
-      {pattern === 5 && (
-        <>
-          <span className="absolute inset-y-0 left-[5px] w-[3px] border-x border-off-black/45" />
-          <span className="absolute inset-x-0 bottom-[3px] h-px bg-off-black/45" />
-        </>
-      )}
-    </span>
-  );
-}
-
 function CustomSelect({
   id,
   value,
@@ -379,6 +313,7 @@ function CustomSelect({
   placeholder,
   searchable = false,
   renderOptionMeta,
+  renderValueMeta,
   scrollContainerRef,
   openSelectId,
   setOpenSelectId,
@@ -390,6 +325,7 @@ function CustomSelect({
   placeholder: string;
   searchable?: boolean;
   renderOptionMeta?: (option: string) => React.ReactNode;
+  renderValueMeta?: (value: string) => React.ReactNode;
   scrollContainerRef: RefObject<HTMLElement | null>;
   openSelectId: string | null;
   setOpenSelectId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -472,18 +408,19 @@ function CustomSelect({
           }
           aria-expanded={isOpen}
         >
-          <span
-            className={`min-w-0 flex-1 truncate transition-colors duration-200 ${
-              value
-                ? "text-off-black group-focus-within/contact-focus:text-off-white"
-                : "text-gray-brand group-focus-within/contact-focus:text-off-white/70"
-            }`}
-          >
-            {value || placeholder}
-          </span>
+          {value ? (
+            <span className="flex min-w-0 flex-1 items-center gap-2 text-off-black transition-colors duration-200 group-focus-within/contact-focus:text-off-white">
+              <span className="min-w-0 truncate">{value}</span>
+              {renderValueMeta?.(value)}
+            </span>
+          ) : (
+            <span className="min-w-0 flex-1 truncate text-gray-brand transition-colors duration-200 group-focus-within/contact-focus:text-off-white/70">
+              {placeholder}
+            </span>
+          )}
           <span
             aria-hidden
-            className="shrink-0 self-end pb-[2px] text-[18px] leading-none transition-colors duration-200 md:text-[21px]"
+            className="shrink-0 self-end pb-1 pr-1 text-[18px] leading-none transition-colors duration-200 md:text-[21px]"
           >
             {isOpen ? "X" : ">"}
           </span>
@@ -844,7 +781,10 @@ export default function ContactForm({ service = null }: { service?: string | nul
                     openSelectId={openSelectId}
                     setOpenSelectId={setOpenSelectId}
                     renderOptionMeta={(option) => (
-                      <MonochromeFlag country={option} />
+                      <MonochromeCountryFlag country={option} />
+                    )}
+                    renderValueMeta={(option) => (
+                      <MonochromeCountryFlag country={option} />
                     )}
                     onChange={(value) =>
                       setValue("country", value, {
