@@ -31,6 +31,16 @@ export const metadata: Metadata = {
     default: "ESQUINA ESTUDIO™ | Branding & Design",
   },
   description: defaultDescription,
+  icons: {
+    icon: [
+      {
+        url: "/logo-favicon.png",
+        type: "image/png",
+      },
+    ],
+    shortcut: "/logo-favicon.png",
+    apple: "/logo-favicon.png",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
