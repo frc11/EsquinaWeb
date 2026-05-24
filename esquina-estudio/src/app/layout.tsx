@@ -5,16 +5,9 @@ import CustomCursor from "@/components/ui/CustomCursor";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import "./globals.css";
 
-const displayFont = localFont({
+const manropeFont = localFont({
   src: "../../tipografia/manrope-variable.ttf",
-  variable: "--font-display",
-  weight: "300 800",
-  display: "swap",
-});
-
-const bodyFont = localFont({
-  src: "../../tipografia/manrope-variable.ttf",
-  variable: "--font-body",
+  variable: "--font-manrope",
   weight: "300 800",
   display: "swap",
 });
@@ -63,25 +56,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${displayFont.variable} ${bodyFont.variable} antialiased`}
-    >
+    <html lang="en" className={`${manropeFont.variable} antialiased`}>
       <body className="bg-off-white text-off-black font-body min-h-screen">
-        <style suppressHydrationWarning>{`
-  /* Nuclear scrollbar hide */
-  ::-webkit-scrollbar {
-    display: none !important;
-    width: 0px !important;
-    height: 0px !important;
-    background: transparent !important;
-    -webkit-appearance: none !important;
-  }
-  html, body {
-    -ms-overflow-style: none !important;
-    scrollbar-width: none !important;
-  }
-`}</style>
         <PreloaderProvider>
           <CustomCursor />
           <LoadingScreen />

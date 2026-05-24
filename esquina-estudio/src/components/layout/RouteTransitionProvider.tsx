@@ -10,12 +10,12 @@ import {
   useState,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useReducedMotion } from "framer-motion";
 
 export const PAGE_EXIT_DURATION = 0.65;
 export const PAGE_EXIT_EASE: [number, number, number, number] = [
   0.76, 0, 0.24, 1,
 ];
+export const PAGE_EXIT_EASE_CSS = "cubic-bezier(0.76, 0, 0.24, 1)";
 
 const REDUCED_EXIT_DURATION = 0.06;
 
@@ -61,6 +61,22 @@ function getRouteHref(destination: URL) {
   return `${destination.pathname}${destination.search}${destination.hash}`;
 }
 
+function usePrefersReducedMotion() {
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setReduceMotion(media.matches);
+
+    updatePreference();
+    media.addEventListener("change", updatePreference);
+
+    return () => media.removeEventListener("change", updatePreference);
+  }, []);
+
+  return reduceMotion;
+}
+
 export function useRouteTransition() {
   const context = useContext(RouteTransitionContext);
 
@@ -79,7 +95,7 @@ export default function RouteTransitionProvider({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = usePrefersReducedMotion();
   const router = useRouter();
   const [leavingPathname, setLeavingPathname] = useState<string | null>(null);
   const [pendingPathname, setPendingPathname] = useState<string | null>(null);

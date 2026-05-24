@@ -1,27 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, useMotionValue } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
 export default function CustomCursor() {
-  const isTouchDevice =
-    typeof window !== "undefined" &&
-    window.matchMedia("(pointer: coarse)").matches;
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<number | null>(null);
+  const latestPositionRef = useRef({ x: -100, y: -100 });
   const [isVisible, setIsVisible] = useState(false);
 
-  const mouseX = useMotionValue(-100);
-  const mouseY = useMotionValue(-100);
-
   useEffect(() => {
-    const isTouch =
+    const isTouchDevice =
       window.matchMedia("(pointer: coarse)").matches ||
       "ontouchstart" in window;
 
-    if (isTouch) return;
+    if (isTouchDevice) return;
+
+    const updateCursor = () => {
+      const cursor = cursorRef.current;
+      if (!cursor) return;
+
+      const { x, y } = latestPositionRef.current;
+      cursor.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+      frameRef.current = null;
+    };
 
     const handleMouseMove = (event: MouseEvent) => {
-      mouseX.set(event.clientX);
-      mouseY.set(event.clientY);
+      latestPositionRef.current = {
+        x: event.clientX,
+        y: event.clientY,
+      };
+
+      if (frameRef.current === null) {
+        frameRef.current = window.requestAnimationFrame(updateCursor);
+      }
+
       setIsVisible(true);
     };
 
@@ -41,25 +53,21 @@ export default function CustomCursor() {
       window.removeEventListener("mousemove", handleMouseMove);
       document.documentElement.removeEventListener("mouseleave", handleMouseLeave);
       document.documentElement.removeEventListener("mouseenter", handleMouseEnter);
-    };
-  }, [mouseX, mouseY]);
 
-  if (isTouchDevice) return null;
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <motion.div
-      className="fixed left-0 top-0 z-[9999] h-4 w-4 rounded-full bg-white pointer-events-none mix-blend-difference"
-      animate={{
-        opacity: isVisible ? 1 : 0,
-      }}
-      transition={{
-        opacity: { duration: 0.12 },
-      }}
+    <div
+      ref={cursorRef}
+      className="pointer-events-none fixed left-0 top-0 z-[9999] hidden h-4 w-4 rounded-full bg-white mix-blend-difference transition-opacity duration-[120ms] [@media(pointer:fine)]:block"
       style={{
-        x: mouseX,
-        y: mouseY,
-        translateX: "-50%",
-        translateY: "-50%",
+        opacity: isVisible ? 1 : 0,
+        transform: "translate3d(-100px, -100px, 0) translate(-50%, -50%)",
+        willChange: "transform, opacity",
       }}
     />
   );

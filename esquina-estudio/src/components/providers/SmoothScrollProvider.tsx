@@ -10,6 +10,10 @@ declare global {
   }
 }
 
+function shouldUseSmoothScroll(pathname: string) {
+  return pathname === "/team" || pathname.startsWith("/work");
+}
+
 export default function SmoothScrollProvider({
   children,
 }: {
@@ -22,7 +26,7 @@ export default function SmoothScrollProvider({
     let isDisposed = false;
     let cleanupSmoothScroll: (() => void) | undefined;
 
-    if (pathname === "/services") {
+    if (!shouldUseSmoothScroll(pathname)) {
       document.documentElement.style.scrollBehavior = "auto";
       delete window.lenis;
       lenisRef.current = null;
@@ -32,16 +36,9 @@ export default function SmoothScrollProvider({
     document.documentElement.style.scrollBehavior = "";
 
     const setupSmoothScroll = async () => {
-      const [{ default: LenisConstructor }, { gsap }, { ScrollTrigger }] =
-        await Promise.all([
-          import("@studio-freight/lenis"),
-          import("gsap"),
-          import("gsap/ScrollTrigger"),
-        ]);
+      const { default: LenisConstructor } = await import("@studio-freight/lenis");
 
       if (isDisposed) return;
-
-      gsap.registerPlugin(ScrollTrigger);
 
       const lenis = new LenisConstructor({
         lerp: 0.1,
@@ -51,19 +48,16 @@ export default function SmoothScrollProvider({
       lenisRef.current = lenis;
       window.lenis = lenis;
 
-      const handleScroll = () => ScrollTrigger.update();
+      let animationFrame = 0;
       const updateLenis = (time: number) => {
-        lenis.raf(time * 1000);
-        ScrollTrigger.update();
+        lenis.raf(time);
+        animationFrame = window.requestAnimationFrame(updateLenis);
       };
 
-      lenis.on("scroll", handleScroll);
-      gsap.ticker.add(updateLenis);
-      gsap.ticker.lagSmoothing(0);
+      animationFrame = window.requestAnimationFrame(updateLenis);
 
       cleanupSmoothScroll = () => {
-        lenis.off("scroll", handleScroll);
-        gsap.ticker.remove(updateLenis);
+        window.cancelAnimationFrame(animationFrame);
         lenis.destroy();
         delete window.lenis;
         lenisRef.current = null;

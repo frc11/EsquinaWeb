@@ -156,7 +156,7 @@ function ParticleLogo({
 
       context.globalAlpha = 1;
 
-      if (!reduceMotion) {
+      if (!reduceMotion && progressRef.current < 1) {
         animationFrame = window.requestAnimationFrame(paintParticles);
       }
     };

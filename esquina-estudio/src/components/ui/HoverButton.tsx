@@ -32,11 +32,6 @@ export default function HoverButton({
   blend = false,
   onClick,
 }: HoverButtonProps) {
-  const borderClass = blend
-    ? "border-current"
-    : tone === "dark"
-      ? "border-off-white"
-      : "border-off-black";
   const fillClass = blend
     ? "bg-current"
     : tone === "dark"
@@ -53,43 +48,47 @@ export default function HoverButton({
       : tone === "dark"
       ? "text-off-white group-hover:text-off-black"
       : "text-off-black group-hover:text-off-white";
-  const underlineClass = underline && !underlineDraw
-    ? `border-b ${borderClass}`
-    : "border-b border-transparent";
   const textPaddingClass = tightUnderline
     ? "px-[1px] pb-0 pt-[1px]"
     : "py-[2px] px-[1px]";
 
   const content = (
     <motion.span
-      className={`group relative inline-block overflow-hidden ${underlineClass} ${className}`}
+      className={`group relative inline-block overflow-hidden transform-gpu ${className}`}
       initial="idle"
       whileHover="hover"
     >
       <motion.span
-        className={`absolute inset-0 origin-bottom ${fillClass}`}
+        className={`absolute top-0 -left-[1px] -right-[1px] h-full ${fillClass}`}
         variants={{
-          idle: { scaleY: 0 },
-          hover: { scaleY: 1 },
+          idle: { y: "102%" },
+          hover: { y: "0%" },
         }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
         aria-hidden
       />
 
       <span
-  className={`relative block transition-[color,font-weight] duration-200 ${textPaddingClass} pt-[0.5px] ${textClass} ${
-    blend ? "group-hover:font-bold" : ""
-  }`}
+  className={`relative block transition-colors duration-200 ${textPaddingClass} pt-[0.5px] ${textClass}`}
 >
   {children}
 </span>
 
+      {underline && !underlineDraw && (
+        <span
+          className={`absolute bottom-0 -left-[1px] -right-[1px] h-[1px] ${underlineColorClass}`}
+          aria-hidden="true"
+        />
+      )}
+
       {underline && underlineDraw && (
         <motion.span
-          className={`absolute bottom-0 left-0 h-px w-full origin-left ${underlineColorClass}`}
+          className={`absolute bottom-0 -left-[1px] -right-[1px] h-px origin-left ${underlineColorClass}`}
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
-          style={{ transformOrigin: "left" }}
+          style={{
+            transformOrigin: "left",
+          }}
           transition={{
             delay: underlineDrawDelay,
             duration: 2.5,

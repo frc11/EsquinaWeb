@@ -40,6 +40,7 @@ export default function Hero() {
   return (
     <section className="flex h-full min-h-0 flex-col items-center justify-center overflow-hidden px-6 py-4 text-center md:px-12">
       <motion.div
+        key={isPreloaderDone ? "home-ready" : "home-waiting"}
         initial={{ opacity: 0 }}
         animate={{ opacity: isPreloaderDone ? 1 : 0 }}
         transition={{ duration: 0 }}

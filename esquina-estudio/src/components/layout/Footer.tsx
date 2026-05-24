@@ -82,8 +82,11 @@ export default function Footer() {
     isFunGallery || isDarkRoute ? "text-off-white" : "text-off-black";
   const footerSmallTextWeight = isFunGallery ? "font-thin" : "font-[550]";
   const footerCtaWeight = isFunGallery ? "font-thin" : "";
-  const developerLogoClass =
-    isFunGallery || isDarkRoute ? "invert" : "opacity-80";
+  const developerLogoClass = isFunGallery
+  ? "brightness-0 invert"
+  : isDarkRoute
+    ? "invert"
+    : "opacity-80";
   const footerRouteStyle = isFunGallery
     ? {
         background: "transparent",
