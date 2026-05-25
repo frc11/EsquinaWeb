@@ -26,6 +26,7 @@ export const FUN_GALLERY_PROJECTS_QUERY = `
     content[] {
       _type,
       _key,
+      ...,
       _type == "mediaItem" => {
         caption,
         file {
@@ -42,21 +43,19 @@ export const FUN_GALLERY_PROJECTS_QUERY = `
           ...,
           asset->
         }
+      },
+      image {
+        ...,
+        asset->
+      },
+      images[] {
+        ...,
+        asset->
+      },
+      gallery[] {
+        ...,
+        asset->
       }
     }
-  }
-`;
-
-// Fun gallery images
-export const FUN_GALLERY_QUERY = `
-  *[_type == "funGalleryImage"] | order(order asc) {
-    _id, image, alt
-  }
-`;
-
-// All services
-export const ALL_SERVICES_QUERY = `
-  *[_type == "service"] | order(order asc) {
-    _id, title, description, items, gallery
   }
 `;

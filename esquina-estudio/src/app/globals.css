@@ -42,7 +42,8 @@
   --font-size-nav--letter-spacing: 0.05em;
 }
 
-* {
+body[data-custom-cursor="true"],
+body[data-custom-cursor="true"] * {
   cursor: none !important;
 }
 

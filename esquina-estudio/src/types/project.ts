@@ -44,10 +44,3 @@ export interface Project {
   coverColor?: string;
   content?: ProjectContentBlock[];
 }
-
-export interface FunGalleryImage {
-  _id: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  image: any;
-  alt?: string;
-}

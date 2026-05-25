@@ -15,6 +15,8 @@ export default function CustomCursor() {
 
     if (isTouchDevice) return;
 
+    document.body.dataset.customCursor = "true";
+
     const updateCursor = () => {
       const cursor = cursorRef.current;
       if (!cursor) return;
@@ -50,6 +52,7 @@ export default function CustomCursor() {
     document.documentElement.addEventListener("mouseenter", handleMouseEnter);
 
     return () => {
+      delete document.body.dataset.customCursor;
       window.removeEventListener("mousemove", handleMouseMove);
       document.documentElement.removeEventListener("mouseleave", handleMouseLeave);
       document.documentElement.removeEventListener("mouseenter", handleMouseEnter);

@@ -169,6 +169,47 @@ function isDualMedia(block: ProjectContentBlock): block is ProjectDualMedia {
   return block?._type === "dualMedia";
 }
 
+function isSanityImageLike(value: unknown): value is SanityImageLike {
+  if (!value || typeof value !== "object") return false;
+
+  const maybeImage = value as SanityImageLike;
+  return Boolean(maybeImage.asset);
+}
+
+function getGenericBlockImageCandidates(
+  block: ProjectContentBlock,
+  project: Project,
+): ProjectImageCandidate[] {
+  const blockRecord = block as Record<string, unknown>;
+  const blockKey = typeof blockRecord._key === "string" ? blockRecord._key : "block";
+  const candidates: ProjectImageCandidate[] = [];
+
+  if (isSanityImageLike(blockRecord.image)) {
+    candidates.push({
+      image: blockRecord.image,
+      alt: project.title,
+      keySuffix: `${blockKey}-image`,
+    });
+  }
+
+  for (const fieldName of ["images", "gallery"] as const) {
+    const fieldValue = blockRecord[fieldName];
+    if (!Array.isArray(fieldValue)) continue;
+
+    fieldValue.forEach((image, index) => {
+      if (!isSanityImageLike(image)) return;
+
+      candidates.push({
+        image,
+        alt: project.title,
+        keySuffix: `${blockKey}-${fieldName}-${index}`,
+      });
+    });
+  }
+
+  return candidates;
+}
+
 function getProjectImageCandidates(project: Project): ProjectImageCandidate[] {
   const contentImages = (project.content ?? []).flatMap((block) => {
     if (isMediaItem(block)) {
@@ -197,7 +238,7 @@ function getProjectImageCandidates(project: Project): ProjectImageCandidate[] {
       ];
     }
 
-    return [];
+    return getGenericBlockImageCandidates(block, project);
   });
 
   return [

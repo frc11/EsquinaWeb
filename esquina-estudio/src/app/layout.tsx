@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import PreloaderProvider from "@/components/providers/PreloaderProvider";
-import CustomCursor from "@/components/ui/CustomCursor";
-import LoadingScreen from "@/components/ui/LoadingScreen";
+import RootClientShell from "@/components/providers/RootClientShell";
 import "./globals.css";
 
 const manropeFont = localFont({
@@ -58,11 +56,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${manropeFont.variable} antialiased`}>
       <body className="bg-off-white text-off-black font-body min-h-screen">
-        <PreloaderProvider>
-          <CustomCursor />
-          <LoadingScreen />
-          {children}
-        </PreloaderProvider>
+        <RootClientShell>{children}</RootClientShell>
       </body>
     </html>
   );
