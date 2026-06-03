@@ -40,6 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Windows folder settings
+desktop.ini
+
 # Original uncompressed assets
 /Asset_ Imágenes
 /Asset_ Logo
