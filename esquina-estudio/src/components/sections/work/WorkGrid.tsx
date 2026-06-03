@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useInView, useReducedMotion } from "framer-motion";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
 import { Project } from "@/types/project";
 import ProjectCard from "./ProjectCard";
@@ -9,42 +10,42 @@ interface WorkGridProps {
   projects: Project[];
 }
 
-const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
-const DIRECTIONS = [
-  { x: -60, y: 0 },
-  { x: 60, y: 0 },
-  { x: 0, y: 60 },
-] as const;
+const EASE = [0.25, 0.1, 0.25, 1] as const;
+
+const containerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } },
+};
 
 export default function WorkGrid({ projects }: WorkGridProps) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
   const { isPreloaderDone } = usePreloader();
+  const reduce = useReducedMotion();
+  const reveal = isPreloaderDone && inView;
 
   return (
-    <div className="flex flex-wrap gap-6 bg-off-white p-6">
-      {projects.map((project, index) => {
-        const initialDirection = DIRECTIONS[index % DIRECTIONS.length];
-
-        return (
-          <motion.div
-            key={project._id}
-            className="h-[350px] min-w-[300px] flex-[1_1_calc(33.333%-1.5rem)] overflow-hidden cursor-none md:min-w-[calc(33.333%-1.5rem)]"
-            initial={{ opacity: 0, ...initialDirection }}
-            whileInView={
-              isPreloaderDone
-                ? { opacity: 1, x: 0, y: 0 }
-                : { opacity: 0, ...initialDirection }
-            }
-            viewport={{ once: true, margin: "0px 0px -100px 0px" }}
-            transition={{
-              duration: 0.8,
-              ease: EASE,
-              delay: index < 3 ? index * 0.1 : 0,
-            }}
-          >
-            <ProjectCard project={project} />
-          </motion.div>
-        );
-      })}
-    </div>
+    <motion.div
+      ref={ref}
+      className="grid grid-cols-1 gap-6 bg-off-white p-6 sm:grid-cols-2 lg:grid-cols-3"
+      variants={reduce ? undefined : containerVariants}
+      initial={reduce ? false : "hidden"}
+      animate={reduce ? undefined : reveal ? "visible" : "hidden"}
+    >
+      {projects.map((project) => (
+        <motion.div
+          key={project._id}
+          variants={reduce ? undefined : itemVariants}
+          className="aspect-square cursor-none overflow-hidden"
+        >
+          <ProjectCard project={project} />
+        </motion.div>
+      ))}
+    </motion.div>
   );
 }
