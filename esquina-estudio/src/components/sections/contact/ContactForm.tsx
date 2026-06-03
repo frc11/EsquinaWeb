@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -22,14 +22,19 @@ type FieldError = string | undefined;
 type WorkTypeOption = (typeof WORK_TYPE_OPTIONS)[number];
 
 export const CONTACT_FORM_ID = "contact-form";
+// Gap (px) kept between an open dropdown and the viewport edge when the page
+// auto-scrolls the select into view.
 const SELECT_SCROLL_GUTTER = 24;
 const CONTACT_EASE = [0.22, 1, 0.36, 1] as const;
+// Scoped text selection inside the contact inputs: off-white fill / off-black
+// text — the inverse of the global ::selection — so the highlight stays visible
+// against the black focus surface. `leading-none` keeps it hugging the glyphs.
 const CONTROL_TEXT_CLASS =
-  "min-h-[48px] w-full bg-transparent pl-1 font-body text-[28px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:min-h-[58px] md:text-[34px]";
+  "min-h-[48px] w-full bg-transparent pl-1 font-body text-[28px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand selection:bg-off-white selection:text-off-black group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:min-h-[58px] md:text-[34px]";
 const SELECT_BUTTON_CLASS =
-  "flex min-h-[48px] w-full pl-1 items-center justify-between gap-4 bg-transparent text-left font-body text-[28px] uppercase leading-none text-off-black outline-none transition-colors duration-200 group-focus-within/contact-focus:text-off-white md:min-h-[58px] md:text-[34px]";
+  "flex min-h-[48px] w-full pl-1 items-center justify-between gap-4 bg-transparent text-left font-body text-[28px] uppercase leading-none text-off-black outline-none transition-colors duration-200 selection:bg-off-white selection:text-off-black group-focus-within/contact-focus:text-off-white md:min-h-[58px] md:text-[34px]";
 const SELECT_SEARCH_CLASS =
-  "w-full bg-transparent pl-1  font-body text-[20px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:text-[22px]";
+  "w-full bg-transparent pl-1  font-body text-[20px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand selection:bg-off-white selection:text-off-black group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:text-[22px]";
 
 const contactFieldGroupVariants: Variants = {
   hidden: {},
@@ -261,60 +266,6 @@ function ContactFieldReveal({
   );
 }
 
-function AnimatedLife({
-  playAnimation,
-  reduceMotion,
-}: {
-  playAnimation: boolean;
-  reduceMotion: boolean;
-}) {
-  if (reduceMotion) {
-    return (
-      <span className="inline-block border-b-2 border-off-black font-thin">
-        LIFE
-      </span>
-    );
-  }
-
-  return (
-    <span className="relative inline-block">
-      <span className="sr-only">LIFE</span>
-      <span aria-hidden className="invisible font-semibold">
-        LIFE
-      </span>
-      <span aria-hidden className="absolute inset-0 font-normal">
-        LIFE
-      </span>
-      <motion.span
-        aria-hidden
-        className="absolute inset-0 overflow-hidden whitespace-nowrap font-medium"
-        initial={{ clipPath: "inset(0 100% 0 0)" }}
-        animate={{
-          clipPath: playAnimation ? "inset(0 0% 0 0)" : "inset(0 100% 0 0)",
-        }}
-        transition={{
-          delay: 0.72,
-          duration: 2.15,
-          ease: CONTACT_EASE,
-        }}
-      >
-        LIFE
-      </motion.span>
-      <motion.span
-        aria-hidden
-        className="pointer-events-none absolute bottom-[0.02em] left-0 right-0 h-[2px] origin-left bg-off-black"
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: playAnimation ? 1 : 0 }}
-        transition={{
-          delay: 0.72,
-          duration: 2.15,
-          ease: CONTACT_EASE,
-        }}
-      />
-    </span>
-  );
-}
-
 function CustomSelect({
   id,
   value,
@@ -323,7 +274,6 @@ function CustomSelect({
   searchable = false,
   renderOptionMeta,
   renderValueMeta,
-  scrollContainerRef,
   openSelectId,
   setOpenSelectId,
   onChange,
@@ -335,7 +285,6 @@ function CustomSelect({
   searchable?: boolean;
   renderOptionMeta?: (option: string) => React.ReactNode;
   renderValueMeta?: (value: string) => React.ReactNode;
-  scrollContainerRef: RefObject<HTMLElement | null>;
   openSelectId: string | null;
   setOpenSelectId: React.Dispatch<React.SetStateAction<string | null>>;
   onChange: (value: string) => void;
@@ -353,22 +302,22 @@ function CustomSelect({
     );
   }, [options, query]);
 
+  // The dropdown is rendered out of flow (absolute overlay), so opening it no
+  // longer changes the field height. When it would spill past the bottom of
+  // the viewport, nudge the whole page (window) up just enough to reveal it.
   useEffect(() => {
     if (!isOpen) return;
 
     const frame = window.requestAnimationFrame(() => {
       const dropdown = dropdownRef.current;
-      const scrollContainer = scrollContainerRef.current;
-
-      if (!dropdown || !scrollContainer) return;
+      if (!dropdown) return;
 
       const dropdownRect = dropdown.getBoundingClientRect();
-      const scrollRect = scrollContainer.getBoundingClientRect();
       const overflowBelow =
-        dropdownRect.bottom - scrollRect.bottom + SELECT_SCROLL_GUTTER;
+        dropdownRect.bottom - window.innerHeight + SELECT_SCROLL_GUTTER;
 
       if (overflowBelow > 0) {
-        scrollContainer.scrollBy({
+        window.scrollBy({
           top: overflowBelow,
           behavior: "smooth",
         });
@@ -376,7 +325,7 @@ function CustomSelect({
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [isOpen, scrollContainerRef]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -429,9 +378,20 @@ function CustomSelect({
           )}
           <span
             aria-hidden
-            className="shrink-0 self-end pb-1 pr-1 text-[18px] leading-none transition-colors duration-200 md:text-[21px]"
+            className="flex shrink-0 items-center self-center pr-1 text-off-black transition-colors duration-200 group-focus-within/contact-focus:text-off-white"
           >
-            {isOpen ? "X" : ">"}
+            <svg
+              viewBox="0 0 12 12"
+              className="h-[14px] w-[14px] transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:h-[16px] md:w-[16px]"
+              style={{ transform: isOpen ? "rotate(90deg)" : "rotate(0deg)" }}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M 4 2.5 L 8 6 L 4 9.5" />
+            </svg>
           </span>
         </button>
       </ContactFocusSurface>
@@ -439,7 +399,7 @@ function CustomSelect({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="relative z-30 mt-2 flex min-h-0 flex-col border border-off-black bg-off-white p-2"
+          className="absolute left-0 right-0 top-full z-30 mt-2 flex min-h-0 flex-col border border-off-black bg-off-white p-2"
         >
           {searchable && (
             <ContactFocusSurface className="mb-2 shrink-0">
@@ -462,7 +422,7 @@ function CustomSelect({
               <button
                 key={option}
                 type="button"
-                className="flex w-full items-center justify-between gap-3 px-2 py-2 text-left font-body text-[18px] uppercase leading-none transition-colors hover:bg-off-black hover:text-off-white md:text-[20px]"
+                className="group flex w-full items-center justify-between gap-3 px-2 py-2 text-left font-body text-[18px] uppercase leading-none transition-colors hover:bg-off-black hover:text-off-white md:text-[20px]"
                 onClick={() => {
                   onChange(option);
                   setOpenSelectId(null);
@@ -490,7 +450,6 @@ export default function ContactForm({ service = null }: { service?: string | nul
   const reduceMotion = useReducedMotion();
   const { isPreloaderDone } = usePreloader();
   const shouldReduceMotion = Boolean(reduceMotion);
-  const formScrollRef = useRef<HTMLElement>(null);
   const prefilledWorkType = useMemo(() => {
     const resolvedService = resolveWorkTypeFromService(service);
     return resolvedService ? [resolvedService] : [];
@@ -533,28 +492,6 @@ export default function ContactForm({ service = null }: { service?: string | nul
       shouldValidate: true,
     });
   }, [prefilledWorkType, setValue]);
-  const [formScrollProgress, setFormScrollProgress] = useState(0);
-
-  const updateFormScrollProgress = () => {
-    const scrollContainer = formScrollRef.current;
-    if (!scrollContainer) return;
-
-    const maxScroll = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-    const nextProgress =
-      maxScroll <= 0 ? 1 : Math.min(1, Math.max(0, scrollContainer.scrollTop / maxScroll));
-
-    setFormScrollProgress(nextProgress);
-  };
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(updateFormScrollProgress);
-
-    window.addEventListener("resize", updateFormScrollProgress);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener("resize", updateFormScrollProgress);
-    };
-  }, []);
 
   const toggleWorkType = (option: string) => {
     const next = workType.includes(option)
@@ -582,8 +519,8 @@ export default function ContactForm({ service = null }: { service?: string | nul
   };
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-[1680px] flex-col gap-6 lg:grid lg:grid-cols-[minmax(420px,1.08fr)_minmax(560px,0.92fr)] lg:gap-[clamp(3rem,6vw,8rem)]">
-      <aside className="flex w-full max-w-[700px] flex-none flex-col self-start lg:h-full">
+    <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-12 lg:grid lg:grid-cols-[minmax(420px,1.05fr)_minmax(560px,0.95fr)] lg:items-start lg:gap-[clamp(3rem,6vw,8rem)]">
+      <aside className="flex w-full max-w-[700px] flex-none flex-col self-start lg:sticky lg:top-[calc(var(--header-height)+clamp(2.5rem,5vh,5rem))]">
         <motion.div
           className="overflow-hidden"
           initial={shouldReduceMotion ? false : "hidden"}
@@ -595,11 +532,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
             <br />
             YOUR IDEAS
             <br />
-            TO{" "}
-            <AnimatedLife
-              playAnimation={isPreloaderDone}
-              reduceMotion={shouldReduceMotion}
-            />
+            TO <span className="font-semibold">LIFE</span>
           </h1>
         </motion.div>
 
@@ -618,80 +551,29 @@ export default function ContactForm({ service = null }: { service?: string | nul
             &rarr;
           </p>
         </motion.div>
-
-        <motion.div
-          className="mt-8 w-fit lg:mt-auto"
-          initial={shouldReduceMotion ? false : "hidden"}
-          animate={isPreloaderDone ? "visible" : "hidden"}
-          variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
-        >
-          <button
-            type="submit"
-            form={CONTACT_FORM_ID}
-            disabled={isSubmitting}
-            className="w-fit disabled:opacity-50"
-          >
-            <HoverButton
-              as="span"
-              className="font-body text-[21px] uppercase md:text-[24px]"
-            >
-              {isSubmitting ? "SENDING..." : "SEND QUESTIONNAIRE"}
-            </HoverButton>
-          </button>
-        </motion.div>
       </aside>
 
-      <div className="relative min-h-0 min-w-0 flex-1 bg-off-white lg:h-full lg:w-full lg:max-w-[840px] lg:justify-self-end">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-off-white px-5 pb-10 sm:px-6 md:px-8 lg:px-10"
-        >
-          <div className="mx-auto flex w-full max-w-[700px] items-center gap-4">
-            <div className="relative h-px min-w-0 flex-1 bg-off-black/20">
-              <motion.span
-                className="absolute inset-y-0 left-0 w-full origin-left bg-off-black"
-                initial={false}
-                animate={{ scaleX: formScrollProgress }}
-                transition={
-                  shouldReduceMotion
-                    ? { duration: 0 }
-                    : { duration: 0.18, ease: CONTACT_EASE }
-                }
-              />
-            </div>
-            <span className="shrink-0 font-body text-[12px] uppercase leading-none tracking-[0.22em] text-off-black/70 md:text-[13px]">
-              {formScrollProgress >= 0.995 ? "End" : "Scroll"}
-            </span>
-          </div>
-        </div>
+      <div className="min-w-0 lg:w-full lg:max-w-[840px] lg:justify-self-end">
+        <div className="mx-auto w-full max-w-[760px]">
+          <motion.form
+            id={CONTACT_FORM_ID}
+            onSubmit={handleSubmit(onSubmit)}
+            onFocusCapture={(event) => {
+              const target = event.target;
 
-        <section
-          ref={formScrollRef}
-          onScroll={updateFormScrollProgress}
-          data-contact-scroll
-          data-lenis-prevent
-          className="h-full min-h-0 overflow-y-auto overscroll-contain [scrollbar-gutter:stable]"
-          aria-label="Project questionnaire"
-        >
-          <div className="mx-auto min-h-full w-full max-w-[700px] px-5 pb-20 pt-14 sm:px-6 md:px-8 lg:px-10">
-            <motion.form
-              id={CONTACT_FORM_ID}
-              onSubmit={handleSubmit(onSubmit)}
-              onFocusCapture={(event) => {
-                const target = event.target;
-
-                if (
-                  target instanceof HTMLElement &&
-                  !target.closest("[data-contact-select]")
-                ) {
-                  setOpenSelectId(null);
-                }
-              }}
-              className="mx-auto w-full max-w-[720px]"
-              initial={shouldReduceMotion ? false : "hidden"}
-              animate={isPreloaderDone ? "visible" : "hidden"}
-              variants={shouldReduceMotion ? undefined : contactFieldGroupVariants}
-            >
+              if (
+                target instanceof HTMLElement &&
+                !target.closest("[data-contact-select]")
+              ) {
+                setOpenSelectId(null);
+              }
+            }}
+            aria-label="Project questionnaire"
+            className="w-full"
+            initial={shouldReduceMotion ? false : "hidden"}
+            animate={isPreloaderDone ? "visible" : "hidden"}
+            variants={shouldReduceMotion ? undefined : contactFieldGroupVariants}
+          >
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
                   label={"STATE YOUR FULL NAME *"}
@@ -753,8 +635,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
                     id="business-type"
                     value={businessType}
                     options={BUSINESS_TYPE_OPTIONS}
-                    placeholder="SELECT OPTION >"
-                    scrollContainerRef={formScrollRef}
+                    placeholder="SELECT OPTION"
                     openSelectId={openSelectId}
                     setOpenSelectId={setOpenSelectId}
                     onChange={(value) =>
@@ -789,16 +670,27 @@ export default function ContactForm({ service = null }: { service?: string | nul
                     id="country"
                     value={country}
                     options={COUNTRY_OPTIONS}
-                    placeholder="SELECT OPTION >"
+                    placeholder="SELECT OPTION"
                     searchable
-                    scrollContainerRef={formScrollRef}
                     openSelectId={openSelectId}
                     setOpenSelectId={setOpenSelectId}
                     renderOptionMeta={(option) => (
-                      <MonochromeCountryFlag country={option} />
+                      // Mono by default; the colored variant fades in on row
+                      // hover via `group-hover` (no per-option JS state).
+                      <span className="relative grid shrink-0 place-items-center">
+                        <span className="col-start-1 row-start-1 transition-opacity duration-150 group-hover:opacity-0">
+                          <MonochromeCountryFlag country={option} />
+                        </span>
+                        <span
+                          aria-hidden
+                          className="col-start-1 row-start-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                        >
+                          <MonochromeCountryFlag country={option} colored />
+                        </span>
+                      </span>
                     )}
                     renderValueMeta={(option) => (
-                      <MonochromeCountryFlag country={option} />
+                      <MonochromeCountryFlag country={option} colored />
                     )}
                     onChange={(value) =>
                       setValue("country", value, {
@@ -816,8 +708,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
                     id="timeline"
                     value={timeline}
                     options={TIMELINE_OPTIONS}
-                    placeholder="SELECT OPTION >"
-                    scrollContainerRef={formScrollRef}
+                    placeholder="SELECT OPTION"
                     openSelectId={openSelectId}
                     setOpenSelectId={setOpenSelectId}
                     onChange={(value) =>
@@ -839,8 +730,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
                     id="budget"
                     value={budget}
                     options={BUDGET_OPTIONS}
-                    placeholder="SELECT OPTION >"
-                    scrollContainerRef={formScrollRef}
+                    placeholder="SELECT OPTION"
                     openSelectId={openSelectId}
                     setOpenSelectId={setOpenSelectId}
                     onChange={(value) =>
@@ -877,14 +767,29 @@ export default function ContactForm({ service = null }: { service?: string | nul
                 </ContactFieldReveal>
               )}
             </motion.form>
-          </div>
-        </section>
 
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-off-white via-off-white/95 to-transparent"
-        />
+            <motion.div
+              className="mt-12 w-fit md:mt-16"
+              initial={shouldReduceMotion ? false : "hidden"}
+              animate={isPreloaderDone ? "visible" : "hidden"}
+              variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
+            >
+              <button
+                type="submit"
+                form={CONTACT_FORM_ID}
+                disabled={isSubmitting}
+                className="w-fit disabled:opacity-50"
+              >
+                <HoverButton
+                  as="span"
+                  className="font-body text-[21px] uppercase md:text-[24px]"
+                >
+                  {isSubmitting ? "SENDING..." : "SEND QUESTIONNAIRE"}
+                </HoverButton>
+              </button>
+            </motion.div>
+          </div>
       </div>
-    </div>  
+    </div>
   );
 }
