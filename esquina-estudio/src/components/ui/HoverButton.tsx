@@ -15,6 +15,9 @@ interface HoverButtonProps {
   underlineDrawDelay?: number;
   tightUnderline?: boolean;
   blend?: boolean;
+  /** When true, hover fill and text padding use equal spacing on all four sides.
+   *  Default false = existing behaviour preserved exactly. */
+  balancedPadding?: boolean;
   onClick?: () => void;
 }
 
@@ -30,6 +33,7 @@ export default function HoverButton({
   underlineDrawDelay = 0,
   tightUnderline = false,
   blend = false,
+  balancedPadding = false,
   onClick,
 }: HoverButtonProps) {
   const fillClass = blend
@@ -48,9 +52,15 @@ export default function HoverButton({
       : tone === "dark"
       ? "text-off-white group-hover:text-off-black"
       : "text-off-black group-hover:text-off-white";
-  const textPaddingClass = tightUnderline
-    ? "px-[1px] pb-0 pt-[1px]"
-    : "py-[2px] px-[1px]";
+  const textPaddingClass = balancedPadding
+    ? "p-[6px]"
+    : tightUnderline
+      ? "px-[1px] pb-0 pt-[1px]"
+      : "py-[2px] px-[1px]";
+
+  const fillInset = balancedPadding
+    ? "left-0 right-0"
+    : "-left-[1px] -right-[1px]";
 
   const content = (
     <motion.span
@@ -59,7 +69,7 @@ export default function HoverButton({
       whileHover="hover"
     >
       <motion.span
-        className={`absolute top-0 -left-[1px] -right-[1px] h-full ${fillClass}`}
+        className={`absolute top-0 ${fillInset} h-full ${fillClass}`}
         variants={{
           idle: { y: "102%" },
           hover: { y: "0%" },
@@ -69,10 +79,10 @@ export default function HoverButton({
       />
 
       <span
-  className={`relative block transition-colors duration-200 ${textPaddingClass} pt-[0.5px] ${textClass}`}
->
-  {children}
-</span>
+        className={`relative block transition-colors duration-200 ${textPaddingClass}${balancedPadding ? "" : " pt-[0.5px]"} ${textClass}`}
+      >
+        {children}
+      </span>
 
       {underline && !underlineDraw && (
         <span

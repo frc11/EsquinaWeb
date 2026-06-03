@@ -284,13 +284,13 @@ export default function Navbar() {
     >
       <div
         ref={desktopNavRef}
-        className="pointer-events-auto relative flex h-[var(--header-height)] items-center justify-between px-12 pb-6 pt-12 lg:px-16"
+        className="pointer-events-auto relative flex h-[var(--header-height)] items-center justify-between px-12 py-10 lg:px-16"
       >
         <div ref={desktopLogoRef} className="flex-shrink-0">
           <LogoScript size="md" tone={navTone} />
         </div>
 
-        <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
+        <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex">
           {NAV_LINKS.map((link) => {
             return (
               <span
@@ -303,17 +303,12 @@ export default function Navbar() {
                   underline={false}
                   tone={navTone}
                   blend={useGalleryBlend}
+                  balancedPadding
                   className={`text-[13px] uppercase font-body ${
                     isFunGallery ? "font-thin" : "font-[480]"
                   } ${
                     isFunGallery ? "tracking-[0.09em]" : "tracking-wider"
-                  } ${linkTextClass} text-center ${
-                    link.label === "WORK" ? "w-[43px]" : ""
-                  }${
-                    link.label === "SERVICES" ? "w-[68px]" : ""
-                  } ${
-                    link.label === "FUN GALLERY" ? "w-[102px]" : ""
-                  }${link.label === "TEAM" ? "w-[40px]" : ""}`}
+                  } ${linkTextClass}`}
                 >
                   {link.label}
                 </HoverButton>
@@ -331,6 +326,7 @@ export default function Navbar() {
               underline={false}
               tone={navTone}
               blend={useGalleryBlend}
+              balancedPadding
               className={`text-[13px] uppercase font-body ${
                 isFunGallery ? "font-normal" : "font-medium"
               } ${
