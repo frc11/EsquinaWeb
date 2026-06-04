@@ -14,7 +14,7 @@ const EASE = [0.25, 0.1, 0.25, 1] as const;
 
 const containerVariants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
+  visible: { transition: { staggerChildren: 0.7 } },
 };
 
 const itemVariants = {
