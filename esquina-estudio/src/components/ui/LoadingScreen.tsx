@@ -5,6 +5,9 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
 import headerLogoWhite from "../../../logos/logo-header-blanco.png";
 
+// LoadingScreen is skipped when the provider already resolved isPreloaderDone=true
+// (i.e. sessionStorage flag was set in a previous load of this session).
+
 const PROGRESS_DURATION_MS = 1000;
 const HOLD_AFTER_COMPLETE_MS = 700;
 const EXIT_DURATION = 1;
@@ -308,6 +311,9 @@ export default function LoadingScreen() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Session already has the flag set (preloader was shown earlier this session).
+    // Skip animation entirely — no overlay, no timers.
+    if (window.sessionStorage.getItem("esquina:preloaderShown") === "1") return;
 
     let progressFrame = 0;
     let progressStart = 0;
