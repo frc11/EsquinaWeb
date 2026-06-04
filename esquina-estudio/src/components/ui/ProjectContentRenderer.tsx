@@ -77,15 +77,17 @@ function SingleMedia({ block }: { block: any }) {
 
     if (isGif) {
       return (
-        <figure className="w-full mb-6 flex flex-col items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imageUrl}
-            alt={caption || "Project media"}
-            className="max-w-full max-h-[88vh] w-auto object-contain mx-auto"
-          />
+        <figure className="w-full mb-6">
+          <div className="relative w-full aspect-[4/3] max-h-[88vh] mx-auto overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              alt={caption || "Project media"}
+              className="h-full w-full object-cover"
+            />
+          </div>
           {caption && (
-            <figcaption className="mt-2 text-[13px] text-gray-brand font-body self-start">
+            <figcaption className="mt-2 text-[13px] text-gray-brand font-body">
               {caption}
             </figcaption>
           )}
@@ -94,17 +96,18 @@ function SingleMedia({ block }: { block: any }) {
     }
 
     return (
-      <figure className="w-full mb-6 flex flex-col items-center">
-        <Image
-          src={imageUrl}
-          alt={caption || "Project media"}
-          width={1200}
-          height={800}
-          sizes="(max-width: 768px) 100vw, 800px"
-          className="max-w-full max-h-[88vh] w-auto object-contain mx-auto"
-        />
+      <figure className="w-full mb-6">
+        <div className="relative w-full aspect-[4/3] max-h-[88vh] mx-auto overflow-hidden">
+          <Image
+            src={imageUrl}
+            alt={caption || "Project media"}
+            fill
+            sizes="(max-width: 768px) 100vw, 800px"
+            className="object-cover"
+          />
+        </div>
         {caption && (
-          <figcaption className="mt-2 text-[13px] text-gray-brand font-body self-start">
+          <figcaption className="mt-2 text-[13px] text-gray-brand font-body">
             {caption}
           </figcaption>
         )}
@@ -127,28 +130,30 @@ function DualMedia({ block }: { block: any }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       {leftUrl && (
-        <div className="flex items-center justify-center">
-          <Image
-            src={leftUrl}
-            alt="Project media"
-            width={600}
-            height={800}
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="max-w-full max-h-[88vh] w-auto object-contain"
-          />
-        </div>
+        <figure className="m-0">
+          <div className="relative w-full aspect-[4/3] overflow-hidden">
+            <Image
+              src={leftUrl}
+              alt="Project media"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
+            />
+          </div>
+        </figure>
       )}
       {rightUrl && (
-        <div className="flex items-center justify-center">
-          <Image
-            src={rightUrl}
-            alt="Project media"
-            width={600}
-            height={800}
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="max-w-full max-h-[88vh] w-auto object-contain"
-          />
-        </div>
+        <figure className="m-0">
+          <div className="relative w-full aspect-[4/3] overflow-hidden">
+            <Image
+              src={rightUrl}
+              alt="Project media"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
+            />
+          </div>
+        </figure>
       )}
     </div>
   );
