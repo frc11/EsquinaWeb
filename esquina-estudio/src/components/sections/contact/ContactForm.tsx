@@ -29,12 +29,25 @@ const CONTACT_EASE = [0.22, 1, 0.36, 1] as const;
 // Scoped text selection inside the contact inputs: off-white fill / off-black
 // text — the inverse of the global ::selection — so the highlight stays visible
 // against the black focus surface. `leading-none` keeps it hugging the glyphs.
+//
+// Why this needs `!important` (the `!` suffix) and not just higher specificity:
+// the global `::selection` in globals.css is written UNLAYERED, while every
+// Tailwind utility lives inside `@layer utilities`. In the CSS cascade an
+// unlayered rule beats any layered rule regardless of specificity, so a plain
+// (or even higher-specificity) `selection:bg-off-white` utility can never win
+// against the global — which is why the highlight stayed invisible. We can't
+// edit the shared globals.css, so we override from the layered side with
+// `!important`: an important layered declaration outranks a normal unlayered one.
+// The `[data-contact]` ancestor scope keeps this `!important` confined to the
+// contact form inputs so it can't leak to the rest of the site.
+const SCOPED_SELECTION =
+  "[[data-contact]_&]:selection:bg-off-white! [[data-contact]_&]:selection:text-off-black!";
 const CONTROL_TEXT_CLASS =
-  "min-h-[48px] w-full bg-transparent pl-1 font-body text-[28px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand selection:bg-off-white selection:text-off-black group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:min-h-[58px] md:text-[34px]";
+  `min-h-[48px] w-full bg-transparent pl-1 font-body text-[28px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:min-h-[58px] md:text-[34px]`;
 const SELECT_BUTTON_CLASS =
-  "flex min-h-[48px] w-full pl-1 items-center justify-between gap-4 bg-transparent text-left font-body text-[28px] uppercase leading-none text-off-black outline-none transition-colors duration-200 selection:bg-off-white selection:text-off-black group-focus-within/contact-focus:text-off-white md:min-h-[58px] md:text-[34px]";
+  `flex min-h-[48px] w-full pl-1 items-center justify-between gap-4 bg-transparent text-left font-body text-[28px] uppercase leading-none text-off-black outline-none transition-colors duration-200 ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white md:min-h-[58px] md:text-[34px]`;
 const SELECT_SEARCH_CLASS =
-  "w-full bg-transparent pl-1  font-body text-[20px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand selection:bg-off-white selection:text-off-black group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:text-[22px]";
+  `w-full bg-transparent pl-1  font-body text-[20px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:text-[22px]`;
 
 const contactFieldGroupVariants: Variants = {
   hidden: {},
@@ -519,8 +532,11 @@ export default function ContactForm({ service = null }: { service?: string | nul
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-12 lg:grid lg:grid-cols-[minmax(420px,1.05fr)_minmax(560px,0.95fr)] lg:items-start lg:gap-[clamp(3rem,6vw,8rem)]">
-      <aside className="flex w-full max-w-[700px] flex-none flex-col self-start lg:sticky lg:top-[calc(var(--header-height)+clamp(2.5rem,5vh,5rem))]">
+    <div
+      data-contact
+      className="mx-auto flex w-full max-w-[1680px] flex-col gap-12 lg:grid lg:grid-cols-[minmax(420px,1.05fr)_minmax(560px,0.95fr)] lg:items-start lg:gap-[clamp(3rem,6vw,8rem)]"
+    >
+      <aside className="flex w-full max-w-[700px] flex-none flex-col self-start lg:sticky lg:top-[calc(var(--header-height)+3.5rem)]">
         <motion.div
           className="overflow-hidden"
           initial={shouldReduceMotion ? false : "hidden"}

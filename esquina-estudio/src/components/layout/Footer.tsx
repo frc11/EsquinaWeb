@@ -101,7 +101,7 @@ export default function Footer() {
       className={`w-full border-none ${
         isFunGallery
           ? "fixed bottom-[26px] left-0 right-0 z-[100] bg-transparent text-off-white mix-blend-difference"
-          : isContactForm || isDarkRoute
+          : isDarkRoute
             ? "fixed bottom-0 left-0 right-0 z-[100] bg-transparent"
             : "bg-off-white"
       }`}
