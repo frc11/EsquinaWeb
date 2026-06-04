@@ -71,7 +71,7 @@ export default function HoverButton({
       <motion.span
         className={`absolute top-0 ${fillInset} h-full ${fillClass}`}
         variants={{
-          idle: { y: "102%" },
+          idle: { y: "110%" },
           hover: { y: "0%" },
         }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
