@@ -26,7 +26,7 @@ function SingleMedia({ block }: { block: any }) {
 
     if (isEmbed) {
       return (
-        <figure className="w-full mb-16 relative bg-gray-brand/10">
+        <figure className="w-full mb-6 relative bg-gray-brand/10">
           <div className="relative w-full aspect-video overflow-hidden">
             <iframe
               src={video}
@@ -47,14 +47,14 @@ function SingleMedia({ block }: { block: any }) {
 
     // Direct .mp4 file
     return (
-      <figure className="w-full mb-16 relative bg-gray-brand/10">
+      <figure className="w-full mb-6 relative bg-gray-brand/10">
         <video
           src={video}
           autoPlay
           loop
           muted
           playsInline
-          className="w-full h-auto"
+          className="w-full max-h-[88vh] object-contain"
         />
         {caption && (
           <figcaption className="mt-2 text-[13px] text-gray-brand font-body">
@@ -77,15 +77,15 @@ function SingleMedia({ block }: { block: any }) {
 
     if (isGif) {
       return (
-        <figure className="w-full mb-16 relative bg-gray-brand/10">
+        <figure className="w-full mb-6 flex flex-col items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
             alt={caption || "Project media"}
-            className="w-full h-auto"
+            className="max-w-full max-h-[88vh] w-auto object-contain mx-auto"
           />
           {caption && (
-            <figcaption className="mt-2 text-[13px] text-gray-brand font-body">
+            <figcaption className="mt-2 text-[13px] text-gray-brand font-body self-start">
               {caption}
             </figcaption>
           )}
@@ -94,17 +94,17 @@ function SingleMedia({ block }: { block: any }) {
     }
 
     return (
-      <figure className="w-full mb-16 relative bg-gray-brand/10">
+      <figure className="w-full mb-6 flex flex-col items-center">
         <Image
           src={imageUrl}
           alt={caption || "Project media"}
           width={1200}
           height={800}
           sizes="(max-width: 768px) 100vw, 800px"
-          className="w-full h-auto"
+          className="max-w-full max-h-[88vh] w-auto object-contain mx-auto"
         />
         {caption && (
-          <figcaption className="mt-2 text-[13px] text-gray-brand font-body">
+          <figcaption className="mt-2 text-[13px] text-gray-brand font-body self-start">
             {caption}
           </figcaption>
         )}
@@ -125,26 +125,28 @@ function DualMedia({ block }: { block: any }) {
   if (!leftUrl && !rightUrl) return null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       {leftUrl && (
-        <div className="relative aspect-[3/4] overflow-hidden">
+        <div className="flex items-center justify-center">
           <Image
             src={leftUrl}
             alt="Project media"
-            fill
+            width={600}
+            height={800}
             sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover"
+            className="max-w-full max-h-[88vh] w-auto object-contain"
           />
         </div>
       )}
       {rightUrl && (
-        <div className="relative aspect-[3/4] overflow-hidden">
+        <div className="flex items-center justify-center">
           <Image
             src={rightUrl}
             alt="Project media"
-            fill
+            width={600}
+            height={800}
             sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover"
+            className="max-w-full max-h-[88vh] w-auto object-contain"
           />
         </div>
       )}

@@ -65,11 +65,11 @@ export default function ProjectDetailClient({
     <motion.main
       ref={pageRef}
       className="min-h-screen overflow-visible"
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0 }}
       animate={
         isPreloaderDone
-          ? { opacity: 1, y: 0 }
-          : { opacity: 0, y: 20 }
+          ? { opacity: 1 }
+          : { opacity: 0 }
       }
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
@@ -88,10 +88,19 @@ export default function ProjectDetailClient({
           </h1>
         </div>
 
-        {/* RIGHT COLUMN — Main Content Area */}
-        <div className="flex-1 w-full">
+        {/* RIGHT COLUMN — Main Content Area (slide-up only here, not on the sticky ancestor) */}
+        <motion.div
+          className="flex-1 w-full"
+          initial={{ opacity: 0, y: 20 }}
+          animate={
+            isPreloaderDone
+              ? { opacity: 1, y: 0 }
+              : { opacity: 0, y: 20 }
+          }
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        >
           <ProjectContentRenderer content={project.content || []} />
-        </div>
+        </motion.div>
       </div>
 
       {/* ── Bottom Navigation ────────────────────────────── */}
