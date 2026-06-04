@@ -33,7 +33,7 @@ export default function LogoScript({
       <Image
         src={logoSrc}
         alt="ESQUINA ESTUDIO"
-        className={`${isFooter ? "h-20 w-auto" : "h-16 w-auto"}${isDark && isFooter ? " invert" : ""}`}
+        className={`${isFooter ? "h-20 w-auto" : "h-12 w-auto"}${isDark && isFooter ? " invert" : ""}`}
         priority={!isFooter}
         sizes={isFooter ? "120px" : "196px"}
       />
