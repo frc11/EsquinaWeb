@@ -6,7 +6,6 @@ import {
   useMotionValue,
   useReducedMotion,
   useSpring,
-  type Variants,
 } from "framer-motion";
 import {
   type MouseEvent,
@@ -72,52 +71,62 @@ const CTA_DURATION = 0.45;
 const CTA_DELAY =
   TITLE_DELAY + TITLE_STAGGER * (TITLE_1_LINE_COUNT - 1) + TITLE_LINE_DURATION;
 const CTA_UNDERLINE_DELAY = CTA_DELAY + CTA_DURATION;
+// Underline-draw duration baked into HoverButton (the `scaleX` tween). Kept here
+// so the initial scroll-lock can outlast the full draw, not just the line reveal.
+const CTA_UNDERLINE_DURATION = 2.5;
 // Text 2 reveal waits for text 1 to finish fading out before staggering in.
 const TEXT2_DELAY_CHILDREN = TITLE_DELAY + FADE_OUT_TIME;
 // Deterministic latch timings (ms). We don't rely on Framer's onAnimationComplete
 // for these gates: that callback can be dropped on re-render races (and the text-2
 // layer carries infinitely-animating image children), which would leave the intro
 // stuck. Timers tied to the known durations are race-proof.
-const TEXT1_REVEAL_MS =
-  (TITLE_DELAY + TITLE_STAGGER * (TITLE_1_LINE_COUNT - 1) + TITLE_LINE_DURATION) *
-  1000;
+//
+// The initial scroll-lock holds until the button's underline has finished
+// drawing (reveal delay + draw duration), not merely until the lines settle —
+// so the user can't scroll past a half-drawn underline.
+const INITIAL_LOCK_MS = (CTA_UNDERLINE_DELAY + CTA_UNDERLINE_DURATION) * 1000;
 const CROSSFADE_MS = (FADE_OUT_TIME + FADE_IN_TIME) * 1000;
 
-const containerVariants: Variants = {
-  hidden: { opacity: 1 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: TITLE_STAGGER,
-      delayChildren: TITLE_DELAY,
-    },
-  },
-};
-
-// Text 2 shares the same line stagger but holds back until text 1 has cleared.
-const container2Variants: Variants = {
-  hidden: { opacity: 1 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: TITLE_STAGGER,
-      delayChildren: TEXT2_DELAY_CHILDREN,
-    },
-  },
-};
-
-const lineVariants: Variants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: TITLE_LINE_DURATION, ease: EASE },
-  },
-};
-
-// Once the intro region has scrolled fully off-screen we may swap to the
-// static stacked layout invisibly (nothing the user can see changes).
-const STATIC_SWITCH_OFFSET = () => window.innerHeight;
+// Per-line reveal driven directly off `active` with an explicit per-line delay,
+// instead of parent `staggerChildren` orchestration. The orchestrated form
+// (container variant with staggerChildren) silently no-ops here: the container's
+// hidden/visible variants are value-identical (opacity 1 -> 1), so Framer sees
+// no parent transition and never staggers the children — leaving the lines
+// stuck at their hidden y:30 state. Driving each line itself is race-proof and
+// visually identical to Hero's line reveal (fade + rise, staggered).
+function RevealLine({
+  text,
+  index,
+  delayBase,
+  reduceMotion,
+  active,
+  bold = false,
+}: {
+  text: React.ReactNode;
+  index: number;
+  delayBase: number;
+  reduceMotion: boolean;
+  active: boolean;
+  bold?: boolean;
+}) {
+  if (reduceMotion) {
+    return <span className={`block${bold ? " font-bold" : ""}`}>{text}</span>;
+  }
+  return (
+    <motion.span
+      className={`block${bold ? " font-bold" : ""}`}
+      initial={{ opacity: 0, y: 30 }}
+      animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+      transition={{
+        duration: TITLE_LINE_DURATION,
+        delay: active ? delayBase + index * TITLE_STAGGER : 0,
+        ease: EASE,
+      }}
+    >
+      {text}
+    </motion.span>
+  );
+}
 
 type FloatingMediaItem = (typeof FLOATING_MEDIA)[number];
 
@@ -218,6 +227,13 @@ function FloatingMediaLayer() {
 }
 
 // Text 1 copy split into lines so each can reveal independently (like Hero).
+// Bug A fix lives at the call-site: the parent passes `active={isPreloaderDone}`,
+// which is MONOTONIC (the preloader only ever flips done once and never back).
+// So once the lines reach `visible` they stay there for the rest of the mount —
+// they never revert to the hidden (`y:30`) variant. The only thing that moves
+// text 1 off-screen is the opacity fade of its parent container. (Previously
+// `active` depended on `!hasInteracted`, so it flipped back to `hidden` on the
+// crossfade and the lines dropped down — that was Bug A.)
 function Text1Lines({
   reduceMotion,
   active,
@@ -225,23 +241,24 @@ function Text1Lines({
   reduceMotion: boolean;
   active: boolean;
 }) {
+  const lines = [
+    "WE TRANSLATE IDEAS INTO LIVING IDENTITIES —",
+    "CRAFTED THROUGH STRATEGY, AESTHETICS AND",
+    "DETAIL-ORIENTED DESIGN SYSTEMS.",
+  ];
   return (
-    <motion.p
-      className="font-display text-[40px] uppercase leading-[1.05] text-off-black max-w-5xl"
-      variants={reduceMotion ? undefined : containerVariants}
-      initial={reduceMotion ? false : "hidden"}
-      animate={reduceMotion || active ? "visible" : "hidden"}
-    >
-      <motion.span className="block" variants={reduceMotion ? undefined : lineVariants}>
-        WE TRANSLATE IDEAS INTO LIVING IDENTITIES —
-      </motion.span>
-      <motion.span className="block" variants={reduceMotion ? undefined : lineVariants}>
-        CRAFTED THROUGH STRATEGY, AESTHETICS AND
-      </motion.span>
-      <motion.span className="block" variants={reduceMotion ? undefined : lineVariants}>
-        DETAIL-ORIENTED DESIGN SYSTEMS.
-      </motion.span>
-    </motion.p>
+    <p className="font-display text-[40px] uppercase leading-[1.05] text-off-black max-w-5xl">
+      {lines.map((text, index) => (
+        <RevealLine
+          key={index}
+          text={text}
+          index={index}
+          delayBase={TITLE_DELAY}
+          reduceMotion={reduceMotion}
+          active={active}
+        />
+      ))}
+    </p>
   );
 }
 
@@ -253,32 +270,26 @@ function Text2Lines({
   reduceMotion: boolean;
   active: boolean;
 }) {
+  const lines: Array<{ text: React.ReactNode; bold?: boolean }> = [
+    { text: <>Whether we&rsquo;re shaping a brand from scratch or</> },
+    { text: "reimagining an existing one, our approach is rooted in" },
+    { text: "creating experiences that feel authentic, memorable", bold: true },
+    { text: "and visually cohesive across every touchpoint.", bold: true },
+  ];
   return (
-    <motion.p
-      className="font-display text-[40px] leading-[1.05] text-off-black max-w-5xl"
-      variants={reduceMotion ? undefined : container2Variants}
-      initial={reduceMotion ? false : "hidden"}
-      animate={reduceMotion || active ? "visible" : "hidden"}
-    >
-      <motion.span className="block" variants={reduceMotion ? undefined : lineVariants}>
-        Whether we&rsquo;re shaping a brand from scratch or
-      </motion.span>
-      <motion.span className="block" variants={reduceMotion ? undefined : lineVariants}>
-        reimagining an existing one, our approach is rooted in
-      </motion.span>
-      <motion.span
-        className="block font-bold"
-        variants={reduceMotion ? undefined : lineVariants}
-      >
-        creating experiences that feel authentic, memorable
-      </motion.span>
-      <motion.span
-        className="block font-bold"
-        variants={reduceMotion ? undefined : lineVariants}
-      >
-        and visually cohesive across every touchpoint.
-      </motion.span>
-    </motion.p>
+    <p className="font-display text-[40px] leading-[1.05] text-off-black max-w-5xl">
+      {lines.map((line, index) => (
+        <RevealLine
+          key={index}
+          text={line.text}
+          bold={line.bold}
+          index={index}
+          delayBase={TEXT2_DELAY_CHILDREN}
+          reduceMotion={reduceMotion}
+          active={active}
+        />
+      ))}
+    </p>
   );
 }
 
@@ -289,38 +300,51 @@ export default function ServicesIntro() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isJumping, setIsJumping] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const [isIntroComplete, setIsIntroComplete] = useState(false);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
-  // Latched once the forward intro is done AND the region has scrolled away.
-  // Never reset within a mount -> kills the scroll-up replay at the source.
+  // Latched once the forward intro is done. Never reset within a mount -> kills
+  // the scroll-up replay at the source.
   const [isStatic, setIsStatic] = useState(false);
+  // True when the static swap was triggered by the DISCOVER button (a smooth
+  // jump that already lands the viewport on the list) rather than by scrolling
+  // through the crossfade. The two paths position the viewport differently, so
+  // the layout-effect that compensates scroll must know which one ran.
+  const jumpedViaButtonRef = useRef(false);
 
-  // Unlock the scroll-jack once the text-1 reveal has settled. Deterministic
-  // timer instead of a Framer completion callback (race-proof). Under reduced
-  // motion there's no reveal, so unlock as soon as the preloader is done.
+  // Unlock the scroll-jack once the button's underline has finished drawing
+  // (not merely once the lines settle). Deterministic timer instead of a Framer
+  // completion callback (race-proof). Under reduced motion there's no reveal, so
+  // unlock as soon as the preloader is done.
   useEffect(() => {
     if (isInitialLoadComplete) return;
     if (!isPreloaderDone || hasInteracted) return;
 
-    const delay = shouldReduceMotion ? 0 : TEXT1_REVEAL_MS;
+    const delay = shouldReduceMotion ? 0 : INITIAL_LOCK_MS;
     const timer = window.setTimeout(() => setIsInitialLoadComplete(true), delay);
 
     return () => window.clearTimeout(timer);
   }, [isPreloaderDone, hasInteracted, isInitialLoadComplete, shouldReduceMotion]);
 
-  // Latch "intro complete" once the crossfade to text 2 has finished. The jump
-  // path latches immediately; this covers the scroll-driven path.
+  // Scroll-driven path: once the user has triggered the crossfade, keep the
+  // scroll LOCKED through the whole text-2 reveal, then swap to the static
+  // stacked layout while still locked. The matching scroll compensation runs in
+  // a layout effect (below) so the viewport lands on the text-2 block in the
+  // same frame as the swap — no visible pop, and scroll-up afterwards reveals
+  // text 1. The DISCOVER button path is handled separately (it jumps to the
+  // list and latches static after the jump), so skip it here.
   useEffect(() => {
-    if (!hasInteracted || isIntroComplete) return;
+    if (!hasInteracted || isStatic || isJumping || shouldReduceMotion) return;
 
-    const timer = window.setTimeout(() => setIsIntroComplete(true), CROSSFADE_MS);
+    const timer = window.setTimeout(() => {
+      setIsStatic(true);
+    }, CROSSFADE_MS);
 
     return () => window.clearTimeout(timer);
-  }, [hasInteracted, isIntroComplete]);
+  }, [hasInteracted, isStatic, isJumping, shouldReduceMotion]);
 
   // Scroll-jacking listeners. Inert in static mode (and removed entirely).
-  // The initial-load lock waits for the text-1 reveal to settle; under reduced
-  // motion there is no reveal, so that lock is skipped.
+  // The initial-load lock holds until the button underline has finished drawing
+  // (see INITIAL_LOCK_MS); under reduced motion there is no reveal, so that lock
+  // is skipped.
   useEffect(() => {
     if (isStatic) return;
 
@@ -376,25 +400,16 @@ export default function ServicesIntro() {
     shouldReduceMotion,
   ]);
 
-  // After the intro completes, swap to the static stacked layout only once the
-  // intro region is fully off-screen, so the swap produces no visible "pop".
-  useEffect(() => {
-    if (!isIntroComplete || isStatic) return;
-
-    const maybeLatchStatic = () => {
-      if (window.scrollY >= STATIC_SWITCH_OFFSET()) {
-        setIsStatic(true);
-      }
-    };
-
-    maybeLatchStatic();
-    window.addEventListener("scroll", maybeLatchStatic, { passive: true });
-
-    return () => window.removeEventListener("scroll", maybeLatchStatic);
-  }, [isIntroComplete, isStatic]);
-
-  useEffect(() => {
-    if (isStatic || isIntroComplete || isJumping) {
+  // Body scroll lock. The page stays locked for the ENTIRE intro (text-1
+  // reveal -> crossfade -> text-2 reveal) and is released only once we've
+  // swapped to the static layout — or while the DISCOVER button is performing
+  // its smooth jump, or under reduced motion (no scroll-jack at all). Releasing
+  // on `isStatic` (instead of mid-crossfade) is what lets the swap + scroll
+  // compensation happen off-screen with no intermediate, scrollable, half-intro
+  // state. Runs as a layout effect so the lock is lifted before the companion
+  // scroll-compensation effect calls `scrollTo` in the same commit.
+  useLayoutEffect(() => {
+    if (isStatic || isJumping || shouldReduceMotion) {
       document.body.style.overflow = "";
       document.body.style.paddingRight = "";
     } else {
@@ -406,7 +421,18 @@ export default function ServicesIntro() {
       document.body.style.overflow = "";
       document.body.style.paddingRight = "";
     };
-  }, [isStatic, isIntroComplete, isJumping]);
+  }, [isStatic, isJumping, shouldReduceMotion]);
+
+  // Scroll compensation for the scroll-driven swap. When `isStatic` flips via
+  // the crossfade path, the static layout mounts with the viewport at scrollY 0
+  // (showing the text-1 block) while the user was just looking at text 2. Before
+  // the browser paints, jump the viewport to the second viewport-height block so
+  // it shows text 2 exactly where the sticky crossfade left it — no pop. The
+  // button path positions itself (jumps to the list), so it opts out via the ref.
+  useLayoutEffect(() => {
+    if (!isStatic || jumpedViaButtonRef.current) return;
+    window.scrollTo(0, window.innerHeight);
+  }, [isStatic]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -449,9 +475,12 @@ export default function ServicesIntro() {
   }, []);
 
   const handleDiscover = () => {
+    // Mark this as the button path so the static-swap scroll compensation does
+    // NOT yank the viewport back up to the text-2 block — the jump below owns
+    // the final scroll position (the services list).
+    jumpedViaButtonRef.current = true;
     setIsJumping(true);
     setHasInteracted(true);
-    setIsIntroComplete(true);
 
     setTimeout(() => {
       const target = document.getElementById("services-list");
@@ -481,23 +510,40 @@ export default function ServicesIntro() {
         window.requestAnimationFrame(step);
       }
 
-      setTimeout(() => setIsJumping(false), 1600);
+      setTimeout(() => {
+        setIsJumping(false);
+        // Swap to the static stacked layout now that the jump is over and the
+        // user is parked on the list. The intro region (above the fold) keeps
+        // the same total height, so this happens entirely off-screen and the
+        // list does not shift. Scroll-up afterwards reveals the stacked texts.
+        setIsStatic(true);
+      }, 1600);
     }, 400);
   };
 
   // STATIC MODE: two texts stacked in normal flow, fully visible, no animation,
-  // no sticky/absolute, no scroll-jack. Same outer height as the intro so the
-  // content below (ServicesStack) never shifts.
-  if (isStatic) {
+  // no sticky/absolute, no scroll-jack. Each block is a full viewport-height
+  // (`h-screen`) section that mirrors EXACTLY what the sticky intro showed —
+  // same centering, same FloatingMediaLayer + positions on text 2 — so the
+  // crossfade-to-static swap is seamless and scroll-up/scroll-down keep the
+  // same spacing with no overlapping floats (Bug B). The outer height
+  // (`h-[200vh]` = two `h-screen` blocks) matches the intro container so
+  // ServicesStack below never shifts.
+  //
+  // Reduced motion lands here directly: no scroll-jack, no crossfade, just the
+  // two texts stacked and fully visible.
+  if (isStatic || shouldReduceMotion) {
     return (
       <div
-        className="relative h-[120vh] w-full -mt-[var(--header-height)]"
+        className="relative h-[200vh] w-full -mt-[var(--header-height)]"
         ref={containerRef}
       >
-        <div className="flex h-[60vh] w-full flex-col items-center justify-center bg-off-white px-6 text-center">
-          <Text1Lines reduceMotion active />
+        <div className="flex h-screen w-full flex-col items-center justify-center bg-off-white px-6 text-center">
+          <div className="relative flex flex-col items-center">
+            <Text1Lines reduceMotion active />
+          </div>
         </div>
-        <div className="relative flex h-[60vh] w-full flex-col items-center justify-center overflow-hidden bg-off-white px-6 text-center">
+        <div className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-off-white px-6 text-center">
           <FloatingMediaLayer />
           <div className="relative z-10 flex flex-col items-center">
             <Text2Lines reduceMotion active />
@@ -508,9 +554,12 @@ export default function ServicesIntro() {
   }
 
   // INTRO MODE: scroll-jacked sticky crossfade with the Hero-style line reveal.
+  // Outer height is `h-[200vh]` to match the static layout (two `h-screen`
+  // blocks), so the swap between the two never changes total height and the
+  // content below never shifts.
   return (
     <div
-      className="relative h-[120vh] w-full -mt-[var(--header-height)]"
+      className="relative h-[200vh] w-full -mt-[var(--header-height)]"
       ref={containerRef}
     >
       <div className="sticky top-0 h-screen w-full bg-off-white z-10">
@@ -530,12 +579,27 @@ export default function ServicesIntro() {
           }}
         >
           <div className="relative flex flex-col items-center">
+            {/* Bug A: text 1 is LATCHED visible once revealed (active depends on
+                the preloader, NOT on `!hasInteracted`). On crossfade it leaves
+                purely via the parent container's opacity — the lines no longer
+                drop back down to y:30. */}
             <Text1Lines
               reduceMotion={shouldReduceMotion}
-              active={isPreloaderDone && !hasInteracted}
+              active={isPreloaderDone}
             />
 
-            <div className="absolute top-full mt-10">
+            {/* Bug A: the button gets its OWN opacity fade (in addition to the
+                parent's), synced to the crossfade, so it fades out together
+                with the text instead of lingering. */}
+            <motion.div
+              className="absolute top-full mt-10"
+              initial={false}
+              animate={{ opacity: isJumping || hasInteracted ? 0 : 1 }}
+              transition={{
+                duration: hasInteracted ? FADE_OUT_TIME : 0,
+                ease: "easeInOut",
+              }}
+            >
               <HoverButton
                 as="button"
                 className="font-body text-[17px] uppercase"
@@ -546,7 +610,7 @@ export default function ServicesIntro() {
               >
                 DISCOVER OUR BRANDING SERVICES
               </HoverButton>
-            </div>
+            </motion.div>
           </div>
         </motion.div>
 
