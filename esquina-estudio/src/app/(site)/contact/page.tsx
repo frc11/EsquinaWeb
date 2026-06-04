@@ -19,10 +19,11 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
     // The site layout already wraps page content in <main>; use a <section>
     // here to avoid nesting <main>. No fixed height / overflow-hidden so the
     // page scrolls naturally. On /contact the site Footer is `position: fixed`
-    // (z-100, ~166px tall) overlaying the viewport bottom — so reserve bottom
-    // padding larger than the footer height to keep the last fields and the
-    // SEND button clear of it when scrolled to the end.
-    <section className="bg-off-white px-6 pb-[clamp(13rem,22vh,16rem)] pt-6 text-off-black md:px-12 md:pt-10 lg:px-16 lg:pt-14">
+    // (z-100, ~166px tall) overlaying the viewport bottom — the bottom padding
+    // that keeps the last fields and SEND clear of it lives INSIDE the form
+    // column (ContactForm) so it also lengthens the sticky aside's container
+    // (the aside stays pinned through the footer instead of drifting up).
+    <section className="bg-off-white px-6 pt-6 text-off-black md:px-12 md:pt-10 lg:px-16 lg:pt-14">
       <ContactForm service={serviceParam} />
     </section>
   );

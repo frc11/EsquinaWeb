@@ -71,9 +71,6 @@ const CTA_DURATION = 0.45;
 const CTA_DELAY =
   TITLE_DELAY + TITLE_STAGGER * (TITLE_1_LINE_COUNT - 1) + TITLE_LINE_DURATION;
 const CTA_UNDERLINE_DELAY = CTA_DELAY + CTA_DURATION;
-// Underline-draw duration baked into HoverButton (the `scaleX` tween). Kept here
-// so the initial scroll-lock can outlast the full draw, not just the line reveal.
-const CTA_UNDERLINE_DURATION = 2.5;
 // Text 2 reveal waits for text 1 to finish fading out before staggering in.
 const TEXT2_DELAY_CHILDREN = TITLE_DELAY + FADE_OUT_TIME;
 // Deterministic latch timings (ms). We don't rely on Framer's onAnimationComplete
@@ -81,10 +78,14 @@ const TEXT2_DELAY_CHILDREN = TITLE_DELAY + FADE_OUT_TIME;
 // layer carries infinitely-animating image children), which would leave the intro
 // stuck. Timers tied to the known durations are race-proof.
 //
-// The initial scroll-lock holds until the button's underline has finished
-// drawing (reveal delay + draw duration), not merely until the lines settle —
-// so the user can't scroll past a half-drawn underline.
-const INITIAL_LOCK_MS = (CTA_UNDERLINE_DELAY + CTA_UNDERLINE_DURATION) * 1000;
+// The initial scroll-lock holds only until text 1's LINES have finished revealing
+// (reveal delay + per-line stagger + line duration) — NOT until the button's
+// underline finishes drawing. The underline keeps drawing after; the page is
+// already scrollable the moment the text settled.
+const TEXT1_REVEAL_MS =
+  (TITLE_DELAY + TITLE_STAGGER * (TITLE_1_LINE_COUNT - 1) + TITLE_LINE_DURATION) *
+  1000;
+const INITIAL_LOCK_MS = TEXT1_REVEAL_MS;
 const CROSSFADE_MS = (FADE_OUT_TIME + FADE_IN_TIME) * 1000;
 
 // Per-line reveal driven directly off `active` with an explicit per-line delay,
@@ -133,9 +134,11 @@ type FloatingMediaItem = (typeof FLOATING_MEDIA)[number];
 function FloatingImage({
   item,
   index,
+  float,
 }: {
   item: FloatingMediaItem;
   index: number;
+  float: boolean;
 }) {
   const imgRef = useRef<HTMLDivElement | null>(null);
   const x = useMotionValue(0);
@@ -190,12 +193,15 @@ function FloatingImage({
   return (
     <motion.div
       className={`pointer-events-auto absolute z-0 hover:z-50 ${item.className}`}
-      animate={{ y: [0, -25, 0], x: [0, 15, 0] }}
-      transition={{
-        duration: 8 + index * 1.5,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
+      // Bug B: the gentle float starts ONLY in static mode. During the intro the
+      // images stay at their base position, so the static layer (which mounts at
+      // base) produces no jump on the swap — the float then begins from base.
+      animate={float ? { y: [0, -25, 0], x: [0, 15, 0] } : { y: 0, x: 0 }}
+      transition={
+        float
+          ? { duration: 8 + index * 1.5, repeat: Infinity, ease: "easeInOut" }
+          : { duration: 0 }
+      }
     >
       <motion.div
         ref={imgRef}
@@ -216,11 +222,11 @@ function FloatingImage({
   );
 }
 
-function FloatingMediaLayer() {
+function FloatingMediaLayer({ float }: { float: boolean }) {
   return (
     <div className="absolute inset-0 z-0">
       {FLOATING_MEDIA.map((item, index) => (
-        <FloatingImage key={item.src} item={item} index={index} />
+        <FloatingImage key={item.src} item={item} index={index} float={float} />
       ))}
     </div>
   );
@@ -310,8 +316,9 @@ export default function ServicesIntro() {
   // the layout-effect that compensates scroll must know which one ran.
   const jumpedViaButtonRef = useRef(false);
 
-  // Unlock the scroll-jack once the button's underline has finished drawing
-  // (not merely once the lines settle). Deterministic timer instead of a Framer
+  // Unlock the scroll-jack once text 1's lines have finished revealing
+  // (INITIAL_LOCK_MS = TEXT1_REVEAL_MS) — not when the button underline finishes
+  // drawing (that was too long). Deterministic timer instead of a Framer
   // completion callback (race-proof). Under reduced motion there's no reveal, so
   // unlock as soon as the preloader is done.
   useEffect(() => {
@@ -544,7 +551,7 @@ export default function ServicesIntro() {
           </div>
         </div>
         <div className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-off-white px-6 text-center">
-          <FloatingMediaLayer />
+          <FloatingMediaLayer float={isStatic && !shouldReduceMotion} />
           <div className="relative z-10 flex flex-col items-center">
             <Text2Lines reduceMotion active />
           </div>
@@ -627,7 +634,7 @@ export default function ServicesIntro() {
             ease: "easeInOut",
           }}
         >
-          <FloatingMediaLayer />
+          <FloatingMediaLayer float={false} />
 
           <div className="relative z-10 flex flex-col items-center">
             <Text2Lines

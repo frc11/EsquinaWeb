@@ -71,7 +71,10 @@ export default function HoverButton({
       <motion.span
         className={`absolute top-0 ${fillInset} h-full ${fillClass}`}
         variants={{
-          idle: { y: "110%" },
+          // Idle rests fully below the overflow-hidden clip. Pushed past 100%
+          // (to 120%) so no anti-aliased hairline of the fill survives the clip
+          // edge on fractional-DPR displays after the hover retracts.
+          idle: { y: "120%" },
           hover: { y: "0%" },
         }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}

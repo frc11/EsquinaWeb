@@ -569,7 +569,12 @@ export default function ContactForm({ service = null }: { service?: string | nul
         </motion.div>
       </aside>
 
-      <div className="min-w-0 lg:w-full lg:max-w-[840px] lg:justify-self-end">
+      {/* Bottom padding lives here (not on the page <section>) so the form
+          column — the taller grid item that defines the sticky aside's
+          containing block — extends past the form. That keeps the LET'S BRING
+          aside pinned while the fixed footer appears, instead of releasing at
+          the form's end and drifting up. It also keeps SEND clear of the footer. */}
+      <div className="min-w-0 pb-[clamp(13rem,22vh,16rem)] lg:w-full lg:max-w-[840px] lg:justify-self-end">
         <div className="mx-auto w-full max-w-[760px]">
           <motion.form
             id={CONTACT_FORM_ID}

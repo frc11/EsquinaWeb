@@ -26,7 +26,7 @@ function SingleMedia({ block }: { block: any }) {
 
     if (isEmbed) {
       return (
-        <figure className="w-full mb-6 relative bg-gray-brand/10">
+        <figure className="w-full mb-[2px] relative bg-gray-brand/10">
           <div className="relative w-full aspect-video overflow-hidden">
             <iframe
               src={video}
@@ -47,7 +47,7 @@ function SingleMedia({ block }: { block: any }) {
 
     // Direct .mp4 file
     return (
-      <figure className="w-full mb-6 relative bg-gray-brand/10">
+      <figure className="w-full mb-[2px] relative bg-gray-brand/10">
         <video
           src={video}
           autoPlay
@@ -77,7 +77,7 @@ function SingleMedia({ block }: { block: any }) {
 
     if (isGif) {
       return (
-        <figure className="w-full mb-6">
+        <figure className="w-full mb-[2px]">
           <div className="relative w-full aspect-[4/3] max-h-[88vh] mx-auto overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -96,7 +96,7 @@ function SingleMedia({ block }: { block: any }) {
     }
 
     return (
-      <figure className="w-full mb-6">
+      <figure className="w-full mb-[2px]">
         <div className="relative w-full aspect-[4/3] max-h-[88vh] mx-auto overflow-hidden">
           <Image
             src={imageUrl}
@@ -118,41 +118,40 @@ function SingleMedia({ block }: { block: any }) {
   return null;
 }
 
-/* ── Dual media block (two vertical images side by side) ────── */
+/* ── Dual media block (two images side by side, single-height) ── */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function DualMedia({ block }: { block: any }) {
   const { left, right } = block;
-  const leftUrl = left ? urlFor(left).width(600).url() : null;
-  const rightUrl = right ? urlFor(right).width(600).url() : null;
+  const leftUrl = left ? urlFor(left).width(800).url() : null;
+  const rightUrl = right ? urlFor(right).width(800).url() : null;
 
   if (!leftUrl && !rightUrl) return null;
 
+  // Same effective height as SingleMedia (full-width 4:3, capped at 88vh):
+  // the row owns the height; each image fills half the width with object-cover.
+  // Thin (2px) horizontal gap between the pair, thin vertical gap below.
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <div className="relative flex w-full gap-[2px] aspect-[4/3] max-h-[88vh] mb-[2px]">
       {leftUrl && (
-        <figure className="m-0">
-          <div className="relative w-full aspect-[4/3] overflow-hidden">
-            <Image
-              src={leftUrl}
-              alt="Project media"
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-            />
-          </div>
+        <figure className="relative m-0 h-full flex-1 overflow-hidden">
+          <Image
+            src={leftUrl}
+            alt="Project media"
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
+          />
         </figure>
       )}
       {rightUrl && (
-        <figure className="m-0">
-          <div className="relative w-full aspect-[4/3] overflow-hidden">
-            <Image
-              src={rightUrl}
-              alt="Project media"
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-            />
-          </div>
+        <figure className="relative m-0 h-full flex-1 overflow-hidden">
+          <Image
+            src={rightUrl}
+            alt="Project media"
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
+          />
         </figure>
       )}
     </div>
