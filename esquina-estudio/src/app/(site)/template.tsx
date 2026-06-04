@@ -9,15 +9,11 @@ export default function Template({ children }: { children: React.ReactNode }) {
   const { isPreloaderDone } = usePreloader();
 
   return (
-    <div className="min-h-0 overflow-hidden">
+    <div className="min-h-0">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={
-          isPreloaderDone
-            ? { opacity: 1, y: 0 }
-            : { opacity: 0, y: 20 }
-        }
-        exit={{ opacity: 0, y: -10 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isPreloaderDone ? 1 : 0 }}
+        exit={{ opacity: 0 }}
         transition={{ duration: 0.5, ease: EASE }}
       >
         {children}
