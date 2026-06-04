@@ -1,47 +1,34 @@
-<!-- Destino en el repo: /design-refs/services/BRIEF.md -->
-# SERVICES — Brief de cambios
+<!-- Destino: /design-refs/services/BRIEF.md (reemplaza el de ronda 1) -->
+# SERVICES — Corrección (ronda 2)
 
-> Sin imágenes: el comportamiento se entiende del texto. Referencia viva del efecto a replicar: `src/components/sections/home/Hero.tsx`.
+Archivo: `src/components/sections/services/ServicesIntro.tsx`.
+⚠️ Es el cambio más delicado de la tanda (todo es continuidad visual). Verificá a ojo.
 
-## Contexto del estado actual
-El intro de Services (`ServicesIntro.tsx`) es **scroll-jacking real**, no un simple fade:
-- Contenedor `h-[120vh] -mt-[var(--header-height)]` con un `sticky top-0 h-screen` adentro.
-- Dos `motion.div` **absolutos superpuestos** que hacen crossfade por opacidad:
-  - **Texto 1:** "WE TRANSLATE IDEAS INTO LIVING IDENTITIES…" + botón "DISCOVER OUR BRANDING SERVICES".
-  - **Texto 2:** "Whether we're shaping a brand from scratch…" + imágenes flotantes.
-- Máquina de estados: `isPreloaderDone`, `isInitialLoadComplete`, `hasInteracted`, `isIntroComplete`, `isJumping`. Listeners globales de `wheel`/`touch` con `preventDefault`.
-- El `body` queda con `overflow: hidden` hasta que el intro termina.
+## Bug A — el texto-1 sale "hacia abajo" y el botón no se desvanece
+**Causa:** al pasar al texto-2, `Text1Lines` revierte a su estado `hidden` (`y:30`) → las líneas bajan mientras el contenedor recién hace opacidad. El botón además queda fuera del fade.
+**Fix:**
+- Una vez revelado el texto-1, **congelá `Text1Lines` en `visible`** (que NO vuelva a `hidden`/`y:30`). El "irse" debe ser **solo opacidad del contenedor**, en el lugar, sin movimiento.
+- Asegurá que el **botón DISCOVER esté dentro de la misma capa que hace la opacidad** (o dale su propio fade de opacidad), para que se desvanezca junto con el texto.
+- El texto-2 mantiene su entrada actual por líneas (eso ya está bien).
 
----
+## Bug B — no puedo volver hacia arriba + las secciones se reacomodan/superponen
+**Causa:** el modo estático usa bloques `h-[60vh]` que NO coinciden con el intro (viewport completo) → al volver arriba todo reacomoda y las imágenes flotantes (posicionadas absolutas) caen en otros lugares y se superponen. Y el switch a estático recién pasa tras scrollear un viewport, así que apenas aparece el texto-2 no se puede subir.
+**Fix — flujo ideal:**
+1. **Bloques estáticos idénticos al intro:** en modo estático, texto-1 y texto-2 cada uno en un bloque **`h-screen`** centrado (no `h-[60vh]`), con la misma `FloatingMediaLayer` y posiciones que el intro → así se ven EXACTAMENTE igual (mismos espacios, imágenes en el mismo lugar). Contenedor exterior `h-[200vh]`.
+2. **Switch durante la ventana bloqueada + compensación de scroll:** cuando termina el reveal del texto-2 (y el scroll todavía está bloqueado), hacé el switch a estático y **en el mismo frame** `window.scrollTo(0, window.innerHeight)` (sin smooth), de modo que el viewport quede sobre el bloque del texto-2 (visualmente idéntico al frame anterior). Recién ahí desbloqueá el scroll.
+3. Resultado: sin "pop", sin replay; **scroll arriba → texto-1**, scroll abajo → `ServicesStack`, con scroll normal (sin repetir efectos).
+- Mantené el `-mt-[var(--header-height)]` consistente para que `ServicesStack` no salte visiblemente (el switch ocurre fuera de vista).
 
-## Request 1 — Reveal estilo Home en los dos textos
-**Replicar el efecto de aparición del home** (`Hero.tsx`) en el intro:
-- **Texto 1 + su botón:** las líneas entran con el reveal del home (stagger, `opacity:0, y:30 → 0`), y el botón hace el **mismo efecto de subrayado animado** que el CTA del home (props `underline` / `underlineDraw` / `underlineDrawDelay` de `HoverButton`).
-- **Texto 2:** mismo reveal de aparición (solo aparición, sin botón).
-- **Mantener** el efecto de **desaparición por opacidad** (el texto 1 se desvanece para dar paso al texto 2).
+## Detalle del gating inicial
+El lock inicial (`isInitialLoadComplete`) debe durar **hasta que el subrayado del botón termina de dibujarse** (no solo las líneas). Ajustá el timer de unlock a la duración real del underline-draw del botón.
 
-## Request 2 — Sin replay al volver arriba
-**Ahora:** una vez pasados los dos textos y desbloqueado el scroll, si volvés arriba, el intro **se reproduce al revés** (texto 2 → texto 1).
-**Queremos:** que una vez que pasaron **ambos** efectos, al volver arriba **no se repitan**. Los dos textos se ven como **dos secciones normales, una arriba de la otra** (texto 1 arriba, texto 2 abajo, mismo orden), estáticas, como una página común.
-**Restricción clave:** ese cambio de estado **no debe alterar el tamaño / la posición de lo que está debajo** (`ServicesStack`). Nada de saltos en la lista de servicios.
+## Aceptación
+- [ ] Texto-1 + botón se van por **opacidad en el lugar** (sin bajar).
+- [ ] Texto-2 entra con su reveal (ya ok).
+- [ ] Tras aparecer el texto-2 puedo **subir** y veo el texto-1 (scroll normal), y bajar a `ServicesStack`. Sin replay.
+- [ ] Texto-1 y texto-2 se ven **idénticos** al principio y después de bajar/subir (mismos espacios, imágenes sin superponerse).
+- [ ] `getBoundingClientRect().top` de `ServicesStack` no salta perceptiblemente.
+- [ ] No se puede scrollear hasta que el underline del botón se completa.
 
----
-
-## Criterios de aceptación
-- [ ] Texto 1 entra con el reveal del home (líneas con stagger + fade-up).
-- [ ] El botón del texto 1 hace el subrayado animado igual que el CTA del home.
-- [ ] Texto 2 entra con el mismo reveal de aparición (sin botón).
-- [ ] Se mantiene la desaparición por opacidad del texto 1 al pasar al 2.
-- [ ] Al volver arriba después del intro: **no se repite** ninguna animación.
-- [ ] En reposo (después del intro) los dos textos quedan apilados, en orden, como secciones normales.
-- [ ] `ServicesStack` (la lista de servicios de abajo) **no se desplaza** al cambiar de modo.
-- [ ] El switch a modo estático no produce un "pop" perceptible (verificar visualmente).
-- [ ] Respeta `prefers-reduced-motion` (textos visibles sin reveal).
-
-## Notas de causa raíz (no apilar parches)
-- El replay viene de la rama del handler de scroll que, en `scrollY === 0` y scroll hacia arriba, hace `setHasInteracted(false)` + `setIsIntroComplete(false)`. **Eliminar esa rama.**
-- Latchear el "intro terminado" en un estado/ref que **nunca se reinicie** dentro del mismo montaje.
-- Una vez latcheado: render condicional → modo estático apilado (flow normal, sin `absolute`, sin `sticky`, sin animación, sin listeners de scroll-jack).
-- "No afecte al tamaño de abajo": mantener la **misma altura exterior** (`h-[120vh]`) en ambos modos, así el offset de `ServicesStack` no cambia.
-- Re-montaje en navegación (`ServicesStack` usa `key={pathname}`): el reveal vuelve a jugar al entrar de nuevo a la página (correcto). El latch evita el replay solo dentro de la misma vista. (Si se quisiera persistir entre navegaciones, sería un flag en `sessionStorage` — no requerido por ahora.)
-- Reusar el patrón de `Hero.tsx`: `containerVariants` (staggerChildren/delayChildren) + `lineVariants` (`opacity:0,y:30 → 0`). No inventar un sistema nuevo de reveal.
+## Self-check
+`tsc`/`eslint`/`build` ok · dev `-p 3002`, `/services`: grabá el flujo completo (carga → scroll → texto-2 → subir → bajar) y verificá cada punto. **Aviso: "sin pop" es visual → marcá para revisión humana en el gate.**

@@ -1,80 +1,33 @@
-<!-- Destino en el repo: /design-refs/contact/BRIEF.md -->
-# CONTACT — Brief de cambios
+<!-- Destino: /design-refs/contact/BRIEF.md (reemplaza el de ronda 1) -->
+# CONTACT — Corrección (ronda 2)
 
-## Imágenes de referencia (en esta carpeta)
-1. `before-life-underline.png` — LIFE con subrayado (closeup).
-2. `before-select-double-arrow.png` — Select cerrado con DOS flechas (una al lado de OPTION, otra abajo-derecha).
-3. `before-select-open-x.png` — Select abierto con X y dropdown.
-4. `before-selection-in-input-invisible.png` — Texto seleccionado dentro de un input en focus: no se ve (mismo color que el fondo del focus).
-5. `reference-page-selection-and-life.png` — Selección de texto normal de la página (negro/blanco) + LIFE en bold.
-6. `before-country-input-flag-mono.png` — Input de país con bandera monocromática.
-7. `before-country-dropdown-flags-mono.png` — Dropdown de países con banderas monocromáticas + buscador.
-8. `before-contact-layout-full.png` — Layout actual completo (form a la derecha, línea "SCROLL", scroll interno).
-9. `reference-contact-fields-annotated.png` — Campos del form anotados (opciones de cada select).
+Archivos: `src/components/sections/contact/ContactForm.tsx`, `src/app/(site)/contact/page.tsx`, `src/components/layout/Footer.tsx` (solo rama contact).
 
-> Archivos involucrados: `ContactForm.tsx`, `MonochromeCountryFlag.tsx`, `contact/page.tsx`. (Todos del lane Contact.)
+## Bug 1 — la selección de texto sigue sin verse en los inputs
+**Importante:** las clases `selection:bg-off-white selection:text-off-black` **YA están** en `CONTROL_TEXT_CLASS`, `SELECT_BUTTON_CLASS` y `SELECT_SEARCH_CLASS`. No es que falten — **algo las pisa**.
+**Qué hacer — diagnóstico de specificity (no re-agregar la clase):**
+- En devtools, seleccioná texto dentro de un input en focus e inspeccioná qué regla `::selection` gana. Sospechoso #1: la `::selection` global de `globals.css` (mismo/mayor peso, o `!important`).
+- Hacé ganar a la regla scopeada **sin tocar `globals.css`** (subiendo specificity del selector scopeado; p. ej. un selector más específico para los inputs de contacto, o `[data-contact] ... ::selection`). `globals.css` NO se toca (es compartido).
+- Resultado: con el input en focus (fondo negro), el texto seleccionado se ve **fondo off-white / letra off-black**, abrazando los glifos (no un bloque del alto del input).
 
----
+## Bug 2 — el footer en Contact es transparente, debería ser sólido
+**Causa:** en `Footer.tsx`, la rama `isContactForm || isDarkRoute → "fixed bottom-0 ... bg-transparent"` (herencia del layout viejo, cuando contact no scrolleaba).
+**Fix:** sacá `isContactForm` de esa rama → que Contact caiga al `bg-off-white` sólido normal, en flujo (no fixed). Dejá `isDarkRoute` (la página `/contact/success`) como está. No rompas el resto del footer.
 
-## Request 1 — Palabra "LIFE"
-**Ahora:** el componente `AnimatedLife` dibuja un subrayado animado (`scaleX`) y "engrosa" la letra (revela una versión `font-medium` sobre `font-normal` con clip-path).
-**Queremos:** sacar el subrayado y el engrosamiento. Dejar **LIFE en bold, estático, desde el inicio** (sin animación). El resto del heading igual.
-**Implementación:** reemplazar `<AnimatedLife/>` por `<span className="font-semibold">LIFE</span>` (ajustar el peso al de la referencia). Borrar el componente `AnimatedLife` (queda muerto). Mantener el reveal del título completo (`contactTitleVariants`).
+## Bug 3 — "LET'S BRING YOUR IDEAS" no queda sticky y arranca muy abajo
+**Estado:** el aside ya es `lg:sticky lg:top-[calc(var(--header-height)+clamp(2.5rem,5vh,5rem))]` pero **no pega** y **empieza demasiado abajo**.
+**Qué hacer:**
+- **Posición:** reducí el offset superior (sacá el `+clamp(2.5rem,5vh,5rem)` o bajalo bastante) para que arranque alto, alineado cerca del primer campo del form.
+- **Sticky roto:** mismo diagnóstico que el aside de Work Single — **recorré ancestros en runtime buscando `transform !== none`** (Lenis / shell de transición) o un `overflow` que cree contenedor de scroll. 
+  - Si la causa es **local** (en `contact/page.tsx` o el grid) → arreglala acá (p. ej. asegurar que el contenedor del grid no tenga overflow/transform y tenga altura suficiente).
+  - Si es un **ancestro compartido** → **reportala, no la toques** (probable causa común con Work Single; un solo fix coordinado en la capa compartida).
+- Verificá: la columna izquierda queda fija mientras scrollea el form; el footer sólido aparece al final.
 
-## Request 2 — El label se mueve al abrir un select
-**Ahora:** al abrir un select, el label se reubica (en `before-select-open-x.png` se ve centrado contra TODA la altura del select abierto → el dropdown empuja el alto de la fila y `items-center` recentra el label).
-**Queremos:** el label se queda donde está, siempre alineado a su campo, abra o no el select.
-**Implementación:** que el dropdown quede **fuera de flujo** (absolute, overlay) para que no cambie el alto de la fila, y/o que el label no dependa del estado abierto del select (alinearlo de forma estable). Verificar abriendo cada select.
+## Aceptación
+- [ ] Selección visible (off-white/off-black) dentro de los inputs en focus, sin tocar `globals.css`.
+- [ ] Footer sólido (`bg-off-white`, en flujo) en `/contact`.
+- [ ] Aside izquierdo sticky de verdad y arrancando alto (o causa compartida reportada).
+- [ ] Se mantiene: el form scrollea con la página, SEND debajo del form, reveals, validación y submit.
 
-## Request 3 — Flechas del select
-**Ahora:** dos flechas (una al lado de "OPTION", otra en la esquina abajo-derecha) + una X cuando abre.
-**Queremos:** sacar la flecha de abajo-derecha **y** la X. Dejar **una sola flecha** (la de al lado de OPTION) que **rota 90° en sentido horario al abrir**, con transición suave y sin layout shift.
-**Ojo:** la `>` al lado de OPTION hoy es **texto** dentro del placeholder (`"SELECT OPTION >"`). Para que rote suave hay que convertirla en un **elemento real** (svg/span) y sacar la `>` del string del placeholder/valor.
-
-## Request 4 — Selección de texto dentro de los inputs
-**Ahora:** al marcar texto en un input, el `::selection` global (negro/blanco) coincide con el fondo negro del focus → no se ve (imagen 4).
-**Queremos:** que la selección **dentro de los inputs** use el **color contrario** (fondo blanco, texto negro) y que tenga la **altura de la palabra, no del input** (que no se salga, que se note adentro).
-**Implementación:** usar la variante `selection:` de Tailwind en los inputs (`selection:bg-off-white selection:text-off-black`). **NO tocar `globals.css`** (la selección global de la página se mantiene como está). Verificar que el highlight abraza el texto y no parece un bloque de alto completo (revisar `leading`/padding de `CONTROL_TEXT_CLASS` si hiciera falta).
-
-## Request 5 — Banderas de países coloreadas (line-art coloreado)
-**Decisión tomada:** opción 1 — **colorear los patrones line-art existentes** con los colores reales del país, manteniendo las MISMAS formas. (Sin librerías nuevas, sin emojis.)
-**Comportamiento:** en **hover** de un país (dropdown) y en el país **seleccionado** (input), la bandera se ve **coloreada** con los colores del país. El resto (opciones no-hover del dropdown, estado por defecto) sigue **monocromático** como ahora.
-**Implementación (`MonochromeCountryFlag.tsx`):**
-- Agregar prop `colored?: boolean` (default `false` → comportamiento monocromático actual **intacto**).
-- Refactorizar cada función de patrón para aceptar un array **ordenado** de colores y, en modo `colored`, rellenar las regiones con esos colores manteniendo la geometría exacta. El orden lo define la geometría del patrón (ej. `horizontal-tricolor` → [arriba, medio, abajo]; `vertical-tricolor` → [izq, centro, der]; `nordic` → [campo, cruz]; etc.). **Documentar el orden por patrón.**
-- Crear un mapa estático `COUNTRY_FLAG_COLORS: Record<string, string[]>` (en este archivo o uno hermano), con los colores de cada país en el orden que consume su patrón. **Fallback:** país sin entrada → render monocromático (nunca roto).
-**Triggers (`ContactForm.tsx`, select de país):** `renderValueMeta` pasa `colored` **siempre** (el seleccionado va coloreado); `renderOptionMeta` pasa `colored` **en hover** de esa opción (preferir `group-hover` por CSS, sin estado JS por opción).
-**Avisos honestos:**
-- El **mapa de colores por país es la parte de más esfuerzo y más riesgo de exactitud.** Sourcear de una referencia confiable, NO a ojo. Revisión humana sobre una muestra.
-- Patrones con emblema / cuarteados / complejos quedarán **aproximados** por naturaleza (son line-art estilizado). Aceptado.
-- Interpretación de "coloreada": se rellenan las regiones con los colores reales (lee como una mini-bandera en el mismo estilo compacto). Si en review se prefiere solo colorear trazos, es ajuste menor.
-
-## Request 6 — Layout: izquierda sticky + scroll de página + SEND debajo del form
-**Ahora:** `contact/page.tsx` tiene `<main>` con `h-[calc(100svh-var(--header-height))] overflow-hidden` (no scrollea la página). El form tiene scroll interno (`overflow-y-auto`, `data-lenis-prevent`), una barra de progreso "SCROLL" arriba y un gradiente abajo. El botón SEND está en el aside izquierdo.
-**Queremos:**
-- Sacar la línea/barra "SCROLL" de arriba del form.
-- Que **scrollee la página entera** (sacar el alto fijo + `overflow-hidden` del `<main>` y el scroll interno del form).
-- La **mitad izquierda** (heading "LET'S BRING YOUR IDEAS…" + texto) queda **sticky** en su lugar; la **derecha** (el form, que es largo) scrollea con la página.
-- El form puede quedar **centrado horizontalmente** en su sección derecha y un poco más grande.
-- El botón **SEND QUESTIONNAIRE va DEBAJO del form** (al final), no en el lado izquierdo.
-**Dependencia importante:** el `CustomSelect` usa `scrollContainerRef={formScrollRef}` (el scroll interno) para auto-scrollear el dropdown cuando se sale de vista. Al eliminar ese scroll, hay que **reapuntar esa lógica al scroll de la página** (window) o usar `scrollIntoView`.
-**Limpieza:** borrar el código muerto resultante (`formScrollProgress`, `updateFormScrollProgress`, barra de progreso, gradiente, `data-lenis-prevent`). Opcional: el `<main>` de `contact/page.tsx` anida con el `<main>` del layout del sitio → convertirlo en `<div>`/`<section>` (evita `<main>` anidado).
-
----
-
-## Criterios de aceptación
-- [ ] LIFE: bold estático, sin subrayado ni animación; `AnimatedLife` borrado.
-- [ ] Al abrir un select, el label NO se mueve.
-- [ ] Select: una sola flecha que rota 90° horario al abrir; sin flecha abajo-derecha ni X; sin layout shift.
-- [ ] Selección dentro de inputs: fondo blanco / texto negro, contenida al alto del texto; `globals.css` intacto.
-- [ ] Banderas: en hover (dropdown) y en seleccionado (input) se ven coloreadas; el resto monocromático. Países sin datos → mono (no roto).
-- [ ] Layout: sin línea "SCROLL"; página scrollea; izquierda sticky; form a la derecha scrolleando; SEND debajo del form.
-- [ ] El dropdown del select sigue auto-revelándose al abrir cerca del borde (con el nuevo scroll de página).
-- [ ] Footer aparece naturalmente al final; sin código muerto del scroll interno.
-- [ ] `prefers-reduced-motion` respetado en lo que aplique.
-
-## Notas de causa raíz (no apilar parches)
-- Selección invisible = `::selection` global negro/negro en focus. Fix scopeado con `selection:` (sin tocar globals).
-- Label que salta = dropdown en flujo + `items-center`. Fix: dropdown fuera de flujo.
-- Flecha que no rota = es texto, no ícono. Convertir a elemento.
-- Scroll interno = consecuencia del `<main>` de alto fijo. Quitar la causa (alto fijo) en vez de parchear el scroll.
+## Self-check
+`tsc`/`eslint`/`build` ok · dev `-p 3004`, `/contact`: marcar texto en un input (se ve el highlight), footer sólido, scrollear y verificar que la izquierda queda fija. Reportá si el sticky era causa local o compartida.

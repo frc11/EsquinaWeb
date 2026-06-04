@@ -25,17 +25,15 @@ Sos el lead engineer y arquitecto de diseño de Esquina Estudio, trabajando el h
 - **NO modificar:** `globals.css` (no tocar `--header-height`). Providers, otras páginas.
 
 ## Qué hacer
+Seguí el BRIEF de corrección actualizado en `/design-refs/<sección>/BRIEF.md`.
+Implementá exactamente esos cambios. El resto del agente (alcance, qué
+preservar, self-check, reporte) sigue valiendo.
 
-### 1. Logo más chico, header igual
-- En `LogoScript.tsx`: reducí el alto del logo del header (caso `size="md"`, hoy `h-16`) a algo tipo `h-12`–`h-14` (ajustá a ojo), `w-auto`. Antes, **grep** para confirmar que `size="md"` solo lo usa el header (el footer usa `sm`, no lo toques).
-- En `Navbar.tsx`: balanceá el padding vertical de la fila (`pt-12 pb-6` es asimétrico) para que el logo más chico quede **centrado verticalmente**. **No cambies** el alto del header (`h-[var(--header-height)]`) ni el padding horizontal.
-- Alineá el grupo de tabs (hoy `absolute left-1/2 -translate-x-1/2` **sin `top`**) al **centro vertical** del logo: `top-1/2 -translate-y-1/2`, o pasalo a flujo flex con `items-center`. CONTACT US debe quedar alineado igual.
-- Verificá que el indicador de subrayado activo siga alineado bajo los tabs.
-
-### 2. Padding parejo en el hover negro
-- En `HoverButton.tsx`: agregá un prop opcional (ej. `balancedPadding?: boolean`, default `false`). Cuando es `true`, el padding del texto/recuadro es **igual en los 4 lados** (px = py) y el fill (`-left/-right`, `h-full`) se ajusta para abrazar parejo. Default `false` = **exactamente el comportamiento actual** (no cambies el branch existente).
-- En `Navbar.tsx`: pasá `balancedPadding` a los HoverButton de los tabs (y CONTACT US para consistencia). **Quitá los anchos fijos por tab** (`w-[43px]`, `w-[68px]`, `w-[102px]`, `w-[40px]`, `text-center`) para que cada tab abrace su texto con padding parejo.
-- Objetivo: cada tab con recuadro negro de padding visualmente igual en los 4 lados, consistente (como `reference-funtab-hover-balanced.png`).
+## Autonomía — NO PEDIR INPUT (regla de oro)
+Esta corrida es desatendida. NUNCA frenes a preguntarle nada al humano.
+Si hay ambigüedad: elegí la opción más fiel a la identidad del proyecto,
+implementala, y ANOTÁ el supuesto en el reporte. No devuelvas el control.
+Permisos en `.claude/settings.json` (allowlist + deny de rm/push/sudo).
 
 ## Qué preservar (no romper)
 - El alto y la posición del header.

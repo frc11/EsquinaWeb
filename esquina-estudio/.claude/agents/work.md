@@ -20,20 +20,15 @@ Sos el lead engineer y arquitecto de diseño de Esquina Estudio, trabajando la p
 - **Solo lectura (NO modificar):** `src/components/sections/work/ProjectCard.tsx`, `src/app/(site)/work/page.tsx`, los providers, `globals.css`, `RevealOnScroll.tsx`. Si creés que necesitás tocar alguno, **pará y reportá** — casi seguro hay otra solución.
 
 ## Qué hacer
+Seguí el BRIEF de corrección actualizado en `/design-refs/<sección>/BRIEF.md`.
+Implementá exactamente esos cambios. El resto del agente (alcance, qué
+preservar, self-check, reporte) sigue valiendo.
 
-### 1. Proporción: tarjetas cuadradas, grilla de 3 columnas
-- Reemplazá el layout flex actual (`flex flex-wrap` + `h-[350px]` + `flex-[1_1_calc(33.333%-1.5rem)]`) por una grilla CSS.
-- Cada celda: proporción 1:1 (`aspect-square`), `overflow-hidden`, `cursor-none`.
-- Responsive: 1 col (mobile) → 2 col (sm) → 3 col (lg). Mantené `gap-6`.
-- `ProjectCard` es `h-full`: con la celda cuadrada queda cuadrada sola. **No la toques.**
-
-### 2. Reveal: desde abajo, secuencial, una sola vez
-- **Eliminá** el array `DIRECTIONS` y la lógica `index < 3 ? index * 0.1 : 0` (código obsoleto, no lo modifiques: borralo).
-- Stagger a nivel **contenedor** (no delay por índice):
-  - item: hidden `{ opacity: 0, y: 40 }` → visible `{ opacity: 1, y: 0 }`, duración ~0.7s, ease `[0.25, 0.1, 0.25, 1]` (el `EASE` que ya existe en el archivo).
-  - contenedor: `staggerChildren: ~0.08` (sutil; ajustable).
-- Gating: misma técnica que `RevealOnScroll.tsx` → `useInView(ref, { once: true, margin: "-80px" })` + `usePreloader()`. Animá a `"visible"` solo cuando `isPreloaderDone && inView`.
-- Respetá `prefers-reduced-motion` (sin offset ni stagger si está activo; mostrar directo).
+## Autonomía — NO PEDIR INPUT (regla de oro)
+Esta corrida es desatendida. NUNCA frenes a preguntarle nada al humano.
+Si hay ambigüedad: elegí la opción más fiel a la identidad del proyecto,
+implementala, y ANOTÁ el supuesto en el reporte. No devuelvas el control.
+Permisos en `.claude/settings.json` (allowlist + deny de rm/push/sudo).
 
 ### Implementación de referencia (adaptá a la API real de Framer 12 / Next 16)
 ```tsx

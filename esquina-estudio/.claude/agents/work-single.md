@@ -22,20 +22,15 @@ Sos el lead engineer y arquitecto de diseño de Esquina Estudio, trabajando la p
 - **Solo lectura (NO modificar):** providers, el layout del sitio, `globals.css`. Si creés que necesitás tocarlos, **pará y reportá**.
 
 ## Qué hacer
+Seguí el BRIEF de corrección actualizado en `/design-refs/<sección>/BRIEF.md`.
+Implementá exactamente esos cambios. El resto del agente (alcance, qué
+preservar, self-check, reporte) sigue valiendo.
 
-### 1. Aside sticky sin salto
-- **Causa raíz:** la entrada `motion.main` con `initial={{opacity:0, y:20}}` aplica un `transform` al ancestro del aside sticky, lo que rompe el `position: sticky` hasta que el transform se limpia (de ahí el "subidón").
-- **Fix:** quitar el `y` de la entrada de `motion.main` → que sea **solo `opacity`** (`{opacity:0} → {opacity:1}`). Así no hay transform en el ancestro y el sticky funciona desde el frame uno.
-- Si se quisiera conservar un slide de contenido, aplicarlo **solo a la columna derecha** (`flex-1`), nunca al `<main>` ni a la columna del aside.
-- **No remuevas** el `useLayoutEffect` que pone `overflow: visible` en ancestros (resuelve otro rompedor de sticky; su fix real tocaría layout compartido, fuera de este lane).
-- Verificá: el aside no se mueve entre el load inicial y el primer scroll; queda fijo bajo el header.
-
-### 2. Imágenes: enteras, max-height viewport, gaps
-En `ProjectContentRenderer.tsx`, para `SingleMedia` (tanto el `<Image>` de next como el `<img>`) y `DualMedia`:
-- Restringir **altura máxima a ~88–90vh** (`max-h-[88vh]` o similar), `object-contain`, `max-w-full`, centradas (`mx-auto`). Sin recorte.
-- `DualMedia`: **quitar** `aspect-[3/4]` + `object-cover` (recortan). Mantener las dos lado a lado con un gap, cada una con el mismo criterio de max-height/contain.
-- **Gap ligero y consistente** entre imágenes apiladas (espaciado vertical entre bloques) y entre las dos de `dualMedia` (gap horizontal). Usá un valor único para ambos ejes.
-- Preservá los `caption` y la estructura `<figure>`.
+## Autonomía — NO PEDIR INPUT (regla de oro)
+Esta corrida es desatendida. NUNCA frenes a preguntarle nada al humano.
+Si hay ambigüedad: elegí la opción más fiel a la identidad del proyecto,
+implementala, y ANOTÁ el supuesto en el reporte. No devuelvas el control.
+Permisos en `.claude/settings.json` (allowlist + deny de rm/push/sudo).
 
 ## Qué preservar (no romper)
 - El fade-in de la página (opacidad).

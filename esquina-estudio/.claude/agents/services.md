@@ -26,24 +26,15 @@ Sos el lead engineer y arquitecto de diseño de Esquina Estudio, trabajando el i
 - Si creés que necesitás tocar algo fuera de tu archivo, **pará y reportá**.
 
 ## Qué hacer
+Seguí el BRIEF de corrección actualizado en `/design-refs/<sección>/BRIEF.md`.
+Implementá exactamente esos cambios. El resto del agente (alcance, qué
+preservar, self-check, reporte) sigue valiendo.
 
-### 1. Reveal estilo Home en los dos textos
-- Reemplazá el fade de opacidad plano de los textos por el reveal del home:
-  - Container variant con `staggerChildren` + `delayChildren` (mirá `Hero.tsx`).
-  - Cada línea como `motion.p` con `lineVariants`: hidden `{opacity:0, y:30}` → visible `{opacity:1, y:0}`, ease `[0.25,0.1,0.25,1]`. Hay que **separar los `<br>` en líneas** `motion.p`, como en el home.
-  - **Texto 1:** reveal por líneas + botón "DISCOVER OUR BRANDING SERVICES" con las mismas props de subrayado animado que el CTA del home (`underline` / `underlineDraw` / `underlineDrawDelay`, con su delay después de las líneas).
-  - **Texto 2:** mismo reveal por líneas, sin botón.
-- **Mantené** la desaparición por opacidad del texto 1 al pasar al texto 2 (el crossfade-out actual).
-- Preservá el gating: el reveal del texto 1 arranca con el preloader + carga inicial; el del texto 2 cuando `hasInteracted`.
-
-### 2. Sin replay + estado estático apilado
-- **Eliminá** del handler de `wheel`/`touch` la rama que resetea al volver arriba (`hasInteracted && isIntroComplete && scrollY===0 && deltaY<0` → `setHasInteracted(false)` / `setIsIntroComplete(false)`). Esa rama es la causa del replay.
-- Latcheá el "intro terminado" en un estado/ref que **no se reinicie** dentro del mismo montaje.
-- **Render condicional:**
-  - Mientras el intro no terminó: la etapa actual sticky + crossfade (con los reveals nuevos).
-  - Una vez latcheado: **modo estático** → texto 1 y texto 2 **apilados en flow normal** (sin `absolute`, sin `sticky`, sin animación), ambos visibles, en orden. Quitá los listeners de scroll-jack en este modo.
-- **No reflow de abajo:** mantené la **misma altura exterior** del contenedor (`h-[120vh] -mt-[var(--header-height)]`) en ambos modos, para que `ServicesStack` no cambie de posición.
-- El **momento del switch** a modo estático puede generar un "pop" → ajustalo para que sea limpio (p. ej. switchear cuando se vuelve cerca de `scrollY 0`, o que el modo estático coincida visualmente con el último frame del intro). Verificá esto a ojo.
+## Autonomía — NO PEDIR INPUT (regla de oro)
+Esta corrida es desatendida. NUNCA frenes a preguntarle nada al humano.
+Si hay ambigüedad: elegí la opción más fiel a la identidad del proyecto,
+implementala, y ANOTÁ el supuesto en el reporte. No devuelvas el control.
+Permisos en `.claude/settings.json` (allowlist + deny de rm/push/sudo).
 
 ## Qué preservar (no romper)
 - La máquina de estados forward (texto 1 → crossfade → texto 2) y el `body overflow:hidden` durante el intro.
