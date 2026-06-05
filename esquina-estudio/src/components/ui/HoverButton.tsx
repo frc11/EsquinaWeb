@@ -64,19 +64,16 @@ export default function HoverButton({
 
   const content = (
     <motion.span
-      className={`group relative inline-block overflow-hidden transform-gpu ${className}`}
+      className={`group relative inline-block overflow-hidden ${className}`}
       initial="idle"
       whileHover="hover"
     >
       <motion.span
         className={`absolute top-0 ${fillInset} h-full ${fillClass}`}
         variants={{
-          // Idle rests fully below the overflow-hidden clip. Pushed past 100%
-          // (to 120%) so no anti-aliased hairline of the fill survives the clip
-          // edge on fractional-DPR displays after the hover retracts.
-          idle: { y: "120%" },
-          hover: { y: "0%" },
-        }}
+     idle: { y: "120%", opacity: 0 },
+     hover: { y: "0%", opacity: 1 },
+   }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
         aria-hidden
       />

@@ -33,7 +33,7 @@ export default function ProjectDetailClient({
       {/* ── Two-column editorial layout ──────────────────── */}
       <div className="flex flex-col md:flex-row gap-12 md:gap-24 overflow-visible px-6 md:px-12 py-12 md:py-16">
         {/* LEFT COLUMN — Sticky Meta Info */}
-        <div className="w-full md:w-[240px] flex-shrink-0 md:sticky md:top-32 self-start flex flex-col">
+        <div className="w-full md:w-[240px] flex-shrink-0 md:sticky md:top-48 self-start flex flex-col">
           <div className="font-body text-[17px] uppercase leading-relaxed text-off-black space-y-1">
             <p>{project.category}</p>
             <p>{project.services}</p>

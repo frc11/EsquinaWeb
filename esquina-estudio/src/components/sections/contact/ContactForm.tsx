@@ -790,25 +790,28 @@ export default function ContactForm({ service = null }: { service?: string | nul
             </motion.form>
 
             <motion.div
-              className="mt-12 w-fit md:mt-16"
-              initial={shouldReduceMotion ? false : "hidden"}
-              animate={isPreloaderDone ? "visible" : "hidden"}
-              variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
-            >
-              <button
-                type="submit"
-                form={CONTACT_FORM_ID}
-                disabled={isSubmitting}
-                className="w-fit disabled:opacity-50"
-              >
-                <HoverButton
-                  as="span"
-                  className="font-body text-[21px] uppercase md:text-[24px]"
-                >
-                  {isSubmitting ? "SENDING..." : "SEND QUESTIONNAIRE"}
-                </HoverButton>
-              </button>
-            </motion.div>
+  className="mt-12 md:mt-16 md:grid md:grid-cols-[minmax(150px,176px)_minmax(0,420px)] md:gap-7"
+  initial={shouldReduceMotion ? false : "hidden"}
+  animate={isPreloaderDone ? "visible" : "hidden"}
+  variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
+>
+  <div aria-hidden className="hidden md:block" />
+  <div className="flex md:justify-end">
+    <button
+      type="submit"
+      form={CONTACT_FORM_ID}
+      disabled={isSubmitting}
+      className="w-fit disabled:opacity-50"
+    >
+      <HoverButton
+        as="span"
+        className="font-body text-[21px] uppercase md:text-[24px]"
+      >
+        {isSubmitting ? "SENDING..." : "SEND QUESTIONNAIRE"}
+      </HoverButton>
+    </button>
+  </div>
+</motion.div>
           </div>
       </div>
     </div>
