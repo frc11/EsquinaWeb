@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useLayoutEffect, useRef } from "react";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
 import { Project } from "@/types/project";
 import ProjectContentRenderer from "@/components/ui/ProjectContentRenderer";
@@ -19,51 +18,9 @@ export default function ProjectDetailClient({
   nextProject,
 }: ProjectDetailClientProps) {
   const { isPreloaderDone } = usePreloader();
-  const pageRef = useRef<HTMLElement | null>(null);
-
-  useLayoutEffect(() => {
-    const page = pageRef.current;
-    if (!page) return;
-
-    const restoreStyles: Array<() => void> = [];
-    let element = page.parentElement;
-
-    while (element && element !== document.body) {
-      const styles = window.getComputedStyle(element);
-      const hasStickyBlockingOverflow = [
-        styles.overflow,
-        styles.overflowX,
-        styles.overflowY,
-      ].some((value) => value === "hidden" || value === "clip");
-
-      if (hasStickyBlockingOverflow) {
-        const target = element;
-        const previousOverflow = target.style.overflow;
-        const previousOverflowX = target.style.overflowX;
-        const previousOverflowY = target.style.overflowY;
-
-        target.style.overflow = "visible";
-        target.style.overflowX = "visible";
-        target.style.overflowY = "visible";
-
-        restoreStyles.push(() => {
-          target.style.overflow = previousOverflow;
-          target.style.overflowX = previousOverflowX;
-          target.style.overflowY = previousOverflowY;
-        });
-      }
-
-      element = element.parentElement;
-    }
-
-    return () => {
-      restoreStyles.forEach((restoreStyle) => restoreStyle());
-    };
-  }, []);
 
   return (
     <motion.main
-      ref={pageRef}
       className="min-h-screen overflow-visible"
       initial={{ opacity: 0 }}
       animate={
@@ -100,11 +57,13 @@ export default function ProjectDetailClient({
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
           <ProjectContentRenderer content={project.content || []} />
-        </motion.div>
-      </div>
 
-      {/* ── Bottom Navigation ────────────────────────────── */}
-      <nav className="flex items-center justify-between py-12 border-t border-off-black/20 mt-24 mx-6 md:mx-12">
+          {/* ── Bottom Navigation (inside the content column) ──
+              Living inside this column instead of as a sibling of the flex row
+              makes the two-column row — the sticky aside's containing block —
+              span the full page height. The aside then stays pinned to the
+              bottom instead of drifting up once the shorter image stack ended. */}
+          <nav className="mt-24 flex items-center justify-between border-t border-off-black/20 py-12">
         {/* Left / Center — All Projects link */}
         <Link
           href="/work"
@@ -141,7 +100,9 @@ export default function ProjectDetailClient({
         ) : (
           <div />
         )}
-      </nav>
+          </nav>
+        </motion.div>
+      </div>
     </motion.main>
   );
 }
