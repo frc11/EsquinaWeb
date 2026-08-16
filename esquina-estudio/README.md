@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Esquina Estudio — sitio web
 
-## Getting Started
+Portfolio editorial monocromo de **Esquina Estudio** (estudio de branding, Tucumán, Argentina). Next.js App Router + Sanity CMS. Deploy en Netlify.
 
-First, run the development server:
+## Stack
+
+Next.js 16.2.6 · React 19.2.4 · TypeScript · Tailwind v4 · Framer Motion 12 · GSAP 3 (ScrollTrigger) · `@studio-freight/lenis` · next-sanity · react-hook-form + zod v4 · Resend.
+
+## Desarrollo
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev     # http://localhost:3000
+npm run build
+npm run start
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Variables de entorno (`.env.local`; no hay plantilla versionada)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `NEXT_PUBLIC_SANITY_PROJECT_ID` — requerida; sin ella el sitio cae a los datos locales de fallback.
+- `RESEND_API_KEY` y `CONTACT_FROM_EMAIL` — formulario de contacto (`/api/contact`).
+- `NEXT_PUBLIC_SITE_URL` — base de metadata/OG; si falta, cae a un placeholder (ver `docs/pendientes.md`).
+- `NEXT_PUBLIC_SANITY_DATASET` — presente históricamente pero **ignorada por el código**: el dataset está fijado a `production`.
+- `SANITY_API_WRITE_TOKEN` — sin consumidores en el código; se conserva en el entorno para tooling manual futuro.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Estructura
 
-## Learn More
+`src/app` (rutas; grupo único `(site)`; `/studio` y `/api` fuera del shell) · `src/components` · `src/lib` (cliente Sanity, queries, datos de Contact, fallbacks locales) · `src/sanity` (config + schemas) · `src/types` · `docs/` (plan maestro, pendientes, bitácora, reportes, instrucciones).
 
-To learn more about Next.js, take a look at the following resources:
+## CMS
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Sanity Studio embebido en `/studio`. Guía para las editoras: `docs/sanity-studio-guide.md`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Método de trabajo
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Este repo se trabaja con instrucciones de ejecución generadas en la capa de planificación (develOP). **Leé `CLAUDE.md` antes de tocar nada**; los registros del método viven en `docs/`.
