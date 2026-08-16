@@ -14,11 +14,12 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 - Scripts: `dev`, `build`, `start`, `lint`. No hay tests ni typegen.
 - `netlify.toml`: solo `command = "npm run build"` + plugin de Next. Sin redirects, headers ni env.
 - Variables leídas por el código: `NEXT_PUBLIC_SANITY_PROJECT_ID`, `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`, `NEXT_PUBLIC_SITE_URL` (hoy ausente de `.env.local` → `metadataBase` cae a un placeholder; ver pendientes). `NEXT_PUBLIC_SANITY_DATASET` existe en `.env.local` pero **nadie la lee** (dataset hardcodeado). `SANITY_API_WRITE_TOKEN` queda en el entorno **sin consumidores en el código** (el seeder `/api/seed-sanity` fue eliminado en B1; tooling de escritura futuro = script local con guard, nunca ruta pública).
+- **`AGENTS.md` (raíz del proyecto) es vinculante y complementa a este archivo:** Next 16 trae breaking changes respecto de versiones anteriores, y el conocimiento general del modelo suele estar desactualizado. Antes de escribir código de Next (rutas, caching, `searchParams`, APIs de servidor), consultar las docs embarcadas en `node_modules/next/dist/docs/` — son las de la versión exacta instalada. Precedente: la semántica de `force-dynamic` de la auditoría se resolvió así.
 
 ## 2. Identidad visual — ESTADO
 
 - Colores: off-white `#F3F3F3` · off-black `#0F0F0F` · beige `#EFEEDA` · gris `#939393` (`gray-brand` en `@theme`).
-- Tipografía: **Manrope variable 300–800**, local (`src/app/layout.tsx:6-10`). `--header-height: 128px`. `::selection` global invertida. Scrollbars ocultas globalmente.
+- Tipografía: **Manrope variable 300–800**, local (`src/app/layout.tsx:6-10`). `--header-height: 128px`. `::selection` global invertida. Scrollbars ocultas globalmente. `--font-display` y `--font-body` apuntan **a la misma familia** (`globals.css:22-23`): la jerarquía del sitio se construye por escala y peso, no por contraste de familias.
 - `--footer-height: 480px` y `--cursor-size(-hover)` existen en `globals.css` pero **no los consume nadie** (el footer real en flujo mide 166 px). Los 5 tokens de font-size del `@theme` están **huérfanos**: el patrón vigente es el valor arbitrario por componente (`text-[13px]`, `text-[40px]`, …). Adoptarlos o borrarlos es decisión del ritual de B2 — no lo resuelvas por tu cuenta.
 - Todas las reglas de `globals.css` (salvo el `@theme`) están **fuera de `@layer`**: le ganan a cualquier utility. Para sobreescribir desde un componente: `!important` del lado layered, scopeado. Precedente correcto: `SCOPED_SELECTION` en `ContactForm.tsx:43-44`.
 - Cursor custom: punto fijo de 16 px (`h-4 w-4`, `mix-blend-difference`), activado por `body[data-custom-cursor]`; excluido de `/studio` por early-return de `RootClientShell`.
@@ -77,6 +78,20 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 5. Un objetivo por sprint; scope explícito; **no ampliar alcance por iniciativa propia**. Bifurcación real → frenar y reportar.
 6. Nada destructivo: sin `rm` de shell (usar `git rm`), sin `git push`, sin tocar producción, Netlify ni el dataset de Sanity salvo instrucción.
 7. Sanity simple para las editoras: labels con ejemplo, agrupación, nada técnico expuesto.
+8. **Causa raíz, no parches.** Antes de tocar, inspeccionar y entender lo que ya existe. Si un síntoma se puede tapar o resolver de fondo, se resuelve de fondo. No apilar arreglos sobre arreglos.
+9. **Refinar antes que reconstruir.** Ante código que funciona, la opción por defecto es ajustarlo, no reemplazarlo. Reescribir un módulo entero requiere que el sprint lo pida de forma explícita.
+10. **No duplicar sistemas.** Si ya existe un primitivo, un hook o un patrón que resuelve el problema, se reusa; no se crea uno paralelo. Este repo ya arrastra cinco implementaciones de «aparecer» (§6): no agregar la sexta. Cuando un sprint pida capacidad genuinamente nueva (por ejemplo un scroll-spy continuo, que hoy no existe), se construye **una** y se documenta acá.
+11. **Eliminar lo obsoleto.** Cuando un cambio deja código sin consumidores, se borra en el mismo sprint — no se deja «por si acaso». (Verificar con grep antes de borrar.)
+12. **Jerarquía de prioridades, en este orden:** calidad de diseño > mantenibilidad > puntaje de rendimiento > conveniencia de implementación. Ante un conflicto, gana la de más arriba; si la de arriba obliga a sacrificar mucho de la de abajo, es una bifurcación: frenar y reportar.
+
+### Directiva estética (aplica a todo trabajo visual)
+
+- **Identidad monocromática.** Off-white / off-black / gris, más el beige como acento puntual. Los colores fuertes que aparecen en pantalla son **contenido** (portadas de proyectos, `coverColor` de Sanity), nunca cromo de interfaz.
+- **Nada de estética SaaS:** sin tarjetas con sombra decorativa, sin gradientes genéricos, sin bordes redondeados de dashboard, sin iconografía de librería, sin patrones de componente de producto.
+- **Peso visual por escala y composición, no por negritas.** La jerarquía se construye con tamaño, espacio y posición; el énfasis por peso tipográfico es la excepción deliberada (p. ej. una palabra en `font-semibold`), no la herramienta por defecto.
+- **Nada de motion gratuito.** Toda animación tiene una razón; las existentes tienen timings afinados a mano. No agregar transiciones «para que se sienta vivo» ni cambiar duraciones/easings sin que el sprint lo pida.
+- **Sin navegación hamburguesa en desktop** ni patrones de componente que rompan el lenguaje editorial del sitio.
+- Ante duda estética real: **frenar y reportar**. La decisión visual es humana (§9).
 
 ## 9. Método de trabajo — VIGENTE
 
@@ -84,6 +99,7 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 - Ejecución **secuencial en `main`, sesión única**. **No existen subagentes por carril ni `.claude/agents/`**: el método de junio fue reemplazado; no intentes reproducirlo.
 - Registros: al cerrar cada sprint, **apendear** la entrada en `docs/bitacora.md` (nunca sobrescribir). El plan maestro y los pendientes los mantiene la capa de planificación.
 - Puertas de calidad: `npm run lint` y `npm run build` dentro de `esquina-estudio/` (**ECC no está instalado** en este repo). La verificación visual/comercial es humana y se declara pendiente por escrito en cada reporte.
+- Antes de escribir código de Next: leer `AGENTS.md` y las docs embarcadas de la versión instalada (§1). No asumir APIs de memoria.
 
 ## 10. Plan de la ronda — resumen
 
