@@ -49,3 +49,6 @@ desktop.ini
 /Asset_ Tipografía
 
 devserver*.log
+
+# originales de assets entregados por las clientas
+/Assets_Footer
