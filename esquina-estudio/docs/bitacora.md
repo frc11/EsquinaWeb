@@ -22,3 +22,12 @@ Formato de entrada:
 - **Pendientes que deja:** el borrado del seeder rige en producción recién con el próximo deploy (ver `docs/pendientes.md`). Observación para la capa de planificación: `esquina-estudio/AGENTS.md` existe, está versionado y sigue vigente (regla autogenerada de Next: leer `node_modules/next/dist/docs/` antes de escribir código, por breaking changes de la 16), pero el CLAUDE.md nuevo no lo menciona ni lo integra.
 - **Verificación humana pendiente:** diff de `CLAUDE.md` + exactitud de plan-maestro/pendientes (Valentino); smoke visual de que nada cambió en `/`, `/work`, `/services`, `/contact`.
 - **Commits:** `9e19461` (F1), `8590967` (F2), `00f57d7` (F3), más el de este cierre.
+
+## 2026-08-15 · B1 · Enmienda de CLAUDE.md (microsprint)
+
+- **Qué se hizo:** restituidas en §8 las reglas de criterio (causa raíz, refinar > reconstruir, no duplicar sistemas, eliminar obsoleto, jerarquía de prioridades) y agregada la subsección de directiva estética; integrado `AGENTS.md` en §1 y §9; aclarado en §2 que `--font-display` y `--font-body` son la misma familia. Tres altas en `docs/pendientes.md`.
+- **Origen:** observaciones d.1–d.4 y desvío 3 del reporte de cierre del Bloque 1.
+- **Decisiones tomadas en ejecución:** ninguna.
+- **Mediciones / puertas:** build exit 0; diff acotado a 2 archivos.
+- **Verificación humana pendiente:** lectura del diff completo de `CLAUDE.md` por Valentino.
+- **Commits:** `83880a9`, más el de este cierre.
