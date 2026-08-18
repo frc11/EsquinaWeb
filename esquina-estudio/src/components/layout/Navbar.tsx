@@ -23,6 +23,14 @@ const NAV_INDICATOR_EASE: [number, number, number, number] = [
 ];
 const NAV_INDICATOR_TIMES = [0, 0.28, 0.72, 1];
 const NAV_INDICATOR_HOME_GAP = 24;
+/**
+ * Separación entre el borde inferior de la caja de texto del tab y el subrayado,
+ * expresada en em del propio tab. Sale de medir el header a 13 px antes de este
+ * sprint: el subrayado caía 6,5 px por debajo de esa caja (6,5 / 13 = 0,5 em) y
+ * 10,5 px por debajo de la línea de base. Al quedar en em, la proporción se
+ * conserva con cualquier tamaño de tipografía — a 17 px son 8,5 px y 13,75 px.
+ */
+const NAV_INDICATOR_GAP_EM = 0.5;
 
 type DesktopNavHref =
   | "/work"
@@ -45,6 +53,65 @@ type IndicatorAnimation = {
   top: number;
   duration: number;
 };
+
+type LabelMetrics = {
+  left: number;
+  right: number;
+  bottom: number;
+  fontSize: number;
+};
+
+/**
+ * Mide el texto renderizado de un tab, no su caja.
+ *
+ * El `<span>` que referencia el Navbar envuelve un `HoverButton`, cuya caja
+ * suma 6 px de padding propio (`balancedPadding`) más el hueco de descendentes
+ * del `<a>`, que hereda 16 px del body. Ninguno de los dos escala con el tamaño
+ * del tab, así que medir la caja acoplaba la geometría del indicador a valores
+ * de otro archivo. El recorrido llega al nodo de texto y lo mide con un `Range`,
+ * que devuelve el avance real de los glifos — sin padding y sin el espacio
+ * fantasma que el interletrado agregaba después del último glifo.
+ */
+function measureLabel(host: HTMLElement): LabelMetrics | null {
+  const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+  let node = walker.nextNode();
+
+  while (node && !node.nodeValue?.trim()) {
+    node = walker.nextNode();
+  }
+
+  const parent = node?.parentElement;
+
+  if (!node || !parent) {
+    return null;
+  }
+
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  const rect = range.getBoundingClientRect();
+
+  if (rect.width === 0 || rect.height === 0) {
+    return null;
+  }
+
+  return {
+    left: rect.left,
+    right: rect.right,
+    bottom: rect.bottom,
+    fontSize: Number.parseFloat(getComputedStyle(parent).fontSize),
+  };
+}
+
+/**
+ * Alto del subrayado relativo al contenedor del header. Se redondea a píxel CSS
+ * entero: el elemento mide 1 px de alto y un `top` fraccionario lo reparte entre
+ * dos filas de píxeles, que es como se ve el hairline sucio a DPR 1.
+ */
+function indicatorTop(label: LabelMetrics, navTop: number) {
+  const gap = label.fontSize * NAV_INDICATOR_GAP_EM;
+
+  return Math.round(label.bottom + gap - navTop);
+}
 
 function isPathActive(pathname: string, href: DesktopNavHref) {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -109,14 +176,10 @@ export default function Navbar() {
       }
 
       const navRect = desktopNav.getBoundingClientRect();
-      const baselineRect = baselineLink.getBoundingClientRect();
+      const baselineLabel = measureLabel(baselineLink);
       const logoRect = logo.getBoundingClientRect();
 
-      if (
-        baselineRect.width === 0 ||
-        baselineRect.height === 0 ||
-        logoRect.width === 0
-      ) {
+      if (!baselineLabel || logoRect.width === 0) {
         currentIndicatorRef.current = null;
         setIndicator(null);
         return;
@@ -124,9 +187,9 @@ export default function Navbar() {
 
       const homeIndicator: IndicatorMeasure = {
         kind: "home",
-        x: logoRect.right - navRect.left + NAV_INDICATOR_HOME_GAP,
+        x: Math.round(logoRect.right - navRect.left) + NAV_INDICATOR_HOME_GAP,
         width: NAV_INDICATOR_DOT_WIDTH,
-        top: baselineRect.bottom - navRect.top - 7,
+        top: indicatorTop(baselineLabel, navRect.top),
       };
       const previousIndicator = currentIndicatorRef.current;
 
@@ -172,19 +235,24 @@ export default function Navbar() {
         return;
       }
 
-      const linkRect = activeLink.getBoundingClientRect();
+      const activeLabel = measureLabel(activeLink);
 
-      if (linkRect.width === 0 || linkRect.height === 0) {
+      if (!activeLabel) {
         currentIndicatorRef.current = null;
         setIndicator(null);
         return;
       }
 
+      // Los dos bordes se redondean por separado y el ancho sale de la resta,
+      // para que ninguno de los dos caiga en medio de un píxel.
+      const activeLeft = Math.round(activeLabel.left - navRect.left);
+      const activeRight = Math.round(activeLabel.right - navRect.left);
+
       const nextIndicator: IndicatorMeasure = {
         kind: "tab",
-        x: linkRect.left - navRect.left,
-        width: linkRect.width,
-        top: linkRect.bottom - navRect.top - 7,
+        x: activeLeft,
+        width: activeRight - activeLeft,
+        top: indicatorTop(activeLabel, navRect.top),
       };
 
       if (!animateMove || !previousIndicator) {
@@ -304,11 +372,9 @@ export default function Navbar() {
                   tone={navTone}
                   blend={useGalleryBlend}
                   balancedPadding
-                  className={`text-[13px] uppercase font-body ${
+                  className={`text-[17px] uppercase font-body ${
                     isFunGallery ? "font-thin" : "font-[480]"
-                  } ${
-                    isFunGallery ? "tracking-[0.09em]" : "tracking-wider"
-                  } ${linkTextClass}`}
+                  } tracking-normal ${linkTextClass}`}
                 >
                   {link.label}
                 </HoverButton>
@@ -327,11 +393,9 @@ export default function Navbar() {
               tone={navTone}
               blend={useGalleryBlend}
               balancedPadding
-              className={`text-[13px] uppercase font-body ${
+              className={`text-[17px] uppercase font-body ${
                 isFunGallery ? "font-normal" : "font-medium"
-              } ${
-                isFunGallery ? "tracking-[0.09em]" : "tracking-wider"
-              } ${linkTextClass}`}
+              } tracking-normal ${linkTextClass}`}
             >
               CONTACT US
             </HoverButton>
