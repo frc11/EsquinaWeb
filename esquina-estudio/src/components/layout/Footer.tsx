@@ -184,8 +184,10 @@ function InfoRow({
 /**
  * Franja clara de las rutas internas: la frase de la marca a la izquierda y la
  * llamada a contacto a la derecha. Reemplaza al CTA «LET'S WORK TOGETHER!».
+ * En `/contact` el bloque de llamada a contacto no se renderiza: la clienta
+ * ya está en el formulario.
  */
-function StatementBand() {
+function StatementBand({ isContactPage }: { isContactPage: boolean }) {
   return (
     <div className={`flex w-full flex-row items-start justify-between gap-12 ${GUTTER} py-20`}>
       <div className="font-display text-[40px] uppercase leading-[48px] tracking-normal text-off-black">
@@ -203,21 +205,23 @@ function StatementBand() {
         ))}
       </div>
 
-      <div className="flex flex-col items-end gap-y-[8px] text-right font-body font-[550] uppercase tracking-normal text-off-black">
-        <HoverButton
-          href="/contact"
-          underline
-          tightUnderline
-          className="text-[26px] leading-[31px]"
-        >
-          CONTACT US
-        </HoverButton>
-        <p className="whitespace-nowrap text-[26px] leading-[31px]">
-          LET&apos;S BRING
-          <br />
-          YOUR IDEAS TO LIFE
-        </p>
-      </div>
+      {!isContactPage && (
+        <div className="flex flex-col items-end gap-y-[8px] text-right font-body font-[550] uppercase tracking-normal text-off-black">
+          <HoverButton
+            href="/contact"
+            underline
+            tightUnderline
+            className="text-[26px] leading-[31px]"
+          >
+            CONTACT US
+          </HoverButton>
+          <p className="whitespace-nowrap text-[26px] leading-[31px]">
+            LET&apos;S BRING
+            <br />
+            YOUR IDEAS TO LIFE
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -228,9 +232,10 @@ function StatementBand() {
  * se monta a ancho completo y sin gutter — su borde derecho es el del viewport
  * — y el sangrado del mockup sale sin recortar de más (perderíamos el ™).
  * El aire propio del asset a la izquierda (24,8 % del ancho) aloja «JOIN OUR
- * CLUB», que se superpone sin tocar la tinta.
+ * CLUB», que se superpone sin tocar la tinta. Solo se renderiza en `/contact`
+ * (mockup de esa ruta); el resto de las rutas internas lo omite.
  */
-function ScriptBand() {
+function ScriptBand({ isContactPage }: { isContactPage: boolean }) {
   return (
     <div className="relative w-full overflow-hidden bg-off-black">
       <Image
@@ -240,22 +245,24 @@ function ScriptBand() {
         sizes="100vw"
       />
 
-      <div className="absolute left-12 top-[46%] lg:left-16 font-body font-[550] uppercase tracking-normal text-off-white">
-        <HoverButton
-          href="/contact"
-          underline
-          tightUnderline
-          tone="dark"
-          className="text-[26px] leading-[31px]"
-        >
-          JOIN OUR CLUB
-        </HoverButton>
-        <p className="mt-3 whitespace-nowrap text-[22px] leading-[26px]">
-          BECOME PART OF A
-          <br />
-          CREATIVE COMMUNITY
-        </p>
-      </div>
+      {isContactPage && (
+        <div className="absolute left-12 top-[46%] lg:left-16 font-body font-[550] uppercase tracking-normal text-off-white">
+          <HoverButton
+            href="/contact"
+            underline
+            tightUnderline
+            tone="dark"
+            className="text-[26px] leading-[31px]"
+          >
+            JOIN OUR CLUB
+          </HoverButton>
+          <p className="mt-3 whitespace-nowrap text-[22px] leading-[26px]">
+            BECOME PART OF A
+            <br />
+            CREATIVE COMMUNITY
+          </p>
+        </div>
+      )}
 
       <div className={`${GUTTER} pb-10 pt-6`}>
         <InfoRow
@@ -271,12 +278,15 @@ function ScriptBand() {
   );
 }
 
-/** Footer de las rutas internas: franja clara + banda oscura. */
-function SiteFooter() {
+/**
+ * Footer de las rutas internas: franja clara + banda oscura. La llamada a
+ * contacto alterna por ruta entre las dos bandas (`isContactPage`).
+ */
+function SiteFooter({ isContactPage }: { isContactPage: boolean }) {
   return (
     <footer className="w-full border-none bg-off-white">
-      <StatementBand />
-      <ScriptBand />
+      <StatementBand isContactPage={isContactPage} />
+      <ScriptBand isContactPage={isContactPage} />
     </footer>
   );
 }
@@ -417,6 +427,7 @@ export default function Footer() {
   const isFunGallery =
     pathname === "/fun-gallery" || pathname.startsWith("/fun-gallery/");
   const isDarkRoute = pathname === "/contact/success";
+  const isContactPage = pathname === "/contact";
 
   if (isFunGallery || isDarkRoute) {
     return <FixedFooter isFunGallery={isFunGallery} />;
@@ -426,5 +437,5 @@ export default function Footer() {
     return <HomeFooter />;
   }
 
-  return <SiteFooter />;
+  return <SiteFooter isContactPage={isContactPage} />;
 }
