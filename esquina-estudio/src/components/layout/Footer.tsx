@@ -114,16 +114,31 @@ function InfoRow({
   stackGap,
   align,
   trailing,
+  inlineCredit = false,
+  inlineSocial = false,
 }: {
   tone: "light" | "dark";
   leadingClass: string;
   stackGap: string;
   align: string;
   trailing?: React.ReactNode;
+  /** Rutas internas: copyright y crédito develOP van a la misma altura, no apilados. */
+  inlineCredit?: boolean;
+  /** Rutas internas: Instagram y LinkedIn van lado a lado, no apilados. */
+  inlineSocial?: boolean;
 }) {
   const isDark = tone === "dark";
   const textClass = isDark ? "text-off-white" : "text-off-black";
   const developLogoClass = isDark ? "invert" : "opacity-80";
+
+  const credit = (
+    <DevelopCredit
+      logoClassName={developLogoClass}
+      textClassName={textClass}
+      tone={tone}
+      blend={false}
+    />
+  );
 
   return (
     <div
@@ -137,19 +152,27 @@ function InfoRow({
           </div>
         ))}
 
-        <div className={`flex flex-col items-start ${stackGap}`}>
-          <span className="whitespace-nowrap">{COPYRIGHT}</span>
-          <DevelopCredit
-            logoClassName={developLogoClass}
-            textClassName={textClass}
-            tone={tone}
-            blend={false}
-          />
-        </div>
+        {inlineCredit ? (
+          <>
+            <span className="whitespace-nowrap">{COPYRIGHT}</span>
+            {credit}
+          </>
+        ) : (
+          <div className={`flex flex-col items-start ${stackGap}`}>
+            <span className="whitespace-nowrap">{COPYRIGHT}</span>
+            {credit}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-row items-center gap-12">
-        <div className={`flex flex-col items-start ${stackGap}`}>
+        <div
+          className={
+            inlineSocial
+              ? "flex flex-row items-center gap-x-5"
+              : `flex flex-col items-start ${stackGap}`
+          }
+        >
           <SocialLinks tone={tone} />
         </div>
         {trailing}
@@ -180,13 +203,16 @@ function StatementBand() {
         ))}
       </div>
 
-      <div
-        className={`flex flex-col items-end gap-y-[8px] text-right ${INFO_TYPE} leading-[20px] text-off-black`}
-      >
-        <HoverButton href="/contact" underline tightUnderline>
+      <div className="flex flex-col items-end gap-y-[8px] text-right font-body font-[550] uppercase tracking-normal text-off-black">
+        <HoverButton
+          href="/contact"
+          underline
+          tightUnderline
+          className="text-[26px] leading-[31px]"
+        >
           CONTACT US
         </HoverButton>
-        <p className="whitespace-nowrap">
+        <p className="whitespace-nowrap text-[26px] leading-[31px]">
           LET&apos;S BRING
           <br />
           YOUR IDEAS TO LIFE
@@ -214,13 +240,17 @@ function ScriptBand() {
         sizes="100vw"
       />
 
-      <div
-        className={`absolute left-12 top-10 lg:left-16 ${INFO_TYPE} leading-[20px] text-off-white`}
-      >
-        <HoverButton href="/contact" underline tightUnderline tone="dark">
+      <div className="absolute left-12 top-[46%] lg:left-16 font-body font-[550] uppercase tracking-normal text-off-white">
+        <HoverButton
+          href="/contact"
+          underline
+          tightUnderline
+          tone="dark"
+          className="text-[26px] leading-[31px]"
+        >
           JOIN OUR CLUB
         </HoverButton>
-        <p className="mt-[8px] whitespace-nowrap">
+        <p className="mt-3 whitespace-nowrap text-[22px] leading-[26px]">
           BECOME PART OF A
           <br />
           CREATIVE COMMUNITY
@@ -233,6 +263,8 @@ function ScriptBand() {
           leadingClass="leading-none"
           stackGap="gap-y-[8px]"
           align="items-start"
+          inlineCredit
+          inlineSocial
         />
       </div>
     </div>
