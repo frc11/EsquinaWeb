@@ -1,18 +1,14 @@
 "use client";
 
+import { Fragment } from "react";
 import { motion, type Variants } from "framer-motion";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
-import HoverButton from "@/components/ui/HoverButton";
+import { HERO_LINES } from "@/lib/site-copy";
 
 const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 const TITLE_DELAY = 0.12;
 const TITLE_STAGGER = 0.08;
 const TITLE_LINE_DURATION = 0.42;
-const TITLE_LINE_COUNT = 3;
-const CTA_DURATION = 0.45;
-const CTA_DELAY =
-  TITLE_DELAY + TITLE_STAGGER * (TITLE_LINE_COUNT - 1) + TITLE_LINE_DURATION;
-const CTA_UNDERLINE_DELAY = CTA_DELAY + CTA_DURATION;
 
 const containerVariants: Variants = {
   hidden: { opacity: 1 },
@@ -34,6 +30,14 @@ const lineVariants: Variants = {
   },
 };
 
+/**
+ * Hero de home: la frase de la marca, centrada, 40/48/0. El texto sale de
+ * `HERO_LINES` (fuente única compartida con el footer de las rutas internas), y
+ * el espacio entre fragmentos se emite fuera del `<span>` que aplica la negrita
+ * — contrato documentado en `site-copy.ts` — para que su avance no dependa del
+ * peso de la Manrope variable. La entrada es por línea, con stagger, gateada por
+ * el preloader.
+ */
 export default function Hero() {
   const { isPreloaderDone } = usePreloader();
 
@@ -49,46 +53,23 @@ export default function Hero() {
           variants={containerVariants}
           initial="hidden"
           animate={isPreloaderDone ? "visible" : "hidden"}
+          className="font-display text-[40px] uppercase leading-[48px] tracking-normal text-off-black"
         >
-          <motion.p
-            variants={lineVariants}
-            className="font-display text-[40px] uppercase leading-[1.05] text-off-black"
-          >
-            IN A WORLD FULL OF NOISE
-          </motion.p>
-          <motion.p
-            variants={lineVariants}
-            className="mt-1 font-display text-[40px] uppercase font-semibold leading-[1.05] text-off-black"
-          >
-            MAKE YOUR BRAND STAND OUT.
-          </motion.p>
-          <motion.p
-            variants={lineVariants}
-            className="mt-1 font-display text-[40px] uppercase leading-[1.05] text-off-black"
-          >
-            WITH INTENTION. WITH IMPACT.
-          </motion.p>
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          animate={
-            isPreloaderDone
-              ? { y: 0, opacity: 1 }
-              : { y: 30, opacity: 0 }
-          }
-          transition={{ delay: CTA_DELAY, duration: CTA_DURATION, ease: EASE }}
-          className="mt-8"
-        >
-          <HoverButton
-            href="/contact"
-            underline={isPreloaderDone}
-            underlineDraw={isPreloaderDone}
-            underlineDrawDelay={CTA_UNDERLINE_DELAY}
-            className="font-display text-[24px] uppercase tracking-wider"
-          >
-            LET&apos;S WORK TOGETHER!
-          </HoverButton>
+          {HERO_LINES.map((line) => (
+            <motion.p
+              key={line.map((fragment) => fragment.text).join(" ")}
+              variants={lineVariants}
+            >
+              {line.map((fragment, index) => (
+                <Fragment key={fragment.text}>
+                  {index > 0 && " "}
+                  <span className={fragment.bold ? "font-semibold" : undefined}>
+                    {fragment.text}
+                  </span>
+                </Fragment>
+              ))}
+            </motion.p>
+          ))}
         </motion.div>
       </motion.div>
     </section>
