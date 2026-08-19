@@ -18,7 +18,7 @@ export type CopyFragment = { readonly text: string; readonly bold?: boolean };
 export type CopyLine = ReadonlyArray<CopyFragment>;
 
 export const HERO_LINES: ReadonlyArray<CopyLine> = [
-  [{ text: "IN A WORLD FULL OF NOISE" }],
+  [{ text: "IN A WORLD FULL OF NOISE," }],
   [{ text: "STAND OUT", bold: true }, { text: "WITH INTENTION." }],
   [{ text: "WITH" }, { text: "IMPACT.", bold: true }],
 ];
