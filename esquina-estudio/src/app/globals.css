@@ -5,10 +5,7 @@
   --color-off-black: #0F0F0F;
   --color-beige: #EFEEDA;
   --color-gray: #939393;
-  --cursor-size: 12px;
-  --cursor-size-hover: 48px;
   --header-height: 128px;
-  --footer-height: 480px;
 }
 
 @theme inline {
@@ -21,25 +18,6 @@
   /* Font families */
   --font-display: var(--font-manrope), sans-serif;
   --font-body: var(--font-manrope), sans-serif;
-
-  /* Font sizes */
-  --font-size-display: 40px;
-  --font-size-display--line-height: 1.05;
-  --font-size-display--letter-spacing: -0.02em;
-
-  --font-size-body: 17px;
-  --font-size-body--line-height: 1.5;
-
-  --font-size-footer-cta: 40px;
-  --font-size-footer-cta--line-height: 1;
-  --font-size-footer-cta--letter-spacing: -0.02em;
-
-  --font-size-project-text: 30px;
-  --font-size-project-text--line-height: 1.3;
-
-  --font-size-nav: 13px;
-  --font-size-nav--line-height: 1;
-  --font-size-nav--letter-spacing: 0.05em;
 }
 
 body[data-custom-cursor="true"],
