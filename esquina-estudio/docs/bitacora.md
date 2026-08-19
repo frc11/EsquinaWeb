@@ -213,3 +213,143 @@ Formato de entrada:
 - **Verificación humana pendiente (declarada, no la da por cumplida el agente).** El agente mide layout y **no puede observar la animación**, que es la mitad de este sprint (ver nota de método). Queda a ojo humano en `localhost:3010`, **a DPR 1 y zoom 100 %**: (a) **la aparición**, entrando a `/work` con scroll desde arriba — si se siente rápida y encadenada, con la siguiente arrancando antes de que termine la anterior; si todavía se siente lenta, o si al revés ahora parecen aparecer todas juntas y se perdió la secuencia, el ajuste es **un solo número**, `ITEM_DURATION`; (b) **los recortes de las cuatro portadas a 5:4**, uno por uno — son fotos de producto y packaging de las clientas y el `rect` que elige el CDN es **centrado**, así que puede cortar un logo, un envase o una cara; si alguna queda mal encuadrada, se arregla poniendo *hotspot* en Sanity, no en el código; (c) **el aire del overlay** contra `06-work-grid-anotado.jpg`, en hover sobre cada tarjeta; (d) la grilla completa a **1920, 1512, 1440 y 1280**, buscando filas parejas y ausencia de huecos raros.
 
 - **Commits:** el de este sprint, más el de este cierre.
+
+---
+
+## 2026-08-19 · B2.5 · Contact con la composición del PDF, questionnaire sin scroll y limpieza de tokens
+
+- **Qué se hizo:** tres commits, cuatro archivos. **[F1]** `ContactForm.tsx` y `lib/contact.ts`: título del aside a **40 / 48 / 0** e izquierda, bajada a **17 / 21 / 0** e izquierda; los nueve labels pasan a **alineados a la izquierda y en dos líneas fijas** (el prop `label` de `FieldShell` dejó de ser `React.ReactNode` y ahora es una **tupla `readonly [string, string]`**: las dos líneas quedan garantizadas por tipo, no por el ancho de la columna); los controles pasan al **gris de identidad**; entran las **10 pills nuevas** en el orden cerrado por Valentino, con `PACKAGING DESIGN` renombrada a `PACKAGE DESIGN`; `?service=` pasa a resolución tolerante que devuelve `null` ante lo desconocido; y el fit sale de **comprimir el padding vertical de los campos (28 → 12 px) y la separación previa al botón de envío (64 → 28 px)**. **[F2]** `Footer.tsx` y `ContactSuccess.tsx`: `/contact/success` adopta el footer nuevo con la variante de `/contact`. **[F3]** `globals.css`: se borran 15 declaraciones sin consumidores. **No se tocó** `HoverButton.tsx`, ni `api/contact/route.ts`, ni `contact/page.tsx`, ni la arquitectura sticky del aside, ni `SCOPED_SELECTION`, ni ninguna variant de entrada.
+
+- **Decisiones tomadas en ejecución** (siete; ninguna cambia el pedido, todas se explican con una medición):
+
+  **(1) «Todo en gris» son los controles, no los labels — está medido en el mockup, no interpretado.** Muestreo de luminancia sobre `12-contact-anotado.jpg`: los labels dan mínimo **32** (misma tinta que el menú, 32, y que `SEND QUESTIONNAIRE`, 12), mientras el texto de las pills da **149** — que es exactamente `#939393` (147) — y la regla del campo da **206**, imposible para una línea de 1 px de `#0F0F0F` a esa escala (daría 129) y consistente con una de `#939393` (196). Así que el gris entró en **regla del campo, borde y texto en reposo de las pills, y chevron del select**; los labels siguen en off-black. Los placeholders **ya estaban** en `gray-brand` desde antes.
+
+  **(2) El estado «respondido» se queda en off-black.** El mockup solo dibuja el formulario vacío, y el código ya distinguía placeholder (gris) de valor (negro). Se conservó: texto tipeado, valor elegido del select y pill seleccionada siguen en off-black, y la inversión sobre fondo negro al enfocar queda intacta. Si las clientas quieren también eso en gris, es un cambio de tres clases.
+
+  **(3) Un solo label conserva el corte de hoy, y es una restricción de ancho, no una preferencia.** El mockup corta `WHAT ARE YOU LOOKING / TO WORK ON?`; esa primera línea mide **181,1 px** y la columna de labels mide **176**. El mockup se lo puede permitir porque **ensancha esa columna a ~208 px** (medido: su borde izquierdo cae 31 px a la izquierda del actual y su regla de campo termina 39 px antes). Mover esos ~32 px de la columna de control a la de labels rompe el fit: a **1512** el control quedaría en **394 px** y las 10 pills necesitan **396** para entrar en cuatro filas — pasarían a cinco y la columna crecería 37 px. Se conservó `WHAT ARE YOU / LOOKING TO WORK ON?` (173,9 px, entra) y la grilla intacta en `176 / 28 / 420`. Los otros ocho labels llevan el corte del mockup tal cual.
+
+  **(4) El label de las pills va arriba, no centrado.** Medido: su cap-top está en y=231 del mockup y el borde superior de la primera fila de pills en y=230; si estuviera centrado contra un bloque de 142 px caería en y≈258. En los campos normales sí está centrado (predicho 315,4, medido 317; top-aligned habría dado 310). Se implementó como prop `alignLabelTop`, usado una sola vez.
+
+  **(5) El schema y el mail no necesitaban edición, y se verificó en vez de asumirlo.** `contactSchema` declara `workType: z.array(z.string()).optional()` y el mail formatea con `join(", ")`: los dos son **agnósticos de la lista**, y la lista vive en el mismo archivo que el schema. Cambiar a `z.enum(WORK_TYPE_OPTIONS)` habría sido más estricto pero rompe la regla 1 del sprint —empezaría a rechazar con 400 los envíos de un cliente con JS viejo en caché, que todavía manda `Packaging Design`—. Se comprobó contra el módulo real: el payload capturado valida, las 10 opciones validan, un payload inválido se rechaza con los mismos mensajes, y la celda «Work type» del mail sale `Consultation, Illustration, Editorial Design`.
+
+  **(6) La separación previa al `SEND` se derivó de una proporción, no de un gusto.** Hoy el hueco regla→`SEND` (123,3 px hasta el cap-top) es **1,68×** el hueco entre campos (73,6 px); en el mockup esa relación es **1,70×**. Manteniéndola con el padding nuevo sale `mt-7` (28 px), y el resultado cae sobre el mockup: tramo *regla de HEAR ABOUT → regla de SEND* de **78,5 px** implementados contra **79,2 px** medidos en el mockup — **0,9 px**.
+
+  **(7) Dos cosas que el mockup muestra distinto y NO se cambiaron, por no estar en la devolución escrita:** en el mockup **`LIFE` no está en negrita** (el código lo tiene en `font-semibold`; el mockup sí dibuja en negrita el `STAND OUT.` del footer, así que no es que no distinga pesos) y **no aparece la flecha `→`** debajo de la bajada (barrido de la zona: cero tinta). Las dos se dejaron como están y quedan para decisión de Valentino. Nota práctica sobre la flecha: con la bajada a 17 px, la flecha —que lleva tamaño propio de 32 px— pasa de ser 1,3× el texto a ser 1,9×.
+
+- **Cómo se derivó la densidad, y por qué se le puede creer al número.** Mismo método que B2.4: medir por píxel sobre el JPG y **validar el método contra la captura del sitio real** antes de usarlo sobre el anotado.
+
+  **Validación contra `11-contact-actual.jpg`.** La captura del sitio dentro del JPG ocupa x∈[82,1373] (1292 px) e y∈[52,766]. Ajustando escala y origen sobre las **seis reglas de campo** (y = 232,5 / 310 / 521 / 598 / 676 / 753) contra sus valores reales (271 / 386 / 699 / 814 / 929 / 1044 px de CSS) sale **S = 0,6733** e **y₀ = 50,0** — o sea un viewport de **1292 / 0,6733 = 1919 px**, que es 1920. Con esa vara, predicho contra medido:
+
+  | magnitud | valor real (CSS) | predicho en el JPG | medido en el JPG | error |
+  |---|---|---|---|---|
+  | pitch entre reglas de campo | 115 | 77,4 | 77,5 | 0,1 % |
+  | ancho de la regla de campo | 420 | 282,8 | 283 | 0,1 % |
+  | borde izquierdo de la columna de control | 1260,7 | 930,8 | 931 | 0,2 px |
+  | pitch de línea del título (96 px / 0,9) | 86,4 | 58,2 | 58,5 | 0,5 % |
+  | cap-top del título | 194,97 | 181,3 | 181 ± 1 | ~0,3 px |
+
+  Las dos últimas usan las métricas reales de Manrope leídas del navegador (`cap = 0,71875 em`, `ascent = 1,066`, `descent = 0,300`), no ratios de memoria.
+
+  **Aplicación a `12-contact-anotado.jpg`.** Su captura ocupa x∈[59,1003] = **945 px** → **S = 945 / 1920 = 0,4922**; el origen vertical (**y₀ = 37,5**) sale de la banda del menú (y 64–70), cuyo cap-center cae a 60,9 px de CSS dentro de un header de 128. Dos controles independientes confirman la escala: la anotación dice que el título va a **40 / 48** y el pitch medido de sus tres líneas es **23,75** contra **23,63** predichos (0,5 %); y el borde izquierdo de la columna de control cae en x=680 → **1261,7 px de CSS** contra los **1260,7** reales — **1 px**.
+
+  **Lo que pide el mockup, ya en píxeles de CSS:**
+
+  | magnitud | mockup (px del JPG) | mockup (CSS) | antes | implementado |
+  |---|---|---|---|---|
+  | pitch entre reglas de campo | 39,5 (media de 34/37/40/38/46/42) | **80,3** | 115 | **83** |
+  | tramo regla NAME → regla HEAR ABOUT | 365 | 741,6 → `16·P + 555` → **P = 11,7** | P = 28 | **P = 12** |
+  | alto del bloque de pills | 70 | 142,2 | 142 | **142** (sin tocar) |
+  | pitch de fila de pills | 18 | 36,6 | 37 | **37** (sin tocar) |
+  | alto de pill | 16 | 32,5 | 31 | **31** (sin tocar) |
+  | tramo regla HEAR ABOUT → regla de SEND | 39 | 79,2 | 130,5 | **78,5** |
+  | ancho de la regla de campo | 188 | 381,9 | 420 | **420** (sin tocar) |
+
+  Es decir: **el mockup no comprime ni la tipografía ni las pills ni el alto del control — comprime el aire entre campos**, exactamente el orden de prioridad que fijó Valentino. Por eso no hizo falta bajar el tamaño de los placeholders (prioridad 2): nunca se llegó a necesitarla.
+
+- **De dónde salió cada píxel recortado.** El objetivo eran **274,5 px**; se recortaron **324**.
+
+  | bloque | antes | después | delta |
+  |---|---|---|---|
+  | 8 filas normales (2·P + 58 + 1 de regla) | 8 × 115 = 920 | 8 × 83 = 664 | **−256** |
+  | fila de pills (2·P + 142) | 198 | 166 | **−32** |
+  | separación antes de `SEND` | 64 | 28 | **−36** |
+  | bloque `SEND` | 44,5 | 44,5 | 0 |
+  | **columna del formulario** | **1226,5** | **902,5** | **−324** |
+
+  **Progresión medida** (viewport 1920, DPR 1): **1226,5 → 938,5 → 902,5**. El paso intermedio se midió forzando los valores viejos sobre el árbol nuevo, no calculándolo. El primer número es también el del árbol nuevo **con las 10 pills y sin comprimir nada**: la lista nueva **no cuesta un solo píxel**, porque diez pills siguen entrando en cuatro filas igual que las siete viejas. Todo el recorte son los `28 → 12` de padding vertical (9 filas × 32 px = 288) más los `64 → 28` del margen del `SEND` (36). **Cero de tipografía, cero de las pills, cero del alto del control.**
+
+- **Mediciones / salidas de puertas.** Puertas: línea base `lint` exit 0 y `build` exit 0 (14 rutas, único warning el conocido de `@sanity/image-url`); final **idéntico** — lint exit 0, build exit 0, mismas 14 rutas, mismo único warning, cero errores nuevos. Runtime con `next dev` en el puerto **3010**, DPR 1, medido a **1920 × 1080 exactos** (iframe de 1920×1080 dentro de la ventana maximizada: el `resize` de ventana sigue sin aplicar, mismo límite que B2.1–B2.4).
+
+  **El fit, contra el criterio.** Columna del formulario **902,5 px** contra el objetivo de **≤ 952** (`100svh − 128`): entra con **49,5 px de margen**. En pantalla: la columna arranca en y=184 y termina en **y = 1086,5**, pero **la regla del `SEND` cierra en y = 1080,5** — o sea que a 1080 de alto **se ve el questionnaire entero, botón incluido**, y lo que queda debajo del corte es medio píxel de esa regla más 6 px de aire vacío. La página completa mide 2306 px (footer de 981,7 desde y=1324,1). El aside pasó de 425,17 a **278 px**.
+
+  **Aside contra el mockup.** Título `40px / 48px / normal / left`; bajada `17px / 21px / normal / left`; separación entre ambos `mt-9` (36 px). La **relación entre los dos** reproduce el mockup con **1,5 px** de error (28,9 px de separación de cap-tops implementados contra 27,4 medidos) y **su posición respecto del formulario** con **3,5 px**. Lo que no coincide: el mockup dibuja **todo el bloque ~29 px más abajo**, o sea con un padding superior de sección de ~86 px contra los 56 de hoy (`lg:pt-14`). **No se tocó**: la devolución no lo pide y costaría 29 px del presupuesto del fit.
+
+  **Labels.** Los nueve miden 36,8 px = exactamente dos líneas de 18,4; `text-align: start`; 16 px; color `rgb(15,15,15)`.
+
+  **Colores computados** (leídos de la clase, no del estilo computado: la pestaña de la herramienta corre con `visibilityState: hidden` y las transiciones CSS quedan congeladas en su valor inicial — se verificó que la pill seleccionada lleva `bg-off-black text-off-white` y la de reposo `bg-transparent text-gray-brand`):
+
+  | elemento | antes | después |
+  |---|---|---|
+  | regla del campo (`border-b`) | `#0F0F0F` | **`rgb(147,147,147)`** |
+  | borde de las pills | `#0F0F0F` | **`rgb(147,147,147)`** |
+  | texto de pill en reposo | `#0F0F0F` | **`rgb(147,147,147)`** |
+  | chevron del select | `#0F0F0F` | **`rgb(147,147,147)`** |
+  | placeholder de input y de select | `rgb(147,147,147)` | igual |
+  | texto tipeado, valor elegido, pill elegida | `#0F0F0F` | igual |
+  | labels | `#0F0F0F` | igual |
+
+  **Contraste, con el número pedido:** `#939393` sobre `#F3F3F3` da **2,77 : 1**, por debajo del umbral WCAG AA tanto para texto normal (4,5:1) como para texto grande (3:1). Los placeholders **ya venían con ese contraste** (34 px, es el gris que el repo usaba antes de este sprint); lo nuevo es el texto de las pills, que a 17 px queda en la misma relación. Se reporta el valor en vez de inventar otro gris, como pedía la instrucción: el gris de identidad es `#939393` y es el que muestra el mockup.
+
+  **Las 10 pills, presentes y en orden**, y su agrupación coincide **exactamente** con la del mockup:
+
+  | fila | pills | ancho |
+  |---|---|---|
+  | 1 | CONSULTATION · BRANDING · REBRANDING | 386,7 |
+  | 2 | EVENT VISUAL IDENTITY · PACKAGE DESIGN | 371,0 |
+  | 3 | MOTION GRAPHICS · ADVERTISING/CAMPAIGN | 396,0 |
+  | 4 | ILLUSTRATION · EDITORIAL DESIGN · OTHER | 387,8 |
+
+  **Resolución de `?service=`** (medida sobre el HTML servido de `/contact?service=…`, leyendo qué pill sale con `aria-pressed="true"`):
+
+  | valor | origen | resuelve a |
+  |---|---|---|
+  | `brand essentials` | catálogo de /services | Branding |
+  | `brand universe` | catálogo de /services | Branding |
+  | `motion graphics` | catálogo de /services | Motion Graphics |
+  | `packaging` | catálogo de /services | **Package Design** |
+  | `editorial` | catálogo de /services | **Editorial Design** (antes caía en `Other`) |
+  | `illustration` | catálogo de /services | **Illustration** (antes caía en `Other`) |
+  | `Packaging Design` / `PACKAGING DESIGN` / `Packaging  Design` | nombre viejo de la pill | **Package Design** |
+  | `package-design` / `Package Design` | nombre nuevo | Package Design |
+  | `Branding`, `Rebranding`, `Event Visual Identity`, `Motion Graphics`, `Advertising/Campaign`, `Consultation`, `Illustration`, `Editorial Design`, `Other` | nombres de pill | sí mismos |
+  | `web design`, `zzz`, vacío | desconocido | **nada seleccionado** (antes: `Other`) |
+
+  **Envío de punta a punta, sin mandar un mail.** Se llenó el formulario en el navegador como lo haría una persona (inputs por su setter nativo + evento `input`, tres pills nuevas por click, tres selects abriendo y eligiendo) y se interceptó `fetch` para capturar el POST **sin dejarlo salir**: la validación pasa, el `POST /api/contact` sale con `workType: ["Consultation","Illustration","Editorial Design"]` y el resto de los campos, y devolviendo 500 aparece el estado de error de siempre sin navegar. Del lado del servidor: el payload capturado y las 10 opciones **validan contra el `contactSchema` real**, un payload inválido se rechaza con los mismos mensajes, `POST /api/contact` con body inválido devuelve **400** en vivo, y la celda «Work type» del mail sale `Consultation, Illustration, Editorial Design`. **El único eslabón no ejercitado es la llamada a Resend**, que es justo la verificación humana declarada — y que este sprint no toca.
+
+  **`/contact/success`** a 1920×1080: página **2062 px** = una pantalla completa (1080) + footer de **981,7** desde y=1080, el mismo alto que el footer de las demás rutas internas. `LET'S WORK TOGETHER!` **ya no está en el DOM**; sí están `JOIN OUR CLUB` y `BECOME PART OF A CREATIVE COMMUNITY`, y el footer **no** trae el bloque `CONTACT US` (el `CONTACT US` que queda en la página es el del menú). El panel oscuro conserva su animación y queda recortado por el `overflow-hidden` de la sección: sin él barrería el footer al subir.
+
+  **Tokens borrados (15 declaraciones)** — re-grepeados sobre el repo entero justo antes de borrar: los cinco `--font-size-*` del `@theme` con sus `--line-height` y `--letter-spacing` (`display`, `body`, `footer-cta`, `project-text`, `nav`) y, del `:root`, `--cursor-size`, `--cursor-size-hover` y `--footer-height`. Las utilidades que generaban (`text-display`, `text-body`, `text-footer-cta`, `text-project-text`, `text-nav`) tienen **cero usos** en `src/`; el único consumidor que registraba la auditoría (`text-body` en `InfoCard.tsx`) **ya no existe**, se borró en B1. **Conservados:** `--header-height`, que **sí** se usa en seis lugares (layout, Navbar, `/work`, `/services`, `/team` y el sticky del aside de contacto). **Huérfanos confirmados que NO se borraron**, por quedar fuera de la lista de la instrucción: `--color-gray` del `:root` (duplicado exacto de `--color-gray-brand`, que sí se usa) y `--color-beige` / `bg-beige`, que es un **color declarado de la identidad** en `CLAUDE.md` §2 aunque hoy no lo consuma nadie — borrarlo es una decisión de paleta, no una limpieza.
+
+  **Control de no-regresión del borrado** (alto de página · alto de `<main>` · alto y tope del footer, a 1920×1080, antes y después de la Fase 3):
+
+  | ruta | antes | después |
+  |---|---|---|
+  | `/` | 1080 · 916 · 164 desde 916 | **idéntico** |
+  | `/work` | 2154 · 1172,8 · 981,7 desde 1172,8 | **idéntico** |
+  | `/team` | 4257 · 3147,6 · 981,7 desde 3275,6 | **idéntico** |
+  | `/services` | 8477 · 7495 · 981,7 desde 7495 | **idéntico** |
+  | `/fun-gallery` | 1080 · 128 · 166 desde 888 | **idéntico** |
+  | `/contact` | 2306 · columna 902,5 | **idéntico** |
+  | `/contact/success` | 2062 · 1080 · 981,7 desde 1080 | **idéntico** |
+
+  Ninguna ruta tiene scroll horizontal (`scrollWidth === 1920` en las siete). `--header-height` sigue resolviendo a `128px` y `--footer-height` / `--cursor-size` ya resuelven a vacío.
+
+- **Hallazgo de la Fase 2, medido y señalado: el menú queda ilegible sobre el footer.** En `/contact/success` el `Navbar` va **transparente y con el texto en off-white** (`Navbar.tsx:128,139` — rama `isDarkRoute`), y no se oculta al scrollear (no tiene ningún listener de scroll). Con el footer nuevo la ruta pasó a tener 982 px de scroll, y **desde y≈783 hasta el final la franja clara del footer queda debajo de la barra**: medido en el tope del scroll, la franja ocupa el viewport de −71 a 233, cubre entera la banda del menú [0,128], y su fondo es `rgb(243,243,243)` — **exactamente el mismo color que el texto del menú**. El menú desaparece. Es la forma concreta del riesgo que la instrucción declaraba («puede quedar un corte raro»). **No se arregló porque el arreglo vive en `Navbar.tsx`**, que no está entre los archivos autorizados de la Fase 2; el arreglo real es hacer el tono del `Navbar` sensible al scroll en esa ruta. Al ir la fase en su propio commit, revertirla es una línea.
+
+- **Pendientes que deja:** **(1)** El hallazgo del `Navbar` de arriba: o se hace el tono sensible al scroll (cambio en `Navbar.tsx`, fuera de este sprint) o se revierte la Fase 2. **(2)** **Debajo de 1512 el fit se pierde, y es por las pills.** Las diez necesitan **396 px** de columna de control para entrar en cuatro filas; a 1920 hay 420 y a 1512 hay 410,3, pero de ahí para abajo el segundo track de la grilla toca su mínimo de 560 px y el control se achica: a 1440 quedan 378,2 (5 filas, columna de 939,5 — todavía ≤ 952), y a 1366 y 1280 quedan 356 (6 filas, columna de **976,5**, por encima del objetivo). Las siete pills viejas entraban en cuatro filas hasta 1280, así que es consecuencia directa de la lista nueva; a 1280 la columna igual bajó de 1226,5 a 976,5. Si importa el rango 1280–1440, se resuelve tocando el tamaño o el padding de las pills, que este sprint dejó intactos a propósito porque el mockup los reproduce clavados. **(3)** La rama clara de `FixedFooter` (`isFunGallery = false`) quedó **sin llamadores**; se conservó a propósito, documentado en el propio archivo, para que revertir la Fase 2 sea una línea. Si la Fase 2 se confirma, esa rama se borra en B3 junto con el rediseño de `/fun-gallery`. **(4)** Los dos huérfanos que no se borraron (`--color-gray`, `--color-beige`). **(5)** Las dos diferencias del mockup que no se aplicaron: `LIFE` sin negrita y la flecha `→` ausente. **(6)** El mockup dibuja el aside ~29 px más abajo que el código (padding superior de sección de ~86 px contra 56).
+
+- **Nota de método, tres límites del entorno.** **(1)** Vale el mismo límite de B2.2 a B2.4: la pestaña de la herramienta corre con `document.visibilityState === "hidden"`, Chrome no dispara `requestAnimationFrame` ahí y **las animaciones no se pueden observar** — ni las variants de entrada del formulario ni el panel que sube en `/contact/success` ni las transiciones de color de 150 ms de las pills. Por eso los colores se verificaron **por clase** y no por estilo computado: el estilo computado de una pill recién seleccionada devolvía su valor de reposo, congelado en el frame 0 de la transición. **(2)** El `resize` de ventana no aplica con la ventana maximizada; todo se midió a 1920×1080 exactos dentro de un iframe del mismo origen, que resuelve las media queries contra su propio viewport, y los anchos de 1512 a 1280 fijando el ancho del contenedor y el `gap` que la `clamp(3rem,6vw,8rem)` daría en cada uno. **(3)** El `next dev` **se quedó sin heap dos veces** durante el sprint (`Ineffective mark-compacts near heap limit`, ~7 GB), una de ellas al correr `next build` contra el mismo `.next`; hubo que relanzarlo con `--max-old-space-size`. No afecta a ninguna medición —todas se rehicieron sobre un servidor sano— pero conviene saberlo para el próximo sprint largo.
+
+- **Verificación humana pendiente (declarada, no la da por cumplida el agente).** En `localhost:3010`, DPR 1, zoom 100 %: **(a)** **enviar el formulario de verdad** y confirmar que llega el mail con las opciones nuevas — es lo único del circuito que no se pudo ejercitar sin mandar un correo real, y es la verificación más importante del sprint; **(b)** si el questionnaire **respira o quedó apretado**: la medición dice que entra (902,5 contra 952) y que la densidad es la del mockup, pero ninguna medición dice si se siente cómodo — si quedó apretado, aflojar es subir un número (`md:py-3`) y aceptar algo de scroll; **(c)** la composición contra `12-contact-anotado.jpg`: título, bajada, labels a la izquierda en dos líneas, grises; **(d)** las dos diferencias del mockup que se dejaron sin aplicar (`LIFE` en negrita, flecha `→`); **(e)** **`/contact/success`**, sabiendo de antemano que el menú desaparece sobre la franja clara del footer — decidir entre arreglar el `Navbar` o revertir la fase; **(f)** que `/`, `/work`, `/services`, `/team` y `/fun-gallery` no cambiaron (control del borrado de tokens).
+
+- **Commits:** los tres del sprint, más el de este cierre.
