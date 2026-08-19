@@ -419,3 +419,92 @@ Formato de entrada:
 - **Pendientes que deja:** **(1)** El corte en 1600 deja fuera a 1536, que es un ancho común (1920 al 125 %). Si se quiere ganarlo hay dos caminos, los dos con costo: apretar el padding de las pills a `px-1` **y** aceptar que el presupuesto se trunque, o bajar la escala tipográfica de los controles, que este sprint tenía prohibido tocar. **(2)** La rama clara de `FixedFooter` (`isFunGallery = false`) **sigue sin llamadores**; se conserva a propósito, documentado en el archivo, para que volver a un footer fijo sea una línea. Se borra en B3 con el rediseño de `/fun-gallery`. **(3)** Los dos huérfanos de `globals.css` que B2.5 no borró (`--color-gray`, `--color-beige`). **(4)** El mockup dibuja el aside ~29 px más abajo que el código.
 
 - **Commits:** los tres del sprint, más el de este cierre.
+
+## 2026-08-19 · B3.1 · Sonda de transparencia del pipeline Sanity → CDN → `next/image` (apertura del Bloque 3)
+
+- **Qué se hizo: nada de diseño y ningún código permanente.** El sprint entrega un reporte. Se montó una ruta temporal (`src/app/alpha-probe/page.tsx`), se midió, y se borró antes del commit. **El repo queda sin la sonda**: `lint` limpio, `build` en verde y **11 rutas**, idéntico a la línea base tomada al abrir (HEAD `6650e64`). No se escribió en Sanity: todo fue lectura por API pública y CDN.
+
+- **PARADA al inicio, y por qué conviene registrarla.** El asset del prerrequisito no estaba subido. En vez de asumirlo se consultó la API: el dataset `production` tenía **12 assets**, ninguno de 2250×2250, y el más reciente era del 2026-08-13. Se paró, se pidió el asset y se retomó. Queda como método: **el prerrequisito humano se verifica, no se supone.**
+
+- **[a] Caracterización del original** (`993ebe54…-2250x2250.png`, el peor borde de los ocho): 2250×2250, PNG, **4 canales**, `hasAlpha: true`, `isOpaque: false`, **1 931,3 KB**. El histograma de alpha corrige la lectura de un solo número:
+
+  | banda de alpha | píxeles | % | qué es |
+  |---|---|---|---|
+  | `0` | 3 137 479 | **61,98 %** | vacío total |
+  | `1–127` | — | 0,04 % | degradado anti-alias real |
+  | `128–250` | — | **10,73 %** | dos mesetas planas en `237` (5,33 %) y `242` (5,33 %) |
+  | `251–254` | — | **27,25 %** | cuerpo del producto, casi todo en `254` |
+  | `255` | 0 | **0,00 %** | — |
+
+  Dos cosas que no se ven en el resumen. **La imagen no tiene un solo píxel totalmente opaco**: el cuerpo está en `alpha=254`, a uno del tope. Y el **10,77 %** medido antes de subir corresponde a la banda `128–250`, que **no es borde anti-aliased**: son dos mesetas planas de translucidez deliberada (sombra o placa). El anti-alias verdadero es apenas **0,04 %**. Un borde real degradaría por todos los valores, no picaría en exactamente 237 y 242.
+
+  **El dato que gobierna el resto del sprint:** bajo los 3 137 479 píxeles vacíos el PNG guarda **blanco puro `rgb(255,255,255)`**. Si algo del camino aplanara la transparencia, el resultado sería **blanco** — y sobre el off-white `#F3F3F3` del sitio eso es una diferencia de 12/255, prácticamente invisible. **El fondo saturado no era un lujo del método: era la única forma de que un aplanado se notara.**
+
+- **[b] Qué devuelve el CDN de Sanity.** Alpha conservado en los cuatro casos, sin aplanado en ninguno:
+
+  | transformación | content-type | peso | canales | `isOpaque` |
+  |---|---|---|---|---|
+  | original, sin params | `image/png` | 1 931,3 KB | 4 | `false` |
+  | `?w=1200&q=90` (la galería hoy) | `image/png` | **534,6 KB** | 4 | `false` |
+  | `+fm=webp` | `image/webp` | **94,9 KB** | 4 | `false` |
+  | `+fm=png` | `image/png` | 534,6 KB | 4 | `false` |
+  | `+auto=format`, sin `Accept` | `image/png` | 534,6 KB | 4 | `false` |
+  | `+auto=format`, con `Accept: image/webp` | `image/webp` | **94,9 KB** | 4 | `false` |
+
+  **El CDN no negocia formato por su cuenta**: sin `fm` ni `auto=format` devuelve PNG siempre. Y `auto=format` **llega hasta WebP, nunca AVIF**, incluso cuando el `Accept` del cliente lo ofrece.
+
+- **[c] Qué devuelve `next/image`.** Medido **solo contra producción** (`npm run build` + `npm run start -- -p 3010`), según la adenda; **la comparación dev vs. producción queda eliminada del sprint**. Alpha conservado en los tres formatos:
+
+  | `Accept` | formato servido | w=384 | w=750 | w=1080 | w=1200 | canales | `isOpaque` |
+  |---|---|---|---|---|---|---|---|
+  | Chrome (avif, webp) | **AVIF** | 9,4 KB | 21,7 KB | 33,8 KB | **37,0 KB** | 4 | `false` |
+  | Safari (webp) | **WebP** | 12,8 KB | 32,2 KB | 52,7 KB | 54,2 KB | 4 | `false` |
+  | sin preferencia | PNG | 23,0 KB | 81,1 KB | 148,4 KB | 167,7 KB | 4 | `false` |
+
+  **Hallazgo operativo: la galería pide `q=90` al CDN pero el optimizador reencoda a `q=75`.** `urlFor(...).quality(90)` gobierna el fetch servidor→CDN; `<Image>` no recibe prop `quality`, así que usa su default. Pedir `q=90` a `/_next/image` **devuelve HTTP 400**, porque `next.config.ts` no declara `qualities`.
+
+- **[d] Halo y bordes: no hay, y está medido además de mirado.** Se compositaron sobre los tres fondos la salida real de `next/image` (AVIF w=1200) y una referencia del original reescalada con alpha premultiplicado, comparando **solo la banda de borde** (550 643 px con alpha parcial):
+
+  | fondo | diferencia media | sesgo con signo (+ = aclara) | máximo puntual |
+  |---|---|---|---|
+  | off-black `#0F0F0F` | 2,42 / 255 | **+0,37** | 63 |
+  | beige `#EFEEDA` | 2,32 / 255 | **+0,37** | 62 |
+  | off-white `#F3F3F3` | 2,19 / 255 | **+0,36** | 63 |
+
+  **Lo que prueba que no hay halo no es que el sesgo sea chico, sino que no cambia con el fondo.** Si el blanco guardado bajo los píxeles vacíos se estuviera filtrando al borde, sobre off-black el sesgo sería fuertemente positivo y sobre off-white casi nulo. Que dé +0,36/+0,37 en los tres significa que la diferencia es **ruido de compresión AVIF a q=75**, no error de composición. Coherente con lo observado en los bytes: el optimizador reemplaza el blanco bajo los vacíos por `rgba(0,0,0,0)`, que es exactamente el manejo premultiplicado correcto.
+
+  **Capturas en `C:/EsquinaWeb-capturas-B3.1/`** (fuera del repo, a propósito): `00-fila-completa-beige.jpg`, `00-fila-completa-offblack.jpg`, `01-beige-cover.png`, `02-beige-contain.png`, `03-offblack-cover.png`, `04-offblack-contain.png`, `05/06-CONTROL-sin-optimizar.png` y `07-zoom-borde-offblack-optimizada-vs-control.png`. La sonda incluyó **una celda de control con `unoptimized`** en cada fondo, que sirve el CDN directo sin pasar por el optimizador: es lo que permite separar «lo rompió Next» de «el asset es así». A ojo son indistinguibles.
+
+- **[e] `cover` vs `contain` con un recorte cuadrado.** Geometría de la tarjeta de `FunGallery` (`itemHeight = itemWidth × rand(0.68, 1.16)`), fuente 1:1:
+
+  | proporción de tarjeta | `r` | `cover` recorta | `contain` deja vacío |
+  |---|---|---|---|
+  | más apaisada (h/w 0,68) | 1,471 | **32,0 % del alto** | 32,0 % del área |
+  | media (h/w 0,92) | 1,087 | 8,0 % del alto | 8,0 % del área |
+  | más vertical (h/w 1,16) | 0,862 | 13,8 % del ancho | 13,8 % del área |
+
+  Con un recorte flotando en el vacío, `cover` **le corta pedazos al producto** —hasta un tercio— y `contain` no pierde nada: solo deja transparencia alrededor, que es precisamente lo que se quiere ver.
+
+- **[f] Peso servido, por etapa.** Contra lo que sirve hoy el pool de la galería:
+
+  | asset | original | CDN w=1200 | next w=384 | next w=1200 |
+  |---|---|---|---|---|
+  | **sonda `00-04.png`** (recorte alpha) | 1 931,3 KB | 534,6 KB | **9,4 KB** | **37,0 KB** |
+  | `akasha-producto.png` (pool hoy) | 19 709,4 KB | 2 708,3 KB | 18,3 KB | 71,1 KB |
+  | `akasha.png` (pool hoy) | 162,0 KB | 186,3 KB | 6,7 KB | 23,4 KB |
+  | `tukumi.jpg` (pool hoy) | 2 200,6 KB | 583,5 KB | 14,5 KB | 226,2 KB |
+  | `matsu.png` (pool hoy) | 2 163,1 KB | 2 859,5 KB | 7,5 KB | 127,4 KB |
+
+  **El recorte con alpha no es más caro que lo que la galería ya sirve: es más barato.** A w=384 —el ancho que realmente pide una tarjeta de 26vw— pesa **9,4 KB**, el más liviano de la tabla. La transparencia no tiene costo de peso apreciable. Nótese de paso que **el CDN puede devolver más que el original** en PNG (`matsu`: 2 859 contra 2 163 KB), que es otro argumento para no dejarlo en PNG.
+
+- **Recomendación medida para la galería nueva.** **(1) Pedirle al CDN `w=1200&fm=webp` en vez de `w=1200&q=90`**: mismo alpha, 94,9 contra 534,6 KB en el fetch servidor→CDN, y evita el caso patológico de PNG que engorda. `auto=format` también sirve pero depende del `Accept`, que en un fetch de servidor no está garantizado; `fm=webp` es determinista. **(2) Dejar `quality` como está** —sin prop en `<Image>`, o sea 75—: a q=75 la diferencia media en el borde es 2,4/255 sobre un asset elegido por ser el peor de los ocho. Subir a 90 obliga a declarar `qualities` en `next.config.ts` y no compra nada visible. **(3) Encuadrar con `object-contain`, no `cover`**, y esto es lo único que sí exige rediseño: son recortes flotando en el vacío y `cover` les corta hasta el 32 %. **(4) `next.config.ts` no necesita tocarse**: `remotePatterns` ya cubre `cdn.sanity.io`, y `formats: ["image/avif","image/webp"]` ya entrega AVIF con alpha intacto. Solo haría falta `qualities` si se decidiera subir de 75, y la medición dice que no hace falta.
+
+- **El riesgo que abrió el sprint no existe.** Ningún tramo del camino aplana la transparencia: ni el CDN con las transformaciones de la galería, ni el optimizador de Next al pasar a AVIF o WebP. **No hay halo, no hay borde sucio, no hay caja opaca.** El pipeline está listo para los ocho recortes sin cambios de infraestructura.
+
+- **Hallazgo lateral, para B3.2: el parallax de la galería desborda su propio overscan.** Cada tarjeta reserva `-inset-[8%]` de margen y el parallax la desplaza `40px × factor(2..3)` = **hasta 120 px**. El overscan disponible es de 26 px en una tarjeta de 320 y 54 px en una de 680: **en todos los tamaños el borde de la imagen puede entrar en cuadro.** Hoy no se nota porque las imágenes son opacas y llenan el marco; **con recortes sobre transparencia y `object-contain` sí se va a notar.** No se tocó nada: queda anotado como insumo del rediseño.
+
+- **[g] Lo que no se pudo medir.** **(1)** La comparación **dev vs. producción**, eliminada por la adenda: se reporta solo producción. **(2)** Los **otros siete** recortes: se midió únicamente `00-04.png`. Es el peor caso de borde declarado (10,77 % en la banda translúcida contra 0,50–2,77 % de los demás) y el más pesado, así que el resultado acota a los otros siete por arriba, pero **no están medidos**. **(3)** El comportamiento en el **CDN de Vercel en producción real**: todo se midió contra `next start` local. **(4)** Un primer intento de medir pesos con `Promise.all` devolvió **0 KB en dos filas**; era saturación del optimizador, no un fallo — repetido en secuencial dio 200 y los valores de la tabla. Queda anotado porque es un falso positivo fácil de creerse.
+
+- **Verificación humana pendiente:** mirar las capturas de fondo saturado —el halo es un fenómeno visual, no una métrica— y **descartar el borrador del Studio** que se creó para el prerrequisito. El asset queda huérfano en la biblioteca, sin efecto sobre el sitio.
+
+- **Commit:** uno solo, de bitácora, porque el sprint no deja código.
