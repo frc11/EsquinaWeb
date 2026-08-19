@@ -154,3 +154,62 @@ Formato de entrada:
 - **Verificación humana pendiente (declarada, no la da por cumplida el agente):** el agente mide layout, no píxeles pintados, y **no puede observar la animación de entrada** (ver nota de método). Queda a ojo humano en `localhost:3010`, **a DPR 1 y zoom 100 %**: (a) **primera visita en pestaña nueva** —para ver la cortina del preloader— y **recarga**, confirmando que la entrada de las tres líneas se sienta igual de fluida que antes y que no quede un salto donde estaba el botón; (b) el **corte de las tres líneas y las negritas** contra `02-home-anotado.jpg`, incluida la decisión de la coma; (c) el **equilibrio vertical** de la frase sin el botón —si queda bien plantada o pide subir/bajar—; (d) que el **footer de home** se siga viendo igual que ayer.
 
 - **Commits:** `0dc1c0a`, más el de este cierre.
+
+---
+
+## 2026-08-18 · B2.4 · Grilla de Work 5:4, más aire en el hover y aparición rápida solapada
+
+- **Qué se hizo:** dos archivos, `WorkGrid.tsx` y `ProjectCard.tsx`. **(A) Ratio:** la celda pasa de `aspect-square` a **`aspect-[5/4]`** — el mismo mecanismo que ya usa el repo (`aspect-[3/4]` en `ServiceItem`, `aspect-[4/3]` en `ProjectContentRenderer`), no se introdujo uno nuevo. **(B) Pedido al CDN:** `urlFor(coverImage).width(1200).height(1600)` → **`.width(1200).height(960)`**, para que la relación pedida (1,25) coincida con la renderizada; `object-cover` y el resto del helper quedan intactos. **(C) Aire del overlay:** `p-8` → **`px-[9%] py-[11%]`**. **(D) Tiempos:** aparecen `ITEM_DURATION = 0.45` e `ITEM_STAGGER = ITEM_DURATION / 2`, y las variants los consumen en vez de los dos `0.7` sueltos. No se tocó `HoverButton.tsx`, ni el número de columnas, ni el `gap`, ni los breakpoints, ni `RevealOnScroll`, ni ningún otro sistema de aparición del sitio.
+
+- **Corrección al inventario de la instrucción: no existe una «primera celda de texto».** La Fase 1 pedía verificar que «la primera celda, la de texto» acompañara la altura de fila. No hay tal celda: lo que se ve beige con `01 / AKASHA BLENDS / …` en los dos mockups es **el overlay de hover de la tarjeta 01**, que al abrirse tapa la portada con el `coverColor`. En `05-work-grid-actual.jpg` se confirma porque la barra de estado del navegador muestra `…/work/akasha-blends`: había un cursor encima. La grilla es homogénea — cuatro celdas del mismo componente con la misma clase — así que las filas quedan parejas por construcción, verificado en runtime: las cuatro miden **608 × 486,39** a 1920. **No fue una PARADA:** la acción pedida no cambia, el registro sí.
+
+- **5:4 = ancho : alto, confirmado contra el mockup antes de tocar nada.** En `06-work-grid-anotado.jpg` la tarjeta de la fila 1 mide **403 × 315 px** de imagen (ratio **1,28**) y la celda 1 comparte esa altura de fila: apaisada, no vertical. No se disparó la PARADA del ratio invertido.
+
+- **Cómo se decidió el aire del overlay (y por qué es un porcentaje).** La devolución no trae un número, trae una proporción dibujada. Se midió el mockup por píxel (scan de umbral sobre el JPG, con `sharp`) y se **validó el método contra `05-work-grid-actual.jpg`**, que sí es una captura del sitio real: ahí el método devuelve un padding de **5,15 %** del ancho de la tarjeta contra el **5,26 %** verdadero (32 px sobre 608) — error de 0,1 pp. Aplicada la misma vara al mockup anotado, las clientas piden **9,2 % del ancho a los costados** y **10,9 % arriba**, o sea entre 1,75× y 2,1× lo actual. Como la proporción es relativa al ancho de la tarjeta y la tarjeta cambia de tamaño con el viewport, se escribió tal cual: **`px-[9%] py-[11%]`**, que en CSS resuelve contra el ancho del bloque contenedor en los cuatro lados. Un valor fijo no podía cumplir las dos puntas: a 1920 el mockup pide ~56 px, pero a 1280 la tarjeta 5:4 mide 315,7 px de alto y **56 px arriba y abajo desbordan el texto**. El porcentaje resuelve el rango entero con un solo valor y sin agregar un breakpoint que el repo no usa en ningún `.tsx`. El repo ya escribe todo con valores arbitrarios (`text-[17px]`, `max-w-[220px]`, `h-[200vh]`): es su idioma, no uno nuevo. **No se tocó la escala tipográfica ni el contenido:** siguen los 17 px, el `leading-[1.15]`, los `mt-6` y el `max-w-[220px]`.
+
+- **El stagger se deriva de la duración, no se fija aparte.** El criterio de aceptación — la tarjeta n+1 arranca cuando la n va por la mitad — es una **relación**, así que se escribió como relación: `ITEM_STAGGER = ITEM_DURATION / 2`. Retocar la velocidad es ahora editar **un solo número** y el solapamiento se mantiene solo. Se conserva todo lo demás de la animación: el mismo `EASE` `[0.25, 0.1, 0.25, 1]`, el mismo desplazamiento `y: 40`, el mismo disparo por scroll (`useInView` con `once: true` y `margin: "-80px"`), el mismo `useReducedMotion` y **el mismo gateo por preloader** (`reveal = isPreloaderDone && inView`), que no se rompió.
+
+- **Mediciones / salidas de puertas.** Puertas: línea base lint exit 0 y build exit 0 (14 rutas, único warning el conocido de `@sanity/image-url`); final **idéntico** — lint exit 0, build exit 0, mismas 14 rutas, cero errores nuevos. Runtime (`next dev` en el puerto **3010**, DPR 1).
+
+  **Tiempos de la secuencia, con los 4 proyectos del dataset:**
+
+  | | Duración por tarjeta | Stagger | Arranca la 4ª | Termina la secuencia | Solapamiento |
+  |---|---|---|---|---|---|
+  | Antes | 0,70 s | 0,70 s | **2,10 s** | **2,80 s** | ninguno (stagger = duración) |
+  | Después | 0,45 s | 0,225 s | **0,675 s** | **1,125 s** | 50 % exacto |
+
+  La última tarjeta arranca **68 % antes** y la secuencia entera dura **60 % menos**.
+
+  **Geometría de la tarjeta y del overlay, por ancho** (celda medida en runtime; el alto del contenido del overlay no depende del viewport porque `max-w-[220px]` lo fija):
+
+  | Viewport | Tarjeta | Ratio | Padding × | Padding y | Hueco libre entre bloques |
+  |---|---|---|---|---|---|
+  | 1280 | 394,66 × 315,72 | **1,25** | 35,5 | 43,4 | 25,2 |
+  | 1440 | 448,00 × 358,39 | **1,25** | 40,3 | 49,3 | 56,1 |
+  | 1512 | 472,00 × 377,59 | **1,25** | 42,5 | 51,9 | 70,0 |
+  | 1920 | 608,00 × 486,39 | **1,25** | 54,7 | 66,9 | 148,9 |
+
+  El caso más apretado del rango desktop es 1280 y **no desborda**: sobran 25,2 px, prácticamente el mismo `mt-6` (24 px) del ritmo interno del bloque. **Padding del overlay antes:** `32px` uniforme en todos los anchos. A 1920 el resultado cae sobre el mockup: **9,0 % del ancho a los costados** (mockup 9,2 %) y **11,0 % arriba** (mockup 10,9 %). Sin scroll horizontal en ningún ancho (`scrollWidth === 1920`).
+
+  **Pedido al CDN, antes y después** (leído del HTML prerenderizado de `/work` en los dos árboles; `q` y `fm` no se especifican ni antes ni después — rigen los valores por defecto de Sanity, y no se agregaron):
+
+  | Proyecto | Asset de origen | Antes | Después |
+  |---|---|---|---|
+  | AKASHA BLENDS | 3456×5184 | `w=1200 h=1600 rect=0,288,3456,4608` | `w=1200 h=960 rect=0,1210,3456,2765` |
+  | TUKUMI TAKEAWAY | 2400×3000 | `w=1200 h=1600 rect=75,0,2250,3000` | `w=1200 h=960 rect=0,540,2400,1920` |
+  | MATSU | 1024×1536 | `w=1200 h=1600 rect=0,86,1024,1365` | `w=1200 h=960 rect=0,359,1024,819` |
+  | Matsu (`matsutrabajo`) | 1024×576 | `w=1200 h=1600 rect=296,0,432,576` | `w=1200 h=960 rect=152,0,720,576` |
+
+  La relación pedida pasa de **0,75** a **1,25** en los cuatro, y el `rect` que calcula el builder pasa a ser el que efectivamente se muestra: **se termina el recorte doble** (antes Sanity cortaba a 3:4 y después `object-cover` volvía a cortar a 1:1). El caso extremo es `matsutrabajo`, cuyo origen es apaisado: antes se le pedía una tira central de **432 px de ancho** para estirarla a 1200; ahora se le piden **720**, un 67 % más de píxeles reales. Sigue siendo el único asset que el CDN **amplía** (720 → 1200) — es una limitación del original, no del pedido.
+
+  **Alto de la página `/work`** (1920×911): **2398 → 2154 px** (−244, −10,2 %). El footer sube de `y = 1416` a `y = 1173` y conserva sus **982 px**, idénticos a los que dejó medidos B2.1b: quedó donde tiene que quedar. La grilla misma pasa de 1288 a 1044,78 px.
+
+  **Control de que `/work/[slug]` no cambió — prueba fuerte.** No se midió alto de página: se comparó el **HTML prerenderizado** de las cuatro rutas SSG entre el árbol previo y el final (dos builds completos, con `git stash` de por medio). El `<main>` de las cuatro es **byte a byte idéntico** — `akasha-blends` 7702 B, `matsu` 3635 B, `matsutrabajo` 3302 B, `tukumi-takeaway` 1513 B, mismos hashes. En `/work`, el mismo diff muestra **exactamente los tres cambios buscados y ninguno más**: `aspect-square`→`aspect-[5/4]`, `p-8`→`px-[9%] py-[11%]` y el `src` del CDN, repetidos una vez por tarjeta. Coherente con el grafo de imports: `WorkGrid` lo consume sólo `/work/page.tsx` y `ProjectCard` sólo `WorkGrid`.
+
+- **Nota de método, dos límites del entorno.** **(1)** Vale el mismo límite registrado en B2.2, B2.2b y B2.3: la pestaña de la herramienta corre con `document.visibilityState === "hidden"` y Chrome no dispara `requestAnimationFrame` ahí, así que **la animación de entrada — el punto central de este sprint — no se pudo observar**. Los tiempos de la tabla son los de las variants, no una medición de reproducción. Para la captura de control hubo que forzar a mano la opacidad de las celdas y de un ancestro que el preloader dejaba en 0,14. Además, `/work/[slug]` **colgó el renderer** de la pestaña de herramienta en tres intentos seguidos: de ahí que su control se haya hecho contra el HTML prerenderizado, que es prueba más fuerte que un alto de página. **(2)** El `resize` de ventana **no aplica con la ventana maximizada** (mismo límite que B2.1, B2.1b y B2.2): los anchos de la tabla se midieron fijando el ancho del contenedor de la grilla, que reproduce la geometría exacta porque en todo el rango 1280–1920 rige el mismo breakpoint (`lg:grid-cols-3`) y ninguna media query más interviene.
+
+- **Pendientes que deja:** **(1)** **El rango de 2 columnas queda fuera de norma con el ratio nuevo.** Entre `sm` (640 px) y `lg` (1024 px) la grilla es de 2 columnas; a 640 px la tarjeta pasa a medir 284 × 227,2 px y el contenido del overlay (203,7 px) no entra con ningún padding razonable. Es consecuencia directa del 5:4, no de la decisión de padding — con `p-8` también desbordaría — y cae de lleno en la ronda de mobile que `CLAUDE.md` §1 declara separada; el sitio es desktop-first y este sprint tenía el alcance en `/work` de escritorio. Se registra para que esa ronda lo tome. **(2)** El mockup anotado dibuja el ritmo **interno** del bloque de texto más suelto que el código (separaciones de ~3 interlineados contra los ~2,2 que dan los `mt-6`). **No se tocó**: la devolución habla del margen contra el borde de la tarjeta, no del espaciado entre líneas, y la instrucción pide expresamente conservar la escala tipográfica. Si al comparar contra el mockup se ve que también hay que soltar el interior, es un cambio de una constante (`mt-6`) y una decisión de diseño de Valentino. **(3)** `matsutrabajo` sigue con un original de 1024×576 que el CDN amplifica; se resuelve subiendo una portada mejor al dataset, no desde el código.
+
+- **Verificación humana pendiente (declarada, no la da por cumplida el agente).** El agente mide layout y **no puede observar la animación**, que es la mitad de este sprint (ver nota de método). Queda a ojo humano en `localhost:3010`, **a DPR 1 y zoom 100 %**: (a) **la aparición**, entrando a `/work` con scroll desde arriba — si se siente rápida y encadenada, con la siguiente arrancando antes de que termine la anterior; si todavía se siente lenta, o si al revés ahora parecen aparecer todas juntas y se perdió la secuencia, el ajuste es **un solo número**, `ITEM_DURATION`; (b) **los recortes de las cuatro portadas a 5:4**, uno por uno — son fotos de producto y packaging de las clientas y el `rect` que elige el CDN es **centrado**, así que puede cortar un logo, un envase o una cara; si alguna queda mal encuadrada, se arregla poniendo *hotspot* en Sanity, no en el código; (c) **el aire del overlay** contra `06-work-grid-anotado.jpg`, en hover sobre cada tarjeta; (d) la grilla completa a **1920, 1512, 1440 y 1280**, buscando filas parejas y ausencia de huecos raros.
+
+- **Commits:** el de este sprint, más el de este cierre.
