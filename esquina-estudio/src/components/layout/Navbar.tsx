@@ -23,14 +23,6 @@ const NAV_INDICATOR_EASE: [number, number, number, number] = [
 ];
 const NAV_INDICATOR_TIMES = [0, 0.28, 0.72, 1];
 const NAV_INDICATOR_HOME_GAP = 24;
-/**
- * Separación entre el borde inferior de la caja de texto del tab y el subrayado,
- * expresada en em del propio tab. Sale de medir el header a 13 px antes de este
- * sprint: el subrayado caía 6,5 px por debajo de esa caja (6,5 / 13 = 0,5 em) y
- * 10,5 px por debajo de la línea de base. Al quedar en em, la proporción se
- * conserva con cualquier tamaño de tipografía — a 17 px son 8,5 px y 13,75 px.
- */
-const NAV_INDICATOR_GAP_EM = 0.5;
 
 type DesktopNavHref =
   | "/work"
@@ -54,25 +46,27 @@ type IndicatorAnimation = {
   duration: number;
 };
 
-type LabelMetrics = {
+type FillBox = {
   left: number;
   right: number;
   bottom: number;
-  fontSize: number;
 };
 
 /**
- * Mide el texto renderizado de un tab, no su caja.
+ * Mide la caja que cubre el fill del hover de `HoverButton`, no el texto.
  *
- * El `<span>` que referencia el Navbar envuelve un `HoverButton`, cuya caja
- * suma 6 px de padding propio (`balancedPadding`) más el hueco de descendentes
- * del `<a>`, que hereda 16 px del body. Ninguno de los dos escala con el tamaño
- * del tab, así que medir la caja acoplaba la geometría del indicador a valores
- * de otro archivo. El recorrido llega al nodo de texto y lo mide con un `Range`,
- * que devuelve el avance real de los glifos — sin padding y sin el espacio
- * fantasma que el interletrado agregaba después del último glifo.
+ * El indicador se lee como el pie de ese fill, así que su referencia es la
+ * misma caja que el fill pinta. El fill es un `absolute top-0 left-0 right-0
+ * h-full` — con `balancedPadding`, que es lo que porta el Navbar en los cinco
+ * tabs — de modo que ocupa exactamente su bloque contenedor. En reposo no
+ * sirve medirlo a él: está desplazado `y: 120%` fuera de la caja. Lo que se
+ * mide es el contenedor, y ese es el mismo elemento posicionado del que cuelga
+ * el texto: de ahí el recorrido hasta el nodo de texto y el salto a su
+ * `offsetParent`. Tampoco sirve el `<span>` que referencia el Navbar: envuelve
+ * un `<a>` que hereda los 16 px del body y agrega por debajo del fill un hueco
+ * de descendentes que no escala con el tamaño del tab.
  */
-function measureLabel(host: HTMLElement): LabelMetrics | null {
+function measureFillBox(host: HTMLElement): FillBox | null {
   const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
   let node = walker.nextNode();
 
@@ -80,15 +74,13 @@ function measureLabel(host: HTMLElement): LabelMetrics | null {
     node = walker.nextNode();
   }
 
-  const parent = node?.parentElement;
+  const container = node?.parentElement?.offsetParent;
 
-  if (!node || !parent) {
+  if (!(container instanceof HTMLElement)) {
     return null;
   }
 
-  const range = document.createRange();
-  range.selectNodeContents(node);
-  const rect = range.getBoundingClientRect();
+  const rect = container.getBoundingClientRect();
 
   if (rect.width === 0 || rect.height === 0) {
     return null;
@@ -98,19 +90,17 @@ function measureLabel(host: HTMLElement): LabelMetrics | null {
     left: rect.left,
     right: rect.right,
     bottom: rect.bottom,
-    fontSize: Number.parseFloat(getComputedStyle(parent).fontSize),
   };
 }
 
 /**
- * Alto del subrayado relativo al contenedor del header. Se redondea a píxel CSS
+ * Alto del subrayado relativo al contenedor del header: su borde superior se
+ * apoya en el borde inferior del fill, sin hueco. Se redondea a píxel CSS
  * entero: el elemento mide 1 px de alto y un `top` fraccionario lo reparte entre
  * dos filas de píxeles, que es como se ve el hairline sucio a DPR 1.
  */
-function indicatorTop(label: LabelMetrics, navTop: number) {
-  const gap = label.fontSize * NAV_INDICATOR_GAP_EM;
-
-  return Math.round(label.bottom + gap - navTop);
+function indicatorTop(box: FillBox, navTop: number) {
+  return Math.round(box.bottom - navTop);
 }
 
 function isPathActive(pathname: string, href: DesktopNavHref) {
@@ -176,10 +166,10 @@ export default function Navbar() {
       }
 
       const navRect = desktopNav.getBoundingClientRect();
-      const baselineLabel = measureLabel(baselineLink);
+      const baselineBox = measureFillBox(baselineLink);
       const logoRect = logo.getBoundingClientRect();
 
-      if (!baselineLabel || logoRect.width === 0) {
+      if (!baselineBox || logoRect.width === 0) {
         currentIndicatorRef.current = null;
         setIndicator(null);
         return;
@@ -189,7 +179,7 @@ export default function Navbar() {
         kind: "home",
         x: Math.round(logoRect.right - navRect.left) + NAV_INDICATOR_HOME_GAP,
         width: NAV_INDICATOR_DOT_WIDTH,
-        top: indicatorTop(baselineLabel, navRect.top),
+        top: indicatorTop(baselineBox, navRect.top),
       };
       const previousIndicator = currentIndicatorRef.current;
 
@@ -235,9 +225,9 @@ export default function Navbar() {
         return;
       }
 
-      const activeLabel = measureLabel(activeLink);
+      const activeBox = measureFillBox(activeLink);
 
-      if (!activeLabel) {
+      if (!activeBox) {
         currentIndicatorRef.current = null;
         setIndicator(null);
         return;
@@ -245,14 +235,14 @@ export default function Navbar() {
 
       // Los dos bordes se redondean por separado y el ancho sale de la resta,
       // para que ninguno de los dos caiga en medio de un píxel.
-      const activeLeft = Math.round(activeLabel.left - navRect.left);
-      const activeRight = Math.round(activeLabel.right - navRect.left);
+      const activeLeft = Math.round(activeBox.left - navRect.left);
+      const activeRight = Math.round(activeBox.right - navRect.left);
 
       const nextIndicator: IndicatorMeasure = {
         kind: "tab",
         x: activeLeft,
         width: activeRight - activeLeft,
-        top: indicatorTop(activeLabel, navRect.top),
+        top: indicatorTop(activeBox, navRect.top),
       };
 
       if (!animateMove || !previousIndicator) {
@@ -372,9 +362,7 @@ export default function Navbar() {
                   tone={navTone}
                   blend={useGalleryBlend}
                   balancedPadding
-                  className={`text-[17px] uppercase font-body ${
-                    isFunGallery ? "font-thin" : "font-[480]"
-                  } tracking-normal ${linkTextClass}`}
+                  className={`text-[17px] uppercase font-body font-[480] tracking-normal ${linkTextClass}`}
                 >
                   {link.label}
                 </HoverButton>
@@ -393,9 +381,7 @@ export default function Navbar() {
               tone={navTone}
               blend={useGalleryBlend}
               balancedPadding
-              className={`text-[17px] uppercase font-body ${
-                isFunGallery ? "font-normal" : "font-medium"
-              } tracking-normal ${linkTextClass}`}
+              className={`text-[17px] uppercase font-body font-medium tracking-normal ${linkTextClass}`}
             >
               CONTACT US
             </HoverButton>
