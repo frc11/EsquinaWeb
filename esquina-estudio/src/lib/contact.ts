@@ -1,12 +1,15 @@
 import { z } from "zod";
 
 export const WORK_TYPE_OPTIONS = [
+  "Consultation",
   "Branding",
   "Rebranding",
   "Event Visual Identity",
-  "Packaging Design",
+  "Package Design",
   "Motion Graphics",
   "Advertising/Campaign",
+  "Illustration",
+  "Editorial Design",
   "Other",
 ] as const;
 

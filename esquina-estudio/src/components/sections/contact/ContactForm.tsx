@@ -125,47 +125,75 @@ function normalizeServiceParam(value: string) {
     .trim();
 }
 
+/**
+ * Fallback tolerante de `?service=`: gana el primer trozo que aparezca en el
+ * valor ya normalizado. Cubre los nombres del catálogo de /services —`brand
+ * essentials`, `brand universe`, `packaging`, `editorial`, `illustration`,
+ * `motion graphics`— y los nombres viejos de las pills, para que los links ya
+ * emitidos sigan resolviendo después del rename `PACKAGING DESIGN` →
+ * `PACKAGE DESIGN`. El orden importa: `brand` va último porque también está
+ * dentro de `rebranding`.
+ */
+const SERVICE_KEYWORDS: ReadonlyArray<readonly [string, WorkTypeOption]> = [
+  ["consult", "Consultation"],
+  ["rebrand", "Rebranding"],
+  ["event", "Event Visual Identity"],
+  ["packag", "Package Design"],
+  ["motion", "Motion Graphics"],
+  ["advertis", "Advertising/Campaign"],
+  ["campaign", "Advertising/Campaign"],
+  ["illustrat", "Illustration"],
+  ["editorial", "Editorial Design"],
+  ["brand", "Branding"],
+];
+
+/**
+ * Un valor desconocido devuelve `null`: el formulario abre sin nada marcado en
+ * vez de elegir una opción por la clienta.
+ */
 function resolveWorkTypeFromService(service: string | null): WorkTypeOption | null {
   if (!service) return null;
 
   const normalized = normalizeServiceParam(service);
   if (!normalized) return null;
 
-  const directMatch = WORK_TYPE_OPTIONS.find((option) => {
-    const normalizedOption = normalizeServiceParam(option);
-    return (
-      normalized === normalizedOption ||
-      normalized.includes(normalizedOption) ||
-      normalizedOption.includes(normalized)
-    );
-  });
+  const exactMatch = WORK_TYPE_OPTIONS.find(
+    (option) => normalizeServiceParam(option) === normalized,
+  );
+  if (exactMatch) return exactMatch;
 
-  if (directMatch) return directMatch;
-  if (normalized.includes("motion")) return "Motion Graphics";
-  if (normalized.includes("packaging")) return "Packaging Design";
-  if (normalized.includes("rebrand")) return "Rebranding";
-  if (normalized.includes("brand")) return "Branding";
-  if (normalized.includes("event")) return "Event Visual Identity";
-  if (normalized.includes("campaign") || normalized.includes("advertising")) {
-    return "Advertising/Campaign";
-  }
+  const keyword = SERVICE_KEYWORDS.find(([needle]) =>
+    normalized.includes(needle),
+  );
 
-  return "Other";
+  return keyword ? keyword[1] : null;
 }
 
 function FieldShell({
   label,
   error,
+  alignLabelTop = false,
   children,
 }: {
-  label: React.ReactNode;
+  /** Dos líneas fijas: el corte lo decide el mockup, no el ancho de la columna. */
+  label: readonly [string, string];
   error?: FieldError;
+  /** El bloque de pills es mucho más alto que su label: ahí el label va arriba. */
+  alignLabelTop?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid gap-3 py-5 md:grid-cols-[minmax(150px,176px)_minmax(0,420px)] md:items-center md:gap-7 md:py-7">
-      <label className="self-center font-body text-[14px] uppercase leading-[1.15] text-off-black md:text-right md:text-[16px]">
-        {label}
+    <div className="grid gap-3 py-5 md:grid-cols-[minmax(150px,176px)_minmax(0,420px)] md:items-center md:gap-7 md:py-3">
+      <label
+        className={`${
+          alignLabelTop ? "self-start" : "self-center"
+        } font-body text-[14px] uppercase leading-[1.15] text-off-black md:text-[16px]`}
+      >
+        {label.map((line) => (
+          <span key={line} className="block">
+            {line}
+          </span>
+        ))}
       </label>
       <div className="min-w-0 self-center">
         {children}
@@ -188,7 +216,7 @@ function ContactFocusSurface({
 }) {
   return (
     <div
-      className={`group/contact-focus relative isolate overflow-hidden border-b border-off-black ${className}`}
+      className={`group/contact-focus relative isolate overflow-hidden border-b border-gray-brand ${className}`}
     >
       <span
         aria-hidden
@@ -233,10 +261,10 @@ function WorkTypePill({
       type="button"
       aria-pressed={selected}
       onClick={handleClick}
-      className={`relative shrink-0 cursor-pointer overflow-hidden border border-off-black px-2.5 py-1.5 font-body text-[15px] uppercase leading-none transition-colors duration-150 hover:bg-off-black hover:text-off-white focus-visible:bg-off-black focus-visible:text-off-white md:text-[17px] ${
+      className={`relative shrink-0 cursor-pointer overflow-hidden border border-gray-brand px-2.5 py-1.5 font-body text-[15px] uppercase leading-none transition-colors duration-150 hover:bg-off-black hover:text-off-white focus-visible:bg-off-black focus-visible:text-off-white md:text-[17px] ${
         selected
           ? "bg-off-black text-off-white"
-          : "bg-transparent text-off-black"
+          : "bg-transparent text-gray-brand"
       }`}
     >
       {ripple && (
@@ -391,7 +419,7 @@ function CustomSelect({
           )}
           <span
             aria-hidden
-            className="flex shrink-0 items-center self-center pr-1 text-off-black transition-colors duration-200 group-focus-within/contact-focus:text-off-white"
+            className="flex shrink-0 items-center self-center pr-1 text-gray-brand transition-colors duration-200 group-focus-within/contact-focus:text-off-white"
           >
             <svg
               viewBox="0 0 12 12"
@@ -543,7 +571,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
           animate={isPreloaderDone ? "visible" : "hidden"}
           variants={shouldReduceMotion ? undefined : contactTitleVariants}
         >
-          <h1 className="font-display text-[56px] font-thin uppercase leading-[0.9] md:text-[68px] lg:text-[clamp(74px,5.25vw,96px)]">
+          <h1 className="font-display text-[40px] font-thin uppercase leading-[48px] tracking-normal">
             LET&apos;S BRING
             <br />
             YOUR IDEAS
@@ -553,7 +581,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
         </motion.div>
 
         <motion.div
-          className="mt-9 max-w-[560px] space-y-6 overflow-hidden font-body text-[20px] uppercase leading-[1.24] md:text-[23px] lg:mt-12 lg:text-[25px]"
+          className="mt-9 max-w-[560px] space-y-6 overflow-hidden font-body text-[17px] uppercase leading-[21px] tracking-normal"
           initial={shouldReduceMotion ? false : "hidden"}
           animate={isPreloaderDone ? "visible" : "hidden"}
           variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
@@ -598,7 +626,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
           >
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
-                  label={"STATE YOUR FULL NAME *"}
+                  label={["STATE YOUR", "FULL NAME *"]}
                   error={errors.fullName?.message}
                 >
                   <ContactFocusSurface>
@@ -614,7 +642,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
-                  label="EMAIL ADDRESS *"
+                  label={["EMAIL", "ADDRESS *"]}
                   error={errors.email?.message}
                 >
                   <ContactFocusSurface>
@@ -630,13 +658,9 @@ export default function ContactForm({ service = null }: { service?: string | nul
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
-                  label={
-                    <>
-                      <span className="block">WHAT ARE YOU</span>
-                      <span className="block">LOOKING TO WORK ON?</span>
-                    </>
-                  }
+                  label={["WHAT ARE YOU", "LOOKING TO WORK ON?"]}
                   error={errors.workType?.message}
+                  alignLabelTop
                 >
                   <div className="flex max-w-[430px] flex-wrap gap-1.5">
                     {WORK_TYPE_OPTIONS.map((option) => (
@@ -652,7 +676,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
               </ContactFieldReveal>
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
-                <FieldShell label="WHAT BEST DESCRIBES YOUR BUSINESS?">
+                <FieldShell label={["WHAT BEST DESCRIBES", "YOUR BUSINESS?"]}>
                   <CustomSelect
                     id="business-type"
                     value={businessType}
@@ -671,7 +695,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
               </ContactFieldReveal>
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
-                <FieldShell label="WHAT IS YOUR INDUSTRY/FIELD">
+                <FieldShell label={["WHAT IS YOUR", "INDUSTRY/FIELD"]}>
                   <ContactFocusSurface>
                     <input
                       type="text"
@@ -684,10 +708,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
               </ContactFieldReveal>
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
-                <FieldShell label={<>
-                      <span className="block">WHERE ARE</span>
-                      <span className="block">YOU BASED?</span>
-                    </>}>
+                <FieldShell label={["WHERE ARE", "YOU BASED?"]}>
                   <CustomSelect
                     id="country"
                     value={country}
@@ -725,7 +746,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
               </ContactFieldReveal>
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
-                <FieldShell label="DO YOU HAVE A TIMELINE IN MIND?">
+                <FieldShell label={["DO YOU HAVE A", "TIMELINE IN MIND?"]}>
                   <CustomSelect
                     id="timeline"
                     value={timeline}
@@ -744,10 +765,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
               </ContactFieldReveal>
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
-                <FieldShell label={<>
-                      <span className="block">WHAT IS YOUR</span>
-                      <span className="block">BUDGET RANGE?</span>
-                    </>}>
+                <FieldShell label={["WHAT IS YOUR", "BUDGET RANGE?"]}>
                   <CustomSelect
                     id="budget"
                     value={budget}
@@ -766,10 +784,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
               </ContactFieldReveal>
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
-                <FieldShell label={<>
-                      <span className="block">HOW DID YOU</span>
-                      <span className="block">HEAR ABOUT US?</span>
-                    </>}>
+                <FieldShell label={["HOW DID YOU", "HEAR ABOUT US?"]}>
                   <ContactFocusSurface>
                     <input
                       type="text"
@@ -791,7 +806,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
             </motion.form>
 
             <motion.div
-  className="mt-12 md:mt-16 md:grid md:grid-cols-[minmax(150px,176px)_minmax(0,420px)] md:gap-7"
+  className="mt-12 md:mt-7 md:grid md:grid-cols-[minmax(150px,176px)_minmax(0,420px)] md:gap-7"
   initial={shouldReduceMotion ? false : "hidden"}
   animate={isPreloaderDone ? "visible" : "hidden"}
   variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
