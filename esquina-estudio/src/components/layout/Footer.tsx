@@ -314,10 +314,13 @@ function HomeFooter() {
 }
 
 /**
- * Rutas con footer fijo (`/fun-gallery` y `/contact/success`): el logo gigante y
- * la banda oscura romperían esas pantallas, así que conservan la composición
- * compacta de hoy. Único cambio: el interletrado pasa a 0 en todo el footer.
- * `/fun-gallery` se rediseña en el Bloque 3.
+ * Footer fijo de `/fun-gallery`: el logo gigante y la banda oscura romperían esa
+ * pantalla, así que conserva la composición compacta de hoy, con el interletrado
+ * a 0. Se rediseña en el Bloque 3.
+ *
+ * La rama clara (`isFunGallery = false`) quedó sin llamadores cuando
+ * `/contact/success` adoptó el footer nuevo (B2.5/F2); se conserva a propósito
+ * para que revertir esa adopción sea una sola línea.
  */
 function FixedFooter({ isFunGallery }: { isFunGallery: boolean }) {
   const textClass = "text-off-white";
@@ -426,10 +429,13 @@ export default function Footer() {
 
   const isFunGallery =
     pathname === "/fun-gallery" || pathname.startsWith("/fun-gallery/");
-  const isDarkRoute = pathname === "/contact/success";
-  const isContactPage = pathname === "/contact";
+  // `/contact/success` adopta el footer nuevo con la variante de `/contact`: la
+  // clienta acaba de escribir, así que la franja clara no repite «CONTACT US» y
+  // la llamada a comunidad viaja en la banda oscura.
+  const isContactRoute =
+    pathname === "/contact" || pathname === "/contact/success";
 
-  if (isFunGallery || isDarkRoute) {
+  if (isFunGallery) {
     return <FixedFooter isFunGallery={isFunGallery} />;
   }
 
@@ -437,5 +443,5 @@ export default function Footer() {
     return <HomeFooter />;
   }
 
-  return <SiteFooter isContactPage={isContactPage} />;
+  return <SiteFooter isContactPage={isContactRoute} />;
 }

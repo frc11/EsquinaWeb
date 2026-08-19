@@ -10,9 +10,15 @@ export default function ContactSuccess() {
   const { isPreloaderDone } = usePreloader();
   const shouldReduceMotion = Boolean(reduceMotion);
 
+  // La pantalla de éxito ocupa una pantalla completa **en flujo normal** (antes
+  // era `fixed inset-0`): así el footer nuevo, que en esta ruta ya no es fijo,
+  // se apila debajo y se alcanza scrolleando. El margen negativo cancela el
+  // `pt-[--header-height]` del <main> para que el panel oscuro siga cubriendo la
+  // franja del header igual que cuando era fijo, y `overflow-hidden` lo recorta
+  // a esa pantalla mientras sube (si no, barrería el footer al animar).
   return (
     <section
-      className="fixed inset-0 z-[90]"
+      className="relative z-[90] -mt-[var(--header-height)] h-[100svh] overflow-hidden"
       aria-label="Inquiry sent confirmation"
     >
       {/* ── Dark panel that rises from below ── */}
