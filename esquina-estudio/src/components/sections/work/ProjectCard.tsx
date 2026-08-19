@@ -30,7 +30,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
     typeof project.coverImage === "string"
       ? project.coverImage
       : project.coverImage
-        ? urlFor(project.coverImage).width(1200).height(1600).url()
+        ? urlFor(project.coverImage).width(1200).height(960).url()
         : null;
   const contrastClass = getContrastClass(project.coverColor);
 
@@ -59,7 +59,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         )}
 
         <motion.div
-          className={`absolute inset-0 flex flex-col justify-between p-8 ${contrastClass}`}
+          className={`absolute inset-0 flex flex-col justify-between px-[9%] py-[11%] ${contrastClass}`}
           style={{ backgroundColor: project.coverColor || "#EFEEDA" }}
           initial={{ opacity: 0 }}
           whileHover={{ opacity: 1 }}
