@@ -576,12 +576,12 @@ export default function ContactForm({ service = null }: { service?: string | nul
             <br />
             YOUR IDEAS
             <br />
-            TO <span className="font-semibold">LIFE</span>
+            TO LIFE
           </h1>
         </motion.div>
 
         <motion.div
-          className="mt-9 max-w-[560px] space-y-6 overflow-hidden font-body text-[17px] uppercase leading-[21px] tracking-normal"
+          className="mt-9 max-w-[560px] overflow-hidden font-body text-[17px] uppercase leading-[21px] tracking-normal"
           initial={shouldReduceMotion ? false : "hidden"}
           animate={isPreloaderDone ? "visible" : "hidden"}
           variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
@@ -590,9 +590,6 @@ export default function ContactForm({ service = null }: { service?: string | nul
             SHARE YOUR PROJECT DETAILS
             <br />
             TO RECEIVE A CUSTOM PROPOSAL
-          </p>
-          <p aria-hidden className="text-[28px] leading-none md:text-[32px]">
-            &rarr;
           </p>
         </motion.div>
       </aside>
