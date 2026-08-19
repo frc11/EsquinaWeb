@@ -2,7 +2,8 @@
 export const ALL_PROJECTS_QUERY = `
   *[_type == "project"] | order(order asc) {
     _id, title, slug, projectNumber, category, services, year,
-    coverImage, coverColor
+    coverImage, coverColor,
+    titleEs, categoryEs, servicesEs
   }
 `;
 
@@ -10,7 +11,8 @@ export const ALL_PROJECTS_QUERY = `
 export const PROJECT_BY_SLUG_QUERY = `
   *[_type == "project" && slug.current == $slug][0] {
     _id, title, slug, projectNumber, category, services, year,
-    coverImage, content
+    coverImage, content,
+    titleEs, categoryEs, servicesEs
   }
 `;
 

@@ -4,12 +4,26 @@ export default defineType({
   name: "project",
   title: "Project",
   type: "document",
+  // Cada par EN/ES viaja en su propio fieldset para que la pantalla de edición
+  // no quede en una columna plana de trece campos.
+  fieldsets: [
+    { name: "nameGroup", title: "Project Name (English and Spanish)" },
+    { name: "categoryGroup", title: "Category (English and Spanish)" },
+    { name: "servicesGroup", title: "Services (English and Spanish)" },
+  ],
   fields: [
     defineField({
       name: "title",
       title: "Project Name",
       type: "string",
+      fieldset: "nameGroup",
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: "titleEs",
+      title: "Project Name in Spanish",
+      type: "string",
+      fieldset: "nameGroup",
     }),
     defineField({
       name: "slug",
@@ -27,11 +41,25 @@ export default defineType({
       name: "category",
       title: "Category (e.g. FOOD & BEVERAGES)",
       type: "string",
+      fieldset: "categoryGroup",
+    }),
+    defineField({
+      name: "categoryEs",
+      title: "Category in Spanish (e.g. COMIDA Y BEBIDAS)",
+      type: "string",
+      fieldset: "categoryGroup",
     }),
     defineField({
       name: "services",
       title: "Services (e.g. BRANDING / PACKAGING DESIGN)",
       type: "string",
+      fieldset: "servicesGroup",
+    }),
+    defineField({
+      name: "servicesEs",
+      title: "Services in Spanish (e.g. BRANDING / DISEÑO DE PACKAGING)",
+      type: "string",
+      fieldset: "servicesGroup",
     }),
     defineField({
       name: "year",

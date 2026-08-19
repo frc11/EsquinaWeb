@@ -43,4 +43,11 @@ export interface Project {
   coverImage: SanityImageLike | string | null;
   coverColor?: string;
   content?: ProjectContentBlock[];
+  // Casillas en español de los tres campos de texto traducibles. Opcionales en
+  // el schema; el render bilingüe con fallback cruzado llega en el Bloque 4.
+  // (GROQ devuelve `null` cuando la casilla está vacía; los proyectos locales
+  // de fallback ni siquiera traen la clave.)
+  titleEs?: string | null;
+  categoryEs?: string | null;
+  servicesEs?: string | null;
 }

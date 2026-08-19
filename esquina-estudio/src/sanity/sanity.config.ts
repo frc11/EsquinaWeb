@@ -2,6 +2,7 @@ import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
 import { visionTool } from "@sanity/vision";
 import project from "./schemas/project";
+import funGalleryImage from "./schemas/funGalleryImage";
 
 export default defineConfig({
   name: "esquina-estudio",
@@ -11,6 +12,6 @@ export default defineConfig({
   basePath: "/studio",
   plugins: [structureTool(), visionTool()],
   schema: {
-    types: [project],
+    types: [project, funGalleryImage],
   },
 });
