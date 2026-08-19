@@ -183,7 +183,7 @@ function FieldShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid gap-3 py-5 md:grid-cols-[minmax(150px,176px)_minmax(0,420px)] md:items-center md:gap-7 md:py-3">
+    <div className="grid gap-3 py-5 md:grid-cols-[var(--contact-label-w)_minmax(0,420px)] md:items-center md:gap-x-[var(--contact-gap)] md:py-3">
       <label
         className={`${
           alignLabelTop ? "self-start" : "self-center"
@@ -562,7 +562,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
   return (
     <div
       data-contact
-      className="mx-auto flex w-full max-w-[1680px] flex-col gap-12 lg:grid lg:grid-cols-[minmax(420px,1.05fr)_minmax(560px,0.95fr)] lg:items-start lg:gap-[clamp(3rem,6vw,8rem)]"
+      className="mx-auto flex w-full max-w-[1680px] flex-col gap-12 [--contact-gap:28px] [--contact-label-w:176px] lg:grid lg:items-start lg:max-[1599.98px]:grid-cols-[minmax(280px,0.85fr)_minmax(624px,1.15fr)] lg:max-[1599.98px]:gap-x-[clamp(3rem,5vw,6rem)] min-[1600px]:grid-cols-[minmax(280px,1fr)_minmax(1120px,1192px)] min-[1600px]:gap-x-10"
     >
       <aside className="flex w-full max-w-[700px] flex-none flex-col self-start lg:sticky lg:top-[calc(var(--header-height)+3.5rem)]">
         <motion.div
@@ -600,27 +600,51 @@ export default function ContactForm({ service = null }: { service?: string | nul
           aside pinned until the end of the page: the extra bottom padding
           stretches the sticky containing block. (The Footer is in normal flow
           on /contact.) */}
-      <div className="min-w-0 pb-[clamp(13rem,22vh,16rem)] lg:w-full lg:max-w-[840px] lg:justify-self-end">
-        <div className="mx-auto w-full max-w-[760px]">
-          <motion.form
-            id={CONTACT_FORM_ID}
-            onSubmit={handleSubmit(onSubmit)}
-            onFocusCapture={(event) => {
-              const target = event.target;
+      <div className="min-w-0 pb-[clamp(13rem,22vh,16rem)] lg:w-full lg:justify-self-end lg:max-[1599.98px]:max-w-[624px]">
+        <motion.form
+          id={CONTACT_FORM_ID}
+          onSubmit={handleSubmit(onSubmit)}
+          onFocusCapture={(event) => {
+            const target = event.target;
 
-              if (
-                target instanceof HTMLElement &&
-                !target.closest("[data-contact-select]")
-              ) {
-                setOpenSelectId(null);
-              }
-            }}
-            aria-label="Project questionnaire"
-            className="w-full"
-            initial={shouldReduceMotion ? false : "hidden"}
-            animate={isPreloaderDone ? "visible" : "hidden"}
-            variants={shouldReduceMotion ? undefined : contactFieldGroupVariants}
-          >
+            if (
+              target instanceof HTMLElement &&
+              !target.closest("[data-contact-select]")
+            ) {
+              setOpenSelectId(null);
+            }
+          }}
+          aria-label="Project questionnaire"
+          className="w-full"
+          initial={shouldReduceMotion ? false : "hidden"}
+          animate={isPreloaderDone ? "visible" : "hidden"}
+          variants={shouldReduceMotion ? undefined : contactFieldGroupVariants}
+        >
+          {/* Dos columnas de campos a partir de 1600 px, una sola debajo. El
+              corte no es una preferencia: es el ancho minimo en el que las dos
+              columnas entran sin romper nada. La izquierda necesita 396 px de
+              control para que las pills queden en 4 filas, mas 176 px de label
+              (su linea mas larga, LOOKING TO WORK ON?, mide 173,6). La derecha
+              necesita 352 px de control para que el valor mas largo de
+              presupuesto (312 px) no se trunque, mas 140 px de label (su linea
+              mas larga, TIMELINE IN MIND?, mide 136,2). Con el aside en 280 y
+              los gutters al minimo legible la suma da 1472 px de contenido, o
+              sea 1600 de viewport. Los pisos de las dos pistas (600 y 520)
+              reparten los 4 px que sobran en ese ancho, para que ninguna de
+              las dos arranque justo sobre su limite.
+
+              Las pistas van a ancho fijo con tope en vez de fr: entre 1600 y
+              1680 (el max-w del bloque) el rango util es corto, y un reparto
+              por fr repartiria el sobrante en partes iguales justo cuando la
+              columna de las pills es la que no puede ceder.
+
+              El orden del DOM sigue siendo el orden de tipeo: la primera
+              columna lleva los primeros cinco campos y la segunda el resto mas
+              el boton, asi que Tab recorre nombre, email, pills, negocio,
+              industria, ubicacion, plazo, presupuesto, como nos conociste y
+              SEND. Sin reordenar markup ni posicionamiento absoluto. */}
+          <div className="min-[1600px]:grid min-[1600px]:grid-cols-[minmax(600px,620px)_minmax(520px,540px)] min-[1600px]:items-start min-[1600px]:gap-x-8 min-[1600px]:[--contact-gap:24px]">
+            <div>
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
                   label={["STATE YOUR", "FULL NAME *"]}
@@ -703,7 +727,9 @@ export default function ContactForm({ service = null }: { service?: string | nul
                   </ContactFocusSurface>
                 </FieldShell>
               </ContactFieldReveal>
+            </div>
 
+            <div className="min-[1600px]:[--contact-label-w:140px]">
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell label={["WHERE ARE", "YOU BASED?"]}>
                   <CustomSelect
@@ -793,39 +819,49 @@ export default function ContactForm({ service = null }: { service?: string | nul
                 </FieldShell>
               </ContactFieldReveal>
 
-              {submitError && (
-                <ContactFieldReveal reduceMotion={shouldReduceMotion}>
-                  <p className="mt-6 text-right font-body text-[13px] uppercase tracking-wider text-off-black">
-                    {submitError}
-                  </p>
-                </ContactFieldReveal>
-              )}
-            </motion.form>
-
-            <motion.div
-  className="mt-12 md:mt-7 md:grid md:grid-cols-[minmax(150px,176px)_minmax(0,420px)] md:gap-7"
-  initial={shouldReduceMotion ? false : "hidden"}
-  animate={isPreloaderDone ? "visible" : "hidden"}
-  variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
->
-  <div aria-hidden className="hidden md:block" />
-  <div className="flex md:justify-end">
-    <button
-      type="submit"
-      form={CONTACT_FORM_ID}
-      disabled={isSubmitting}
-      className="w-fit disabled:opacity-50"
-    >
-      <HoverButton
-        as="span"
-        className="font-body text-[21px] uppercase md:text-[24px]"
-      >
-        {isSubmitting ? "SENDING..." : "SEND QUESTIONNAIRE"}
-      </HoverButton>
-    </button>
-  </div>
-</motion.div>
+              {/* El boton ocupa el lugar de un campo al final de la segunda
+                  columna. Entra al <form> (antes vivia afuera, atado por el
+                  atributo `form`), pero conserva su propio initial/animate: eso
+                  lo deja como raiz de animacion independiente, fuera del
+                  stagger de los campos, igual que antes. El margen sube a 64 px
+                  en dos columnas para que las dos terminen parejas -- con 5
+                  campos a la izquierda (498 px) y 4 + boton a la derecha la
+                  diferencia queda en 57,5 px, debajo del tope de 60. En una
+                  columna se queda en 28. */}
+              <motion.div
+                className="mt-12 md:grid md:grid-cols-[var(--contact-label-w)_minmax(0,420px)] md:gap-x-[var(--contact-gap)] md:max-[1599.98px]:mt-7 min-[1600px]:mt-16"
+                initial={shouldReduceMotion ? false : "hidden"}
+                animate={isPreloaderDone ? "visible" : "hidden"}
+                variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
+              >
+                <div aria-hidden className="hidden md:block" />
+                <div className="flex md:justify-end">
+                  <button
+                    type="submit"
+                    form={CONTACT_FORM_ID}
+                    disabled={isSubmitting}
+                    className="w-fit disabled:opacity-50"
+                  >
+                    <HoverButton
+                      as="span"
+                      className="font-body text-[21px] uppercase md:text-[24px]"
+                    >
+                      {isSubmitting ? "SENDING..." : "SEND QUESTIONNAIRE"}
+                    </HoverButton>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
           </div>
+
+          {submitError && (
+            <ContactFieldReveal reduceMotion={shouldReduceMotion}>
+              <p className="mt-6 text-right font-body text-[13px] uppercase tracking-wider text-off-black">
+                {submitError}
+              </p>
+            </ContactFieldReveal>
+          )}
+        </motion.form>
       </div>
     </div>
   );
