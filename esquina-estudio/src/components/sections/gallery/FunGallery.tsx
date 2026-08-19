@@ -11,13 +11,7 @@ import {
 } from "framer-motion";
 import { useRouteTransition } from "@/components/layout/RouteTransitionProvider";
 import { urlFor } from "@/lib/sanity";
-import {
-  Project,
-  ProjectContentBlock,
-  ProjectDualMedia,
-  ProjectMediaItem,
-  SanityImageLike,
-} from "@/types/project";
+import { FunGalleryImage } from "@/types/fun-gallery-image";
 
 const MAP_WIDTH_FEW_IMAGES = 2550;
 const MAP_HEIGHT_FEW_IMAGES = 1450;
@@ -73,17 +67,24 @@ const HOVER_Z_INDEX = 999;
 const EAGER_IMAGE_COUNT = 6;
 const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 
+// Pedido al CDN de Sanity, medido en la sonda B3.1: `w=1200&fm=webp` conserva
+// el alpha y pesa 94,9 KB contra los 534,6 KB del PNG que se pedía antes.
+// `fm=webp` es determinista; `auto=format` depende del header `Accept`, que en
+// un fetch de servidor no está garantizado. La calidad queda en el default (75)
+// a propósito: pedirle 90 al optimizador devuelve HTTP 400 mientras
+// `next.config.ts` no declare `qualities`, y a 75 la diferencia medida en el
+// borde fue de 2,4/255 sobre el peor de los ocho recortes.
+const GALLERY_IMAGE_CDN_WIDTH = 1200;
+const GALLERY_IMAGE_CDN_FORMAT = "webp" as const;
+
 type GalleryItem = {
   id: string;
+  // El nombre de la imagen: es lo que anuncia el link ("View ...").
   title: string;
+  // El texto alternativo, que el schema guarda aparte del nombre.
+  alt: string;
   href?: string;
   imageUrl: string;
-};
-
-type ProjectImageCandidate = {
-  image: SanityImageLike | string | null | undefined;
-  alt?: string;
-  keySuffix: string;
 };
 
 type MapItem = GalleryItem & {
@@ -148,132 +149,32 @@ function shuffle<T>(items: T[], random: () => number) {
   return shuffled;
 }
 
-function getImageAssetKey(image: SanityImageLike | string | null | undefined) {
-  if (typeof image === "string") return image;
-  return image?.asset?._id ?? image?.asset?._ref ?? null;
-}
+/**
+ * La galería ya no deriva sus imágenes de los proyectos: cada `funGalleryImage`
+ * es un ítem, en el orden que devuelve la query. Se descarta el que no logre
+ * URL (documento sin asset), que es también el caso que filtra la query.
+ *
+ * `href` sale del proyecto vinculado y es opcional: sin vínculo el ítem se ve
+ * pero no es clickeable.
+ */
+function toGalleryItems(images: FunGalleryImage[]): GalleryItem[] {
+  return images.flatMap((image) => {
+    const imageUrl = urlFor(image.image)
+      .width(GALLERY_IMAGE_CDN_WIDTH)
+      .format(GALLERY_IMAGE_CDN_FORMAT)
+      .url();
 
-function getImageUrl(image: SanityImageLike | string | null | undefined) {
-  if (typeof image === "string") return image;
-  if (!getImageAssetKey(image)) return null;
+    if (!imageUrl) return [];
 
-  const transformedUrl = urlFor(image).width(1200).quality(90).url();
-  return transformedUrl || image?.asset?.url || null;
-}
-
-function isMediaItem(block: ProjectContentBlock): block is ProjectMediaItem {
-  return block?._type === "mediaItem";
-}
-
-function isDualMedia(block: ProjectContentBlock): block is ProjectDualMedia {
-  return block?._type === "dualMedia";
-}
-
-function isSanityImageLike(value: unknown): value is SanityImageLike {
-  if (!value || typeof value !== "object") return false;
-
-  const maybeImage = value as SanityImageLike;
-  return Boolean(maybeImage.asset);
-}
-
-function getGenericBlockImageCandidates(
-  block: ProjectContentBlock,
-  project: Project,
-): ProjectImageCandidate[] {
-  const blockRecord = block as Record<string, unknown>;
-  const blockKey = typeof blockRecord._key === "string" ? blockRecord._key : "block";
-  const candidates: ProjectImageCandidate[] = [];
-
-  if (isSanityImageLike(blockRecord.image)) {
-    candidates.push({
-      image: blockRecord.image,
-      alt: project.title,
-      keySuffix: `${blockKey}-image`,
-    });
-  }
-
-  for (const fieldName of ["images", "gallery"] as const) {
-    const fieldValue = blockRecord[fieldName];
-    if (!Array.isArray(fieldValue)) continue;
-
-    fieldValue.forEach((image, index) => {
-      if (!isSanityImageLike(image)) return;
-
-      candidates.push({
-        image,
-        alt: project.title,
-        keySuffix: `${blockKey}-${fieldName}-${index}`,
-      });
-    });
-  }
-
-  return candidates;
-}
-
-function getProjectImageCandidates(project: Project): ProjectImageCandidate[] {
-  const contentImages = (project.content ?? []).flatMap((block) => {
-    if (isMediaItem(block)) {
-      return [
-        {
-          image: block.file,
-          alt: block.caption,
-          keySuffix: block._key ?? "media",
-        },
-      ];
-    }
-
-    if (isDualMedia(block)) {
-      const blockKey = block._key ?? "dual";
-      return [
-        {
-          image: block.left,
-          alt: project.title,
-          keySuffix: `${blockKey}-left`,
-        },
-        {
-          image: block.right,
-          alt: project.title,
-          keySuffix: `${blockKey}-right`,
-        },
-      ];
-    }
-
-    return getGenericBlockImageCandidates(block, project);
-  });
-
-  return [
-    {
-      image: project.coverImage,
-      alt: project.title,
-      keySuffix: "cover",
-    },
-    ...contentImages,
-  ];
-}
-
-function getGalleryItems(projects: Project[]): GalleryItem[] {
-  const seenAssetKeys = new Set<string>();
-
-  return projects.flatMap((project) => {
-    const href = project.slug?.current ? `/work/${project.slug.current}` : undefined;
-
-    return getProjectImageCandidates(project).flatMap((candidate) => {
-      const assetKey = getImageAssetKey(candidate.image);
-      const imageUrl = getImageUrl(candidate.image);
-
-      if (!assetKey || !imageUrl || seenAssetKeys.has(assetKey)) return [];
-
-      seenAssetKeys.add(assetKey);
-
-      return [
-        {
-          id: `${project._id}-${assetKey}-${candidate.keySuffix}`,
-          title: candidate.alt || project.title,
-          href,
-          imageUrl,
-        },
-      ];
-    });
+    return [
+      {
+        id: image._id,
+        title: image.title,
+        alt: image.altText || image.title,
+        href: image.projectSlug ? `/work/${image.projectSlug}` : undefined,
+        imageUrl,
+      },
+    ];
   });
 }
 
@@ -381,7 +282,7 @@ function GalleryCard({
 
   const content = (
     <motion.div
-      className="relative h-full w-full overflow-hidden"
+      className="relative h-full w-full"
       initial={false}
       animate={{ opacity: isLoaded ? 1 : 0 }}
       transition={{
@@ -390,18 +291,39 @@ function GalleryCard({
         ease: EASE,
       }}
     >
+      {/*
+        Overscan y encuadre, derivados del desplazamiento máximo del parallax
+        (`ITEM_PARALLAX_STRENGTH * ITEM_PARALLAX_MAX` = 120 px por eje, sin
+        overshoot porque los dos springs son sobreamortiguados).
+
+        Con `object-cover` el overscan negativo tenía sentido: agrandaba la caja
+        para que al desplazarse no quedara hueco. Con `object-contain` se
+        invierte, porque `contain` escala la imagen *a la caja*: agrandar la
+        caja agranda el dibujo y lo recorta contra la tarjeta. Medido sobre los
+        ocho recortes reales, el `-inset-[8%]` de antes dejaba apenas 1–2 px de
+        aire; para garantizar cero recorte a 120 px de desplazamiento haría
+        falta un inset *positivo* de 85–120 px, más que el lado corto de las
+        tarjetas chicas. No hay constante que lo resuelva.
+
+        La caja pasa entonces a medir exactamente la tarjeta —el único tamaño
+        con el que `contain` dibuja la imagen al tamaño previsto— y se le quita
+        el recorte a la capa de fade: son recortes sobre transparencia, no hay
+        borde de tarjeta visible que respetar, así que la imagen puede salirse
+        sin que se vea el límite. El viewport la sigue recortando (`<main>` y
+        `<section>` son `overflow-hidden`).
+      */}
       <motion.div
-        className="absolute -inset-[8%] transform-gpu will-change-transform"
+        className="absolute inset-0 transform-gpu will-change-transform"
         style={{ x: itemParallaxX, y: itemParallaxY }}
       >
         <Image
           src={item.imageUrl}
-          alt={item.title}
+          alt={item.alt}
           fill
           sizes="(max-width: 768px) 78vw, 26vw"
           priority={index < EAGER_IMAGE_COUNT}
           onLoadingComplete={() => setIsLoaded(true)}
-          className="object-cover"
+          className="object-contain"
         />
       </motion.div>
     </motion.div>
@@ -425,8 +347,10 @@ function GalleryCard({
       role={item.href ? "link" : undefined}
       tabIndex={item.href ? 0 : undefined}
       aria-label={item.href ? `View ${item.title}` : undefined}
-      onClick={handleNavigate}
-      onKeyDown={handleKeyDown}
+      // Sin proyecto vinculado el ítem no es interactivo: tampoco se le cuelgan
+      // los handlers. Antes se colgaban siempre y salían por un early return.
+      onClick={item.href ? handleNavigate : undefined}
+      onKeyDown={item.href ? handleKeyDown : undefined}
     >
       {content}
     </motion.div>
@@ -434,10 +358,10 @@ function GalleryCard({
 }
 
 export default function FunGallery({
-  projects,
+  images,
   randomSeed,
 }: {
-  projects: Project[];
+  images: FunGalleryImage[];
   randomSeed: string;
 }) {
   const x = useMotionValue(0);
@@ -448,7 +372,7 @@ export default function FunGallery({
   const springY = useSpring(y, SPRING);
   const springPointerX = useSpring(pointerX, ITEM_PARALLAX_SPRING);
   const springPointerY = useSpring(pointerY, ITEM_PARALLAX_SPRING);
-  const galleryItems = useMemo(() => getGalleryItems(projects), [projects]);
+  const galleryItems = useMemo(() => toGalleryItems(images), [images]);
   const mapLayout = useMemo(
     () => buildMapLayout(galleryItems, randomSeed),
     [galleryItems, randomSeed],

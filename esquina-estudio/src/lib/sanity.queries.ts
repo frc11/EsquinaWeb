@@ -16,48 +16,16 @@ export const PROJECT_BY_SLUG_QUERY = `
   }
 `;
 
-// Projects with every image source needed by Fun Gallery
-export const FUN_GALLERY_PROJECTS_QUERY = `
-  *[_type == "project"] | order(order asc) {
-    _id, title, slug, projectNumber, category, services, year,
-    coverImage {
-      ...,
-      asset->
-    },
-    coverColor,
-    content[] {
-      _type,
-      _key,
-      ...,
-      _type == "mediaItem" => {
-        caption,
-        file {
-          ...,
-          asset->
-        }
-      },
-      _type == "dualMedia" => {
-        left {
-          ...,
-          asset->
-        },
-        right {
-          ...,
-          asset->
-        }
-      },
-      image {
-        ...,
-        asset->
-      },
-      images[] {
-        ...,
-        asset->
-      },
-      gallery[] {
-        ...,
-        asset->
-      }
-    }
+// Fun Gallery images: su propio tipo de contenido, ya no derivadas de project.
+// `_id asc` es un desempate obligatorio, no decoración: `order` es opcional, y
+// sin un orden total GROQ no garantiza una secuencia estable entre dos lecturas
+// — y de esa secuencia sale el seed del mapa.
+export const FUN_GALLERY_IMAGES_QUERY = `
+  *[_type == "funGalleryImage" && defined(image.asset)] | order(order asc, _id asc) {
+    _id,
+    title,
+    altText,
+    image,
+    "projectSlug": linkedProject->slug.current
   }
 `;

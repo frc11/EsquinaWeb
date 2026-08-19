@@ -23,6 +23,7 @@ export const urlFor = (source: any) => {
       width: () => stub,
       height: () => stub,
       quality: () => stub,
+      format: () => stub,
       url: () => "",
     };
 
