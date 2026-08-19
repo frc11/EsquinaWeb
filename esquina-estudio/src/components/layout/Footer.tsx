@@ -319,8 +319,9 @@ function HomeFooter() {
  * a 0. Se rediseña en el Bloque 3.
  *
  * La rama clara (`isFunGallery = false`) quedó sin llamadores cuando
- * `/contact/success` adoptó el footer nuevo (B2.5/F2); se conserva a propósito
- * para que revertir esa adopción sea una sola línea.
+ * `/contact/success` dejó de usar el footer fijo (B2.5/F2), y sigue sin ellos
+ * ahora que esa ruta toma el footer de home (B2.5b/F2); se conserva a propósito
+ * para que volver a un footer fijo sea una sola línea.
  */
 function FixedFooter({ isFunGallery }: { isFunGallery: boolean }) {
   const textClass = "text-off-white";
@@ -429,19 +430,21 @@ export default function Footer() {
 
   const isFunGallery =
     pathname === "/fun-gallery" || pathname.startsWith("/fun-gallery/");
-  // `/contact/success` adopta el footer nuevo con la variante de `/contact`: la
-  // clienta acaba de escribir, así que la franja clara no repite «CONTACT US» y
-  // la llamada a comunidad viaja en la banda oscura.
-  const isContactRoute =
-    pathname === "/contact" || pathname === "/contact/success";
 
   if (isFunGallery) {
     return <FixedFooter isFunGallery={isFunGallery} />;
   }
 
-  if (pathname === "/") {
+  // `/contact/success` usa la variante de home. Es una pantalla simple y de una
+  // sola vista: el footer de dos zonas (franja clara + banda oscura con el logo
+  // gigante) era demasiada pieza. Además resuelve un defecto real — el Navbar
+  // de esa ruta va en off-white sobre fondo transparente, y la franja clara del
+  // footer interno (982 px de alto) terminaba justo debajo de la banda del
+  // header: el menú desaparecía. La franja de home mide ~124 px, así que ni con
+  // el scroll al máximo alcanza la banda [0, 128] que ocupa el Navbar.
+  if (pathname === "/" || pathname === "/contact/success") {
     return <HomeFooter />;
   }
 
-  return <SiteFooter isContactPage={isContactRoute} />;
+  return <SiteFooter isContactPage={pathname === "/contact"} />;
 }
