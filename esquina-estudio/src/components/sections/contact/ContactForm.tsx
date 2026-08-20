@@ -183,7 +183,15 @@ function FieldShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid gap-3 py-5 md:grid-cols-[var(--contact-label-w)_minmax(0,420px)] md:items-center md:gap-x-[var(--contact-gap)] md:py-3">
+    // El label va al costado solo donde su ancho entra: en una sola columna
+    // entre 768 y 880, y en dos columnas a partir de 1600. En el medio --que
+    // es donde viven las dos columnas angostas-- va ARRIBA del control: esa es
+    // la palanca que libera 364 px de ancho (176 + 24 de la columna izquierda
+    // mas 140 + 24 de la derecha) a cambio de 48,8 px de alto por campo.
+    // Los dos rangos son mutuamente excluyentes a proposito: Tailwind emite
+    // las variantes arbitrarias antes que los breakpoints con nombre, asi que
+    // sin rangos disjuntos `md:` le ganaria a `min-[1600px]:` (B2.5b).
+    <div className="grid gap-3 py-5 md:items-center md:gap-x-[var(--contact-gap)] md:py-3 md:max-[879.98px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)] min-[1600px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)]">
       <label
         className={`${
           alignLabelTop ? "self-start" : "self-center"
@@ -562,7 +570,14 @@ export default function ContactForm({ service = null }: { service?: string | nul
   return (
     <div
       data-contact
-      className="mx-auto flex w-full max-w-[1680px] flex-col gap-12 [--contact-gap:28px] [--contact-label-w:176px] lg:grid lg:items-start lg:max-[1599.98px]:grid-cols-[minmax(280px,0.85fr)_minmax(624px,1.15fr)] lg:max-[1599.98px]:gap-x-[clamp(3rem,5vw,6rem)] min-[1600px]:grid-cols-[minmax(280px,1fr)_minmax(1120px,1192px)] min-[1600px]:gap-x-10"
+      // El aside se sienta al costado solo mientras la pista de 280 px entra
+      // al lado del formulario: 280 + 40 + 784 = 1104 de contenido = 1232 de
+      // viewport. Debajo de eso apila arriba (palanca 2), que es el `flex
+      // flex-col` de base. La pista del aside toma el sobrante como en >= 1600
+      // y el formulario queda pegado al borde derecho en los dos rangos, asi
+      // que al cruzar 1600 el bloque crece hacia la izquierda sin moverse de
+      // su margen. Rangos disjuntos, sin `lg:` (ver FieldShell).
+      className="mx-auto flex w-full max-w-[1680px] flex-col gap-12 [--contact-gap:28px] [--contact-label-w:176px] min-[1232px]:grid min-[1232px]:items-start min-[1232px]:gap-x-10 min-[1232px]:max-[1599.98px]:grid-cols-[minmax(280px,1fr)_minmax(784px,872px)] min-[1600px]:grid-cols-[minmax(280px,1fr)_minmax(1120px,1192px)]"
     >
       <aside className="flex w-full max-w-[700px] flex-none flex-col self-start">
         <motion.div
@@ -594,7 +609,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
         </motion.div>
       </aside>
 
-      <div className="min-w-0 lg:w-full lg:justify-self-end lg:max-[1599.98px]:max-w-[624px]">
+      <div className="min-w-0 min-[1232px]:w-full min-[1232px]:justify-self-end">
         <motion.form
           id={CONTACT_FORM_ID}
           onSubmit={handleSubmit(onSubmit)}
@@ -614,30 +629,40 @@ export default function ContactForm({ service = null }: { service?: string | nul
           animate={isPreloaderDone ? "visible" : "hidden"}
           variants={shouldReduceMotion ? undefined : contactFieldGroupVariants}
         >
-          {/* Dos columnas de campos a partir de 1600 px, una sola debajo. El
-              corte no es una preferencia: es el ancho minimo en el que las dos
-              columnas entran sin romper nada. La izquierda necesita 396 px de
-              control para que las pills queden en 4 filas, mas 176 px de label
-              (su linea mas larga, LOOKING TO WORK ON?, mide 173,6). La derecha
-              necesita 352 px de control para que el valor mas largo de
-              presupuesto (312 px) no se trunque, mas 140 px de label (su linea
-              mas larga, TIMELINE IN MIND?, mide 136,2). Con el aside en 280 y
-              los gutters al minimo legible la suma da 1472 px de contenido, o
-              sea 1600 de viewport. Los pisos de las dos pistas (600 y 520)
-              reparten los 4 px que sobran en ese ancho, para que ninguna de
-              las dos arranque justo sobre su limite.
+          {/* Cuatro estados, un solo eje: el ancho. Ninguno es una
+              preferencia --cada corte es el ancho donde el estado de arriba
+              deja de entrar sin romper una restriccion medida.
 
-              Las pistas van a ancho fijo con tope en vez de fr: entre 1600 y
-              1680 (el max-w del bloque) el rango util es corto, y un reparto
-              por fr repartiria el sobrante en partes iguales justo cuando la
-              columna de las pills es la que no puede ceder.
+              >= 1600  dos columnas con el label al costado de su control:
+                       280 + 40 + [176 + 24 + 396] + 32 + [140 + 24 + 352]
+                       = 1472 de contenido = 1600 de viewport.
+              >= 1232  dos columnas con el label ARRIBA del control. Sacar el
+                       label del costado libera 364 px y deja el piso en
+                       280 + 40 + [396 + 32 + 352] = 1100, mas 4 px de aire
+                       = 1104 de contenido = 1232 de viewport.
+              >=  880  lo mismo, pero con el aside APILADO arriba del
+                       formulario: sin la pista del aside el piso baja a 784 de
+                       contenido, y debajo de 1024 el padding de pagina es 96,
+                       o sea 880 de viewport.
+              <   880  una sola columna, que es donde el label vuelve al
+                       costado porque ahi si entra (176 + 24 + 420 = 620).
+
+              Los pisos de las dos pistas reparten los mismos 4 px de aire que
+              a 1600: 396 no puede bajar sin que las pills se vayan a 5 filas y
+              352 no puede bajar sin que se trunque $2,500-$4,000 USD. El tope
+              de 420 en las dos pistas es el mismo tope de control del layout
+              de una columna, para que ningun control quede estirado.
+
+              El costo de las palancas es alto, no ancho: el label arriba suma
+              48,8 px por campo (36,8 de dos lineas a 16/1,15 mas 12 de gap) y
+              el aside apilado suma 270 (222 del bloque mas 48 de gap).
 
               El orden del DOM sigue siendo el orden de tipeo: la primera
               columna lleva los primeros cinco campos y la segunda el resto mas
               el boton, asi que Tab recorre nombre, email, pills, negocio,
               industria, ubicacion, plazo, presupuesto, como nos conociste y
               SEND. Sin reordenar markup ni posicionamiento absoluto. */}
-          <div className="min-[1600px]:grid min-[1600px]:grid-cols-[minmax(600px,620px)_minmax(520px,540px)] min-[1600px]:items-start min-[1600px]:gap-x-8 min-[1600px]:[--contact-gap:24px]">
+          <div className="min-[880px]:grid min-[880px]:items-start min-[880px]:gap-x-8 min-[880px]:max-[1599.98px]:grid-cols-[minmax(396px,420px)_minmax(352px,420px)] min-[1600px]:grid-cols-[minmax(600px,620px)_minmax(520px,540px)] min-[1600px]:[--contact-gap:24px]">
             <div>
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
@@ -817,18 +842,27 @@ export default function ContactForm({ service = null }: { service?: string | nul
                   columna. Entra al <form> (antes vivia afuera, atado por el
                   atributo `form`), pero conserva su propio initial/animate: eso
                   lo deja como raiz de animacion independiente, fuera del
-                  stagger de los campos, igual que antes. El margen sube a 64 px
-                  en dos columnas para que las dos terminen parejas -- con 5
-                  campos a la izquierda (498 px) y 4 + boton a la derecha la
-                  diferencia queda en 57,5 px, debajo del tope de 60. En una
-                  columna se queda en 28. */}
+                  stagger de los campos, igual que antes.
+
+                  Su margen superior es lo unico que empareja las dos columnas,
+                  porque la izquierda lleva 5 campos y la derecha 4 mas el
+                  boton: cada palanca que engorda un campo agranda la izquierda
+                  una vez mas que la derecha, y el margen tiene que absorber esa
+                  diferencia. Con el label al costado son 64 px (498 contra
+                  440,5: 57,5 de diferencia). Con el label arriba cada campo
+                  suma 48,8, asi que el margen sube esos mismos 48,8 --112 en
+                  vez de 64-- y la diferencia se queda donde estaba. En una
+                  sola columna se queda en 28. */}
               <motion.div
-                className="mt-12 md:grid md:grid-cols-[var(--contact-label-w)_minmax(0,420px)] md:gap-x-[var(--contact-gap)] md:max-[1599.98px]:mt-7 min-[1600px]:mt-16"
+                className="mt-12 md:grid md:gap-x-[var(--contact-gap)] md:max-[879.98px]:mt-7 md:max-[879.98px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)] min-[880px]:max-[1599.98px]:mt-28 min-[1600px]:mt-16 min-[1600px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)]"
                 initial={shouldReduceMotion ? false : "hidden"}
                 animate={isPreloaderDone ? "visible" : "hidden"}
                 variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
               >
-                <div aria-hidden className="hidden md:block" />
+                <div
+                  aria-hidden
+                  className="hidden md:max-[879.98px]:block min-[1600px]:block"
+                />
                 <div className="flex md:justify-end">
                   <button
                     type="submit"
