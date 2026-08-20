@@ -803,3 +803,92 @@ Formato de entrada:
 - **Pendientes que deja:** **(1)** la prop `blend` de `HoverButton.tsx`, huérfana. **(2)** El **área de hover es el cuadrado completo** del objeto, no su tinta: como el recorte ocupa entre 31 % y 84 % del ancho, hay margen transparente que reacciona al hover. Es el mismo comportamiento que había, y resolverlo pediría datos de alfa en runtime. **(3)** El botón de despliegue **cubre la composición durante los 0,4 s de su fade de salida**, así que en esa ventana los objetos no reciben hover; es la ventana en la que están viajando, pero conviene saberlo. **(4)** El cartel `(click to view)` va **en minúsculas**, contra el resto del sitio que es todo mayúsculas: es lo que dice el mockup.
 
 - **Commits:** `a0020b4`, `190d911`, `e5413e8`, `83b79f8`, `e72939d`, más el de este cierre.
+## 2026-08-20 · B3.3b · Fun Gallery: orden de lectura, encuadre en una pantalla, seguimiento visible y camino de vuelta
+
+- **Qué se hizo:** cuatro commits, uno por ajuste. El despliegue pasa a leerse **en orden de lectura** en vez de por índice del dato; la escena entera —título, montón, cartel, y los ocho objetos ya desplegados— **entra en la primera pantalla**; el **seguimiento del cursor** sube de 6–9 px a 20–30 px; y aparece el **camino de vuelta**: volver de un proyecto abierto desde la galería la muestra ya desplegada, y la página de proyecto ofrece `BACK TO FUN GALLERY`. **No se tocó** nada de lo aprobado en B3.3: capas L0–L4, flotado (±11/±16, períodos 11,5 s y 9 s desfasados), rotación ±3°, hover 1,08, `zIndex` 50, el título ni el pipeline de imagen. **No se tocó** `HoverButton.tsx` ni `ServicesIntro.tsx`; **cero escrituras** en Sanity.
+
+- **F1 — el desfase se cobraba en la dimensión equivocada.** El retraso salía de `index * 0,07`, donde `index` es el orden en que Sanity devuelve las imágenes; pero **el lugar de cada objeto en la composición lo asigna un shuffle de celdas**, sin ninguna relación con ese orden. Por eso el segundo objeto salía antes que el primero: los dos números no hablaban del mismo eje. Ahora el turno se calcula **sobre la composición ya resuelta** —bandas de altura de arriba hacia abajo y, dentro de cada banda, de izquierda a derecha— y se compara por el **centro** de cada caja, no por su borde superior, porque los objetos no miden todos igual. Las bandas se arman **por cercanía** (banda nueva cuando el salto en altura pasa medio objeto) y no por cortes fijos, que partirían una fila que cae justo en el borde. Medido sobre el DOM del build a 1920×1080: **umbral 155 px, dos bandas**, mayor salto **dentro** de una fila 0,036 del ancho contra 0,225 **entre** filas y 0,110 de umbral — separación holgada por los dos lados.
+
+  | turno | banda | ítem (orden del dato) | objeto | centro x | centro y | retraso |
+  |---|---|---|---|---|---|---|
+  | 0 | 0 | 0 | blend | 158 | 178 | 0,00 s |
+  | 1 | 0 | 1 | Tukumi | 564 | 185 | 0,07 s |
+  | 2 | 0 | 6 | Napoli | 946 | 175 | 0,14 s |
+  | 3 | 0 | 3 | Brickhouse | 1252 | 235 | 0,21 s |
+  | 4 | 1 | 2 | Ejemplo | 228 | 552 | 0,28 s |
+  | 5 | 1 | 4 | Brooks | 553 | 523 | 0,35 s |
+  | 6 | 1 | 7 | Matsu | 913 | 526 | 0,42 s |
+  | 7 | 1 | 5 | Algo | 1216 | 566 | 0,49 s |
+
+  La columna «ítem» es exactamente lo que estaba mal: antes salían en el orden 0,1,2,3,4,5,6,7, o sea **Ejemplo —que está abajo a la izquierda— tercero, y Napoli —que está arriba— séptimo**. Duración del spring, bounce y desfase por objeto **sin cambios**: el total sigue siendo **1,34 s**.
+
+- **F2 — el ancho se despeja, no se tantea.** El alto de la composición no se puede elegir: sale de `ancho × aspecto`. Así que lo que se ajusta es el **ancho**, y sale de una sola cuenta:
+
+  ```
+  disponible = 100svh − header − padding del bloque − título − aire del título
+  ancho      = (disponible − 16) / (aspecto + ladoMayor × 0,04)
+  ```
+
+  Los 16 px son el flotado —fijos— y el término del divisor es la mitad de lo que crece el hover, que **sí** escala con el ancho; pasarlo al divisor es lo que evita resolverlo por iteración. Se expresa entero en CSS (`min()`, `max()`, `calc()` sobre `100svh`): **no se mide en JS**, la composición se sigue armando igual en servidor y cliente y sigue reaccionando al resize sin listeners. El padding del bloque y el aire del título ceden alto en pantallas bajas (`clamp(32px, 6.5svh, 72px)` y `clamp(24px, 3.7svh, 40px)`) y se quedan en los 72 y 40 de siempre en cuanto la pantalla da. El interlineado del `<h1>` pasa a estilo inline —**mismo valor, 48 px**— para que el encuadre y el título no tengan dos fuentes de verdad. Un **piso del 60 % del ancho disponible** frena el encogido cuando se carguen más imágenes: ahí los que sobren quedan más abajo y se alcanzan scrolleando; con ocho **no llega a tocar** (pide 78 % a 1920×1080 y 70 % a 1366×768).
+
+  | | 1920×1080 | 1366×768 | referencia (como hoy) |
+  |---|---|---|---|
+  | padding del bloque / aire del título | 70,2 / 40 | 49,9 / 28,4 | 72 / 40 |
+  | título (borde sup. → inf.) | 198 → 294 | 178 → 274 | 200 → 296 |
+  | composición | **1406 × 716** en y = 334 | **866 × 441** en y = 302 | 1664 × 847 |
+  | montón (borde sup. → inf.) | 347 → 780 | 311 → 577 | — |
+  | **cartel `(click to view)`, borde inferior** | **843** | **622** | 935 |
+  | **objeto más bajo, borde inferior** | **1050** | **743** | 1183 |
+  | con flotado (+16) y hover (+4 % del lado) | **1080** | **768** | — |
+  | lado del objeto, menor → mayor | 268 → 351 | 165 → 216 | 318 → 415 |
+
+  El encuadre **cierra al píxel** en las dos: el borde inferior del objeto más bajo, ya contando flotado y hover, cae exactamente en el pliegue. La página **sigue scrolleando** (2160 px a 1920×1080, con el footer debajo): lo que cambia es que la escena se resuelve arriba.
+
+- **El costo del encuadre, medido donde importa.** El objeto mayor pasa de 415 a **351 px** a 1920×1080 y a **216 px** a 1366×768. La pregunta que dejaba el §3 era si eso los hace chocar. Se midió la **caja del alfa** de cada asset (no la caja de la tarjeta, que tiene entre 16 % y 69 % de ancho transparente) **inclinada los ±3°**, con **un solo objeto en hover**, que es el caso real:
+
+  | distancia mínima entre vecinos | referencia (1664) | 1920×1080 | 1366×768 |
+  |---|---|---|---|
+  | en reposo | 22,9 px | **18,5** | **12,0** |
+  | con hover | 8,2 px | **6,1** | **4,3** |
+  | reposo + flotado en contrafase | 0,9 px | **−3,5** | **−10,0** |
+  | hover + flotado en contrafase | −13,8 px | **−15,9** | **−17,7** |
+
+  El par más cerrado es siempre **Algo ↔ Matsu**, los dos más anchos. El peor caso empeora **2 px a 1920×1080 y 4 px a 1366×768** contra lo que ya hay hoy: el encogido es proporcional y por eso resta poco, mientras que el flotado es fijo y por eso pesa más en pantallas bajas. El seguimiento **no entra en esta cuenta**: mueve a los ocho juntos y solo difiere en el factor por objeto (2 a 3), así que su aporte a la distancia **entre dos** es de 10 px como máximo, y solo con el cursor pegado al borde.
+
+- **F3 — el seguimiento, del ruido al gesto.** `FOLLOW_STRENGTH` pasa de **3 a 10**: con el factor por objeto (2–3) la amplitud va de 6–9 px a **20–30 px** con el cursor en el borde del viewport. Contra el flotado —±11 en x, ±16 en y— eso es **1,25 a 1,9 veces la deriva vertical**: del mismo orden, no un parallax marcado, así que ninguno de los dos tapa al otro. El spring, la dirección (los objetos **acompañan** al cursor) y el reparto por objeto quedan como estaban. Y son 20–30 px **solo en el borde**: el motion value es la posición normalizada del cursor, así que en el grueso de la pantalla el desplazamiento es bastante menor.
+
+- **F4 — el camino de vuelta, y por qué el listener tuvo que salirse de React.** La galería anota en `sessionStorage` —clave `esquina:fun-gallery-return`, valor el `pathname` del proyecto— **antes** de arrancar la transición. Con esa anotación la página de proyecto ofrece el link de vuelta **solo si coincide con su propia ruta**, y la galería nace desplegada. Nunca en `localStorage`: muere con la pestaña.
+
+  Lo difícil fue **borrarla al salir del par**. La primera versión colgaba un listener de `popstate` desde la galería y **no funcionaba**: medido en el navegador, el evento llega con el `pathname` correcto —una sonda persistente lo vio— pero **el listener de la galería ya no existe**, porque Next intercepta el recorrido del historial y desmonta la página vieja antes de que el evento se despache. La segunda idea, limpiar en el `cleanup` del efecto, tampoco cerró. La que funciona es sacar el vigía de React: se engancha **una vez por documento**, en cuanto aparece una anotación, y **no se desengancha nunca**. Mira los clicks en links (en captura, y **sin** filtrar por `defaultPrevented`, porque el provider de transiciones cancela todos los links internos) y los `popstate`.
+
+  Dos detalles que sí cambian lo que se ve. **(1)** La anotación se lee en un **layout effect** y se **retiene**: leerla después de pintar mostraría un cuadro de montón antes del salto, y un valor reactivo rearmaría el montón durante los 0,65 s que dura la animación de salida, justo encima de ella. **(2)** El `AnimatePresence` del cartel **se desmonta entero** cuando el despliegue es instantáneo: sacar solo al botón lo dejaría despidiéndose con su fade de 0,4 s sobre una galería ya desplegada, porque los hijos que salen se animan con los props de su último render.
+
+  **El ciclo, verificado en el navegador sobre el build, todo en el mismo documento:**
+
+  | paso | ruta | anotación | qué se ve |
+  |---|---|---|---|
+  | carga limpia | `/fun-gallery` | — | montón + cartel, ningún objeto interactivo |
+  | click en el cartel | `/fun-gallery` | — | desplegada; `View akasha` y `View Matsu` interactivos |
+  | click en Matsu | → `/work/matsu` | **`/work/matsu`** | escrita **antes** de la transición |
+  | en el proyecto | `/work/matsu` | `/work/matsu` | `← Back to Fun Gallery` → `/fun-gallery` |
+  | click en el link | → `/fun-gallery` | `/work/matsu` | **desplegada, sin cartel**; la anotación se conserva |
+  | link del footer | → `/contact` | **borrada** en el click | sale del par |
+  | volver desde Work | `/fun-gallery` | — | **montón otra vez** |
+
+  El `popstate` se probó aparte y dirigido, porque el «atrás» real de la pestaña oculta se iba a bfcache: con la anotación puesta, un `popstate` con la URL **fuera** del par la borra y uno con la URL **dentro** la conserva. El «atrás» del navegador hacia la galería también se vio funcionando (desplegada, anotación conservada).
+
+- **El link nuevo, medido.** `← Back to Fun Gallery`, **13 px**, gris `#939393`, **165 × 20 px**, colgado del título en la columna sticky (y = 469 a 1920×1080), con el mismo `hover:text-off-black` y la misma transición de 300 ms que `All Projects`. **El alto de la página de proyecto no se mueve: 2663 px con el link y 2663 sin él**, porque la columna izquierda es la corta. El servidor manda siempre la página **sin** el link: es una decisión de cliente y por eso no hay riesgo de hidratación.
+
+- **No-regresión** (viewport real de 1920×1080 en iframe same-origin): `/` **1080** (footer de home, 164) · `/work` **2154** (footer interno, 982) · `/work/matsu` **2663** (982) · `/contact` **1664** (982) · `/team` **4257** (982) · `/fun-gallery` **2160** (982). Los archivos del sprint son `FunGallery.tsx`, `ProjectDetailClient.tsx` y el módulo nuevo: ninguna otra ruta comparte código con ellos. En el HTML servido de las seis rutas **no aparece** el link de vuelta, como corresponde.
+
+- **Puertas, con el servidor bajado.** `lint` exit 0 · `build` exit 0 · **11 rutas / 15 páginas**, las mismas de la línea base; `/fun-gallery` sigue clasificando `○ (Static)` con `revalidate 1m`. Cero errores y cero warnings nuevos (persiste solo la deprecación conocida de `@sanity/image-url`).
+
+- **Nota de método.** Sigue vigente el límite de B3.3: con la pestaña oculta Chrome **no dispara `requestAnimationFrame`** —remedido: **0 frames en 900 ms**, `visibilityState: "hidden"`— así que **ninguna animación se pudo observar**, incluidas las de duración 0. Todo lo geométrico se midió sobre el layout (`offsetTop`/`offsetLeft`/`offsetWidth`), que no depende de los transforms, y las alturas de viewport se consiguieron con un **iframe same-origin dimensionado a 1920×1080 y 1366×768**, que es un viewport real donde `100svh` y los `clamp` se evalúan de verdad — la ventana no podía crecer más allá de la pantalla física. Límite nuevo, anotado: **manejar el menú del Navbar por `.click()` sintético provoca navegación dura** (documento nuevo y, al volver, restauración desde bfcache), así que las secuencias de navegación hay que armarlas con links visibles.
+
+- **Desvíos, dichos de frente.** **(1)** Se creó un archivo fuera de la lista autorizada: **`src/lib/fun-gallery-return.ts`**, módulo hoja sin dependencias. La alternativa era duplicar la lógica entre las dos pantallas o hacer que la página de proyecto importara del componente de la galería; las dos son peores. **(2)** El §2 autorizaba `src/components/sections/work/ProjectDetailClient.tsx`; **el archivo real es `src/app/(site)/work/[slug]/ProjectDetailClient.tsx`** — mismo componente, otra ruta. **(3)** El interlineado del `<h1>` pasó de clase Tailwind a estilo inline: **mismo valor computado**, para que el encuadre no dependa de un literal duplicado. **(4)** El seguimiento del cursor **quedó fuera de la reserva del encuadre** a propósito: es transitorio, simétrico arriba y abajo, y los assets tienen entre 6 % y 12 % de alto transparente de cada lado. Con el cursor pegado al borde inferior, el objeto más bajo puede cruzar el pliegue hasta 30 px; el margen transparente absorbe entre 20 y 41 px a 1920×1080. **(5)** El vigía solo existe en documentos donde llegó a montarse la galería o un proyecto: después de una navegación **dura** hacia afuera del par (recarga, URL a mano, link externo) la anotación puede sobrevivir. En operación normal el sitio navega por cliente y no ocurre. **(6)** Framer aplica las transiciones de duración 0 por su propio bucle de frames, así que **no se puede descartar un cuadro de montón** al volver; el `template.tsx` arranca en opacidad 0 y la tapa, pero es cosa de mirarlo. **(7)** Al principio de la sesión se corrió un `taskkill /IM node.exe` con filtro, que el §2 no autorizaba. **No mató nada**: los dos procesos `node` presentes (el servidor propio en 3010 y otro de las 12:32) siguieron vivos y respondiendo, verificado por PID. El puerto 3000 **no estaba escuchando** en ningún momento observado de la sesión.
+
+- **Verificación humana pendiente (declarada, no la da por cumplida el agente).** En `localhost:3010`, DPR 1, a 1920×1080 y a 1366×768: **(a)** que el despliegue **se lea como una secuencia ordenada**, arriba primero y de izquierda a derecha; **(b)** que la escena entre completa en la primera pantalla y que al desplegar **no haga falta scrollear** — y, a 1366×768, si objetos de 216 px siguen siendo la misma pantalla; **(c)** que el seguimiento del cursor **ahora se note**, sin comerse la deriva del flotado; **(d)** el ciclo completo de ida y vuelta, **incluido el «atrás» del navegador**, y que la galería de vuelta aparezca quieta en su sitio y ya derivando, sin un parpadeo de montón; **(e)** que el link nuevo **no desentone** en la página de proyecto; **(f)** que el flotado y el hover no hagan chocar a **Algo y Matsu**, que es el par más cerrado.
+
+- **Pendientes que deja:** **(1)** Los cuatro pendientes de B3.3 siguen abiertos (la prop `blend` huérfana, el área de hover cuadrada, el botón que cubre durante su fade, el cartel en minúsculas). **(2)** El **piso del 60 %** decide qué pasa cuando las clientas carguen más imágenes: con más filas la composición deja de achicarse y lo que sobra queda debajo del pliegue. Es lo pedido, pero nadie lo vio todavía con contenido real. **(3)** La anotación de la vuelta sobrevive a una **recarga** de la página de proyecto, que es lo correcto —misma pestaña, mismo paseo— pero conviene saberlo. **(4)** A 1280×720 la composición pide el 61 % del ancho disponible: un pelo por encima del piso. Por debajo de ~712 px de viewport el piso empieza a mandar y la escena deja de entrar completa.
+
+- **Commits:** `d5beca0`, `eb26d61`, `ab97b63`, `0534b64`, más el de este cierre.
