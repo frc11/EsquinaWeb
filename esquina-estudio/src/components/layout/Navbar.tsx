@@ -123,8 +123,10 @@ export default function Navbar() {
   >({});
   const currentIndicatorRef = useRef<IndicatorMeasure | null>(null);
   const [indicator, setIndicator] = useState<IndicatorAnimation | null>(null);
-  const isFunGallery =
-    pathname === "/fun-gallery" || pathname.startsWith("/fun-gallery/");
+  // `/fun-gallery` dejó de ser un caso especial en B3.3: la galería pasó a ser
+  // una página normal en off-white, así que toma el mismo tratamiento que el
+  // resto de las rutas claras. La única ruta oscura que queda es
+  // `/contact/success`.
   const isDarkRoute = pathname === "/contact/success";
   const activeDesktopHref: DesktopNavHref | null = isPathActive(
     visualPathname,
@@ -134,14 +136,9 @@ export default function Navbar() {
     : (NAV_LINKS.find((link) => isPathActive(visualPathname, link.href))
         ?.href ?? null);
 
-  const useGalleryBlend = isFunGallery && !menuOpen;
-  const navTone = isFunGallery || isDarkRoute ? "dark" : "light";
-  const linkTextClass = isFunGallery || isDarkRoute
-    ? "text-off-white"
-    : "text-off-black";
-  const hamburgerLineClass = isFunGallery || isDarkRoute
-    ? "bg-off-white"
-    : "bg-off-black";
+  const navTone = isDarkRoute ? "dark" : "light";
+  const linkTextClass = isDarkRoute ? "text-off-white" : "text-off-black";
+  const hamburgerLineClass = isDarkRoute ? "bg-off-white" : "bg-off-black";
 
   const setDesktopLinkRef = useCallback(
     (href: DesktopNavHref) => (node: HTMLSpanElement | null) => {
@@ -321,24 +318,8 @@ export default function Navbar() {
   return (
     <nav
       className={`fixed left-0 right-0 top-0 z-[100] border-none ${
-        useGalleryBlend
-          ? "pointer-events-none bg-transparent text-off-white mix-blend-difference"
-          : isFunGallery
-            ? "pointer-events-none bg-transparent"
-          : isDarkRoute
-            ? "bg-transparent"
-            : "bg-off-white/95 backdrop-blur-sm"
+        isDarkRoute ? "bg-transparent" : "bg-off-white/95 backdrop-blur-sm"
       }`}
-      style={
-        isFunGallery
-          ? {
-              background: "transparent",
-              backgroundColor: "transparent",
-              backdropFilter: "none",
-              WebkitBackdropFilter: "none",
-            }
-          : undefined
-      }
     >
       <div
         ref={desktopNavRef}
@@ -360,7 +341,6 @@ export default function Navbar() {
                   href={link.href}
                   underline={false}
                   tone={navTone}
-                  blend={useGalleryBlend}
                   balancedPadding
                   className={`text-[17px] uppercase font-body font-[480] tracking-normal ${linkTextClass}`}
                 >
@@ -379,7 +359,6 @@ export default function Navbar() {
               href="/contact"
               underline={false}
               tone={navTone}
-              blend={useGalleryBlend}
               balancedPadding
               className={`text-[17px] uppercase font-body font-medium tracking-normal ${linkTextClass}`}
             >

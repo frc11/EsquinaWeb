@@ -53,28 +53,20 @@ function SocialLinks({ tone }: { tone: "light" | "dark" }) {
 }
 
 /**
- * Crédito de develOP. Escala única (17 px, heredada del contenedor); solo
- * cambia la etiqueta: la fila de info del footer nuevo lleva «POWERED BY», y la
- * variante compacta de las rutas con footer fijo conserva el «BY» de hoy.
+ * Crédito de develOP. Escala única: 17 px, heredada del contenedor. La variante
+ * corta («BY») se fue con el footer fijo de `/fun-gallery` en B3.3.
  */
 function DevelopCredit({
-  label = "powered",
   logoClassName,
   textClassName,
   tone,
-  blend,
 }: {
-  label?: "powered" | "short";
   logoClassName: string;
   textClassName: string;
   tone: "light" | "dark";
-  blend: boolean;
 }) {
-  const logoHoverClass = blend
-    ? ""
-    : tone === "dark"
-      ? "group-hover:invert-0"
-      : "group-hover:invert";
+  const logoHoverClass =
+    tone === "dark" ? "group-hover:invert-0" : "group-hover:invert";
 
   return (
     <HoverButton
@@ -83,13 +75,11 @@ function DevelopCredit({
       underline
       tightUnderline
       tone={tone}
-      blend={blend}
       className={`normal-case ${textClassName}`}
     >
       <span className="inline-flex items-center gap-2 whitespace-nowrap">
         <span>
-          {label === "powered" ? "POWERED BY " : "BY "}
-          <span className="normal-case">develOP</span>
+          POWERED BY <span className="normal-case">develOP</span>
         </span>
         <Image
           src={developLogo}
@@ -136,7 +126,6 @@ function InfoRow({
       logoClassName={developLogoClass}
       textClassName={textClass}
       tone={tone}
-      blend={false}
     />
   );
 
@@ -313,127 +302,13 @@ function HomeFooter() {
   );
 }
 
-/**
- * Footer fijo de `/fun-gallery`: el logo gigante y la banda oscura romperían esa
- * pantalla, así que conserva la composición compacta de hoy, con el interletrado
- * a 0. Se rediseña en el Bloque 3.
- *
- * La rama clara (`isFunGallery = false`) quedó sin llamadores cuando
- * `/contact/success` dejó de usar el footer fijo (B2.5/F2), y sigue sin ellos
- * ahora que esa ruta toma el footer de home (B2.5b/F2); se conserva a propósito
- * para que volver a un footer fijo sea una sola línea.
- */
-function FixedFooter({ isFunGallery }: { isFunGallery: boolean }) {
-  const textClass = "text-off-white";
-  const smallTextWeight = isFunGallery ? "font-thin" : "font-[550]";
-  const ctaWeight = isFunGallery ? "font-thin" : "";
-  const developLogoClass = isFunGallery ? "brightness-0 invert" : "invert";
-
-  return (
-    <footer
-      className={`w-full border-none ${
-        isFunGallery
-          ? "fixed bottom-[26px] left-0 right-0 z-[100] bg-transparent text-off-white mix-blend-difference"
-          : "fixed bottom-0 left-0 right-0 z-[100] bg-transparent"
-      }`}
-      style={
-        isFunGallery
-          ? {
-              background: "transparent",
-              backgroundColor: "transparent",
-              backdropFilter: "none",
-              WebkitBackdropFilter: "none",
-            }
-          : undefined
-      }
-    >
-      <div className="flex w-full flex-row items-center justify-between px-12 py-10 lg:px-16">
-        <div className="flex flex-row items-center justify-start gap-12 lg:gap-16">
-          <div className="flex-shrink-0">
-            <LogoScript size="sm" tone="dark" />
-          </div>
-
-          <div
-            className={`grid grid-cols-4 gap-x-12 gap-y-[8px] font-body ${smallTextWeight} text-[17px] uppercase leading-none tracking-normal ${textClass}`}
-          >
-            <span className="col-start-1 row-start-1 block whitespace-nowrap">
-              BORN IN
-            </span>
-            <span className="col-start-1 row-start-2 block whitespace-nowrap">
-              ARGENTINA
-            </span>
-            <span className="col-start-2 row-start-1 block whitespace-nowrap">
-              WORKING
-            </span>
-            <span className="col-start-2 row-start-2 block whitespace-nowrap">
-              WORLDWIDE
-            </span>
-
-            <div className="col-start-3 row-start-1 justify-self-start">
-              <HoverButton
-                href={SOCIAL_LINKS[0].href}
-                external
-                underline
-                tightUnderline
-                tone="dark"
-                blend={isFunGallery}
-              >
-                {SOCIAL_LINKS[0].label}
-              </HoverButton>
-            </div>
-
-            <div className="col-start-3 row-start-2 justify-self-start">
-              <HoverButton
-                href={SOCIAL_LINKS[1].href}
-                external
-                underline
-                tightUnderline
-                tone="dark"
-                blend={isFunGallery}
-              >
-                {SOCIAL_LINKS[1].label}
-              </HoverButton>
-            </div>
-
-            <div className="col-start-4 row-start-1 row-span-2 flex flex-col items-start gap-y-[8px]">
-              <span className="block whitespace-nowrap">{COPYRIGHT}</span>
-              <DevelopCredit
-                label="short"
-                logoClassName={developLogoClass}
-                textClassName={textClass}
-                tone="dark"
-                blend={isFunGallery}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-shrink-0">
-          <HoverButton
-            href="/contact"
-            underline
-            tightUnderline
-            tone="dark"
-            blend={isFunGallery}
-            className={`font-display ${ctaWeight} whitespace-nowrap text-[40px] uppercase leading-none tracking-normal ${textClass}`}
-          >
-            LET&apos;S WORK TOGETHER!
-          </HoverButton>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
 export default function Footer() {
   const pathname = usePathname();
 
-  const isFunGallery =
-    pathname === "/fun-gallery" || pathname.startsWith("/fun-gallery/");
-
-  if (isFunGallery) {
-    return <FixedFooter isFunGallery={isFunGallery} />;
-  }
+  // `/fun-gallery` dejó de tener footer fijo en B3.3: la galería pasó a ser una
+  // página normal, así que toma el footer de rutas internas como el resto. Con
+  // eso se fue el último llamador de la variante fija —y con ella la divergencia
+  // `font-thin` que arrastraba desde B2.2b.
 
   // `/contact/success` usa la variante de home. Es una pantalla simple y de una
   // sola vista: el footer de dos zonas (franja clara + banda oscura con el logo
