@@ -37,7 +37,7 @@ Fuente de verdad del mapa de bloques de la ronda. Lo mantiene la capa de planifi
 
 ### B3 — Rediseños de sección: Fun Gallery y Services · PENDIENTE
 - **Arranque obligatorio: sonda de transparencia.** 1 PNG con alpha real por el camino completo Sanity → CDN → `next/image` (avif/webp), montado sobre fondo de color, comparando `object-cover` vs. `contain`. Reporte antes de diseñar nada encima (es el único camino del pipeline no ejercitado por ninguna imagen del sitio).
-- **Fun Gallery:** schema `funGalleryImage` + casillas ES de `project` + **una sola sesión de carga de las clientas** (8 PNG + ~19 piezas ES) + pantalla de entrada/despliegue + fallback realineado + reescritura de `docs/sanity-studio-guide.md` (solo puede quedar veraz cuando el schema exista).
+- **Fun Gallery:** schema `funGalleryImage` + casillas ES de `project` + **una sola sesión de carga de las clientas** (8 PNG + ~19 piezas ES) + pantalla de entrada/despliegue + fallback realineado. La carga se explica a las clientas por video (decisión B3.2b); la guía escrita del Studio se eliminó.
 - **Services:** IA nueva (INTRO / BRAND CONSULTATION / 01 ESSENTIALS / 02 UNIVERSE / + ADD-ONS), sidebar sticky centrado con flecha scroll-spy y click-scroll, indicador de scroll en lugar del botón DISCOVER, LATEST PROJECTS (4 portadas + links), retiro completo del stack viejo (acordeón, ScrollTriggers, slideshows). El intro se conserva con copy nuevo.
 - **Sprints aprox.:** FG 3 · Services 3–4. **Depende de:** B1 (regla de schema derogada) y B2 (las páginas nuevas se construyen y verifican contra el chrome final).
 

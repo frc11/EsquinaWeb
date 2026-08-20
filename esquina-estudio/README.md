@@ -30,7 +30,7 @@ npm run lint
 
 ## CMS
 
-Sanity Studio embebido en `/studio`. Guía para las editoras: `docs/sanity-studio-guide.md`.
+Sanity Studio embebido en `/studio`. La carga de contenido se explica a las clientas por video, no por guía escrita.
 
 ## Método de trabajo
 
