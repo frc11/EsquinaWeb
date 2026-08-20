@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import {
   AnimatePresence,
   motion,
-  MotionValue,
   useMotionValue,
   useSpring,
-  useTransform,
 } from "framer-motion";
 import {
   usePrefersReducedMotion,
@@ -29,17 +27,21 @@ import { FunGalleryImage } from "@/types/fun-gallery-image";
   pueden compartir propiedad —se pisan—, así que cada movimiento vive en su
   propio elemento y el navegador compone las matrices al bajar por el árbol:
 
-    L0  posición + hover   left/top/width (CSS) · scale (whileHover) · zIndex
-      L1  despliegue        x/y  → animate, una sola vez, al click
-        L2  flotado         x/y  → animate con keyframes, loop infinito
-          L3  seguimiento   x/y  → style con motion values (spring)
-            L4  inclinación rotate (constante) + opacity del fade de carga
-              <Image object-contain />
+    L0  posición + hover + seguimiento
+        left/top/width (CSS) · scale (whileHover) · zIndex · x/y (motion values)
+      L1  despliegue      x/y  → animate, una sola vez, al click
+        L2  flotado       x/y  → animate con keyframes, loop infinito
+          L3  inclinación rotate (constante) + opacity del fade de carga
+            <Image object-contain />
 
-  Ningún par de capas escribe la misma propiedad del mismo elemento: L1, L2 y
-  L3 mueven x/y, pero cada una sobre un div distinto. La rotación va por dentro
-  de las tres traslaciones para que éstas ocurran en el espacio de la página y
-  no en el marco inclinado del objeto.
+  Ningún par de capas escribe la misma propiedad del mismo elemento. L0 lleva
+  x/y y scale a la vez, que son propiedades distintas y sistemas distintos —los
+  motion values del seguimiento contra el `whileHover` de la escala—, así que no
+  compiten: el seguimiento vivía en una capa propia mientras se aplicaba a los
+  ocho objetos con un motion value compartido, y al pasar a ser un gesto del
+  objeto con hover se consolidó en la capa que ya resuelve ese hover (B3.3c/F2).
+  La rotación va por dentro de las traslaciones para que éstas ocurran en el
+  espacio de la página y no en el marco inclinado del objeto.
 
   UNIDADES
   ────────
@@ -217,35 +219,44 @@ const FLOAT_PERIOD_STEP = 1.2;
 // ── Seguimiento del cursor ───────────────────────────────────────────────────
 
 /*
-  El objeto ACOMPAÑA al cursor. En `ServicesIntro` (`:151-191`) las imágenes se
-  apartan de él; acá el signo va al derecho: el cursor a la derecha del centro
-  corre los objetos a la derecha. Se reusa su spring —sobreamortiguado, ζ = 1,5,
-  no hay rebote, solo arrastre.
+  SOLO EL OBJETO CON HOVER ACOMPAÑA AL CURSOR.
 
-  La amplitud es `FOLLOW_STRENGTH × factor` con el cursor en el borde del
-  viewport, y el factor sorteado por objeto (2 a 3) es lo que hace que no se
-  muevan todos igual. Estaba en 6–9 px y era imperceptible: contra los 11/16 px
-  del flotado, el seguimiento quedaba escondido debajo de la deriva. Ahora
-  llega a 20–30 px, que es 1,3 a 1,9 veces el flotado vertical: se nota que los
-  objetos acompañan al cursor y sigue siendo del mismo orden que la deriva, así
-  que ninguno de los dos se come al otro. Y son 20–30 px solo con el cursor
-  pegado al borde: en el grueso de la pantalla el desplazamiento es bastante
-  menor, porque el motion value es la posición normalizada del cursor.
+  Hasta B3.3b el seguimiento era un parallax global: un único motion value con
+  la posición normalizada del cursor en el VIEWPORT movía a los ocho objetos a
+  la vez. No era lo pedido, y además repartía mal el gesto —el desplazamiento
+  dependía de dónde estaba el objeto en la pantalla, no de dónde estaba el
+  cursor respecto del objeto—, así que un objeto cerca del centro casi no se
+  movía por más que el cursor lo recorriera entero.
+
+  Ahora el gesto es del objeto, como en `ServicesIntro` (`:151-191`), que
+  también mide el cursor contra el centro de CADA imagen. Dos diferencias con
+  ese precedente: el signo va al derecho —el objeto ACOMPAÑA al cursor en vez de
+  apartarse— y el radio de disparo no es un círculo de 100 px sino la propia
+  caja del objeto, que es la que ya define el hover. Se reusa su spring:
+  sobreamortiguado, ζ = 1,5, sin rebote, solo arrastre.
+
+  La amplitud es `FOLLOW_STRENGTH × factor` con el cursor en el borde de la
+  caja, o sea 12 a 18 px, y el factor sorteado por objeto (2 a 3) es lo que hace
+  que no todos acompañen igual. Contra los ±11/±16 px del flotado es del mismo
+  orden —«ligeramente», que es lo pedido—, y ahora se lee porque es el único
+  objeto que se mueve respecto de sus vecinos.
 */
 const FOLLOW_MIN = 2;
 const FOLLOW_MAX = 3;
-const FOLLOW_STRENGTH = 10;
+const FOLLOW_STRENGTH = 6;
 const FOLLOW_SPRING = { stiffness: 50, damping: 15, mass: 0.5 };
 
 // ── Hover ────────────────────────────────────────────────────────────────────
 
 /*
-  1,2 agrandaba el objeto 80 px y competía con el despliegue; 1,08 son 32 px
-  sobre una tarjeta de 400 px, que es «un poco». El zIndex de hover pasa de 999
-  a 50 porque ahora la página scrollea: 999 dejaba al objeto por encima del
-  Navbar (z-100) al pasarle por debajo.
+  1,2 agrandaba el objeto 80 px y competía con el despliegue; 1,08 quedó corto y
+  el gesto no se leía. 1,13 son 50 px sobre una tarjeta de 384 px: se nota sin
+  competir. Medido contra el par más cerrado, el costo es asumible (ver el
+  bloque de choques del reporte B3.3c). El zIndex de hover pasa de 999 a 50
+  porque ahora la página scrollea: 999 dejaba al objeto por encima del Navbar
+  (z-100) al pasarle por debajo.
 */
-const HOVER_SCALE = 1.08;
+const HOVER_SCALE = 1.13;
 const HOVER_DURATION = 0.5;
 const HOVER_Z_INDEX = 50;
 
@@ -597,8 +608,6 @@ function GalleryCard({
   spread,
   instant,
   reduceMotion,
-  pointerX,
-  pointerY,
 }: {
   item: LayoutItem;
   index: number;
@@ -607,19 +616,13 @@ function GalleryCard({
   /** El objeto nace en su lugar, sin animar el despliegue. */
   instant: boolean;
   reduceMotion: boolean;
-  pointerX: MotionValue<number>;
-  pointerY: MotionValue<number>;
 }) {
   const { navigateWithTransition } = useRouteTransition();
   const [isLoaded, setIsLoaded] = useState(false);
-  const followX = useTransform(
-    pointerX,
-    (value) => value * FOLLOW_STRENGTH * item.followFactor,
-  );
-  const followY = useTransform(
-    pointerY,
-    (value) => value * FOLLOW_STRENGTH * item.followFactor,
-  );
+  const followTargetX = useMotionValue(0);
+  const followTargetY = useMotionValue(0);
+  const followX = useSpring(followTargetX, FOLLOW_SPRING);
+  const followY = useSpring(followTargetY, FOLLOW_SPRING);
   // Mientras están amontonados los objetos no son interactivos: el click que
   // despliega lo recibe el botón que los cubre, así que nunca compite con el
   // click que navega a un proyecto.
@@ -644,6 +647,35 @@ function GalleryCard({
     handleNavigate();
   };
 
+  /*
+    El cursor se mide contra el centro de ESTA caja y se normaliza por su
+    semilado, así que el gesto es el mismo en cualquier objeto y en cualquier
+    resolución: en el centro no hay desplazamiento y en el borde está el máximo.
+    El rectángulo se lee en cada movimiento —igual que en `ServicesIntro`—
+    porque el objeto está flotando y creciendo por el hover: cualquier medida
+    guardada quedaría vieja al cuadro siguiente.
+  */
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    const amplitude = FOLLOW_STRENGTH * item.followFactor;
+    const offsetX =
+      (event.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
+    const offsetY =
+      (event.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
+
+    followTargetX.set(clamp(offsetX, -1, 1) * amplitude);
+    followTargetY.set(clamp(offsetY, -1, 1) * amplitude);
+  };
+
+  const handlePointerLeave = () => {
+    followTargetX.set(0);
+    followTargetY.set(0);
+  };
+
   return (
     <motion.div
       className={`absolute ${interactive ? "cursor-pointer" : ""}`}
@@ -655,6 +687,8 @@ function GalleryCard({
         width: `${item.size * 100}%`,
         aspectRatio: "1",
         zIndex: item.zIndex,
+        x: followX,
+        y: followY,
       }}
       whileHover={{ scale: HOVER_SCALE, zIndex: HOVER_Z_INDEX }}
       transition={{
@@ -662,6 +696,10 @@ function GalleryCard({
         ease: EASE,
         zIndex: { duration: 0 },
       }}
+      // Con `prefers-reduced-motion` no se cuelga el seguimiento: los motion
+      // values se quedan en 0 y el hover conserva solo su escala.
+      onPointerMove={reduceMotion ? undefined : handlePointerMove}
+      onPointerLeave={reduceMotion ? undefined : handlePointerLeave}
       role={interactive ? "link" : undefined}
       tabIndex={interactive ? 0 : undefined}
       aria-label={interactive ? `View ${item.title}` : undefined}
@@ -717,40 +755,34 @@ function GalleryCard({
                 }
           }
         >
-          {/* L3 — seguimiento del cursor. */}
-          <motion.div
-            className="h-full w-full"
-            style={{ x: followX, y: followY }}
-          >
-            {/*
-              L4 — inclinación constante y fade de carga. `rotate` es un valor
-              estático y `opacity` no es transform: no se pisan.
+          {/*
+            L3 — inclinación constante y fade de carga. `rotate` es un valor
+            estático y `opacity` no es transform: no se pisan.
 
-              La caja mide exactamente la tarjeta, que es el único tamaño con el
-              que `object-contain` dibuja la imagen al tamaño previsto: agrandar
-              la caja agranda el dibujo y lo recorta contra la tarjeta.
-            */}
-            <motion.div
-              className="relative h-full w-full"
-              style={{ rotate: item.rotate }}
-              initial={false}
-              animate={{ opacity: isLoaded ? 1 : 0 }}
-              transition={{
-                duration: IMAGE_FADE_DURATION,
-                delay: (index % IMAGE_FADE_STAGGER_BUCKET) * IMAGE_FADE_STAGGER,
-                ease: EASE,
-              }}
-            >
-              <Image
-                src={item.imageUrl}
-                alt={item.alt}
-                fill
-                sizes="(max-width: 768px) 30vw, 22vw"
-                priority={index < EAGER_IMAGE_COUNT}
-                onLoadingComplete={() => setIsLoaded(true)}
-                className="object-contain"
-              />
-            </motion.div>
+            La caja mide exactamente la tarjeta, que es el único tamaño con el
+            que `object-contain` dibuja la imagen al tamaño previsto: agrandar
+            la caja agranda el dibujo y lo recorta contra la tarjeta.
+          */}
+          <motion.div
+            className="relative h-full w-full"
+            style={{ rotate: item.rotate }}
+            initial={false}
+            animate={{ opacity: isLoaded ? 1 : 0 }}
+            transition={{
+              duration: IMAGE_FADE_DURATION,
+              delay: (index % IMAGE_FADE_STAGGER_BUCKET) * IMAGE_FADE_STAGGER,
+              ease: EASE,
+            }}
+          >
+            <Image
+              src={item.imageUrl}
+              alt={item.alt}
+              fill
+              sizes="(max-width: 768px) 30vw, 22vw"
+              priority={index < EAGER_IMAGE_COUNT}
+              onLoadingComplete={() => setIsLoaded(true)}
+              className="object-contain"
+            />
           </motion.div>
         </motion.div>
       </motion.div>
@@ -769,10 +801,6 @@ export default function FunGallery({
   const [deployed, setDeployed] = useState(false);
   // Hay vuelta cuando esta pestaña tiene anotado un proyecto abierto desde acá.
   const returning = useFunGalleryReturnOnMount() !== null;
-  const pointerX = useMotionValue(0);
-  const pointerY = useMotionValue(0);
-  const followPointerX = useSpring(pointerX, FOLLOW_SPRING);
-  const followPointerY = useSpring(pointerY, FOLLOW_SPRING);
   const galleryItems = useMemo(() => toGalleryItems(images), [images]);
   const composition = useMemo(
     () => buildComposition(galleryItems, randomSeed),
@@ -792,33 +820,6 @@ export default function FunGallery({
   */
   const spread = deployed || returning || reduceMotion;
   const instantSpread = returning || reduceMotion;
-
-  useEffect(() => {
-    if (reduceMotion) return;
-
-    const handlePointerMove = (event: PointerEvent) => {
-      if (event.pointerType === "touch") return;
-
-      const viewportWidth = window.innerWidth || 1;
-      const viewportHeight = window.innerHeight || 1;
-
-      pointerX.set(clamp((event.clientX / viewportWidth - 0.5) * 2, -1, 1));
-      pointerY.set(clamp((event.clientY / viewportHeight - 0.5) * 2, -1, 1));
-    };
-
-    const resetPointer = () => {
-      pointerX.set(0);
-      pointerY.set(0);
-    };
-
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("blur", resetPointer);
-
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("blur", resetPointer);
-    };
-  }, [pointerX, pointerY, reduceMotion]);
 
   return (
     <section
@@ -859,8 +860,6 @@ export default function FunGallery({
             spread={spread}
             instant={instantSpread}
             reduceMotion={reduceMotion}
-            pointerX={followPointerX}
-            pointerY={followPointerY}
           />
         ))}
 
