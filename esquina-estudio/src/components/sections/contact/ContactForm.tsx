@@ -42,12 +42,30 @@ const CONTACT_EASE = [0.22, 1, 0.36, 1] as const;
 // contact form inputs so it can't leak to the rest of the site.
 const SCOPED_SELECTION =
   "[[data-contact]_&]:selection:bg-off-white! [[data-contact]_&]:selection:text-off-black!";
+// Escala tipografica por rango de ancho. Solo hay tres escalones y el de
+// >= 1600 es EXACTAMENTE el aprobado en B2.5b: 34/58 en los controles.
+//
+//   escalon 0  >= 1600      34 px / min-h 58   (composicion aprobada, intocable)
+//   escalon 1  1360-1599    28 px / min-h 48   (la escala base que el archivo
+//                                               ya tenia para < 768: no se
+//                                               inventa ningun tamano nuevo)
+//   escalon 2  1280-1359    26 px / min-h 44   (el unico tamano nuevo, y existe
+//                                               solo para que 1280 entre)
+//
+// El escalon 1 no necesita clase propia: es el valor SIN variante, el mismo que
+// gobierna debajo de 768. Por eso `md:` queda acotado con `max-[1279.98px]`, y
+// el rango 1360-1599 cae al valor base. Los cuatro rangos son mutuamente
+// excluyentes a proposito: Tailwind emite las variantes arbitrarias antes que
+// los breakpoints con nombre, asi que sin acotar `md:` le ganaria a todo lo de
+// arriba (la trampa que B2.5b y B2.6 verificaron dos veces).
+const CONTROL_SCALE =
+  "md:max-[1279.98px]:min-h-[58px] md:max-[1279.98px]:text-[34px] min-[1280px]:max-[1359.98px]:min-h-[44px] min-[1280px]:max-[1359.98px]:text-[26px] min-[1600px]:min-h-[58px] min-[1600px]:text-[34px]";
 const CONTROL_TEXT_CLASS =
-  `min-h-[48px] w-full bg-transparent pl-1 font-body text-[28px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:min-h-[58px] md:text-[34px]`;
+  `min-h-[48px] w-full bg-transparent pl-1 font-body text-[28px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 ${CONTROL_SCALE}`;
 const SELECT_BUTTON_CLASS =
-  `flex min-h-[48px] w-full pl-1 items-center justify-between gap-4 bg-transparent text-left font-body text-[28px] uppercase leading-none text-off-black outline-none transition-colors duration-200 ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white md:min-h-[58px] md:text-[34px]`;
+  `flex min-h-[48px] w-full pl-1 items-center justify-between gap-4 bg-transparent text-left font-body text-[28px] uppercase leading-none text-off-black outline-none transition-colors duration-200 ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white ${CONTROL_SCALE}`;
 const SELECT_SEARCH_CLASS =
-  `w-full bg-transparent pl-1  font-body text-[20px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:text-[22px]`;
+  `w-full bg-transparent pl-1  font-body text-[20px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:max-[1279.98px]:text-[22px] min-[1600px]:text-[22px]`;
 
 const contactFieldGroupVariants: Variants = {
   hidden: {},
@@ -183,19 +201,20 @@ function FieldShell({
   children: React.ReactNode;
 }) {
   return (
-    // El label va al costado solo donde su ancho entra: en una sola columna
-    // entre 768 y 880, y en dos columnas a partir de 1600. En el medio --que
-    // es donde viven las dos columnas angostas-- va ARRIBA del control: esa es
-    // la palanca que libera 364 px de ancho (176 + 24 de la columna izquierda
-    // mas 140 + 24 de la derecha) a cambio de 48,8 px de alto por campo.
-    // Los dos rangos son mutuamente excluyentes a proposito: Tailwind emite
-    // las variantes arbitrarias antes que los breakpoints con nombre, asi que
-    // sin rangos disjuntos `md:` le ganaria a `min-[1600px]:` (B2.5b).
-    <div className="grid gap-3 py-5 md:items-center md:gap-x-[var(--contact-gap)] md:py-3 md:max-[879.98px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)] min-[1600px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)]">
+    // El label va al costado en todos los rangos donde su ancho entra: en una
+    // sola columna entre 768 y 880, y en dos columnas a partir de 1280 (B2.7
+    // bajo ese umbral desde 1600 achicando la columna del label a su piso de
+    // tres lineas y la tipografia un escalon). Queda ARRIBA solo entre 880 y
+    // 1279, que es donde las dos columnas no entran de otra forma; ahi cuesta
+    // 48,8 px de alto por campo.
+    // Los rangos son mutuamente excluyentes a proposito: Tailwind emite las
+    // variantes arbitrarias antes que los breakpoints con nombre, asi que sin
+    // rangos disjuntos `md:` le ganaria a `min-[1600px]:` (B2.5b).
+    <div className="grid gap-3 py-5 md:items-center md:gap-x-[var(--contact-gap)] md:py-3 md:max-[879.98px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)] min-[1280px]:max-[1599.98px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)] min-[1600px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)]">
       <label
         className={`${
           alignLabelTop ? "self-start" : "self-center"
-        } font-body text-[14px] uppercase leading-[1.15] text-off-black md:text-[16px]`}
+        } font-body text-[14px] uppercase leading-[1.15] text-off-black md:max-[1279.98px]:text-[16px] min-[1280px]:max-[1359.98px]:text-[12px] min-[1600px]:text-[16px]`}
       >
         {label.map((line) => (
           <span key={line} className="block">
@@ -269,7 +288,10 @@ function WorkTypePill({
       type="button"
       aria-pressed={selected}
       onClick={handleClick}
-      className={`relative shrink-0 cursor-pointer overflow-hidden border border-gray-brand px-2.5 py-1.5 font-body text-[15px] uppercase leading-none transition-colors duration-150 hover:bg-off-black hover:text-off-white focus-visible:bg-off-black focus-visible:text-off-white md:text-[17px] ${
+      // El padding horizontal baja a su piso medido (4 px) debajo de 1600: es
+      // lo que deja el bloque de pills en 4 filas dentro de 332 px en vez de
+      // 356, y esos 24 px de ancho son los que sostienen el label al costado.
+      className={`relative shrink-0 cursor-pointer overflow-hidden border border-gray-brand px-2.5 py-1.5 font-body text-[15px] uppercase leading-none transition-colors duration-150 hover:bg-off-black hover:text-off-white focus-visible:bg-off-black focus-visible:text-off-white md:max-[1279.98px]:text-[17px] min-[1280px]:max-[1599.98px]:px-1 min-[1280px]:max-[1359.98px]:text-[13px] min-[1600px]:text-[17px] ${
         selected
           ? "bg-off-black text-off-white"
           : "bg-transparent text-gray-brand"
@@ -431,7 +453,7 @@ function CustomSelect({
           >
             <svg
               viewBox="0 0 12 12"
-              className="h-[14px] w-[14px] transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:h-[16px] md:w-[16px]"
+              className="h-[14px] w-[14px] transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:max-[1279.98px]:h-[16px] md:max-[1279.98px]:w-[16px] min-[1280px]:max-[1359.98px]:h-[12px] min-[1280px]:max-[1359.98px]:w-[12px] min-[1600px]:h-[16px] min-[1600px]:w-[16px]"
               style={{ transform: isOpen ? "rotate(90deg)" : "rotate(0deg)" }}
               fill="none"
               stroke="currentColor"
@@ -471,7 +493,7 @@ function CustomSelect({
               <button
                 key={option}
                 type="button"
-                className="group flex w-full items-center justify-between gap-3 px-2 py-2 text-left font-body text-[18px] uppercase leading-none transition-colors hover:bg-off-black hover:text-off-white md:text-[20px]"
+                className="group flex w-full items-center justify-between gap-3 px-2 py-2 text-left font-body text-[18px] uppercase leading-none transition-colors hover:bg-off-black hover:text-off-white md:max-[1279.98px]:text-[20px] min-[1600px]:text-[20px]"
                 onClick={() => {
                   onChange(option);
                   setOpenSelectId(null);
@@ -574,10 +596,15 @@ export default function ContactForm({ service = null }: { service?: string | nul
       // al lado del formulario: 280 + 40 + 784 = 1104 de contenido = 1232 de
       // viewport. Debajo de eso apila arriba (palanca 2), que es el `flex
       // flex-col` de base. La pista del aside toma el sobrante como en >= 1600
-      // y el formulario queda pegado al borde derecho en los dos rangos, asi
+      // y el formulario queda pegado al borde derecho en todos los rangos, asi
       // que al cruzar 1600 el bloque crece hacia la izquierda sin moverse de
       // su margen. Rangos disjuntos, sin `lg:` (ver FieldShell).
-      className="mx-auto flex w-full max-w-[1680px] flex-col gap-12 [--contact-gap:28px] [--contact-label-w:176px] min-[1232px]:grid min-[1232px]:items-start min-[1232px]:gap-x-10 min-[1232px]:max-[1599.98px]:grid-cols-[minmax(280px,1fr)_minmax(784px,872px)] min-[1600px]:grid-cols-[minmax(280px,1fr)_minmax(1120px,1192px)]"
+      //
+      // De 1280 a 1599 la pista del aside baja de 280 a 272: el ancho
+      // max-content del aside medido es 269,16 (lo fija el subtitulo, no el
+      // titulo), asi que 272 lo deja intacto y devuelve 8 px al formulario.
+      // Ni el titulo ni el subtitulo cambian de tamano en ningun rango.
+      className="mx-auto flex w-full max-w-[1680px] flex-col gap-12 [--contact-gap:28px] [--contact-label-w:176px] min-[1232px]:grid min-[1232px]:items-start min-[1232px]:gap-x-10 min-[1232px]:max-[1279.98px]:grid-cols-[minmax(280px,1fr)_minmax(784px,872px)] min-[1280px]:max-[1359.98px]:grid-cols-[minmax(272px,1fr)_minmax(840px,1099px)] min-[1280px]:max-[1359.98px]:[--contact-label-w:95px] min-[1360px]:max-[1599.98px]:grid-cols-[minmax(272px,1fr)_minmax(920px,1129px)] min-[1360px]:max-[1599.98px]:[--contact-label-w:111px] min-[1600px]:grid-cols-[minmax(280px,1fr)_minmax(1120px,1192px)]"
     >
       <aside className="flex w-full max-w-[700px] flex-none flex-col self-start">
         <motion.div
@@ -629,16 +656,26 @@ export default function ContactForm({ service = null }: { service?: string | nul
           animate={isPreloaderDone ? "visible" : "hidden"}
           variants={shouldReduceMotion ? undefined : contactFieldGroupVariants}
         >
-          {/* Cuatro estados, un solo eje: el ancho. Ninguno es una
-              preferencia --cada corte es el ancho donde el estado de arriba
-              deja de entrar sin romper una restriccion medida.
+          {/* Seis estados, un solo eje: el ancho. Ninguno es una preferencia
+              --cada corte es el ancho donde el estado de arriba deja de entrar
+              sin romper una restriccion medida. Cada pista es
+              [label + gap + control] y su piso es la suma de esos tres.
 
-              >= 1600  dos columnas con el label al costado de su control:
+              >= 1600  label al costado, escalon 0 (34/58, pills 17 px-2.5,
+                       labels 16 a dos lineas):
                        280 + 40 + [176 + 24 + 396] + 32 + [140 + 24 + 352]
                        = 1472 de contenido = 1600 de viewport.
-              >= 1232  dos columnas con el label ARRIBA del control. Sacar el
-                       label del costado libera 364 px y deja el piso en
-                       280 + 40 + [396 + 32 + 352] = 1100, mas 4 px de aire
+              >= 1360  label al costado, escalon 1 (28/48, pills 15 px-1,
+                       labels 14 a tres lineas):
+                       272 + 40 + [111 + 24 + 332] + 32 + [98 + 24 + 295]
+                       = 1228 + 4 de aire = 1232 de contenido = 1360.
+              >= 1280  label al costado, escalon 2 (26/44, pills 13 px-1,
+                       labels 12 a tres lineas):
+                       272 + 40 + [95 + 24 + 291] + 32 + [84 + 24 + 275]
+                       = 1137 + 15 de aire = 1152 de contenido = 1280.
+              >= 1232  label ARRIBA del control, escalon 0. Sacar el label del
+                       costado libera 364 px y deja el piso en
+                       280 + 40 + [396 + 32 + 352] = 1100, mas 4 de aire
                        = 1104 de contenido = 1232 de viewport.
               >=  880  lo mismo, pero con el aside APILADO arriba del
                        formulario: sin la pista del aside el piso baja a 784 de
@@ -647,22 +684,28 @@ export default function ContactForm({ service = null }: { service?: string | nul
               <   880  una sola columna, que es donde el label vuelve al
                        costado porque ahi si entra (176 + 24 + 420 = 620).
 
-              Los pisos de las dos pistas reparten los mismos 4 px de aire que
-              a 1600: 396 no puede bajar sin que las pills se vayan a 5 filas y
-              352 no puede bajar sin que se trunque $2,500-$4,000 USD. El tope
-              de 420 en las dos pistas es el mismo tope de control del layout
-              de una columna, para que ningun control quede estirado.
+              Los tres pisos de control estan medidos, no elegidos: 396/332/291
+              es el ancho minimo donde las 10 pills siguen entrando en 4 filas
+              a 17/15/13 px, y 352/295/275 el minimo donde $2,500-$4,000 USD no
+              se trunca a 34/28/26 px. Las columnas de label (176/111/95 y
+              140/98/84) son el minimo donde ningun label pasa de tres lineas,
+              que es lo que entra en el alto del control sin engordar el campo.
+              El tope de 420 en todas las pistas es el mismo tope de control del
+              layout de una columna, para que ningun control quede estirado.
 
               El costo de las palancas es alto, no ancho: el label arriba suma
               48,8 px por campo (36,8 de dos lineas a 16/1,15 mas 12 de gap) y
-              el aside apilado suma 270 (222 del bloque mas 48 de gap).
+              el aside apilado suma 270 (222 del bloque mas 48 de gap). Por eso
+              el label al costado baja hasta 1280 en vez de dejar que el label
+              suba: el bloque mide 450 y 426 en los escalones 1 y 2, contra los
+              741,9 que costaba el label arriba.
 
               El orden del DOM sigue siendo el orden de tipeo: la primera
               columna lleva los primeros cinco campos y la segunda el resto mas
               el boton, asi que Tab recorre nombre, email, pills, negocio,
               industria, ubicacion, plazo, presupuesto, como nos conociste y
               SEND. Sin reordenar markup ni posicionamiento absoluto. */}
-          <div className="min-[880px]:grid min-[880px]:items-start min-[880px]:gap-x-8 min-[880px]:max-[1599.98px]:grid-cols-[minmax(396px,420px)_minmax(352px,420px)] min-[1600px]:grid-cols-[minmax(600px,620px)_minmax(520px,540px)] min-[1600px]:[--contact-gap:24px]">
+          <div className="min-[880px]:grid min-[880px]:items-start min-[880px]:gap-x-8 min-[880px]:max-[1279.98px]:grid-cols-[minmax(396px,420px)_minmax(352px,420px)] min-[1280px]:max-[1359.98px]:grid-cols-[minmax(418px,539px)_minmax(390px,528px)] min-[1280px]:max-[1599.98px]:[--contact-gap:24px] min-[1360px]:max-[1599.98px]:grid-cols-[minmax(469px,555px)_minmax(419px,542px)] min-[1600px]:grid-cols-[minmax(600px,620px)_minmax(520px,540px)] min-[1600px]:[--contact-gap:24px]">
             <div>
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
@@ -748,7 +791,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
               </ContactFieldReveal>
             </div>
 
-            <div className="min-[1600px]:[--contact-label-w:140px]">
+            <div className="min-[1280px]:max-[1359.98px]:[--contact-label-w:84px] min-[1360px]:max-[1599.98px]:[--contact-label-w:98px] min-[1600px]:[--contact-label-w:140px]">
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell label={["WHERE ARE", "YOU BASED?"]}>
                   <CustomSelect
@@ -852,16 +895,19 @@ export default function ContactForm({ service = null }: { service?: string | nul
                   440,5: 57,5 de diferencia). Con el label arriba cada campo
                   suma 48,8, asi que el margen sube esos mismos 48,8 --112 en
                   vez de 64-- y la diferencia se queda donde estaba. En una
-                  sola columna se queda en 28. */}
+                  sola columna se queda en 28. En los escalones 1 y 2 el campo
+                  adelgaza (73 y 69 contra 83), asi que el margen se queda en 64
+                  y baja a 56: la diferencia medida es 54 en los dos, debajo del
+                  tope de 60. */}
               <motion.div
-                className="mt-12 md:grid md:gap-x-[var(--contact-gap)] md:max-[879.98px]:mt-7 md:max-[879.98px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)] min-[880px]:max-[1599.98px]:mt-28 min-[1600px]:mt-16 min-[1600px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)]"
+                className="mt-12 md:grid md:gap-x-[var(--contact-gap)] md:max-[879.98px]:mt-7 md:max-[879.98px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)] min-[880px]:max-[1279.98px]:mt-28 min-[1280px]:max-[1359.98px]:mt-14 min-[1280px]:max-[1599.98px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)] min-[1360px]:max-[1599.98px]:mt-16 min-[1600px]:mt-16 min-[1600px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)]"
                 initial={shouldReduceMotion ? false : "hidden"}
                 animate={isPreloaderDone ? "visible" : "hidden"}
                 variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
               >
                 <div
                   aria-hidden
-                  className="hidden md:max-[879.98px]:block min-[1600px]:block"
+                  className="hidden md:max-[879.98px]:block min-[1280px]:max-[1599.98px]:block min-[1600px]:block"
                 />
                 <div className="flex md:justify-end">
                   <button
@@ -872,7 +918,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
                   >
                     <HoverButton
                       as="span"
-                      className="font-body text-[21px] uppercase md:text-[24px]"
+                      className="font-body text-[21px] uppercase md:max-[1279.98px]:text-[24px] min-[1600px]:text-[24px]"
                     >
                       {isSubmitting ? "SENDING..." : "SEND QUESTIONNAIRE"}
                     </HoverButton>
