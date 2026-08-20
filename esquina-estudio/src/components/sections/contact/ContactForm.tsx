@@ -67,6 +67,15 @@ const SELECT_BUTTON_CLASS =
 const SELECT_SEARCH_CLASS =
   `w-full bg-transparent pl-1  font-body text-[20px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:max-[1279.98px]:text-[22px] min-[1600px]:text-[22px]`;
 
+/**
+ * Un solo lugar decide el `id` del label de un campo. Lo usan los dos lados de
+ * la asociación: `FieldShell`, que emite el label, y `CustomSelect`, que lo cita
+ * en su `aria-labelledby` para que el nombre accesible del disparador sea
+ * «label + valor elegido» y no solo el label (un `<button>` toma su nombre del
+ * contenido, así que un `htmlFor` a secas le taparía el valor).
+ */
+const labelIdFor = (controlId: string) => `${controlId}-label`;
+
 const contactFieldGroupVariants: Variants = {
   hidden: {},
   visible: {
@@ -189,17 +198,40 @@ function resolveWorkTypeFromService(service: string | null): WorkTypeOption | nu
 
 function FieldShell({
   label,
+  controlId,
   error,
   alignLabelTop = false,
+  asGroup = false,
   children,
 }: {
   /** Dos líneas fijas: el corte lo decide el mockup, no el ancho de la columna. */
   label: readonly [string, string];
+  /**
+   * `id` del control que este label nombra. Los cuatro selects ya usaban este
+   * mismo string como llave de `openSelectId`: ahora además viaja al DOM.
+   */
+  controlId: string;
   error?: FieldError;
   /** El bloque de pills es mucho más alto que su label: ahí el label va arriba. */
   alignLabelTop?: boolean;
+  /**
+   * El campo no es un control sino un grupo (las pills): ahí no hay un `id` al
+   * que apuntar, así que el label deja de ser `<label>` y pasa a ser el nombre
+   * accesible de un `role="group"`.
+   */
+  asGroup?: boolean;
   children: React.ReactNode;
 }) {
+  const labelId = labelIdFor(controlId);
+  const labelClassName = `${
+    alignLabelTop ? "self-start" : "self-center"
+  } font-body text-[14px] uppercase leading-[1.15] text-off-black md:max-[1279.98px]:text-[16px] min-[1280px]:max-[1359.98px]:text-[12px] min-[1600px]:text-[16px]`;
+  const labelLines = label.map((line) => (
+    <span key={line} className="block">
+      {line}
+    </span>
+  ));
+
   return (
     // El label va al costado en todos los rangos donde su ancho entra: en una
     // sola columna entre 768 y 880, y en dos columnas a partir de 1280 (B2.7
@@ -211,18 +243,20 @@ function FieldShell({
     // variantes arbitrarias antes que los breakpoints con nombre, asi que sin
     // rangos disjuntos `md:` le ganaria a `min-[1600px]:` (B2.5b).
     <div className="grid gap-3 py-5 md:items-center md:gap-x-[var(--contact-gap)] md:py-3 md:max-[879.98px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)] min-[1280px]:max-[1599.98px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)] min-[1600px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)]">
-      <label
-        className={`${
-          alignLabelTop ? "self-start" : "self-center"
-        } font-body text-[14px] uppercase leading-[1.15] text-off-black md:max-[1279.98px]:text-[16px] min-[1280px]:max-[1359.98px]:text-[12px] min-[1600px]:text-[16px]`}
+      {asGroup ? (
+        <span id={labelId} className={labelClassName}>
+          {labelLines}
+        </span>
+      ) : (
+        <label id={labelId} htmlFor={controlId} className={labelClassName}>
+          {labelLines}
+        </label>
+      )}
+      <div
+        className="min-w-0 self-center"
+        role={asGroup ? "group" : undefined}
+        aria-labelledby={asGroup ? labelId : undefined}
       >
-        {label.map((line) => (
-          <span key={line} className="block">
-            {line}
-          </span>
-        ))}
-      </label>
-      <div className="min-w-0 self-center">
         {children}
         {error && (
           <p className="mt-2 font-body text-[13px] uppercase tracking-wider text-off-black md:text-[14px]">
@@ -431,15 +465,28 @@ function CustomSelect({
       <ContactFocusSurface>
         <button
           type="button"
+          id={id}
           className={SELECT_BUTTON_CLASS}
           onClick={() =>
             setOpenSelectId((current) => (current === id ? null : id))
           }
           aria-expanded={isOpen}
+          // El `<label>` de `FieldShell` apunta acá con `htmlFor` --que es lo
+          // que hace clickeable el label--, pero el nombre accesible se arma a
+          // mano: primero el label, después este mismo botón, cuyo contenido es
+          // el valor elegido. Sin la autorreferencia el label le ganaría al
+          // contenido y el valor dejaría de anunciarse.
+          aria-labelledby={`${labelIdFor(id)} ${id}`}
         >
           {value ? (
             <span className="flex min-w-0 flex-1 items-center gap-2 text-off-black transition-colors duration-200 group-focus-within/contact-focus:text-off-white">
-              <span className="min-w-0 truncate">{value}</span>
+              {/* Sin `truncate`: un valor que no entra se parte en dos o tres
+                  líneas en vez de perder texto. Los 15 países más largos --el
+                  peor es Democratic Republic of the Congo, no Saint Vincent--
+                  no entran en una línea en NINGÚN ancho, ni siquiera a 1920.
+                  El campo crece, pero es el de la columna corta: el alto del
+                  bloque no se mueve en ningún rango (medido). */}
+              <span className="min-w-0">{value}</span>
               {renderValueMeta?.(value)}
             </span>
           ) : (
@@ -710,10 +757,12 @@ export default function ContactForm({ service = null }: { service?: string | nul
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
                   label={["STATE YOUR", "FULL NAME *"]}
+                  controlId="full-name"
                   error={errors.fullName?.message}
                 >
                   <ContactFocusSurface>
                     <input
+                      id="full-name"
                       type="text"
                       placeholder="NAME"
                       className={CONTROL_TEXT_CLASS}
@@ -726,10 +775,12 @@ export default function ContactForm({ service = null }: { service?: string | nul
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
                   label={["EMAIL", "ADDRESS *"]}
+                  controlId="email"
                   error={errors.email?.message}
                 >
                   <ContactFocusSurface>
                     <input
+                      id="email"
                       type="email"
                       placeholder="EMAIL"
                       className={CONTROL_TEXT_CLASS}
@@ -742,8 +793,10 @@ export default function ContactForm({ service = null }: { service?: string | nul
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
                   label={["WHAT ARE YOU", "LOOKING TO WORK ON?"]}
+                  controlId="work-type"
                   error={errors.workType?.message}
                   alignLabelTop
+                  asGroup
                 >
                   <div className="flex max-w-[430px] flex-wrap gap-1.5">
                     {WORK_TYPE_OPTIONS.map((option) => (
@@ -759,7 +812,10 @@ export default function ContactForm({ service = null }: { service?: string | nul
               </ContactFieldReveal>
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
-                <FieldShell label={["WHAT BEST DESCRIBES", "YOUR BUSINESS?"]}>
+                <FieldShell
+                  label={["WHAT BEST DESCRIBES", "YOUR BUSINESS?"]}
+                  controlId="business-type"
+                >
                   <CustomSelect
                     id="business-type"
                     value={businessType}
@@ -778,9 +834,13 @@ export default function ContactForm({ service = null }: { service?: string | nul
               </ContactFieldReveal>
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
-                <FieldShell label={["WHAT IS YOUR", "INDUSTRY/FIELD"]}>
+                <FieldShell
+                  label={["WHAT IS YOUR", "INDUSTRY/FIELD"]}
+                  controlId="industry"
+                >
                   <ContactFocusSurface>
                     <input
+                      id="industry"
                       type="text"
                       placeholder="SHORT ANSWER"
                       className={CONTROL_TEXT_CLASS}
@@ -793,7 +853,10 @@ export default function ContactForm({ service = null }: { service?: string | nul
 
             <div className="min-[1280px]:max-[1359.98px]:[--contact-label-w:84px] min-[1360px]:max-[1599.98px]:[--contact-label-w:98px] min-[1600px]:[--contact-label-w:140px]">
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
-                <FieldShell label={["WHERE ARE", "YOU BASED?"]}>
+                <FieldShell
+                  label={["WHERE ARE", "YOU BASED?"]}
+                  controlId="country"
+                >
                   <CustomSelect
                     id="country"
                     value={country}
@@ -831,7 +894,10 @@ export default function ContactForm({ service = null }: { service?: string | nul
               </ContactFieldReveal>
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
-                <FieldShell label={["DO YOU HAVE A", "TIMELINE IN MIND?"]}>
+                <FieldShell
+                  label={["DO YOU HAVE A", "TIMELINE IN MIND?"]}
+                  controlId="timeline"
+                >
                   <CustomSelect
                     id="timeline"
                     value={timeline}
@@ -850,7 +916,10 @@ export default function ContactForm({ service = null }: { service?: string | nul
               </ContactFieldReveal>
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
-                <FieldShell label={["WHAT IS YOUR", "BUDGET RANGE?"]}>
+                <FieldShell
+                  label={["WHAT IS YOUR", "BUDGET RANGE?"]}
+                  controlId="budget"
+                >
                   <CustomSelect
                     id="budget"
                     value={budget}
@@ -869,9 +938,13 @@ export default function ContactForm({ service = null }: { service?: string | nul
               </ContactFieldReveal>
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
-                <FieldShell label={["HOW DID YOU", "HEAR ABOUT US?"]}>
+                <FieldShell
+                  label={["HOW DID YOU", "HEAR ABOUT US?"]}
+                  controlId="hear-about"
+                >
                   <ContactFocusSurface>
                     <input
+                      id="hear-about"
                       type="text"
                       placeholder="SHORT ANSWER"
                       className={CONTROL_TEXT_CLASS}
