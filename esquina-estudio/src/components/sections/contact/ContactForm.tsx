@@ -564,7 +564,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
       data-contact
       className="mx-auto flex w-full max-w-[1680px] flex-col gap-12 [--contact-gap:28px] [--contact-label-w:176px] lg:grid lg:items-start lg:max-[1599.98px]:grid-cols-[minmax(280px,0.85fr)_minmax(624px,1.15fr)] lg:max-[1599.98px]:gap-x-[clamp(3rem,5vw,6rem)] min-[1600px]:grid-cols-[minmax(280px,1fr)_minmax(1120px,1192px)] min-[1600px]:gap-x-10"
     >
-      <aside className="flex w-full max-w-[700px] flex-none flex-col self-start lg:sticky lg:top-[calc(var(--header-height)+3.5rem)]">
+      <aside className="flex w-full max-w-[700px] flex-none flex-col self-start">
         <motion.div
           className="overflow-hidden"
           initial={shouldReduceMotion ? false : "hidden"}
@@ -594,13 +594,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
         </motion.div>
       </aside>
 
-      {/* Bottom padding lives here (not on the page <section>) so the form
-          column — the taller grid item that defines the sticky aside's
-          containing block — extends past the form. That keeps the LET'S BRING
-          aside pinned until the end of the page: the extra bottom padding
-          stretches the sticky containing block. (The Footer is in normal flow
-          on /contact.) */}
-      <div className="min-w-0 pb-[clamp(13rem,22vh,16rem)] lg:w-full lg:justify-self-end lg:max-[1599.98px]:max-w-[624px]">
+      <div className="min-w-0 lg:w-full lg:justify-self-end lg:max-[1599.98px]:max-w-[624px]">
         <motion.form
           id={CONTACT_FORM_ID}
           onSubmit={handleSubmit(onSubmit)}
