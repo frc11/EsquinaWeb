@@ -55,6 +55,60 @@ import { FunGalleryImage } from "@/types/fun-gallery-image";
  */
 const COMPOSITION_MAX_WIDTH = 1664;
 
+/*
+  ENCUADRE — la escena entera se resuelve en la primera pantalla.
+
+  El alto de la composición no se elige: sale de `ancho × aspecto`. Así que lo
+  que se ajusta es el ANCHO y el alto lo sigue. El ancho que entra se despeja
+  del espacio que queda debajo del título:
+
+    disponible = 100svh − header − padding del bloque − título − aire del título
+    ancho × aspecto + desborde ≤ disponible
+
+  El desborde son los píxeles que el objeto más bajo se sale de la caja de la
+  composición —sus cajas tocan el borde por construcción—: el flotado, que son
+  16 px fijos, más la mitad de lo que crece el hover, que es el 4 % del lado del
+  objeto mayor y sí escala con el ancho. Ese término que escala pasa al divisor
+  y el ancho queda despejado en una sola cuenta:
+
+    ancho = (disponible − 16) / (aspecto + ladoMayor × 0,04)
+
+  El seguimiento del cursor queda afuera del cálculo a propósito: es transitorio
+  y simétrico —arriba y abajo—, y los assets tienen entre 6 y 12 % de alto
+  transparente de cada lado, más que suficiente para absorberlo.
+
+  Todo se expresa en CSS —`min()`, `max()` y `calc()` sobre `100svh`— y no
+  midiendo en JS: la composición se sigue armando igual en el servidor y en el
+  cliente, y sigue reaccionando al resize sin listeners.
+*/
+
+/** Interlineado del título. Es el `line-height` real del `<h1>`. */
+const TITLE_LINE_HEIGHT = 48;
+
+/*
+  Padding del bloque y aire entre el título y la composición: ceden alto en
+  pantallas bajas, donde cada píxel decide si la escena entra, y se quedan en el
+  valor de siempre —72 px y 40 px— en cuanto la pantalla da para tenerlo. A 1080
+  el padding queda en 70 px y el aire en los 40 completos.
+
+  El aire del título es además el margen de arriba: el objeto más alto se sale
+  de la caja lo mismo que el más bajo se sale por abajo. A 1080 ese desborde es
+  de 30 px contra 40 px de aire, y a 768 de 25 px contra 28: entra por los dos
+  lados.
+*/
+const SECTION_PAD_TOP = "clamp(32px, 6.5svh, 72px)";
+const TITLE_GAP = "clamp(24px, 3.7svh, 40px)";
+
+/**
+ * Piso del encuadre, en fracción del ancho disponible. Con más imágenes el
+ * aspecto crece y meter todo en una pantalla dejaría objetos ilegibles: a
+ * partir de acá la composición deja de achicarse, los que sobran quedan más
+ * abajo y se alcanzan scrolleando. Con ocho imágenes no llega a tocar —a
+ * 1920×1080 la composición pide el 78 % del ancho disponible y a 1366×768 el
+ * 70 %—, así que la escena entra completa en las dos.
+ */
+const COMPOSITION_MIN_WIDTH_SHARE = 0.6;
+
 const GRID_CELL_DENSITY = 1.15;
 
 /** Alto de celda / ancho de celda. Medido en el mockup: 404 px sobre 416 px. */
@@ -183,6 +237,20 @@ const EAGER_IMAGE_COUNT = 6;
 const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 
 const TITLE_LINES = ["HAVE FUN EXPLORING", "OUR PROJECTS!"] as const;
+
+/**
+ * Tope de ancho de la composición, resuelto por CSS. Los tres términos del
+ * `min`/`max` son, en orden: el tope de siempre, el piso del encuadre y el
+ * ancho que entra en la pantalla. Ver el bloque ENCUADRE.
+ */
+function getCompositionMaxWidth(aspect: number, maxItemSize: number) {
+  const hoverOverflowShare = (maxItemSize * (HOVER_SCALE - 1)) / 2;
+  const titleBlock = TITLE_LINES.length * TITLE_LINE_HEIGHT;
+  const available = `100svh - var(--header-height) - ${SECTION_PAD_TOP} - ${titleBlock}px - ${TITLE_GAP} - ${FLOAT_Y}px`;
+  const fitted = `calc((${available}) / ${aspect + hoverOverflowShare})`;
+
+  return `min(${COMPOSITION_MAX_WIDTH}px, max(${COMPOSITION_MIN_WIDTH_SHARE * 100}%, ${fitted}))`;
+}
 
 // Pedido al CDN de Sanity, medido en la sonda B3.1: `w=1200&fm=webp` conserva
 // el alpha y pesa 94,9 KB contra los 534,6 KB del PNG que se pedía antes.
@@ -718,10 +786,19 @@ export default function FunGallery({
 
   return (
     <section
-      className="relative overflow-x-clip bg-off-white px-12 pb-32 pt-[72px] text-off-black lg:px-16"
+      className="relative overflow-x-clip bg-off-white px-12 pb-32 text-off-black lg:px-16"
+      style={{ paddingTop: SECTION_PAD_TOP }}
       aria-label="Fun Gallery"
     >
-      <h1 className="text-center font-display text-[40px] uppercase leading-[48px] tracking-normal">
+      {/*
+        El interlineado va inline y no en una clase: el encuadre necesita saber
+        cuánto mide el bloque del título, y con dos fuentes de verdad el día que
+        alguien toque una la cuenta queda mal sin que nada avise.
+      */}
+      <h1
+        className="text-center font-display text-[40px] uppercase tracking-normal"
+        style={{ lineHeight: `${TITLE_LINE_HEIGHT}px` }}
+      >
         {TITLE_LINES.map((line) => (
           <span key={line} className="block">
             {line}
@@ -730,9 +807,13 @@ export default function FunGallery({
       </h1>
 
       <div
-        className="relative mx-auto mt-10 w-full"
+        className="relative mx-auto w-full"
         style={{
-          maxWidth: COMPOSITION_MAX_WIDTH,
+          marginTop: TITLE_GAP,
+          maxWidth: getCompositionMaxWidth(
+            composition.aspect,
+            composition.maxItemSize,
+          ),
           aspectRatio: `1 / ${composition.aspect}`,
         }}
       >
