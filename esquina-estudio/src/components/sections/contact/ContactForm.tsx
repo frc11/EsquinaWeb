@@ -481,11 +481,12 @@ function CustomSelect({
           {value ? (
             <span className="flex min-w-0 flex-1 items-center gap-2 text-off-black transition-colors duration-200 group-focus-within/contact-focus:text-off-white">
               {/* Sin `truncate`: un valor que no entra se parte en dos o tres
-                  líneas en vez de perder texto. Los 15 países más largos --el
-                  peor es Democratic Republic of the Congo, no Saint Vincent--
-                  no entran en una línea en NINGÚN ancho, ni siquiera a 1920.
-                  El campo crece, pero es el de la columna corta: el alto del
-                  bloque no se mueve en ningún rango (medido). */}
+                  líneas en vez de perder texto. Los países más largos --con DR
+                  Congo abreviado, el peor pasa a ser Saint Vincent and the
+                  Grenadines-- no entran en una línea en NINGÚN ancho, ni
+                  siquiera a 1920. El campo crece, pero es el de la columna
+                  corta: el alto del bloque no se mueve en ningún rango
+                  (medido). */}
               <span className="min-w-0">{value}</span>
               {renderValueMeta?.(value)}
             </span>

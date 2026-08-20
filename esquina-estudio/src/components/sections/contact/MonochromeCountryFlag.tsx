@@ -205,7 +205,7 @@ const DIAGONAL = new Set([
   "Brunei",
   "Burundi",
   "Congo",
-  "Democratic Republic of the Congo",
+  "DR Congo",
   "Grenada",
   "Jamaica",
   "Marshall Islands",

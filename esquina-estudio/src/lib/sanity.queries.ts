@@ -17,11 +17,14 @@ export const PROJECT_BY_SLUG_QUERY = `
 `;
 
 // Fun Gallery images: su propio tipo de contenido, ya no derivadas de project.
-// `_id asc` es un desempate obligatorio, no decoración: `order` es opcional, y
-// sin un orden total GROQ no garantiza una secuencia estable entre dos lecturas
-// — y de esa secuencia sale el seed del mapa.
+// El desempate es obligatorio, no decoración: `order` es opcional, y sin un
+// orden total GROQ no garantiza una secuencia estable entre dos lecturas — y de
+// esa secuencia sale el seed de la composición. Ante `order` repetido desempata
+// `_createdAt`, así gana la que se cargó primero; `_id` queda como último
+// recurso porque `_createdAt` tampoco es único por definición (dos documentos
+// creados en el mismo milisegundo comparten marca).
 export const FUN_GALLERY_IMAGES_QUERY = `
-  *[_type == "funGalleryImage" && defined(image.asset)] | order(order asc, _id asc) {
+  *[_type == "funGalleryImage" && defined(image.asset)] | order(order asc, _createdAt asc, _id asc) {
     _id,
     title,
     altText,

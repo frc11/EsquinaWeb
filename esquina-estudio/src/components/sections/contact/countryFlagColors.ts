@@ -196,7 +196,7 @@ export const COUNTRY_FLAG_COLORS: Record<string, string[]> = {
   Brunei: ["#FFFFFF", "#F7E017"],
   Burundi: ["#CE1126", "#1EB53A"],
   Congo: ["#009543", "#DC241F"],
-  "Democratic Republic of the Congo": ["#007FFF", "#007FFF"],
+  "DR Congo": ["#007FFF", "#007FFF"],
   Grenada: ["#CE1126", "#CE1126"],
   Jamaica: ["#009B3A", "#009B3A"],
   "Marshall Islands": ["#003893", "#003893"],

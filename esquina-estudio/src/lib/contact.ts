@@ -80,7 +80,7 @@ export const COUNTRY_OPTIONS = [
   "Cuba",
   "Cyprus",
   "Czechia",
-  "Democratic Republic of the Congo",
+  "DR Congo",
   "Denmark",
   "Djibouti",
   "Dominica",
