@@ -561,3 +561,65 @@ Formato de entrada:
 - **Pendientes que deja:** ninguno nuevo.
 - **Verificación humana pendiente (no se levantó servidor en todo el sprint):** `/contact` a 1920 y a 1512 — que el aside quede quieto y a la misma altura que antes, y que no haya quedado un hueco al pie del formulario donde estaba el padding compensatorio; scrollear hasta el Footer y confirmar que el aside no flota sobre él; enviar el formulario una vez más porque `ContactForm.tsx` se tocó.
 - **Commits:** `5cf5517`, `8e040dd` (F1) · `ea33c9a` (F2), más el de este cierre.
+
+## 2026-08-20 · B2.6 · Piso de resolución del questionnaire: labels arriba y aside apilado por breakpoint
+
+- **Qué se hizo:** un commit, **un solo archivo** (`ContactForm.tsx`); `contact/page.tsx` no hizo falta tocarlo. Se agregaron los dos estados intermedios que faltaban entre las dos columnas de 1600 y la columna única: **dos columnas con el label arriba del control** desde 1232, y **dos columnas con el label arriba y el aside apilado sobre el formulario** desde 880. Los cortes salen de la aritmética de los mínimos medidos, no de anchos «típicos». **No se tocó** la escala tipográfica de nada, ni el padding de las pills, ni el copy, ni el orden de los campos, ni `HoverButton.tsx`, ni Navbar, ni Footer, ni `globals.css`, ni el markup del `<form>`.
+
+- **La escalera completa, con la aritmética de cada corte.** Cada umbral es el ancho donde el estado de arriba deja de entrar sin romper una restricción dura, no una preferencia:
+
+  | estado | rango | composición | contenido mínimo | de dónde sale |
+  |---|---|---|---|---|
+  | **A** | ≥ 1600 | aside al costado · 2 col · label al costado | 1472 | `280 + 40 + [176+24+396] + 32 + [140+24+352]` |
+  | **B** | 1232–1599 | aside al costado · 2 col · **label arriba** | 1104 | `280 + 40 + [396+32+352]` + 4 de aire |
+  | **C** | 880–1231 | **aside apilado** · 2 col · label arriba | 784 | `396 + 32 + 352` + 4 de aire (padding de página 96 debajo de 1024) |
+  | **D** | < 880 | 1 col (el que ya existía) | 620 | `176 + 24 + 420` |
+
+  Sacar el label del costado libera **364 px** (200 de la columna izquierda + 164 de la derecha) y cuesta **48,8 px por campo**. Apilar el aside libera **320 px** y cuesta **270** (222 del bloque + 48 del `gap-12`). Umbrales verificados al píxel: **879 → D, 880 → C, 1231 → C, 1232 → B, 1599 → B, 1600 → A**. En 880 y en 1232 los controles quedan en **398 y 354**: los 4 px de aire repartidos entre las dos pistas, ninguna arrancando justo sobre su límite (mismo criterio que los pisos 600/520 de B2.5b).
+
+- **La matriz completa del barrido** (DPR 1, techo declarado del sprint = `alto − 128`). El alto del bloque **no depende del alto del viewport**, solo del ancho: por eso la tabla se lee como cinco columnas de «entra» sobre una sola fila de geometría.
+
+  | ancho | layout | bloque | 1080 | 900 | 800 | 768 | 720 | filas de pills | control izq. | control der. | dif. de columnas | truncado | desborde X |
+  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+  | 1920 | **A** | 498 | ✅ | ✅ | ✅ | ✅ | ✅ | 4 | 420 | 376 | 57,5 | no | 0 |
+  | 1728 | **A** | 498 | ✅ | ✅ | ✅ | ✅ | ✅ | 4 | 420 | 376 | 57,5 | no | 0 |
+  | 1600 | **A** | 498 | ✅ | ✅ | ✅ | ✅ | ✅ | 4 | 400 | 356 | 57,5 | no | 0 |
+  | 1512 | **B** | 741,9 | ✅ | ✅ | ❌ −69,9 | ❌ −101,9 | ❌ −149,9 | 4 | 420 | 420 | 58,3 | no | 0 |
+  | 1440 | **B** | 741,9 | ✅ | ✅ | ❌ −69,9 | ❌ −101,9 | ❌ −149,9 | 4 | 420 | 420 | 58,3 | no | 0 |
+  | 1366 | **B** | 741,9 | ✅ | ✅ | ❌ −69,9 | ❌ −101,9 | ❌ −149,9 | 4 | 420 | 420 | 58,3 | no | 0 |
+  | 1280 | **B** | 741,9 | ✅ | ✅ | ❌ −69,9 | ❌ −101,9 | ❌ −149,9 | 4 | 420 | 380 | 58,3 | no | 0 |
+  | 1152 | **C** | 1011,9 | ❌ −59,9 | ❌ −239,9 | ❌ −339,9 | ❌ −371,9 | ❌ −419,9 | 4 | 420 | 420 | 58,3 | no | 0 |
+  | 1024 | **C** | 1011,9 | ❌ −59,9 | ❌ −239,9 | ❌ −339,9 | ❌ −371,9 | ❌ −419,9 | 4 | 420 | 420 | 58,3 | no | 0 |
+
+  **Cuatro filas de pills en los nueve anchos**, sin excepción. **`$2,500–$4,000 USD` no se trunca en ningún ancho** (`scrollWidth − clientWidth = 0` en los 16 anchos probados con el valor efectivamente elegido, incluidos los dos pisos de 880 y 1232). **Sin desborde horizontal en ningún ancho.** La diferencia entre columnas se queda en **57,5 (A) / 58,3 (B y C)**, debajo del tope de 60 de B2.5b: el margen del botón subió de 64 a 112, exactamente los 48,8 que engorda cada campo, porque la izquierda lleva cinco campos y la derecha cuatro.
+
+- **El piso, enunciado: el questionnaire entra completo sin scroll desde 1232 px de ancho por 870 px de alto en adelante.** Debajo de 1232 de ancho el piso de alto salta a **1140**, que ninguna pantalla común tiene. Pisos exactos por estado, medidos: **A 626 · B 870 · C 1140 · D 1300,5** (y 1770 debajo de 768). Contra la línea base de B2.5b esto es: **1280–1599 gana el alto 900** (antes necesitaba 1031) y **1024–1231 lo pierde** (ver más abajo). De 1600 para arriba nada cambia: 498, idéntico al píxel.
+
+- **Dos números que el techo declarado del sprint no ve, y conviene tener.** **(1)** El techo `alto − 128` cuenta el header pero **no el `pt-14` de la sección** (56 px; 40 debajo de 1024, 24 debajo de 768). El borde inferior real del bloque cae en **682 (A) · 926 (B) · 1196 (C)**, así que a 1512×900 el bloque «entra» por la métrica del sprint (741,9 ≤ 772) pero su base queda **26 px por debajo del borde de la ventana**. El piso real de B es 928, no 870. **(2)** Con los **dos mensajes de validación visibles** el bloque suma **58 px exactos** en los cuatro estados (29 por mensaje): B pasa a 799,9 y deja de entrar a 900. El piso «con errores en pantalla» de B también es **928**.
+
+- **Lo que la palanca 2 cuesta donde no debería, dicho con el número.** Entre **1024 y 1231** el layout C mide **1011,9** contra los **902,5** de la columna única que había antes: **109,4 px más alto**. Medido reproduciendo las declaraciones viejas en el DOM, ancho por ancho. Consecuencia concreta: a 1152×1080 **antes entraba y ahora no, por 59,9 px**. Es el único punto donde el sprint empeora algo, y es estructural: en esa banda el aside todavía entraría al costado con una sola columna, pero no al costado de dos columnas (para eso hacen falta 1232). La escalera pedida —una columna solo en lo más angosto— excluye volver a la columna única en el medio; queda anotado para que la decisión sea de Valentino.
+
+- **Lo que la palanca 2 arregla de paso.** Entre **1024 y 1086** el ledger viejo (pistas de 280 y 624 de mínimo más un gutter `clamp` de 51,2) pedía **955 px de contenido contra 896 disponibles**: el formulario se salía de su contenedor y se comía el gutter derecho de la página, **59 px a 1024**, decayendo a 0 recién en **1086**. No llegaba a haber scroll horizontal —el sobrante cabía dentro del padding de 64—, pero el margen derecho de la página se desplomaba de 64 a 5. Con el aside apilado desde 1232 eso desaparece: **0 de sobrante en todos los anchos**.
+
+- **Lo que faltaba poco y no se aplicó, con el ahorro medido en el DOM.** Las dos resoluciones que quedan afuera por poco se resuelven con una sola palanca, y es una de las prohibidas:
+
+  | palanca | ahorro medido | qué gana |
+  |---|---|---|
+  | label de **una sola línea** cuando va arriba (mismo tamaño tipográfico, mismo copy) | **−91,95** en B y en C | B entra a **800** de alto (649,9 ≤ 672) y C entra a **1080** (919,9 ≤ 952) |
+  | aside apilado **en fila** (título izq. / subtítulo der.) en vez de en bloque | **−78,00** en C | C entra a **1080** (933,9 ≤ 952) |
+
+  Ninguna se aplicó. La primera toca el corte de línea que decidió el mockup (`FieldShell` lo dice explícito), la segunda recompone el aside. **La decisión es de Valentino.**
+
+- **El formulario, ejercitado entero después de tocar el markup.** Con `fetch` interceptado (verificado contra el log del servidor: **cero POST llegaron**, ningún mail salió): submit vacío → los dos mensajes de zod y **cero requests**; submit completo → **un `POST /api/contact`** con los nueve campos (`fullName`, `email`, `workType`, `businessType`, `industry`, `country`, `timeline`, `budget`, `hearAbout`) y **redirect efectivo a `/contact/success`**; respuesta 500 → aparece el estado de error y **no** redirige. Los cuatro selects abren y eligen, las pills se marcan. Recorrido por teclado: **19 paradas** en el orden lógico (nombre → email → las 10 pills → negocio → industria → ubicación → plazo → presupuesto → cómo nos conociste → SEND), **sin ningún `tabindex` en la página**. Los rangos entre 768 y 879 y debajo de 768 quedan con estilo computado **idéntico** al de antes.
+
+- **Hallazgo lateral que no es de este sprint: los labels no tienen asociación programática con su control, y no la tenían antes.** Los 9 `<label>` no llevan `htmlFor` ni envuelven a su control (verificado: 0 de 9 en ambos criterios). Este sprint no lo empeora —no tocó el markup del label— y con el label arriba la asociación *visual* queda si acaso más fuerte. Arreglarlo pide `id` en los nueve controles y `aria-labelledby` sobre un `role="group"` para las pills, que es otro sprint.
+
+- **Nota de método, y el mismo límite de siempre.** El `resize` de ventana **no funciona con la ventana maximizada**: la herramienta devuelve éxito pero el viewport se queda clavado en 1920×855 (`outerWidth`/`outerHeight` = `screen.availWidth`/`availHeight`). Es el mismo tope que anotó B2.5b. La matriz **no se simuló reproduciendo media queries a mano**: se midió dentro de un **iframe same-origin** al que se le fija el tamaño, que es un viewport real donde Chrome evalúa las mismas media queries contra un ICB real; las lecturas se toman desde adentro del iframe, donde el `transform` de escala del padre no llega. El control que valida el método es el de siempre: **1920 real contra 1920 en el banco, 88 magnitudes comparadas campo por campo, 88 idénticas** (alto del bloque, de cada campo, de cada columna, ancho de cada control, filas de pills, posiciones). Sin scrollbar de por medio: `globals.css` las oculta globalmente, así que el viewport de layout es el ancho de ventana sin descuento. Sigue vigente el límite (1) de B2.5b: con la pestaña oculta Chrome no dispara `requestAnimationFrame`, **las animaciones de entrada no se pueden observar** y para las capturas hubo que forzar el estado final por CSS (solo `opacity`, `clip-path` y `filter`, que no participan del layout — verificado: el alto no se movió).
+
+- **Puertas.** Línea base: lint exit 0, build exit 0, 11 rutas / 15 páginas. Final, con el servidor bajado: lint exit 0, build exit 0, **mismas 11 rutas / 15 páginas**, cero errores ni warnings nuevos (persiste solo la deprecación conocida de `@sanity/image-url`). Los rangos compilan **disjuntos**, verificado sobre el CSS emitido: `(min-width:880px)` conteniendo `not all and (min-width:1599.98px)`, `(min-width:1232px)` conteniendo lo mismo, `(min-width:1600px)` suelto, y `(min-width:48rem)` conteniendo `not all and (min-width:879.98px)`. Confirmada otra vez la trampa de B2.5b —`(min-width:1600px)` se emite **antes** que `(min-width:48rem)` en el stylesheet—, y por eso ningún par de reglas comparte propiedad y rango.
+
+- **Verificación humana pendiente (declarada, no la da por cumplida el agente).** En `localhost:3010`, DPR 1, zoom 100 %: **(a)** **enviar el formulario de verdad** y confirmar que llega el mail — el markup se tocó otra vez y Resend sigue siendo el único eslabón no ejercitable sin mandar un correo; **(b)** recorrerlo **solo con `Tab`**; **(c)** mirar **cada layout en su rango** —1920 (A), 1440 (B), 1024 (C)— y juzgar si el label arriba se siente el mismo formulario y si el aside apilado no descoloca la jerarquía; **(d)** juzgar los **saltos entre layouts** pasando 1920 → 1512 → 1280 → 1152; **(e)** en particular el salto **1599 → 1600**, donde el bloque pasa de 872 a 1152 de ancho anclado por su borde derecho y el label salta de arriba al costado; **(f)** el **blanco de cola del layout C**, que crece de 4 px a 1024 hasta **217 px a 1231** con el formulario alineado a la izquierda; **(g)** decidir sobre las dos palancas prohibidas de la tabla de arriba y sobre la banda 1024–1231.
+
+- **Pendientes que deja:** **(1)** La banda **1024–1231** queda 109,4 px más alta que antes; se arregla con una palanca prohibida o volviendo a la columna única en el medio. **(2)** El techo declarado del sprint (`alto − 128`) **ignora el `pt` de la sección**: si se quiere que «entra» signifique «se ve entero», el piso de B es 928, no 870. **(3)** El **estado de error suma 58 px** y ningún piso lo contempla. **(4)** Los labels **sin asociación programática** con su control. **(5)** `Saint Vincent and the Grenadines`, el país más largo, **se trunca en todos los anchos, también a 1920** (288 px de sobrante allí, 244 en el layout B, que da más ancho de control): es previo a este sprint y no lo empeora, pero la prohibición de truncar valores estaba escrita en general.
+
+- **Commits:** `f90a3ae`, más el de este cierre.
