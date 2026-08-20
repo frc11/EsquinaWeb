@@ -105,13 +105,32 @@ const PILE_CAPTION_GAP = 0.18;
 
 /*
   Spring por duración visual: `visualDuration` es el tiempo en el que el objeto
-  aparenta llegar, y el rebote chico cae después. Con el desfase por índice el
+  aparenta llegar, y el rebote chico cae después. Con el desfase por posición el
   último objeto llega a los 0,85 + 7 × 0,07 = 1,34 s.
 */
 const DEPLOY_VISUAL_DURATION = 0.85;
 const DEPLOY_BOUNCE = 0.18;
 const DEPLOY_STAGGER = 0.07;
 const CAPTION_FADE_DURATION = 0.4;
+
+/*
+  El desfase se reparte en ORDEN DE LECTURA sobre la composición terminada, no
+  sobre el índice del dato: el shuffle de celdas reparte a los ítems por la
+  pantalla sin ninguna relación con el orden en que llegan de Sanity, así que
+  cobrar el retraso por índice hacía salir el segundo objeto antes que el
+  primero y la secuencia se leía desordenada.
+
+  «Arriba primero, y a igual altura de izquierda a derecha» necesita decidir
+  qué es «igual altura»: dos objetos separados por unos píxeles tienen que
+  contar como la misma fila, o se invierten. Se agrupa por cercanía —se abre
+  banda nueva cuando el salto en altura contra el objeto anterior pasa el
+  umbral— y no por cortes fijos, que parten una fila si cae justo en el borde.
+  El umbral es medio objeto: dos cajas que se superponen verticalmente en más
+  de la mitad se leen a la misma altura. Con la composición de ocho imágenes el
+  mayor salto dentro de una fila es 0,036 y el que hay entre filas 0,225,
+  contra un umbral de 0,110: la separación es holgada por los dos lados.
+*/
+const DEPLOY_BAND_SHARE = 0.5;
 
 // ── Flotado ──────────────────────────────────────────────────────────────────
 
@@ -196,6 +215,8 @@ type LayoutItem = GalleryItem & {
   rotate: number;
   zIndex: number;
   followFactor: number;
+  /** Turno en el despliegue: 0 es el primero en salir del montón. */
+  deployOrder: number;
 };
 
 type Composition = {
@@ -203,6 +224,8 @@ type Composition = {
   aspect: number;
   /** Alto del cartel «(click to view)», en fracción del ancho. */
   captionY: number;
+  /** Lado del objeto más grande, en fracción del ancho de la composición. */
+  maxItemSize: number;
   items: LayoutItem[];
 };
 
@@ -279,6 +302,65 @@ function toGalleryItems(images: FunGalleryImage[]): GalleryItem[] {
       },
     ];
   });
+}
+
+/**
+ * Turno de despliegue de cada objeto, en orden de lectura sobre la composición
+ * ya resuelta: bandas de altura de arriba hacia abajo y, dentro de cada banda,
+ * de izquierda a derecha. Devuelve el turno indexado como `placed`, para que el
+ * llamador no tenga que reordenar nada.
+ *
+ * Se compara por el CENTRO de cada caja y no por su borde superior: los objetos
+ * no miden todos igual, y con el borde un objeto grande parecería estar más
+ * arriba que uno chico que en realidad tiene la misma altura visual.
+ */
+function assignDeployOrder(
+  placed: { x: number; y: number; size: number }[],
+): number[] {
+  if (placed.length === 0) return [];
+
+  const meanSize =
+    placed.reduce((total, entry) => total + entry.size, 0) / placed.length;
+  const bandThreshold = meanSize * DEPLOY_BAND_SHARE;
+  const centers = placed
+    .map((entry, index) => ({
+      index,
+      centerX: entry.x + entry.size / 2,
+      centerY: entry.y + entry.size / 2,
+    }))
+    .sort((left, right) => left.centerY - right.centerY);
+
+  const bands: (typeof centers)[] = [];
+
+  for (const entry of centers) {
+    const band = bands[bands.length - 1];
+    const previous = band?.[band.length - 1];
+
+    if (
+      !band ||
+      !previous ||
+      entry.centerY - previous.centerY > bandThreshold
+    ) {
+      bands.push([entry]);
+      continue;
+    }
+
+    band.push(entry);
+  }
+
+  const deployOrder = new Array<number>(placed.length).fill(0);
+  let turn = 0;
+
+  for (const band of bands) {
+    for (const entry of [...band].sort(
+      (left, right) => left.centerX - right.centerX,
+    )) {
+      deployOrder[entry.index] = turn;
+      turn += 1;
+    }
+  }
+
+  return deployOrder;
 }
 
 /**
@@ -380,33 +462,45 @@ function buildComposition(
     Math.max(halfMaxItem, aspect - halfMaxItem),
   );
 
+  const placed = scattered.map((entry) => {
+    const size = entry.size * fit;
+    const x = (entry.centerX - entry.size / 2 - bounds.minX) * fit;
+    const y = (entry.centerY - entry.size / 2 - bounds.minY) * fit;
+    const radius = lerp(
+      PILE_RADIUS_MAX,
+      PILE_RADIUS_MIN,
+      clamp((entry.zIndex - 10) / 24, 0, 1),
+    );
+    const pileX = PILE_CENTER_X + Math.cos(entry.angle) * radius - size / 2;
+    const pileY = pileCenterY + Math.sin(entry.angle) * radius - size / 2;
+
+    return {
+      ...entry.item,
+      x,
+      y,
+      size,
+      pileOffsetX: ((pileX - x) / size) * 100,
+      pileOffsetY: ((pileY - y) / size) * 100,
+      rotate: entry.rotate,
+      zIndex: entry.zIndex,
+      followFactor: entry.followFactor,
+    };
+  });
+  // El turno de despliegue se resuelve recién acá: necesita las posiciones ya
+  // llevadas a la caja, que es lo que se ve en pantalla.
+  const deployOrder = assignDeployOrder(placed);
+
   return {
     aspect,
     captionY: pileCenterY + PILE_CAPTION_GAP,
-    items: scattered.map((entry) => {
-      const size = entry.size * fit;
-      const x = (entry.centerX - entry.size / 2 - bounds.minX) * fit;
-      const y = (entry.centerY - entry.size / 2 - bounds.minY) * fit;
-      const radius = lerp(
-        PILE_RADIUS_MAX,
-        PILE_RADIUS_MIN,
-        clamp((entry.zIndex - 10) / 24, 0, 1),
-      );
-      const pileX = PILE_CENTER_X + Math.cos(entry.angle) * radius - size / 2;
-      const pileY = pileCenterY + Math.sin(entry.angle) * radius - size / 2;
-
-      return {
-        ...entry.item,
-        x,
-        y,
-        size,
-        pileOffsetX: ((pileX - x) / size) * 100,
-        pileOffsetY: ((pileY - y) / size) * 100,
-        rotate: entry.rotate,
-        zIndex: entry.zIndex,
-        followFactor: entry.followFactor,
-      };
-    }),
+    maxItemSize: placed.reduce(
+      (largest, item) => Math.max(largest, item.size),
+      0,
+    ),
+    items: placed.map((item, index) => ({
+      ...item,
+      deployOrder: deployOrder[index] ?? index,
+    })),
   };
 }
 
@@ -499,7 +593,7 @@ function GalleryCard({
                 type: "spring",
                 visualDuration: DEPLOY_VISUAL_DURATION,
                 bounce: DEPLOY_BOUNCE,
-                delay: spread ? index * DEPLOY_STAGGER : 0,
+                delay: spread ? item.deployOrder * DEPLOY_STAGGER : 0,
               }
         }
       >
