@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   AnimatePresence,
@@ -146,6 +146,15 @@ const MAX_ITEM_WIDTH_MANY_IMAGES = 0.2;
 /** Inclinación en grados: cada objeto queda entre -3 y +3, apenas fuera de plomo. */
 const ROTATION_RANGE = 3;
 
+/**
+ * zIndex sorteado por el motor: base y rango. Manda en el estado desplegado
+ * —donde lo único que decide es qué objeto pasa por encima en el hover— y
+ * reparte a los objetos entre el centro y el borde del abanico del montón. El
+ * apilado del montón, en cambio, sale del tamaño visible (ver APILADO).
+ */
+const ITEM_Z_BASE = 10;
+const ITEM_Z_RANGE = 24;
+
 // ── Montón ───────────────────────────────────────────────────────────────────
 
 /*
@@ -155,8 +164,8 @@ const ROTATION_RANGE = 3;
   taparían a los angostos y el montón se leería como un choque, así que cada
   objeto sale del centro en abanico: el ángulo avanza con el ángulo áureo —que
   reparte direcciones parejas para cualquier cantidad de imágenes— y el radio
-  lo dicta el zIndex, de modo que el objeto de adelante queda centrado y los de
-  atrás se corren lo suficiente para asomar.
+  lo dicta el rango del motor, que reparte a los objetos entre el centro y el
+  borde del abanico.
 */
 const PILE_CENTER_X = 0.5;
 const PILE_CENTER_Y = 0.17;
@@ -164,6 +173,37 @@ const PILE_RADIUS_MIN = 0.02;
 const PILE_RADIUS_MAX = 0.05;
 const PILE_GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 const PILE_ANGLE_JITTER = 0.45;
+
+/*
+  APILADO DEL MONTÓN — por tamaño visible, no por el sorteo.
+
+  El zIndex del motor es un sorteo, así que en el montón cualquiera podía quedar
+  arriba: un objeto grande adelante tapaba a los chicos y el montón perdía
+  objetos. Ahora, mientras están amontonados, los objetos se apilan por TAMAÑO
+  VISIBLE —los de más tinta al fondo, los de menos adelante—, que es lo que hace
+  que los ocho se distingan: un recorte angosto adelante deja ver por sus
+  costados a los anchos de atrás.
+
+  «Tamaño visible» es el del DIBUJO, no el de la caja. Los assets son cuadrados
+  con hasta 34 % de margen transparente por lado —Tukumi ocupa el 31 % del ancho
+  de su cuadrado—, así que ordenar por el lado de la tarjeta daría el criterio
+  invertido justo para los recortes angostos. Se usa `lado² × cobertura de
+  tinta`, que es el área que el objeto realmente pinta en pantalla.
+
+  La cobertura se mide sobre la imagen ya decodificada, en un canvas de 48×48:
+  el alfa promedio del muestreo es el área cubierta. No se hornean números por
+  imagen porque el contenido lo cargan las clientas desde Sanity y una tabla
+  fija quedaría vieja a la primera imagen nueva. Y no se puede medir en el
+  servidor: el CDN de Sanity responde 403 a cualquier pedido con `Origin`, así
+  que la única fuente sin CORS es la copia que sirve el optimizador de Next, que
+  es del mismo origen. Hasta que están las ocho medidas manda el zIndex del
+  motor; el orden llega mientras los objetos todavía están en su fundido de
+  entrada.
+
+  Rige SOLO para el montón: desplegados, el zIndex vuelve a ser el del motor,
+  donde lo único que decide es qué objeto pasa por encima en el hover.
+*/
+const INK_SAMPLE_SIZE = 48;
 
 /** Distancia del cartel «(click to view)» al centro del montón, en fracción del ancho. */
 const PILE_CAPTION_GAP = 0.18;
@@ -519,7 +559,7 @@ function buildComposition(
       centerX,
       centerY,
       rotate: randomBetween(random, -ROTATION_RANGE, ROTATION_RANGE),
-      zIndex: 10 + Math.round(random() * 24),
+      zIndex: ITEM_Z_BASE + Math.round(random() * ITEM_Z_RANGE),
       followFactor: randomBetween(random, FOLLOW_MIN, FOLLOW_MAX),
       angle:
         index * PILE_GOLDEN_ANGLE +
@@ -566,7 +606,7 @@ function buildComposition(
     const radius = lerp(
       PILE_RADIUS_MAX,
       PILE_RADIUS_MIN,
-      clamp((entry.zIndex - 10) / 24, 0, 1),
+      clamp((entry.zIndex - ITEM_Z_BASE) / ITEM_Z_RANGE, 0, 1),
     );
     const pileX = PILE_CENTER_X + Math.cos(entry.angle) * radius - size / 2;
     const pileY = pileCenterY + Math.sin(entry.angle) * radius - size / 2;
@@ -601,6 +641,71 @@ function buildComposition(
   };
 }
 
+/**
+ * Fracción del cuadrado que el dibujo cubre de verdad, medida sobre la imagen ya
+ * decodificada. Se promedia el alfa de un muestreo de 48×48 —el canal completo,
+ * no un umbral—, así que un borde a medio cubrir cuenta por lo que cubre. Ver el
+ * bloque APILADO. Devuelve `null` si el navegador no deja leer el canvas, y en
+ * ese caso el objeto conserva el zIndex del motor.
+ */
+function measureInkCoverage(image: HTMLImageElement): number | null {
+  const canvas = document.createElement("canvas");
+  canvas.width = INK_SAMPLE_SIZE;
+  canvas.height = INK_SAMPLE_SIZE;
+
+  const context = canvas.getContext("2d");
+  if (!context) return null;
+
+  context.drawImage(image, 0, 0, INK_SAMPLE_SIZE, INK_SAMPLE_SIZE);
+
+  try {
+    const { data } = context.getImageData(
+      0,
+      0,
+      INK_SAMPLE_SIZE,
+      INK_SAMPLE_SIZE,
+    );
+    let coverage = 0;
+
+    for (let index = 3; index < data.length; index += 4) {
+      coverage += data[index];
+    }
+
+    return coverage / (255 * INK_SAMPLE_SIZE * INK_SAMPLE_SIZE);
+  } catch {
+    // Canvas contaminado: no debería pasar —las imágenes las sirve el
+    // optimizador de Next, que es del mismo origen— pero no vale romper por eso.
+    return null;
+  }
+}
+
+/**
+ * Apilado del montón: los objetos de más tinta al fondo y los de menos adelante.
+ * El área que cada uno pinta es `lado² × cobertura`, o sea el tamaño del dibujo
+ * y no el de la caja. Devuelve `null` mientras falte alguna medición, y ahí
+ * manda el zIndex del motor.
+ */
+function buildPileStack(
+  items: LayoutItem[],
+  inkCoverage: Record<string, number>,
+): Record<string, number> | null {
+  if (items.some((item) => inkCoverage[item.id] === undefined)) return null;
+
+  const stack: Record<string, number> = {};
+
+  [...items]
+    .sort(
+      (left, right) =>
+        right.size * right.size * inkCoverage[right.id] -
+        left.size * left.size * inkCoverage[left.id],
+    )
+    .forEach((item, rank) => {
+      stack[item.id] = ITEM_Z_BASE + rank;
+    });
+
+  return stack;
+}
+
 function GalleryCard({
   item,
   index,
@@ -608,6 +713,8 @@ function GalleryCard({
   spread,
   instant,
   reduceMotion,
+  pileZIndex,
+  onInkMeasured,
 }: {
   item: LayoutItem;
   index: number;
@@ -616,6 +723,9 @@ function GalleryCard({
   /** El objeto nace en su lugar, sin animar el despliegue. */
   instant: boolean;
   reduceMotion: boolean;
+  /** Apilado del montón. Ausente mientras no estén las mediciones. */
+  pileZIndex?: number;
+  onInkMeasured: (id: string, coverage: number) => void;
 }) {
   const { navigateWithTransition } = useRouteTransition();
   const [isLoaded, setIsLoaded] = useState(false);
@@ -686,7 +796,7 @@ function GalleryCard({
         top: `${(item.y / aspect) * 100}%`,
         width: `${item.size * 100}%`,
         aspectRatio: "1",
-        zIndex: item.zIndex,
+        zIndex: spread ? item.zIndex : (pileZIndex ?? item.zIndex),
         x: followX,
         y: followY,
       }}
@@ -780,7 +890,14 @@ function GalleryCard({
               fill
               sizes="(max-width: 768px) 30vw, 22vw"
               priority={index < EAGER_IMAGE_COUNT}
-              onLoadingComplete={() => setIsLoaded(true)}
+              // El callback llega con el `<img>` ya decodificado, que es el
+              // único momento en que se puede leer su alfa.
+              onLoadingComplete={(image) => {
+                setIsLoaded(true);
+
+                const coverage = measureInkCoverage(image);
+                if (coverage !== null) onInkMeasured(item.id, coverage);
+              }}
               className="object-contain"
             />
           </motion.div>
@@ -801,10 +918,21 @@ export default function FunGallery({
   const [deployed, setDeployed] = useState(false);
   // Hay vuelta cuando esta pestaña tiene anotado un proyecto abierto desde acá.
   const returning = useFunGalleryReturnOnMount() !== null;
+  const [inkCoverage, setInkCoverage] = useState<Record<string, number>>({});
   const galleryItems = useMemo(() => toGalleryItems(images), [images]);
   const composition = useMemo(
     () => buildComposition(galleryItems, randomSeed),
     [galleryItems, randomSeed],
+  );
+  // Cada objeto se mide una sola vez: la cobertura es del asset, no del render.
+  const handleInkMeasured = useCallback((id: string, coverage: number) => {
+    setInkCoverage((measured) =>
+      measured[id] === undefined ? { ...measured, [id]: coverage } : measured,
+    );
+  }, []);
+  const pileStack = useMemo(
+    () => buildPileStack(composition.items, inkCoverage),
+    [composition.items, inkCoverage],
   );
   /*
     El estado vive en el componente y `template.tsx` lo remonta en cada
@@ -860,6 +988,8 @@ export default function FunGallery({
             spread={spread}
             instant={instantSpread}
             reduceMotion={reduceMotion}
+            pileZIndex={pileStack?.[item.id]}
+            onInkMeasured={handleInkMeasured}
           />
         ))}
 
