@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
+  AnimatePresence,
   motion,
   MotionValue,
   useMotionValue,
+  useReducedMotion,
   useSpring,
   useTransform,
 } from "framer-motion";
@@ -13,33 +15,108 @@ import { useRouteTransition } from "@/components/layout/RouteTransitionProvider"
 import { urlFor } from "@/lib/sanity";
 import { FunGalleryImage } from "@/types/fun-gallery-image";
 
-const MAP_WIDTH_FEW_IMAGES = 2550;
-const MAP_HEIGHT_FEW_IMAGES = 1450;
+/*
+  ARQUITECTURA DE CAPAS
+  ─────────────────────
+  Sobre cada objeto conviven varios movimientos y casi todos mueven x/y. En
+  Framer Motion un `animate` con keyframes y un motion value con spring no
+  pueden compartir propiedad —se pisan—, así que cada movimiento vive en su
+  propio elemento y el navegador compone las matrices al bajar por el árbol:
 
-const MAP_WIDTH_MANY_IMAGES = 3100;
-const MAP_HEIGHT_MANY_IMAGES = 1750;
+    L0  posición + hover   left/top/width (CSS) · scale (whileHover) · zIndex
+      L1  despliegue        x/y  → animate, una sola vez, al click
+        L3  cursor          x/y  → style con motion values (spring)
+          L4  inclinación   rotate (constante) + opacity del fade de carga
+            <Image object-contain />
 
-const MAP_SIZE_PER_IMAGE = 20;
+  Ningún par de capas escribe la misma propiedad del mismo elemento: L1 y L3
+  mueven x/y, pero cada una sobre un div distinto. La rotación va por dentro de
+  las traslaciones para que éstas ocurran en el espacio de la página y no en el
+  marco inclinado del objeto. (El flotado permanente entra como L2, entre el
+  despliegue y el cursor.)
 
-const MAP_MOVE_X = 900;
-const MAP_MOVE_Y = 700;
-const MAP_EDGE_GUTTER = 24;
+  UNIDADES
+  ────────
+  Todo el layout se expresa en fracciones del ANCHO de la composición. El
+  contenedor no se mide en JS: `left`, `top` y `width` salen en porcentaje y el
+  alto lo fija un `aspect-ratio`, así que la composición escala con la página,
+  sobrevive al resize sin listeners y es idéntica en servidor y cliente.
+*/
+
+// ── Composición ──────────────────────────────────────────────────────────────
+
+/**
+ * Tope de ancho de la composición. A 1920 deja 128 px de margen a cada lado,
+ * que es la caja medida en `docs/mockups/15-fun-gallery-hover.jpg`; por debajo
+ * manda el gutter de la sección y por encima el bloque deja de crecer, para que
+ * en pantallas muy anchas los objetos no se vuelvan gigantes.
+ */
+const COMPOSITION_MAX_WIDTH = 1664;
 
 const GRID_CELL_DENSITY = 1.15;
+
+/** Alto de celda / ancho de celda. Medido en el mockup: 404 px sobre 416 px. */
+const ROW_PITCH = 0.97;
+
+/** Centro del ítem dentro de su celda, y jitter extra, los dos en fracción de celda. */
+const CELL_PLACE_MIN = 0.4;
+const CELL_PLACE_MAX = 0.6;
+const CELL_JITTER = 0.05;
+
+/**
+ * Lado del objeto en fracción del ancho de la grilla, antes del ajuste a la
+ * caja. Los dos pares se interpolan por densidad igual que antes: pocas
+ * imágenes = objetos grandes. Con 8 imágenes el lado final cae en 0,19–0,25 del
+ * ancho de la composición, que son los 288–404 px medidos en el mockup.
+ */
+const MIN_ITEM_WIDTH_FEW_IMAGES = 0.19;
+const MAX_ITEM_WIDTH_FEW_IMAGES = 0.26;
+const MIN_ITEM_WIDTH_MANY_IMAGES = 0.14;
+const MAX_ITEM_WIDTH_MANY_IMAGES = 0.2;
+
+/** Inclinación en grados: cada objeto queda entre -3 y +3, apenas fuera de plomo. */
+const ROTATION_RANGE = 3;
+
+// ── Montón ───────────────────────────────────────────────────────────────────
+
+/*
+  Las ocho imágenes son cuadrados de 2250×2250 con el producto recortado
+  adentro, y ese recorte ocupa 76–88 % del alto pero solo 31–84 % del ancho
+  (medido sobre el alfa de los ocho assets). Apilados concéntricos, los anchos
+  taparían a los angostos y el montón se leería como un choque, así que cada
+  objeto sale del centro en abanico: el ángulo avanza con el ángulo áureo —que
+  reparte direcciones parejas para cualquier cantidad de imágenes— y el radio
+  lo dicta el zIndex, de modo que el objeto de adelante queda centrado y los de
+  atrás se corren lo suficiente para asomar.
+*/
+const PILE_CENTER_X = 0.5;
+const PILE_CENTER_Y = 0.17;
+const PILE_RADIUS_MIN = 0.02;
+const PILE_RADIUS_MAX = 0.05;
+const PILE_GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+const PILE_ANGLE_JITTER = 0.45;
+
+/** Distancia del cartel «(click to view)» al centro del montón, en fracción del ancho. */
+const PILE_CAPTION_GAP = 0.18;
+
+// ── Despliegue ───────────────────────────────────────────────────────────────
+
+/*
+  Spring por duración visual: `visualDuration` es el tiempo en el que el objeto
+  aparenta llegar, y el rebote chico cae después. Con el desfase por índice el
+  último objeto llega a los 0,85 + 7 × 0,07 = 1,34 s.
+*/
+const DEPLOY_VISUAL_DURATION = 0.85;
+const DEPLOY_BOUNCE = 0.18;
+const DEPLOY_STAGGER = 0.07;
+const CAPTION_FADE_DURATION = 0.4;
+
+// ── Reacción al cursor ───────────────────────────────────────────────────────
 
 const ITEM_PARALLAX_MIN = 2;
 const ITEM_PARALLAX_MAX = 3;
 const ITEM_PARALLAX_STRENGTH_X = 40;
 const ITEM_PARALLAX_STRENGTH_Y = 40;
-
-const SPRING_STIFFNESS = 500;
-const SPRING_DAMPING = 100;
-const SPRING_MASS = 1;
-const SPRING = {
-  stiffness: SPRING_STIFFNESS,
-  damping: SPRING_DAMPING,
-  mass: SPRING_MASS,
-};
 
 const ITEM_PARALLAX_SPRING = {
   stiffness: 500,
@@ -47,25 +124,18 @@ const ITEM_PARALLAX_SPRING = {
   mass: 1.5,
 };
 
-const MIN_IMAGE_WIDTH_FEW_IMAGES = 380;
-const MAX_IMAGE_WIDTH_FEW_IMAGES = 680;
-
-const MIN_IMAGE_WIDTH_MANY_IMAGES = 320;
-const MAX_IMAGE_WIDTH_MANY_IMAGES = 560;
-
-const ROTATION_RANGE = 0;
-const EDGE_BLEED = -180;
+const HOVER_SCALE = 1.2;
+const HOVER_DURATION = 0.5;
+const HOVER_Z_INDEX = 999;
 
 const IMAGE_FADE_DURATION = 1.2;
 const IMAGE_FADE_STAGGER = 0.3;
 const IMAGE_FADE_STAGGER_BUCKET = 6;
 
-const HOVER_SCALE = 1.2;
-const HOVER_DURATION = 0.5;
-const HOVER_Z_INDEX = 999;
-
 const EAGER_IMAGE_COUNT = 6;
 const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
+
+const TITLE_LINES = ["HAVE FUN EXPLORING", "OUR PROJECTS!"] as const;
 
 // Pedido al CDN de Sanity, medido en la sonda B3.1: `w=1200&fm=webp` conserva
 // el alpha y pesa 94,9 KB contra los 534,6 KB del PNG que se pedía antes.
@@ -87,20 +157,25 @@ type GalleryItem = {
   imageUrl: string;
 };
 
-type MapItem = GalleryItem & {
+type LayoutItem = GalleryItem & {
+  /** Esquina superior izquierda y lado del objeto, en fracción del ancho. */
   x: number;
   y: number;
-  width: number;
-  height: number;
+  size: number;
+  /** Viaje del montón al lugar, en porcentaje del propio lado del objeto. */
+  pileOffsetX: number;
+  pileOffsetY: number;
   rotate: number;
   zIndex: number;
   parallaxFactor: number;
 };
 
-type MapLayout = {
-  width: number;
-  height: number;
-  items: MapItem[];
+type Composition = {
+  /** Alto de la composición dividido su ancho. */
+  aspect: number;
+  /** Alto del cartel «(click to view)», en fracción del ancho. */
+  captionY: number;
+  items: LayoutItem[];
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -178,68 +253,134 @@ function toGalleryItems(images: FunGalleryImage[]): GalleryItem[] {
   });
 }
 
-function buildMapLayout(items: GalleryItem[], randomSeed: string): MapLayout {
+/**
+ * El motor determinista de siempre —un LCG sembrado con el contenido alimenta
+ * el shuffle de celdas y, por ítem, lado, dos jitters por eje, rotación, zIndex
+ * y factor de reacción al cursor— pero resolviendo una página normal en vez de
+ * un mapa sobredimensionado: la grilla ocupa el ancho disponible y el alto sale
+ * de las filas que pida la cantidad de imágenes.
+ *
+ * La caja del objeto es CUADRADA. El sorteo de aspecto que había antes no
+ * agregaba variedad: los ocho assets son cuadrados y con `object-contain` una
+ * caja no cuadrada solo achica el dibujo contra el lado corto y deja el resto
+ * como aire muerto, que además desalinea el área de hover del producto.
+ */
+function buildComposition(
+  items: GalleryItem[],
+  randomSeed: string,
+): Composition {
   const count = Math.max(items.length, 1);
   const density = clamp((count - 6) / 18, 0, 1);
-  const width =
-    lerp(MAP_WIDTH_FEW_IMAGES, MAP_WIDTH_MANY_IMAGES, density) +
-    count * MAP_SIZE_PER_IMAGE;
-  const height =
-    lerp(MAP_HEIGHT_FEW_IMAGES, MAP_HEIGHT_MANY_IMAGES, density) +
-    count * MAP_SIZE_PER_IMAGE * 0.58;
-  const minImageWidth = lerp(
-    MIN_IMAGE_WIDTH_FEW_IMAGES,
-    MIN_IMAGE_WIDTH_MANY_IMAGES,
+  const minItemWidth = lerp(
+    MIN_ITEM_WIDTH_FEW_IMAGES,
+    MIN_ITEM_WIDTH_MANY_IMAGES,
     density,
   );
-  const maxImageWidth = lerp(
-    MAX_IMAGE_WIDTH_FEW_IMAGES,
-    MAX_IMAGE_WIDTH_MANY_IMAGES,
+  const maxItemWidth = lerp(
+    MAX_ITEM_WIDTH_FEW_IMAGES,
+    MAX_ITEM_WIDTH_MANY_IMAGES,
     density,
   );
   const random = createRandom(randomSeed);
   const columns = Math.ceil(Math.sqrt(count * GRID_CELL_DENSITY));
   const rows = Math.ceil(count / columns);
-  const cellWidth = width / columns;
-  const cellHeight = height / rows;
+  const cellWidth = 1 / columns;
+  const cellHeight = cellWidth * ROW_PITCH;
   const cells = shuffle(
     Array.from({ length: columns * rows }).map((_, index) => index),
     random,
   );
 
+  const scattered = items.map((item, index) => {
+    const cell = cells[index] ?? index;
+    const column = cell % columns;
+    const row = Math.floor(cell / columns);
+    const size = randomBetween(random, minItemWidth, maxItemWidth);
+    const centerX =
+      (column + randomBetween(random, CELL_PLACE_MIN, CELL_PLACE_MAX)) *
+        cellWidth +
+      randomBetween(random, -CELL_JITTER, CELL_JITTER) * cellWidth;
+    const centerY =
+      (row + randomBetween(random, CELL_PLACE_MIN, CELL_PLACE_MAX)) *
+        cellHeight +
+      randomBetween(random, -CELL_JITTER, CELL_JITTER) * cellHeight;
+
+    return {
+      item,
+      index,
+      size,
+      centerX,
+      centerY,
+      rotate: randomBetween(random, -ROTATION_RANGE, ROTATION_RANGE),
+      zIndex: 10 + Math.round(random() * 24),
+      parallaxFactor: randomBetween(
+        random,
+        ITEM_PARALLAX_MIN,
+        ITEM_PARALLAX_MAX,
+      ),
+      angle:
+        index * PILE_GOLDEN_ANGLE +
+        randomBetween(random, -PILE_ANGLE_JITTER, PILE_ANGLE_JITTER),
+    };
+  });
+
+  /*
+    La grilla sortea celdas de tamaño fijo, pero los objetos son casi tan
+    grandes como su celda: recortarlos contra la caja los pegaría al borde y se
+    comerían justo el jitter que los saca de la grilla. En vez de recortar se
+    mide la caja envolvente del sorteo y se la lleva a ocupar exactamente el
+    ancho disponible. El resultado no puede desbordar —el ancho es el ancho, por
+    construcción— y el alto es el que pide la composición, que es lo que la
+    página scrollea.
+  */
+  const bounds = scattered.reduce(
+    (box, entry) => ({
+      minX: Math.min(box.minX, entry.centerX - entry.size / 2),
+      maxX: Math.max(box.maxX, entry.centerX + entry.size / 2),
+      minY: Math.min(box.minY, entry.centerY - entry.size / 2),
+      maxY: Math.max(box.maxY, entry.centerY + entry.size / 2),
+    }),
+    {
+      minX: Infinity,
+      maxX: -Infinity,
+      minY: Infinity,
+      maxY: -Infinity,
+    },
+  );
+  const fit = 1 / Math.max(bounds.maxX - bounds.minX, Number.EPSILON);
+  const aspect = (bounds.maxY - bounds.minY) * fit;
+  const halfMaxItem = (maxItemWidth * fit) / 2;
+  const pileCenterY = clamp(
+    PILE_CENTER_Y,
+    halfMaxItem,
+    Math.max(halfMaxItem, aspect - halfMaxItem),
+  );
+
   return {
-    width,
-    height,
-    items: items.map((item, index) => {
-      const cell = cells[index] ?? index;
-      const column = cell % columns;
-      const row = Math.floor(cell / columns);
-      const itemWidth = randomBetween(random, minImageWidth, maxImageWidth);
-      const itemHeight = itemWidth * randomBetween(random, 0.68, 1.16);
-      const x =
-        column * cellWidth +
-        randomBetween(random, 0.25, 0.75) * cellWidth -
-        itemWidth / 2 +
-        randomBetween(random, -cellWidth * 0.18, cellWidth * 0.18);
-      const y =
-        row * cellHeight +
-        randomBetween(random, 0.25, 0.75) * cellHeight -
-        itemHeight / 2 +
-        randomBetween(random, -cellHeight * 0.18, cellHeight * 0.18);
+    aspect,
+    captionY: pileCenterY + PILE_CAPTION_GAP,
+    items: scattered.map((entry) => {
+      const size = entry.size * fit;
+      const x = (entry.centerX - entry.size / 2 - bounds.minX) * fit;
+      const y = (entry.centerY - entry.size / 2 - bounds.minY) * fit;
+      const radius = lerp(
+        PILE_RADIUS_MAX,
+        PILE_RADIUS_MIN,
+        clamp((entry.zIndex - 10) / 24, 0, 1),
+      );
+      const pileX = PILE_CENTER_X + Math.cos(entry.angle) * radius - size / 2;
+      const pileY = pileCenterY + Math.sin(entry.angle) * radius - size / 2;
 
       return {
-        ...item,
-        x: clamp(x, -EDGE_BLEED, width - itemWidth + EDGE_BLEED),
-        y: clamp(y, -EDGE_BLEED, height - itemHeight + EDGE_BLEED),
-        width: itemWidth,
-        height: itemHeight,
-        rotate: randomBetween(random, -ROTATION_RANGE, ROTATION_RANGE),
-        zIndex: 10 + Math.round(random() * 24),
-        parallaxFactor: randomBetween(
-          random,
-          ITEM_PARALLAX_MIN,
-          ITEM_PARALLAX_MAX,
-        ),
+        ...entry.item,
+        x,
+        y,
+        size,
+        pileOffsetX: ((pileX - x) / size) * 100,
+        pileOffsetY: ((pileY - y) / size) * 100,
+        rotate: entry.rotate,
+        zIndex: entry.zIndex,
+        parallaxFactor: entry.parallaxFactor,
       };
     }),
   };
@@ -248,11 +389,17 @@ function buildMapLayout(items: GalleryItem[], randomSeed: string): MapLayout {
 function GalleryCard({
   item,
   index,
+  aspect,
+  spread,
+  reduceMotion,
   pointerX,
   pointerY,
 }: {
-  item: MapItem;
+  item: LayoutItem;
   index: number;
+  aspect: number;
+  spread: boolean;
+  reduceMotion: boolean;
   pointerX: MotionValue<number>;
   pointerY: MotionValue<number>;
 }) {
@@ -266,6 +413,10 @@ function GalleryCard({
     pointerY,
     (value) => value * ITEM_PARALLAX_STRENGTH_Y * item.parallaxFactor,
   );
+  // Mientras están amontonados los objetos no son interactivos: el click que
+  // despliega lo recibe el botón que los cubre, así que nunca compite con el
+  // click que navega a un proyecto.
+  const interactive = spread && Boolean(item.href);
 
   const handleNavigate = () => {
     if (!item.href) return;
@@ -280,79 +431,87 @@ function GalleryCard({
     handleNavigate();
   };
 
-  const content = (
-    <motion.div
-      className="relative h-full w-full"
-      initial={false}
-      animate={{ opacity: isLoaded ? 1 : 0 }}
-      transition={{
-        duration: IMAGE_FADE_DURATION,
-        delay: (index % IMAGE_FADE_STAGGER_BUCKET) * IMAGE_FADE_STAGGER,
-        ease: EASE,
-      }}
-    >
-      {/*
-        Overscan y encuadre, derivados del desplazamiento máximo del parallax
-        (`ITEM_PARALLAX_STRENGTH * ITEM_PARALLAX_MAX` = 120 px por eje, sin
-        overshoot porque los dos springs son sobreamortiguados).
-
-        Con `object-cover` el overscan negativo tenía sentido: agrandaba la caja
-        para que al desplazarse no quedara hueco. Con `object-contain` se
-        invierte, porque `contain` escala la imagen *a la caja*: agrandar la
-        caja agranda el dibujo y lo recorta contra la tarjeta. Medido sobre los
-        ocho recortes reales, el `-inset-[8%]` de antes dejaba apenas 1–2 px de
-        aire; para garantizar cero recorte a 120 px de desplazamiento haría
-        falta un inset *positivo* de 85–120 px, más que el lado corto de las
-        tarjetas chicas. No hay constante que lo resuelva.
-
-        La caja pasa entonces a medir exactamente la tarjeta —el único tamaño
-        con el que `contain` dibuja la imagen al tamaño previsto— y se le quita
-        el recorte a la capa de fade: son recortes sobre transparencia, no hay
-        borde de tarjeta visible que respetar, así que la imagen puede salirse
-        sin que se vea el límite. El viewport la sigue recortando (`<main>` y
-        `<section>` son `overflow-hidden`).
-      */}
-      <motion.div
-        className="absolute inset-0 transform-gpu will-change-transform"
-        style={{ x: itemParallaxX, y: itemParallaxY }}
-      >
-        <Image
-          src={item.imageUrl}
-          alt={item.alt}
-          fill
-          sizes="(max-width: 768px) 78vw, 26vw"
-          priority={index < EAGER_IMAGE_COUNT}
-          onLoadingComplete={() => setIsLoaded(true)}
-          className="object-contain"
-        />
-      </motion.div>
-    </motion.div>
-  );
-
   return (
     <motion.div
-      className={`absolute transform-gpu will-change-transform ${
-        item.href ? "cursor-pointer" : ""
-      }`}
+      className={`absolute ${interactive ? "cursor-pointer" : ""}`}
       style={{
-        left: item.x,
-        top: item.y,
-        width: item.width,
-        height: item.height,
-        rotate: item.rotate,
+        left: `${item.x * 100}%`,
+        // `top` se mide contra el alto de la composición y las coordenadas
+        // están en unidades de ancho: de ahí la división por el aspecto.
+        top: `${(item.y / aspect) * 100}%`,
+        width: `${item.size * 100}%`,
+        aspectRatio: "1",
         zIndex: item.zIndex,
       }}
       whileHover={{ scale: HOVER_SCALE, zIndex: HOVER_Z_INDEX }}
-      transition={{ duration: HOVER_DURATION, ease: EASE }}
-      role={item.href ? "link" : undefined}
-      tabIndex={item.href ? 0 : undefined}
-      aria-label={item.href ? `View ${item.title}` : undefined}
+      transition={{
+        duration: HOVER_DURATION,
+        ease: EASE,
+        zIndex: { duration: 0 },
+      }}
+      role={interactive ? "link" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? `View ${item.title}` : undefined}
       // Sin proyecto vinculado el ítem no es interactivo: tampoco se le cuelgan
       // los handlers. Antes se colgaban siempre y salían por un early return.
-      onClick={item.href ? handleNavigate : undefined}
-      onKeyDown={item.href ? handleKeyDown : undefined}
+      onClick={interactive ? handleNavigate : undefined}
+      onKeyDown={interactive ? handleKeyDown : undefined}
     >
-      {content}
+      {/* L1 — despliegue: corre una sola vez, del montón a su lugar. */}
+      <motion.div
+        className="h-full w-full"
+        initial={false}
+        animate={{
+          x: spread ? "0%" : `${item.pileOffsetX}%`,
+          y: spread ? "0%" : `${item.pileOffsetY}%`,
+        }}
+        transition={
+          reduceMotion
+            ? { duration: 0 }
+            : {
+                type: "spring",
+                visualDuration: DEPLOY_VISUAL_DURATION,
+                bounce: DEPLOY_BOUNCE,
+                delay: spread ? index * DEPLOY_STAGGER : 0,
+              }
+        }
+      >
+        {/* L3 — reacción al cursor. */}
+        <motion.div
+          className="h-full w-full transform-gpu will-change-transform"
+          style={{ x: itemParallaxX, y: itemParallaxY }}
+        >
+          {/*
+            L4 — inclinación constante y fade de carga. `rotate` es un valor
+            estático y `opacity` no es transform: no se pisan.
+
+            La caja mide exactamente la tarjeta, que es el único tamaño con el
+            que `object-contain` dibuja la imagen al tamaño previsto: agrandar
+            la caja agranda el dibujo y lo recorta contra la tarjeta.
+          */}
+          <motion.div
+            className="relative h-full w-full"
+            style={{ rotate: item.rotate }}
+            initial={false}
+            animate={{ opacity: isLoaded ? 1 : 0 }}
+            transition={{
+              duration: IMAGE_FADE_DURATION,
+              delay: (index % IMAGE_FADE_STAGGER_BUCKET) * IMAGE_FADE_STAGGER,
+              ease: EASE,
+            }}
+          >
+            <Image
+              src={item.imageUrl}
+              alt={item.alt}
+              fill
+              sizes="(max-width: 768px) 30vw, 22vw"
+              priority={index < EAGER_IMAGE_COUNT}
+              onLoadingComplete={() => setIsLoaded(true)}
+              className="object-contain"
+            />
+          </motion.div>
+        </motion.div>
+      </motion.div>
     </motion.div>
   );
 }
@@ -364,19 +523,22 @@ export default function FunGallery({
   images: FunGalleryImage[];
   randomSeed: string;
 }) {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
+  // `useReducedMotion` devuelve `null` hasta que resuelve la media query.
+  const reduceMotion = useReducedMotion() === true;
+  const [deployed, setDeployed] = useState(false);
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
-  const springX = useSpring(x, SPRING);
-  const springY = useSpring(y, SPRING);
   const springPointerX = useSpring(pointerX, ITEM_PARALLAX_SPRING);
   const springPointerY = useSpring(pointerY, ITEM_PARALLAX_SPRING);
   const galleryItems = useMemo(() => toGalleryItems(images), [images]);
-  const mapLayout = useMemo(
-    () => buildMapLayout(galleryItems, randomSeed),
+  const composition = useMemo(
+    () => buildComposition(galleryItems, randomSeed),
     [galleryItems, randomSeed],
   );
+  // El estado vive en el componente y `template.tsx` lo remonta en cada
+  // navegación: el montón se rearma solo, sin nada que recordar entre visitas.
+  // Con `prefers-reduced-motion` no hay montón: la pantalla nace acomodada.
+  const spread = deployed || reduceMotion;
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
@@ -384,77 +546,82 @@ export default function FunGallery({
 
       const viewportWidth = window.innerWidth || 1;
       const viewportHeight = window.innerHeight || 1;
-      const normalizedX = clamp(
-        (event.clientX / viewportWidth - 0.5) * 2,
-        -1,
-        1,
-      );
-      const normalizedY = clamp(
-        (event.clientY / viewportHeight - 0.5) * 2,
-        -1,
-        1,
-      );
-      const maxX = Math.max(
-        0,
-        (mapLayout.width - viewportWidth) / 2 - MAP_EDGE_GUTTER,
-      );
-      const maxY = Math.max(
-        0,
-        (mapLayout.height - viewportHeight) / 2 - MAP_EDGE_GUTTER,
-      );
-      const moveX = Math.min(MAP_MOVE_X, maxX);
-      const moveY = Math.min(MAP_MOVE_Y, maxY);
 
-      pointerX.set(normalizedX);
-      pointerY.set(normalizedY);
-      x.set(-normalizedX * moveX);
-      y.set(-normalizedY * moveY);
+      pointerX.set(clamp((event.clientX / viewportWidth - 0.5) * 2, -1, 1));
+      pointerY.set(clamp((event.clientY / viewportHeight - 0.5) * 2, -1, 1));
     };
 
-    const resetMapPosition = () => {
+    const resetPointer = () => {
       pointerX.set(0);
       pointerY.set(0);
-      x.set(0);
-      y.set(0);
     };
 
     window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("blur", resetMapPosition);
+    window.addEventListener("blur", resetPointer);
 
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("blur", resetMapPosition);
+      window.removeEventListener("blur", resetPointer);
     };
-  }, [mapLayout.height, mapLayout.width, pointerX, pointerY, x, y]);
+  }, [pointerX, pointerY]);
 
   return (
-    <main className="fixed inset-0 h-[100svh] w-screen overflow-hidden overscroll-none bg-off-white text-off-black">
-      <section
-        className="relative h-full w-full overflow-hidden bg-off-white"
-        aria-label="Fun Gallery"
+    <section
+      className="relative overflow-x-clip bg-off-white px-12 pb-32 pt-[72px] text-off-black lg:px-16"
+      aria-label="Fun Gallery"
+    >
+      <h1 className="text-center font-display text-[40px] uppercase leading-[48px] tracking-normal">
+        {TITLE_LINES.map((line) => (
+          <span key={line} className="block">
+            {line}
+          </span>
+        ))}
+      </h1>
+
+      <div
+        className="relative mx-auto mt-10 w-full"
+        style={{
+          maxWidth: COMPOSITION_MAX_WIDTH,
+          aspectRatio: `1 / ${composition.aspect}`,
+        }}
       >
-        <motion.div
-          className="absolute left-1/2 top-1/2 transform-gpu will-change-transform"
-          style={{
-            width: mapLayout.width,
-            height: mapLayout.height,
-            x: springX,
-            y: springY,
-            marginLeft: -mapLayout.width / 2,
-            marginTop: -mapLayout.height / 2,
-          }}
-        >
-          {mapLayout.items.map((item, index) => (
-            <GalleryCard
-              key={item.id}
-              item={item}
-              index={index}
-              pointerX={springPointerX}
-              pointerY={springPointerY}
-            />
-          ))}
-        </motion.div>
-      </section>
-    </main>
+        {composition.items.map((item, index) => (
+          <GalleryCard
+            key={item.id}
+            item={item}
+            index={index}
+            aspect={composition.aspect}
+            spread={spread}
+            reduceMotion={reduceMotion}
+            pointerX={springPointerX}
+            pointerY={springPointerY}
+          />
+        ))}
+
+        <AnimatePresence>
+          {!spread && (
+            <motion.button
+              key="deploy"
+              type="button"
+              className="absolute inset-0 z-40 cursor-pointer"
+              onClick={() => setDeployed(true)}
+              initial={false}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: CAPTION_FADE_DURATION, ease: EASE }}
+            >
+              <span
+                className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-body text-[17px] leading-none text-off-black"
+                style={{
+                  top: `${(composition.captionY / composition.aspect) * 100}%`,
+                }}
+              >
+                (click to view)
+              </span>
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
+    </section>
   );
 }

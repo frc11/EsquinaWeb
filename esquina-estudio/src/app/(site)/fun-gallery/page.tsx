@@ -38,20 +38,20 @@ async function getGalleryImages(): Promise<FunGalleryImage[] | null> {
 
 /**
  * Seed derivado del contenido: los identificadores de las imágenes, en el orden
- * en que las devuelve la query. El mismo contenido produce siempre el mismo
- * mapa —dos cargas seguidas caen en las mismas posiciones— y el sorteo solo
- * cambia cuando las clientas agregan, sacan o reordenan imágenes. Cambiar la
- * foto de una imagen ya cargada no mueve el mapa: el documento sigue siendo el
+ * en que las devuelve la query. El mismo contenido produce siempre la misma
+ * composición —dos cargas seguidas caen en las mismas posiciones— y el sorteo
+ * solo cambia cuando las clientas agregan, sacan o reordenan imágenes. Cambiar
+ * la foto de una imagen ya cargada no mueve nada: el documento sigue siendo el
  * mismo. `FunGallery` lo hashea con FNV-1a antes de sembrar el PRNG.
  */
-function getMapSeed(images: FunGalleryImage[]) {
+function getLayoutSeed(images: FunGalleryImage[]) {
   return images.map((image) => image._id).join("|");
 }
 
 /**
- * Pantallas de error y de vacío. Ocupan el viewport completo en off-white igual
- * que el mapa, porque en esta ruta el Navbar y el Footer van fijos y en
- * `mix-blend-difference`: cualquier otro fondo les cambiaría el color.
+ * Pantallas de error y de vacío. La galería dejó de ser un viewport fijo, así
+ * que el aviso es una sección más del flujo: reserva una pantalla de alto para
+ * no quedar pegado al header, y el Footer va debajo como en cualquier ruta.
  */
 function GalleryNotice({
   heading,
@@ -61,7 +61,7 @@ function GalleryNotice({
   detail: string;
 }) {
   return (
-    <main className="fixed inset-0 flex h-[100svh] w-screen items-center justify-center overflow-hidden overscroll-none bg-off-white px-6 text-center text-off-black">
+    <section className="flex min-h-[60vh] w-full items-center justify-center bg-off-white px-6 py-32 text-center text-off-black">
       <div className="max-w-2xl">
         <h1 className="font-display text-[40px] uppercase leading-[48px]">
           {heading}
@@ -70,7 +70,7 @@ function GalleryNotice({
           {detail}
         </p>
       </div>
-    </main>
+    </section>
   );
 }
 
@@ -95,5 +95,5 @@ export default async function FunGalleryPage() {
     );
   }
 
-  return <FunGallery images={images} randomSeed={getMapSeed(images)} />;
+  return <FunGallery images={images} randomSeed={getLayoutSeed(images)} />;
 }
