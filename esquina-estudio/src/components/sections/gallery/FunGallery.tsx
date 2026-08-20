@@ -7,11 +7,13 @@ import {
   motion,
   MotionValue,
   useMotionValue,
-  useReducedMotion,
   useSpring,
   useTransform,
 } from "framer-motion";
-import { useRouteTransition } from "@/components/layout/RouteTransitionProvider";
+import {
+  usePrefersReducedMotion,
+  useRouteTransition,
+} from "@/components/layout/RouteTransitionProvider";
 import { urlFor } from "@/lib/sanity";
 import { FunGalleryImage } from "@/types/fun-gallery-image";
 
@@ -577,8 +579,7 @@ export default function FunGallery({
   images: FunGalleryImage[];
   randomSeed: string;
 }) {
-  // `useReducedMotion` devuelve `null` hasta que resuelve la media query.
-  const reduceMotion = useReducedMotion() === true;
+  const reduceMotion = usePrefersReducedMotion();
   const [deployed, setDeployed] = useState(false);
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);

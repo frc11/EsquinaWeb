@@ -61,7 +61,16 @@ function getRouteHref(destination: URL) {
   return `${destination.pathname}${destination.search}${destination.hash}`;
 }
 
-function usePrefersReducedMotion() {
+/**
+ * Se exporta para que `FunGallery` apague ahí sus animaciones con la misma
+ * lectura de la preferencia. `useReducedMotion` de Framer Motion no sirve para
+ * eso: resuelve la media query **durante el primer render de cliente** (lee
+ * `matchMedia` en el cuerpo del hook y la congela en un `useState`), así que
+ * con la preferencia activa el HTML del servidor —que la ve como `null`— y el
+ * de hidratación no coinciden. Este hook arranca en `false` en los dos lados y
+ * se corrige en el efecto, y además sí reacciona si la preferencia cambia.
+ */
+export function usePrefersReducedMotion() {
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
