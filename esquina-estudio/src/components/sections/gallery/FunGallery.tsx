@@ -14,6 +14,10 @@ import {
   usePrefersReducedMotion,
   useRouteTransition,
 } from "@/components/layout/RouteTransitionProvider";
+import {
+  rememberFunGalleryReturn,
+  useFunGalleryReturnOnMount,
+} from "@/lib/fun-gallery-return";
 import { urlFor } from "@/lib/sanity";
 import { FunGalleryImage } from "@/types/fun-gallery-image";
 
@@ -586,6 +590,7 @@ function GalleryCard({
   index,
   aspect,
   spread,
+  instant,
   reduceMotion,
   pointerX,
   pointerY,
@@ -594,6 +599,8 @@ function GalleryCard({
   index: number;
   aspect: number;
   spread: boolean;
+  /** El objeto nace en su lugar, sin animar el despliegue. */
+  instant: boolean;
   reduceMotion: boolean;
   pointerX: MotionValue<number>;
   pointerY: MotionValue<number>;
@@ -618,6 +625,9 @@ function GalleryCard({
 
   const handleNavigate = () => {
     if (!item.href) return;
+    // Se anota antes de arrancar la transición: el proyecto y la vuelta a la
+    // galería leen esto para ofrecer el link de vuelta y para nacer desplegada.
+    rememberFunGalleryReturn(item.href);
     navigateWithTransition(item.href);
   };
 
@@ -664,7 +674,7 @@ function GalleryCard({
           y: spread ? "0%" : `${item.pileOffsetY}%`,
         }}
         transition={
-          reduceMotion
+          instant
             ? { duration: 0 }
             : {
                 type: "spring",
@@ -752,6 +762,8 @@ export default function FunGallery({
 }) {
   const reduceMotion = usePrefersReducedMotion();
   const [deployed, setDeployed] = useState(false);
+  // Hay vuelta cuando esta pestaña tiene anotado un proyecto abierto desde acá.
+  const returning = useFunGalleryReturnOnMount() !== null;
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
   const followPointerX = useSpring(pointerX, FOLLOW_SPRING);
@@ -761,10 +773,20 @@ export default function FunGallery({
     () => buildComposition(galleryItems, randomSeed),
     [galleryItems, randomSeed],
   );
-  // El estado vive en el componente y `template.tsx` lo remonta en cada
-  // navegación: el montón se rearma solo, sin nada que recordar entre visitas.
-  // Con `prefers-reduced-motion` no hay montón: la pantalla nace acomodada.
-  const spread = deployed || reduceMotion;
+  /*
+    El estado vive en el componente y `template.tsx` lo remonta en cada
+    navegación: el montón se rearma solo, sin nada que recordar entre visitas.
+    La única excepción es la vuelta desde un proyecto que se abrió DESDE acá,
+    que sí deja anotación en la pestaña: esa visita nace desplegada.
+
+    `instantSpread` separa las dos formas de estar desplegado. Al click el
+    despliegue se anima, que es toda la gracia de la pantalla; en la vuelta y
+    con `prefers-reduced-motion` los objetos nacen en su lugar. El flotado corre
+    igual en los tres casos —lo apaga `reduceMotion` y nada más—, así que la
+    galería de vuelta aparece quieta en su sitio pero ya derivando.
+  */
+  const spread = deployed || returning || reduceMotion;
+  const instantSpread = returning || reduceMotion;
 
   useEffect(() => {
     if (reduceMotion) return;
@@ -833,35 +855,46 @@ export default function FunGallery({
             index={index}
             aspect={composition.aspect}
             spread={spread}
+            instant={instantSpread}
             reduceMotion={reduceMotion}
             pointerX={followPointerX}
             pointerY={followPointerY}
           />
         ))}
 
-        <AnimatePresence>
-          {!spread && (
-            <motion.button
-              key="deploy"
-              type="button"
-              className="absolute inset-0 z-40 cursor-pointer"
-              onClick={() => setDeployed(true)}
-              initial={false}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: CAPTION_FADE_DURATION, ease: EASE }}
-            >
-              <span
-                className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-body text-[17px] leading-none text-off-black"
-                style={{
-                  top: `${(composition.captionY / composition.aspect) * 100}%`,
-                }}
+        {/*
+          El `AnimatePresence` entero desaparece cuando el despliegue es
+          instantáneo. Sacar solo al botón lo dejaría despidiéndose con su fade
+          de 0,4 s por encima de una galería que ya está desplegada: los hijos
+          que salen se animan con los props del último render, y en ese render
+          el fade todavía estaba puesto. Desmontando al `AnimatePresence` no hay
+          quien retenga al botón y se va en el acto.
+        */}
+        {!instantSpread && (
+          <AnimatePresence>
+            {!spread && (
+              <motion.button
+                key="deploy"
+                type="button"
+                className="absolute inset-0 z-40 cursor-pointer"
+                onClick={() => setDeployed(true)}
+                initial={false}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: CAPTION_FADE_DURATION, ease: EASE }}
               >
-                (click to view)
-              </span>
-            </motion.button>
-          )}
-        </AnimatePresence>
+                <span
+                  className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-body text-[17px] leading-none text-off-black"
+                  style={{
+                    top: `${(composition.captionY / composition.aspect) * 100}%`,
+                  }}
+                >
+                  (click to view)
+                </span>
+              </motion.button>
+            )}
+          </AnimatePresence>
+        )}
       </div>
     </section>
   );

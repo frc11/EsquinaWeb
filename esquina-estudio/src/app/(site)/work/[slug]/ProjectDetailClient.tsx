@@ -1,8 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
+import {
+  FUN_GALLERY_PATH,
+  useFunGalleryReturnOnMount,
+} from "@/lib/fun-gallery-return";
 import { Project } from "@/types/project";
 import ProjectContentRenderer from "@/components/ui/ProjectContentRenderer";
 
@@ -18,6 +23,17 @@ export default function ProjectDetailClient({
   nextProject,
 }: ProjectDetailClientProps) {
   const { isPreloaderDone } = usePreloader();
+  const pathname = usePathname();
+
+  /*
+    El link de vuelta aparece SOLO si a ESTE proyecto se llegó desde la Fun
+    Gallery. La anotación la deja la galería al navegar y vive en la pestaña, no
+    en el visitante: quien abre el proyecto desde Work, desde el menú o desde un
+    link pegado no la tiene y no ve nada distinto. Se lee recién al montar, que
+    es cuando existe `sessionStorage`, así que el servidor manda siempre la
+    página sin el link y el cliente lo agrega antes de pintar.
+  */
+  const cameFromGallery = useFunGalleryReturnOnMount() === pathname;
 
   return (
     <motion.main
@@ -43,6 +59,18 @@ export default function ProjectDetailClient({
           <h1 className="font-display text-[40px] uppercase leading-[1.05] tracking-tight text-off-black mt-24">
             {project.title}
           </h1>
+
+          {/* Cuelga del título, con la escala y el gris de los links
+              secundarios de la navegación de abajo: es una salida a mano, no un
+              elemento que compita con el proyecto. */}
+          {cameFromGallery && (
+            <Link
+              href={FUN_GALLERY_PATH}
+              className="mt-12 w-fit font-body text-[13px] uppercase text-gray-brand tracking-wider hover:text-off-black transition-colors duration-300"
+            >
+              ← Back to Fun Gallery
+            </Link>
+          )}
         </div>
 
         {/* RIGHT COLUMN — Main Content Area (slide-up only here, not on the sticky ancestor) */}
