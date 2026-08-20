@@ -209,12 +209,21 @@ const FLOAT_PERIOD_STEP = 1.2;
   El objeto ACOMPAÑA al cursor. En `ServicesIntro` (`:151-191`) las imágenes se
   apartan de él; acá el signo va al derecho: el cursor a la derecha del centro
   corre los objetos a la derecha. Se reusa su spring —sobreamortiguado, ζ = 1,5,
-  no hay rebote, solo arrastre— y la amplitud queda muy por debajo del flotado:
-  entre 6 y 9 px en el borde del viewport contra los 16 px de la deriva.
+  no hay rebote, solo arrastre.
+
+  La amplitud es `FOLLOW_STRENGTH × factor` con el cursor en el borde del
+  viewport, y el factor sorteado por objeto (2 a 3) es lo que hace que no se
+  muevan todos igual. Estaba en 6–9 px y era imperceptible: contra los 11/16 px
+  del flotado, el seguimiento quedaba escondido debajo de la deriva. Ahora
+  llega a 20–30 px, que es 1,3 a 1,9 veces el flotado vertical: se nota que los
+  objetos acompañan al cursor y sigue siendo del mismo orden que la deriva, así
+  que ninguno de los dos se come al otro. Y son 20–30 px solo con el cursor
+  pegado al borde: en el grueso de la pantalla el desplazamiento es bastante
+  menor, porque el motion value es la posición normalizada del cursor.
 */
 const FOLLOW_MIN = 2;
 const FOLLOW_MAX = 3;
-const FOLLOW_STRENGTH = 3;
+const FOLLOW_STRENGTH = 10;
 const FOLLOW_SPRING = { stiffness: 50, damping: 15, mass: 0.5 };
 
 // ── Hover ────────────────────────────────────────────────────────────────────
