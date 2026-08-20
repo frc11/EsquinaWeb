@@ -25,15 +25,15 @@ import { FunGalleryImage } from "@/types/fun-gallery-image";
 
     L0  posición + hover   left/top/width (CSS) · scale (whileHover) · zIndex
       L1  despliegue        x/y  → animate, una sola vez, al click
-        L3  cursor          x/y  → style con motion values (spring)
-          L4  inclinación   rotate (constante) + opacity del fade de carga
-            <Image object-contain />
+        L2  flotado         x/y  → animate con keyframes, loop infinito
+          L3  seguimiento   x/y  → style con motion values (spring)
+            L4  inclinación rotate (constante) + opacity del fade de carga
+              <Image object-contain />
 
-  Ningún par de capas escribe la misma propiedad del mismo elemento: L1 y L3
-  mueven x/y, pero cada una sobre un div distinto. La rotación va por dentro de
-  las traslaciones para que éstas ocurran en el espacio de la página y no en el
-  marco inclinado del objeto. (El flotado permanente entra como L2, entre el
-  despliegue y el cursor.)
+  Ningún par de capas escribe la misma propiedad del mismo elemento: L1, L2 y
+  L3 mueven x/y, pero cada una sobre un div distinto. La rotación va por dentro
+  de las tres traslaciones para que éstas ocurran en el espacio de la página y
+  no en el marco inclinado del objeto.
 
   UNIDADES
   ────────
@@ -111,22 +111,48 @@ const DEPLOY_BOUNCE = 0.18;
 const DEPLOY_STAGGER = 0.07;
 const CAPTION_FADE_DURATION = 0.4;
 
-// ── Reacción al cursor ───────────────────────────────────────────────────────
+// ── Flotado ──────────────────────────────────────────────────────────────────
 
-const ITEM_PARALLAX_MIN = 2;
-const ITEM_PARALLAX_MAX = 3;
-const ITEM_PARALLAX_STRENGTH_X = 40;
-const ITEM_PARALLAX_STRENGTH_Y = 40;
+/*
+  Mismo patrón que `ServicesIntro` (`:196-198`): keyframes de x/y en loop, con
+  el período desfasado por índice para que los objetos no vayan todos juntos.
+  Dos diferencias, las dos para que se lea deriva y no vaivén: los keyframes son
+  simétricos —el objeto se va para los dos lados, no siempre para el mismo— y
+  cada eje tiene su propio período, así que la trayectoria nunca cierra igual y
+  no se percibe el ciclo. La amplitud está calibrada a estos objetos: 16 px de
+  vertical sobre una tarjeta de ~400 px es un 4 %, deriva y no vibración.
+*/
+const FLOAT_X = 11;
+const FLOAT_Y = 16;
+const FLOAT_PERIOD_X = 11.5;
+const FLOAT_PERIOD_Y = 9;
+const FLOAT_PERIOD_STEP = 1.2;
 
-const ITEM_PARALLAX_SPRING = {
-  stiffness: 500,
-  damping: 100,
-  mass: 1.5,
-};
+// ── Seguimiento del cursor ───────────────────────────────────────────────────
 
-const HOVER_SCALE = 1.2;
+/*
+  El objeto ACOMPAÑA al cursor. En `ServicesIntro` (`:151-191`) las imágenes se
+  apartan de él; acá el signo va al derecho: el cursor a la derecha del centro
+  corre los objetos a la derecha. Se reusa su spring —sobreamortiguado, ζ = 1,5,
+  no hay rebote, solo arrastre— y la amplitud queda muy por debajo del flotado:
+  entre 6 y 9 px en el borde del viewport contra los 16 px de la deriva.
+*/
+const FOLLOW_MIN = 2;
+const FOLLOW_MAX = 3;
+const FOLLOW_STRENGTH = 3;
+const FOLLOW_SPRING = { stiffness: 50, damping: 15, mass: 0.5 };
+
+// ── Hover ────────────────────────────────────────────────────────────────────
+
+/*
+  1,2 agrandaba el objeto 80 px y competía con el despliegue; 1,08 son 32 px
+  sobre una tarjeta de 400 px, que es «un poco». El zIndex de hover pasa de 999
+  a 50 porque ahora la página scrollea: 999 dejaba al objeto por encima del
+  Navbar (z-100) al pasarle por debajo.
+*/
+const HOVER_SCALE = 1.08;
 const HOVER_DURATION = 0.5;
-const HOVER_Z_INDEX = 999;
+const HOVER_Z_INDEX = 50;
 
 const IMAGE_FADE_DURATION = 1.2;
 const IMAGE_FADE_STAGGER = 0.3;
@@ -167,7 +193,7 @@ type LayoutItem = GalleryItem & {
   pileOffsetY: number;
   rotate: number;
   zIndex: number;
-  parallaxFactor: number;
+  followFactor: number;
 };
 
 type Composition = {
@@ -256,9 +282,9 @@ function toGalleryItems(images: FunGalleryImage[]): GalleryItem[] {
 /**
  * El motor determinista de siempre —un LCG sembrado con el contenido alimenta
  * el shuffle de celdas y, por ítem, lado, dos jitters por eje, rotación, zIndex
- * y factor de reacción al cursor— pero resolviendo una página normal en vez de
- * un mapa sobredimensionado: la grilla ocupa el ancho disponible y el alto sale
- * de las filas que pida la cantidad de imágenes.
+ * y factor de seguimiento— pero resolviendo una página normal en vez de un mapa
+ * sobredimensionado: la grilla ocupa el ancho disponible y el alto sale de las
+ * filas que pida la cantidad de imágenes.
  *
  * La caja del objeto es CUADRADA. El sorteo de aspecto que había antes no
  * agregaba variedad: los ocho assets son cuadrados y con `object-contain` una
@@ -313,11 +339,7 @@ function buildComposition(
       centerY,
       rotate: randomBetween(random, -ROTATION_RANGE, ROTATION_RANGE),
       zIndex: 10 + Math.round(random() * 24),
-      parallaxFactor: randomBetween(
-        random,
-        ITEM_PARALLAX_MIN,
-        ITEM_PARALLAX_MAX,
-      ),
+      followFactor: randomBetween(random, FOLLOW_MIN, FOLLOW_MAX),
       angle:
         index * PILE_GOLDEN_ANGLE +
         randomBetween(random, -PILE_ANGLE_JITTER, PILE_ANGLE_JITTER),
@@ -380,7 +402,7 @@ function buildComposition(
         pileOffsetY: ((pileY - y) / size) * 100,
         rotate: entry.rotate,
         zIndex: entry.zIndex,
-        parallaxFactor: entry.parallaxFactor,
+        followFactor: entry.followFactor,
       };
     }),
   };
@@ -405,18 +427,21 @@ function GalleryCard({
 }) {
   const { navigateWithTransition } = useRouteTransition();
   const [isLoaded, setIsLoaded] = useState(false);
-  const itemParallaxX = useTransform(
+  const followX = useTransform(
     pointerX,
-    (value) => value * ITEM_PARALLAX_STRENGTH_X * item.parallaxFactor,
+    (value) => value * FOLLOW_STRENGTH * item.followFactor,
   );
-  const itemParallaxY = useTransform(
+  const followY = useTransform(
     pointerY,
-    (value) => value * ITEM_PARALLAX_STRENGTH_Y * item.parallaxFactor,
+    (value) => value * FOLLOW_STRENGTH * item.followFactor,
   );
   // Mientras están amontonados los objetos no son interactivos: el click que
   // despliega lo recibe el botón que los cubre, así que nunca compite con el
   // click que navega a un proyecto.
   const interactive = spread && Boolean(item.href);
+  // Media vuelta de fase entre pares e impares: con ocho períodos distintos por
+  // eje alcanza para que no arranquen todos en el mismo sentido.
+  const driftX = index % 2 === 0 ? FLOAT_X : -FLOAT_X;
 
   const handleNavigate = () => {
     if (!item.href) return;
@@ -476,39 +501,68 @@ function GalleryCard({
               }
         }
       >
-        {/* L3 — reacción al cursor. */}
+        {/* L2 — flotado: loop permanente, un período por eje y por índice. */}
         <motion.div
           className="h-full w-full transform-gpu will-change-transform"
-          style={{ x: itemParallaxX, y: itemParallaxY }}
+          animate={
+            reduceMotion
+              ? { x: 0, y: 0 }
+              : {
+                  x: [0, driftX, 0, -driftX, 0],
+                  y: [0, -FLOAT_Y, 0, FLOAT_Y, 0],
+                }
+          }
+          transition={
+            reduceMotion
+              ? { duration: 0 }
+              : {
+                  x: {
+                    duration: FLOAT_PERIOD_X + index * FLOAT_PERIOD_STEP,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
+                  y: {
+                    duration: FLOAT_PERIOD_Y + index * FLOAT_PERIOD_STEP,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
+                }
+          }
         >
-          {/*
-            L4 — inclinación constante y fade de carga. `rotate` es un valor
-            estático y `opacity` no es transform: no se pisan.
-
-            La caja mide exactamente la tarjeta, que es el único tamaño con el
-            que `object-contain` dibuja la imagen al tamaño previsto: agrandar
-            la caja agranda el dibujo y lo recorta contra la tarjeta.
-          */}
+          {/* L3 — seguimiento del cursor. */}
           <motion.div
-            className="relative h-full w-full"
-            style={{ rotate: item.rotate }}
-            initial={false}
-            animate={{ opacity: isLoaded ? 1 : 0 }}
-            transition={{
-              duration: IMAGE_FADE_DURATION,
-              delay: (index % IMAGE_FADE_STAGGER_BUCKET) * IMAGE_FADE_STAGGER,
-              ease: EASE,
-            }}
+            className="h-full w-full"
+            style={{ x: followX, y: followY }}
           >
-            <Image
-              src={item.imageUrl}
-              alt={item.alt}
-              fill
-              sizes="(max-width: 768px) 30vw, 22vw"
-              priority={index < EAGER_IMAGE_COUNT}
-              onLoadingComplete={() => setIsLoaded(true)}
-              className="object-contain"
-            />
+            {/*
+              L4 — inclinación constante y fade de carga. `rotate` es un valor
+              estático y `opacity` no es transform: no se pisan.
+
+              La caja mide exactamente la tarjeta, que es el único tamaño con el
+              que `object-contain` dibuja la imagen al tamaño previsto: agrandar
+              la caja agranda el dibujo y lo recorta contra la tarjeta.
+            */}
+            <motion.div
+              className="relative h-full w-full"
+              style={{ rotate: item.rotate }}
+              initial={false}
+              animate={{ opacity: isLoaded ? 1 : 0 }}
+              transition={{
+                duration: IMAGE_FADE_DURATION,
+                delay: (index % IMAGE_FADE_STAGGER_BUCKET) * IMAGE_FADE_STAGGER,
+                ease: EASE,
+              }}
+            >
+              <Image
+                src={item.imageUrl}
+                alt={item.alt}
+                fill
+                sizes="(max-width: 768px) 30vw, 22vw"
+                priority={index < EAGER_IMAGE_COUNT}
+                onLoadingComplete={() => setIsLoaded(true)}
+                className="object-contain"
+              />
+            </motion.div>
           </motion.div>
         </motion.div>
       </motion.div>
@@ -528,8 +582,8 @@ export default function FunGallery({
   const [deployed, setDeployed] = useState(false);
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
-  const springPointerX = useSpring(pointerX, ITEM_PARALLAX_SPRING);
-  const springPointerY = useSpring(pointerY, ITEM_PARALLAX_SPRING);
+  const followPointerX = useSpring(pointerX, FOLLOW_SPRING);
+  const followPointerY = useSpring(pointerY, FOLLOW_SPRING);
   const galleryItems = useMemo(() => toGalleryItems(images), [images]);
   const composition = useMemo(
     () => buildComposition(galleryItems, randomSeed),
@@ -541,6 +595,8 @@ export default function FunGallery({
   const spread = deployed || reduceMotion;
 
   useEffect(() => {
+    if (reduceMotion) return;
+
     const handlePointerMove = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
 
@@ -563,7 +619,7 @@ export default function FunGallery({
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("blur", resetPointer);
     };
-  }, [pointerX, pointerY]);
+  }, [pointerX, pointerY, reduceMotion]);
 
   return (
     <section
@@ -593,8 +649,8 @@ export default function FunGallery({
             aspect={composition.aspect}
             spread={spread}
             reduceMotion={reduceMotion}
-            pointerX={springPointerX}
-            pointerY={springPointerY}
+            pointerX={followPointerX}
+            pointerY={followPointerY}
           />
         ))}
 
