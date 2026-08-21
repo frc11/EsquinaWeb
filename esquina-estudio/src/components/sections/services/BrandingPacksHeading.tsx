@@ -1,4 +1,7 @@
-import { SPLIT_GRID } from "@/components/sections/services/services-layout";
+import {
+  BRANDING_PACKS_ID,
+  SPLIT_GRID,
+} from "@/components/sections/services/services-layout";
 import { SERVICES_COPY } from "@/lib/services-content";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +21,10 @@ export default function BrandingPacksHeading() {
   const { label, title, subtitle } = SERVICES_COPY.packsHeading;
 
   return (
-    <div className={cn(SPLIT_GRID, "pt-[160px] pb-[160px]")}>
+    <div
+      id={BRANDING_PACKS_ID}
+      className={cn(SPLIT_GRID, "pt-[160px] pb-[160px]")}
+    >
       <h2 className="font-body text-[30px] uppercase leading-[36px] text-off-black">
         {label}
       </h2>

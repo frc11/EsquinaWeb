@@ -73,6 +73,14 @@ export function getHeaderOffset(): number {
 }
 
 /**
+ * Destino del gatillo del intro (`IntroScrollTrigger`). Es el encabezado de la
+ * zona de packs, que **no** es una sección del sidebar: el menú no lo lista y el
+ * spy no lo observa. Vive acá porque lo comparten quien lo emite y quien lo
+ * busca.
+ */
+export const BRANDING_PACKS_ID = "branding-packs";
+
+/**
  * Atributo del centinela del scroll-spy. Cada sección renderiza el suyo pegado a
  * su tope y el sidebar los observa; ver `ServicesSidebar` para la regla completa.
  * Se declara en el marcado —y no lo inyecta el sidebar— para que el árbol del

@@ -3,7 +3,9 @@ import ServicesIntro from "@/components/sections/services/ServicesIntro";
 import BrandingPacksHeading from "@/components/sections/services/BrandingPacksHeading";
 import ServicePackSection from "@/components/sections/services/ServicePackSection";
 import ServicesSidebar from "@/components/sections/services/ServicesSidebar";
+import IntroScrollTrigger from "@/components/sections/services/IntroScrollTrigger";
 import {
+  BRANDING_PACKS_ID,
   CONTENT_INSET,
   GUTTER,
 } from "@/components/sections/services/services-layout";
@@ -36,6 +38,7 @@ export default function ServicesPage() {
     <div className="bg-off-white text-off-black">
       <div className={cn("relative", GUTTER)}>
         <ServicesIntro />
+        <IntroScrollTrigger targetId={BRANDING_PACKS_ID} />
 
         <div className={CONTENT_INSET}>
           <BrandingPacksHeading />
