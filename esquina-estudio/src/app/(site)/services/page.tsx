@@ -51,9 +51,10 @@ async function getLatestProjects(): Promise<Project[]> {
  * `/services` — rediseño B3.4.
  *
  * Componente de servidor sin estado: no toca `body`, no toca
- * `history.scrollRestoration` y no registra listeners globales. Lo único con
- * comportamiento son el sidebar (F3), el gatillo del intro (F4) y el hover de
- * las portadas (F5), que son componentes de cliente acotados.
+ * `history.scrollRestoration` y no registra listeners globales. El
+ * comportamiento vive en componentes de cliente acotados: la entrada del intro,
+ * el gatillo hacia Branding Packs, el sidebar con su spy y sus saltos, y el
+ * hover de las portadas del cierre.
  *
  * El layout del sitio ya envuelve el contenido en `<main>`, así que acá van
  * `<section>` sueltas —mismo criterio que `/contact`— y no un `<main>` anidado.
