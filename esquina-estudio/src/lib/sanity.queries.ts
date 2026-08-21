@@ -47,6 +47,7 @@ export const FUN_GALLERY_IMAGES_QUERY = `
 // `title` y `slug` son requeridos, así que el caso existe de verdad.
 export const LATEST_PROJECTS_QUERY = `
   *[_type == "project" && defined(coverImage.asset)] | order(_createdAt desc, _id desc)[0...4] {
-    _id, title, slug, coverImage, coverColor
+    _id, title, slug, coverImage, coverColor,
+    titleEs
   }
 `;

@@ -9,6 +9,7 @@ import {
   useFunGalleryReturnOnMount,
 } from "@/lib/fun-gallery-return";
 import { useLocale } from "@/lib/i18n";
+import { projectText } from "@/lib/project-text";
 import { Project } from "@/types/project";
 import ProjectContentRenderer from "@/components/ui/ProjectContentRenderer";
 
@@ -24,7 +25,7 @@ export default function ProjectDetailClient({
   nextProject,
 }: ProjectDetailClientProps) {
   const { isPreloaderDone } = usePreloader();
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const pathname = usePathname();
 
   /*
@@ -53,13 +54,13 @@ export default function ProjectDetailClient({
         {/* LEFT COLUMN — Sticky Meta Info */}
         <div className="w-full md:w-[240px] flex-shrink-0 md:sticky md:top-48 self-start flex flex-col">
           <div className="font-body text-[17px] uppercase leading-relaxed text-off-black space-y-1">
-            <p>{project.category}</p>
-            <p>{project.services}</p>
+            <p>{projectText(project, locale, "category")}</p>
+            <p>{projectText(project, locale, "services")}</p>
             <p>{project.year}</p>
           </div>
 
           <h1 className="font-display text-[40px] uppercase leading-[1.05] tracking-tight text-off-black mt-24">
-            {project.title}
+            {projectText(project, locale, "title")}
           </h1>
 
           {/* Cuelga del título, con la escala y el gris de los links
@@ -112,7 +113,7 @@ export default function ProjectDetailClient({
               {t.work.next} →
             </span>
             <span className="font-display text-[24px] uppercase text-off-black group-hover:text-gray-brand transition-colors duration-300">
-              {nextProject.title}
+              {projectText(nextProject, locale, "title")}
             </span>
           </Link>
         ) : prevProject ? (
@@ -124,7 +125,7 @@ export default function ProjectDetailClient({
               {t.work.next} →
             </span>
             <span className="font-display text-[24px] uppercase text-off-black group-hover:text-gray-brand transition-colors duration-300">
-              {prevProject.title}
+              {projectText(prevProject, locale, "title")}
             </span>
           </Link>
         ) : (

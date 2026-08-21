@@ -5,6 +5,8 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Project } from "@/types/project";
 import { urlFor } from "@/lib/sanity";
+import { projectText } from "@/lib/project-text";
+import { useLocale } from "@/lib/i18n";
 
 interface ProjectCardProps {
   project: Project;
@@ -13,6 +15,11 @@ interface ProjectCardProps {
 const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 
 export default function ProjectCard({ project }: ProjectCardProps) {
+  const { locale } = useLocale();
+  const title = projectText(project, locale, "title");
+  const category = projectText(project, locale, "category");
+  const services = projectText(project, locale, "services");
+
   function getContrastClass(hexColor?: string) {
     if (!hexColor) return "text-off-black";
     const hex = hexColor.replace("#", "");
@@ -43,7 +50,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         {imageUrl && (
           <Image
             src={imageUrl}
-            alt={project.title}
+            alt={title}
             fill
             sizes="(max-width: 768px) 100vw, 33vw"
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
@@ -70,13 +77,13 @@ export default function ProjectCard({ project }: ProjectCardProps) {
               {project.projectNumber}
             </p>
             <h2 className="mt-6 font-body text-[17px] font-medium leading-[1.15]">
-              {project.title}
+              {title}
             </h2>
             <p className="mt-6">
-              {project.category}
+              {category}
             </p>
             <p className="mt-6 max-w-[220px]">
-              {project.services}
+              {services}
             </p>
           </div>
 

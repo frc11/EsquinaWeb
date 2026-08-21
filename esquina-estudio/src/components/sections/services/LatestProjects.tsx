@@ -12,6 +12,7 @@ import {
 import { getServicesCopy } from "@/lib/services-content";
 import { useLocale } from "@/lib/i18n";
 import { urlFor } from "@/lib/sanity";
+import { projectText } from "@/lib/project-text";
 import type { Project } from "@/types/project";
 import { cn } from "@/lib/utils";
 
@@ -162,6 +163,7 @@ export default function LatestProjects({
         >
           {projects.map((project, index) => {
             const isHovered = hoveredIndex === index;
+            const title = projectText(project, locale, "title");
             const isDimmed = hoveredIndex !== null && !isHovered;
             const source =
               typeof project.coverImage === "string"
@@ -178,7 +180,7 @@ export default function LatestProjects({
               <Link
                 key={project._id}
                 href={`/work/${project.slug.current}`}
-                aria-label={project.title}
+                aria-label={title}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 onFocus={() => setHoveredIndex(index)}
@@ -202,7 +204,7 @@ export default function LatestProjects({
                 {source ? (
                   <Image
                     src={source}
-                    alt={project.title}
+                    alt={title}
                     fill
                     sizes="25vw"
                     className="object-cover"
