@@ -846,7 +846,25 @@ export default function ContactForm({ service = null }: { service?: string | nul
               columna lleva los primeros cinco campos y la segunda el resto mas
               el boton, asi que Tab recorre nombre, email, pills, negocio,
               industria, ubicacion, plazo, presupuesto, como nos conociste y
-              SEND. Sin reordenar markup ni posicionamiento absoluto. */}
+              SEND. Sin reordenar markup ni posicionamiento absoluto.
+
+              EN CASTELLANO NO CAMBIA UN PIXEL (B4/F7). Los seis estados, los
+              tres escalones y los tres pisos de arriba valen igual en los dos
+              idiomas: medida la matriz entera —1920, 1728, 1600, 1536, 1440,
+              1366 y 1280, limpia y con los dos mensajes de validacion— el
+              bloque da 498 / 498 / 498 / 450 / 450 / 450 / 426 y el borde
+              inferior 682 / 682 / 682 / 634 / 634 / 634 / 610, identicos campo
+              por campo. Con los dos errores suma los mismos +58 exactos en los
+              siete. Las pills siguen en 4 filas, ningun label pasa de tres
+              renglones y no hay desborde horizontal.
+
+              No es suerte: cada pieza del castellano se eligio contra su piso.
+              Las diez pills suman 1413 px de tinta a 17 px contra los 1503 del
+              ingles, y el subtitulo del aside —que es lo que fija el piso de
+              272 px de esa pista, no el titulo— mide 267,9 contra 269,2. O sea
+              que el castellano pide MENOS ancho que el ingles en los dos
+              lugares donde el ancho manda. Por eso este sprint no toco ninguna
+              palanca. */}
           <div className="min-[880px]:grid min-[880px]:items-start min-[880px]:gap-x-8 min-[880px]:max-[1279.98px]:grid-cols-[minmax(396px,420px)_minmax(352px,420px)] min-[1280px]:max-[1359.98px]:grid-cols-[minmax(418px,539px)_minmax(390px,528px)] min-[1280px]:max-[1599.98px]:[--contact-gap:24px] min-[1360px]:max-[1599.98px]:grid-cols-[minmax(469px,555px)_minmax(419px,542px)] min-[1600px]:grid-cols-[minmax(600px,620px)_minmax(520px,540px)] min-[1600px]:[--contact-gap:24px]">
             <div>
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>

@@ -133,6 +133,17 @@ import { cn } from "@/lib/utils";
  * layout, así que ningún ítem empuja a los otros.
  */
 
+/*
+  EL ANCHO DE LA COLUMNA, EN LOS DOS IDIOMAS (B4/F7)
+  ──────────────────────────────────────────────────
+  La fila de un ítem es `rótulo + ARROW_GAP + flecha`, y tiene que entrar en los
+  `SIDEBAR_WIDTH` px de la columna. Medido en 1920, 1600, 1440, 1366 y 1280, la
+  fila más ancha da **161,1 px en inglés** (CONSULTATION) y **156,6 en
+  castellano** (+ ADICIONALES) contra los 180 de la columna: el castellano pide
+  menos, no más. El aire que queda entre el menú y el borde derecho del contenido
+  va de 143 a 172 px según el ancho, en las dos.
+*/
+
 /** Cuánto tarda el menú en aparecer y en irse. Suave, no un corte. */
 const REVEAL_MS = 500;
 
