@@ -1,28 +1,28 @@
+import type { Locale } from "@/lib/i18n/types";
+
 /**
- * Contenido de `/services`, transcrito verbatim de `Final.pdf` pág. 8.
+ * Contenido de `/services`. El inglés es transcripción verbatim de `Final.pdf`
+ * pág. 8 y **no se edita**: guiones largos (—), asteriscos, mayúsculas,
+ * apóstrofos rectos y rangos con guion corto van tal cual llegaron. La variante
+ * en castellano la agrega B4 con el criterio del sprint —contextual, voseo, y
+ * brevedad como decisión de diseño—.
  *
- * **No se edita el texto.** Guiones largos (—), asteriscos, mayúsculas,
- * apóstrofos rectos y rangos con guion corto van tal cual llegaron: el
- * contenido es de las clientas, no del código.
+ * ## Cómo entra el castellano
  *
- * ## Cómo entra el español en el Bloque 4
- *
- * Todos los textos visibles viven en los campos de `ServicePack` y de
- * `ServicesCopy`; la estructura (qué pack, qué número, qué ítem, a dónde va el
- * botón) vive en los campos que **no** son texto: `id`, `number`, `quoteService`.
- * Eso hace que la variante ES sea **otro valor del mismo tipo** —
- * `SERVICE_PACKS_ES: readonly ServicePack[]` y `SERVICES_COPY_ES: ServicesCopy`—
- * seleccionado por locale, sin tocar ni un componente:
- *
- * ```ts
- * const packs = locale === "es" ? SERVICE_PACKS_ES : SERVICE_PACKS;
- * ```
+ * Tal como lo dejó preparado B3.4: todos los textos visibles viven en los campos
+ * de `ServicePack` y de `ServicesCopy`, y la estructura —qué pack, qué número, a
+ * dónde va el botón— vive en los campos que **no** son texto (`id`, `number`,
+ * `quoteService`). La variante ES es **otro valor del mismo tipo**, elegido por
+ * idioma en `getServicePacks` / `getServicesCopy`, sin tocar la forma de ningún
+ * componente. **No hizo falta rediseñar la estructura**; el único cambio es que
+ * la frase del intro pasa de `string` a **tres líneas explícitas**, porque su
+ * corte es composición y no puede quedar librado al ancho del navegador.
  *
  * Dos consecuencias de diseño que hay que respetar al traducir:
  * 1. `id` es la ancla del scroll-spy y del sidebar (`#consultation`, …). **No se
  *    traduce**: es identidad, no texto. `navLabel` sí.
  * 2. `quoteService` es el valor de `?service=` que consume `ContactForm`. **No se
- *    traduce** tampoco: el mapeo del formulario está en inglés.
+ *    traduce** tampoco: el formulario resuelve por valor canónico.
  */
 
 /** Identidad de cada sección; es también el `id` del DOM y el ancla del sidebar. */
@@ -73,7 +73,14 @@ export interface ServicePack {
 export interface ServicesCopy {
   readonly intro: {
     readonly navLabel: string;
-    readonly phrase: string;
+    /**
+     * **Tres líneas centradas, con el corte escrito.** En inglés son las mismas
+     * tres que producía el ancho de 1000 px, así que el render no se mueve un
+     * píxel; en castellano el corte se eligió y se midió (832 / 797 / 606 px a
+     * 40 px, contra 872 / 903 / 487 del inglés). El navegador no decide: si un
+     * día el copy crece, el corte lo vuelve a decidir una persona.
+     */
+    readonly phrase: readonly [string, string, string];
     /** Indicador de scroll. No es un botón: no se clickea. */
     readonly scrollHint: string;
   };
@@ -102,8 +109,11 @@ export interface ServicesCopy {
 export const SERVICES_COPY: ServicesCopy = {
   intro: {
     navLabel: "INTRO",
-    phrase:
-      "WE TRANSLATE IDEAS INTO LIVING IDENTITIES — CRAFTED THROUGH STRATEGY, AESTHETICS AND EVERYTHING IN-BETWEEN.",
+    phrase: [
+      "WE TRANSLATE IDEAS INTO LIVING IDENTITIES —",
+      "CRAFTED THROUGH STRATEGY, AESTHETICS AND",
+      "EVERYTHING IN-BETWEEN.",
+    ],
     scrollHint: "DISCOVER OUR SERVICES",
   },
   packsHeading: {
@@ -131,7 +141,19 @@ export const SERVICES_COPY: ServicesCopy = {
   quoteLabel: "REQUEST FORMAL QUOTE",
 };
 
-export const SERVICE_PACKS: readonly ServicePack[] = [
+/**
+ * La lista de packs, con los cuatro `id` fijados en su orden. Es lo que hace que
+ * un pack de menos, uno de más o uno fuera de orden sea un **error de
+ * compilación** en cualquiera de los dos idiomas, y no un hueco en la página.
+ */
+export type ServicePackList = readonly [
+  ServicePack & { readonly id: "consultation" },
+  ServicePack & { readonly id: "essentials" },
+  ServicePack & { readonly id: "universe" },
+  ServicePack & { readonly id: "addons" },
+];
+
+export const SERVICE_PACKS: ServicePackList = [
   {
     id: "consultation",
     navLabel: "CONSULTATION",
@@ -285,8 +307,258 @@ export const SERVICE_PACKS: readonly ServicePack[] = [
   },
 ];
 
-/** Orden del sidebar: el intro primero, después los cuatro packs. */
-export const SERVICES_NAV: readonly { id: string; label: string }[] = [
-  { id: "intro", label: SERVICES_COPY.intro.navLabel },
-  ...SERVICE_PACKS.map((pack) => ({ id: pack.id, label: pack.navLabel })),
+/* ────────────────────────────────────────────────────────────────────────────
+   VARIANTE EN CASTELLANO (B4/F4)
+
+   Decisiones de vocabulario del rubro, tomadas caso por caso según el uso real
+   en Argentina y no según el diccionario: **branding**, **packaging**,
+   **rebranding**, **motion graphics**, **startup** y **landing** se quedan en
+   inglés porque así se dicen acá; **brand guidelines** va como «manual de
+   marca», **SWOT** como **FODA**, **stationery** como «papelería»,
+   **letterhead** como «hoja membretada», **signage** como «señalética»,
+   **roadmap** como «hoja de ruta» y **quote** como «presupuesto».
+   ──────────────────────────────────────────────────────────────────────────── */
+
+export const SERVICES_COPY_ES: ServicesCopy = {
+  intro: {
+    navLabel: "INTRO",
+    phrase: [
+      "TRADUCIMOS IDEAS EN IDENTIDADES VIVAS —",
+      "CONSTRUIDAS CON ESTRATEGIA, ESTÉTICA",
+      "Y TODO LO QUE HAY EN EL MEDIO.",
+    ],
+    scrollHint: "DESCUBRÍ NUESTROS SERVICIOS",
+  },
+  packsHeading: {
+    label: "PACKS DE BRANDING",
+    title: {
+      lead: "El buen diseño marca la diferencia entre ser visto y ser ",
+      emphasis: "recordado",
+      tail: ".",
+    },
+    subtitle: {
+      lead: "Ya sea que estemos creando una marca desde cero o reimaginando una que ya existe, nuestro enfoque parte de ",
+      emphasis:
+        "crear experiencias auténticas, memorables y visualmente coherentes en cada punto de contacto.",
+    },
+  },
+  latestProjects: {
+    label: "ÚLTIMOS PROYECTOS",
+    paragraph:
+      "En los últimos 2 años les dimos vida a más de 20 proyectos en rubros muy distintos: de gastronomía a moda y automotor.",
+    // Los `href` son estructura, no texto: van iguales que en inglés.
+    links: [
+      { label: "VER MÁS PROYECTOS", href: "/work" },
+      { label: "HAGAMOS REALIDAD TUS IDEAS", href: "/contact" },
+    ],
+  },
+  quoteLabel: "PEDIR PRESUPUESTO",
+};
+
+export const SERVICE_PACKS_ES: ServicePackList = [
+  {
+    id: "consultation",
+    navLabel: "CONSULTORÍA",
+    number: null,
+    // El inglés corta después de «BRAND»; en castellano el orden se da vuelta y
+    // el corte natural queda después del sustantivo. Siguen siendo dos líneas.
+    name: ["CONSULTORÍA", "DE MARCA"],
+    description: [
+      "Una inmersión enfocada en tu marca y en la experiencia de tus clientes.",
+      "Dónde estás, hasta dónde podés llegar y cómo lograrlo.",
+    ],
+    items: [
+      {
+        name: "Auditoría de marca y experiencia",
+        detail: "Cómo está hoy tu marca en cada punto de contacto",
+      },
+      {
+        name: "3 encuentros virtuales",
+        detail: "Descubrimiento / Validación / Presentación",
+      },
+      {
+        name: "Prioridades y hoja de ruta",
+        detail: "Qué mejorar para llegar a tus objetivos — cómo y dónde",
+      },
+      {
+        name: "PDF de entrega",
+        detail: "Informe completo con hallazgos y recomendaciones accionables",
+      },
+      {
+        name: "Recomendaciones honestas",
+        detail:
+          "Lo que podemos resolver — y colegas de confianza para lo que no",
+      },
+    ],
+    quoteNote:
+      "El 100% de la inversión se acredita al pack de branding que arranques con nosotras",
+    quoteService: "CONSULTATION",
+  },
+  {
+    id: "essentials",
+    navLabel: "ESENCIALES",
+    number: "01",
+    name: ["ESENCIALES", "DE MARCA"],
+    description: [
+      "Para marcas listas para tomar forma. Definimos quién sos y construimos una identidad visual distintiva, más las herramientas para mostrarte con coherencia desde el día uno.",
+    ],
+    items: [
+      {
+        name: "Definición estratégica",
+        detail: "Visión, valores, tono de voz y personalidad de marca",
+      },
+      {
+        name: "Investigación de mercado",
+        detail:
+          "Investigación de escritorio, definición del público y análisis FODA",
+      },
+      {
+        name: "Propuesta de valor",
+        detail:
+          "Ideas de valor agregado para mejorar la experiencia del consumidor",
+      },
+      {
+        name: "Desarrollo de identidad visual",
+        detail:
+          "Identidad institucional, sistema tipográfico, paleta de color, elementos gráficos y dirección fotográfica",
+      },
+      {
+        name: "Manual de marca",
+        detail:
+          "Guía básica de uso de la marca para una aplicación correcta y coherente (aproximadamente 20–40 páginas)",
+      },
+      {
+        name: "3 aplicaciones de marca a elección",
+        detail:
+          "Tarjeta personal / Hoja membretada / Flyers / Papelería / Posteo de Instagram (primera publicación) / Plantilla de historia de Instagram / Señalética",
+      },
+    ],
+    quoteService: "BRANDING",
+  },
+  {
+    id: "universe",
+    navLabel: "UNIVERSO",
+    number: "02",
+    name: ["UNIVERSO", "DE MARCA"],
+    description: [
+      "Nuestro pack más completo, para marcas que quieren un mundo entero donde crecer. Todo lo de Esenciales, ampliado para que tu marca salga formada y lista para escalar.",
+    ],
+    footnote: ["(*)", "ÍTEMS EXCLUSIVOS DE ESTE PACK"],
+    items: [
+      {
+        name: "Definición estratégica",
+        detail: "Visión, valores, tono de voz y personalidad de marca",
+      },
+      {
+        name: "Investigación de mercado",
+        detail:
+          "Investigación de escritorio, definición del público y análisis FODA",
+      },
+      {
+        name: "Propuesta de valor",
+        detail:
+          "Ideas de valor agregado para mejorar la experiencia del consumidor",
+      },
+      {
+        name: "Desarrollo de identidad visual",
+        detail:
+          "Identidad institucional, sistema tipográfico, paleta de color, elementos gráficos, dirección fotográfica y lineamientos visuales para redes *",
+      },
+      {
+        name: "Manual de marca",
+        detail:
+          "Guía básica de uso de la marca para una aplicación correcta y coherente (aproximadamente 40–60 páginas)",
+      },
+      {
+        name: "Animación del logo *",
+        detail:
+          "Versión animada de tu logo para plataformas digitales e intros de video",
+      },
+      {
+        name: "Diseño de landing *",
+        detail:
+          "Sitio de una página para presentar y validar tu marca online (no incluye programación)",
+      },
+      {
+        name: "Producción de fotos inicial *",
+        detail:
+          "Dirección de arte y primera sesión de fotos alineada con tu identidad",
+      },
+      {
+        name: "Banco de imágenes curado *",
+        detail:
+          "Una selección de imágenes de marca listas para usar en todos los canales",
+      },
+      {
+        name: "6 aplicaciones de marca a elección",
+        detail:
+          "Tarjeta personal / Hoja membretada / Flyers / Papelería / Posteo de Instagram / Plantilla de historia / Señalética",
+      },
+    ],
+    quoteService: "BRANDING",
+  },
+  {
+    id: "addons",
+    navLabel: "+ ADICIONALES",
+    number: "+",
+    name: ["ADICIONALES"],
+    description: [
+      "Servicios complementarios para extender cualquier marca: van con branding, con consultoría o como proyecto aparte.",
+    ],
+    items: [
+      { name: "Packaging" },
+      { name: "Impresión" },
+      { name: "Ilustración" },
+      { name: "Diseño editorial" },
+      { name: "Motion graphics" },
+    ],
+    quoteNote: "Se presupuesta por proyecto",
+    quoteService: null,
+  },
 ];
+
+/** Los cuatro packs por id, en orden. Lo consume la página, que es de servidor. */
+export const SERVICE_PACK_IDS = [
+  "consultation",
+  "essentials",
+  "universe",
+  "addons",
+] as const satisfies readonly ServicePackId[];
+
+/**
+ * Los `id` del sidebar, en orden. **No dependen del idioma**: son anclas del
+ * DOM, destino del scroll-spy y objetivo de los `href="#…"`. Van aparte de los
+ * rótulos justamente para eso: el observer del sidebar se arma con esta lista y
+ * por lo tanto **no se reconstruye al cambiar de idioma**.
+ */
+export const SERVICES_NAV_IDS = [
+  'intro',
+  ...SERVICE_PACK_IDS,
+] as const satisfies readonly string[];
+
+/** El contenido de la página en el idioma activo. */
+export function getServicesCopy(locale: Locale): ServicesCopy {
+  return locale === "es" ? SERVICES_COPY_ES : SERVICES_COPY;
+}
+
+export function getServicePacks(locale: Locale): ServicePackList {
+  return locale === "es" ? SERVICE_PACKS_ES : SERVICE_PACKS;
+}
+
+export function getServicePack(locale: Locale, id: ServicePackId): ServicePack {
+  // El `find` no puede fallar: la tupla `ServicePackList` fija los cuatro `id`.
+  return getServicePacks(locale).find((pack) => pack.id === id) as ServicePack;
+}
+
+/** Orden del sidebar: el intro primero, después los cuatro packs. */
+export function getServicesNav(
+  locale: Locale,
+): readonly { id: string; label: string }[] {
+  return [
+    { id: "intro", label: getServicesCopy(locale).intro.navLabel },
+    ...getServicePacks(locale).map((pack) => ({
+      id: pack.id,
+      label: pack.navLabel,
+    })),
+  ];
+}

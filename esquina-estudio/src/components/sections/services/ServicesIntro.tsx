@@ -4,7 +4,8 @@ import { motion, type Variants } from "framer-motion";
 import SpySentinel from "@/components/sections/services/SpySentinel";
 import { usePrefersReducedMotion } from "@/components/layout/RouteTransitionProvider";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
-import { SERVICES_COPY } from "@/lib/services-content";
+import { getServicesCopy } from "@/lib/services-content";
+import { useLocale } from "@/lib/i18n";
 
 /**
  * Intro de `/services`: la frase centrada y, debajo, el indicador de scroll.
@@ -63,14 +64,15 @@ const fadeVariants: Variants = {
 };
 
 export default function ServicesIntro() {
-  const { phrase, scrollHint } = SERVICES_COPY.intro;
+  const { locale, t } = useLocale();
+  const { phrase, scrollHint } = getServicesCopy(locale).intro;
   const { isPreloaderDone } = usePreloader();
   const reduceMotion = usePrefersReducedMotion();
 
   return (
     <section
       id="intro"
-      aria-label="Intro"
+      aria-label={t.services.introLabel}
       className="relative flex min-h-[calc(100vh-var(--header-height))] w-full flex-col items-center justify-center scroll-mt-[var(--header-height)] text-center"
     >
       <SpySentinel id="intro" />
@@ -85,7 +87,13 @@ export default function ServicesIntro() {
           className="max-w-[1000px] font-display text-[40px] uppercase leading-[48px] tracking-normal text-off-black"
           variants={reduceMotion ? undefined : fadeVariants}
         >
-          {phrase}
+          {phrase.map((line, index) => (
+            // `key` por índice: el texto cambia con el idioma y las líneas son
+            // siempre tres, garantizado por el tipo.
+            <span key={index} className="block">
+              {line}
+            </span>
+          ))}
         </motion.p>
 
         <motion.p

@@ -10,7 +10,7 @@ import {
   CONTENT_INSET,
   GUTTER,
 } from "@/components/sections/services/services-layout";
-import { SERVICE_PACKS } from "@/lib/services-content";
+import { SERVICE_PACK_IDS } from "@/lib/services-content";
 import { client } from "@/lib/sanity";
 import { LATEST_PROJECTS_QUERY } from "@/lib/sanity.queries";
 import type { Project } from "@/types/project";
@@ -76,8 +76,8 @@ export default async function ServicesPage() {
 
         <div className={CONTENT_INSET}>
           <BrandingPacksHeading />
-          {SERVICE_PACKS.map((pack) => (
-            <ServicePackSection key={pack.id} pack={pack} />
+          {SERVICE_PACK_IDS.map((id) => (
+            <ServicePackSection key={id} packId={id} />
           ))}
         </div>
 

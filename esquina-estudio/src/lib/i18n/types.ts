@@ -88,6 +88,12 @@ export interface Dictionary {
     readonly photoAlt: string;
   };
 
+  readonly services: {
+    /** Nombre accesible de la sección del intro y del menú lateral. */
+    readonly introLabel: string;
+    readonly sidebarLabel: string;
+  };
+
   readonly gallery: {
     readonly title: TwoLines;
     readonly hint: string;

@@ -62,6 +62,11 @@ We're driven by the idea of helping others build something of their own — turn
     photoAlt: "ESQUINA ESTUDIO team",
   },
 
+  services: {
+    introLabel: "Intro",
+    sidebarLabel: "Services sections",
+  },
+
   gallery: {
     title: ["HAVE FUN EXPLORING", "OUR PROJECTS!"],
     hint: "(click to view)",

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import HoverButton from "@/components/ui/HoverButton";
 import ServicesArrow from "@/components/sections/services/ServicesArrow";
@@ -9,7 +11,12 @@ import {
   SECTION_RULE,
   SERVICES_ANCHOR_ATTR,
 } from "@/components/sections/services/services-layout";
-import { SERVICES_COPY, type ServicePack } from "@/lib/services-content";
+import {
+  getServicePack,
+  getServicesCopy,
+  type ServicePackId,
+} from "@/lib/services-content";
+import { useLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 /**
@@ -18,12 +25,23 @@ import { cn } from "@/lib/utils";
  * ítems con su detalle en gris, y el `REQUEST FORMAL QUOTE` alineado a la
  * derecha al cierre.
  *
+ * Recibe el **id** y no el pack entero: el pack depende del idioma y la página
+ * es un componente de servidor, que siempre rinde inglés. La estructura —cuáles
+ * son los cuatro y en qué orden— sigue viviendo en la página; el contenido lo
+ * resuelve este componente.
+ *
  * El `id` es a la vez el ancla del sidebar y el objetivo del scroll-spy. El
  * `scroll-mt` existe para el camino sin JavaScript: si alguien llega con
  * `/services#universe` antes de que hidrate, el salto nativo respeta el header
  * fijo igual que el salto animado.
  */
-export default function ServicePackSection({ pack }: { pack: ServicePack }) {
+export default function ServicePackSection({
+  packId,
+}: {
+  packId: ServicePackId;
+}) {
+  const { locale } = useLocale();
+  const pack = getServicePack(locale, packId);
   const quoteHref = pack.quoteService
     ? `/contact?service=${encodeURIComponent(pack.quoteService)}`
     : "/contact";
@@ -58,16 +76,16 @@ export default function ServicePackSection({ pack }: { pack: ServicePack }) {
             id={`${pack.id}-name`}
             className="font-body text-[30px] uppercase leading-[36px] text-off-black"
           >
-            {pack.name.map((line) => (
-              <span key={line} className="block">
+            {pack.name.map((line, index) => (
+              <span key={index} className="block">
                 {line}
               </span>
             ))}
           </h3>
 
           <div className="mt-[56px] space-y-[22px] font-body text-[20px] leading-[26px] text-off-black">
-            {pack.description.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
+            {pack.description.map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
             ))}
           </div>
 
@@ -85,7 +103,7 @@ export default function ServicePackSection({ pack }: { pack: ServicePack }) {
           <ul>
             {pack.items.map((item, index) => (
               <li
-                key={item.name}
+                key={index}
                 className={cn(
                   "py-[22px]",
                   index > 0 && ["border-t", ITEM_RULE_BORDER],
@@ -120,7 +138,7 @@ export default function ServicePackSection({ pack }: { pack: ServicePack }) {
                 as="span"
                 className="font-body text-[24px] uppercase leading-[28px]"
               >
-                {SERVICES_COPY.quoteLabel}
+                {getServicesCopy(locale).quoteLabel}
               </HoverButton>
               <ServicesArrow />
             </Link>

@@ -81,6 +81,11 @@ Nos mueve la idea de ayudar a otros a construir algo propio: convertir ideas en 
     photoAlt: "El equipo de ESQUINA ESTUDIO",
   },
 
+  services: {
+    introLabel: "Intro",
+    sidebarLabel: "Secciones de servicios",
+  },
+
   gallery: {
     title: ["¡DIVERTITE EXPLORANDO", "NUESTROS PROYECTOS!"],
     hint: "(clic para ver)",

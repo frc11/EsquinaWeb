@@ -1,9 +1,12 @@
+"use client";
+
 import SpySentinel from "@/components/sections/services/SpySentinel";
 import {
   BRANDING_PACKS_ID,
   SPLIT_GRID,
 } from "@/components/sections/services/services-layout";
-import { SERVICES_COPY } from "@/lib/services-content";
+import { getServicesCopy } from "@/lib/services-content";
+import { useLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 /**
@@ -25,7 +28,8 @@ import { cn } from "@/lib/utils";
  * deliberada que marca el énfasis del texto, no la herramienta de jerarquía.
  */
 export default function BrandingPacksHeading() {
-  const { label, title, subtitle } = SERVICES_COPY.packsHeading;
+  const { locale } = useLocale();
+  const { label, title, subtitle } = getServicesCopy(locale).packsHeading;
 
   return (
     <div

@@ -14,7 +14,11 @@ import {
   getSectionScrollTarget,
 } from "@/components/sections/services/services-layout";
 import { usePrefersReducedMotion } from "@/components/layout/RouteTransitionProvider";
-import { SERVICES_NAV } from "@/lib/services-content";
+import {
+  SERVICES_NAV_IDS,
+  getServicesNav,
+} from "@/lib/services-content";
+import { useLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 /**
@@ -170,7 +174,12 @@ function jumpDuration(distance: number) {
 }
 
 export default function ServicesSidebar() {
-  const [activeId, setActiveId] = useState<string>(SERVICES_NAV[0].id);
+  const { locale, t } = useLocale();
+  // Los rótulos siguen al idioma; los `id` no, y por eso el observer de más
+  // abajo se arma con `SERVICES_NAV_IDS` y no con esta lista: cambiar de idioma
+  // no reconstruye el scroll-spy.
+  const nav = getServicesNav(locale);
+  const [activeId, setActiveId] = useState<string>(SERVICES_NAV_IDS[0]);
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
   const reduceMotion = usePrefersReducedMotion();
@@ -185,14 +194,14 @@ export default function ServicesSidebar() {
     const targets: Element[] = [];
     const sentinels: { id: string; element: Element }[] = [];
 
-    for (const item of SERVICES_NAV) {
-      const section = document.getElementById(item.id);
+    for (const id of SERVICES_NAV_IDS) {
+      const section = document.getElementById(id);
       const sentinel = document.querySelector(
-        `[${SPY_SENTINEL_ATTR}="${item.id}"]`,
+        `[${SPY_SENTINEL_ATTR}="${id}"]`,
       );
       if (!section || !sentinel) continue;
 
-      sentinels.push({ id: item.id, element: sentinel });
+      sentinels.push({ id, element: sentinel });
       targets.push(sentinel, section);
     }
 
@@ -335,7 +344,7 @@ export default function ServicesSidebar() {
         fundido de salida, así que no corta la animación.
       */}
       <nav
-        aria-label="Services sections"
+        aria-label={t.services.sidebarLabel}
         style={{ transitionDuration: `${REVEAL_MS}ms` }}
         className={cn(
           "pointer-events-auto sticky top-1/2 -translate-y-1/2",
@@ -344,7 +353,7 @@ export default function ServicesSidebar() {
         )}
       >
         <ul className="flex flex-col items-end gap-[27px]">
-          {SERVICES_NAV.map((item) => {
+          {nav.map((item) => {
             const isMarked = item.id === markedId;
 
             return (

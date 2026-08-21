@@ -9,7 +9,8 @@ import {
   GUTTER,
   LATEST_GRID,
 } from "@/components/sections/services/services-layout";
-import { SERVICES_COPY } from "@/lib/services-content";
+import { getServicesCopy } from "@/lib/services-content";
+import { useLocale } from "@/lib/i18n";
 import { urlFor } from "@/lib/sanity";
 import type { Project } from "@/types/project";
 import { cn } from "@/lib/utils";
@@ -114,7 +115,8 @@ export default function LatestProjects({
   projects: readonly Project[];
 }) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const { label, paragraph, links } = SERVICES_COPY.latestProjects;
+  const { locale } = useLocale();
+  const { label, paragraph, links } = getServicesCopy(locale).latestProjects;
   const lastIndex = projects.length - 1;
 
   return (
