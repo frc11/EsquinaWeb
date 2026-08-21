@@ -5,7 +5,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import LogoScript from "@/components/ui/LogoScript";
 import HoverButton from "@/components/ui/HoverButton";
-import { HERO_LINES } from "@/lib/site-copy";
+import { getHeroLines } from "@/lib/site-copy";
+import { useLocale } from "@/lib/i18n";
 import developLogo from "../../../logos/logodevelOP.png";
 import footerScriptLarge from "../../../logos/logo-footer-grande.png";
 
@@ -17,12 +18,6 @@ const SOCIAL_LINKS = [
     label: "LINKEDIN",
     href: "https://www.linkedin.com/company/esquina-estudio/",
   },
-] as const;
-
-/** Pares de dos líneas de la fila de info. Mismo texto en las tres variantes. */
-const PLACE_PAIRS = [
-  ["BORN IN", "ARGENTINA"],
-  ["WORKING", "WORLDWIDE"],
 ] as const;
 
 const COPYRIGHT = "© 2024";
@@ -65,6 +60,7 @@ function DevelopCredit({
   textClassName: string;
   tone: "light" | "dark";
 }) {
+  const { t } = useLocale();
   const logoHoverClass =
     tone === "dark" ? "group-hover:invert-0" : "group-hover:invert";
 
@@ -79,7 +75,8 @@ function DevelopCredit({
     >
       <span className="inline-flex items-center gap-2 whitespace-nowrap">
         <span>
-          POWERED BY <span className="normal-case">develOP</span>
+          {t.footer.poweredBy}{" "}
+          <span className="normal-case">develOP</span>
         </span>
         <Image
           src={developLogo}
@@ -117,6 +114,7 @@ function InfoRow({
   /** Rutas internas: Instagram y LinkedIn van lado a lado, no apilados. */
   inlineSocial?: boolean;
 }) {
+  const { t } = useLocale();
   const isDark = tone === "dark";
   const textClass = isDark ? "text-off-white" : "text-off-black";
   const developLogoClass = isDark ? "invert" : "opacity-80";
@@ -134,8 +132,10 @@ function InfoRow({
       className={`flex w-full flex-row ${align} justify-between gap-12 ${INFO_TYPE} ${leadingClass} ${textClass}`}
     >
       <div className="flex flex-row items-start gap-x-12">
-        {PLACE_PAIRS.map(([first, second]) => (
-          <div key={first} className={`flex flex-col ${stackGap}`}>
+        {t.footer.places.map(([first, second], index) => (
+          // `key` por índice: el texto cambia con el idioma y los pares son
+          // siempre dos, garantizado por el tipo.
+          <div key={index} className={`flex flex-col ${stackGap}`}>
             <span className="whitespace-nowrap">{first}</span>
             <span className="whitespace-nowrap">{second}</span>
           </div>
@@ -177,13 +177,15 @@ function InfoRow({
  * ya está en el formulario.
  */
 function StatementBand({ isContactPage }: { isContactPage: boolean }) {
+  const { locale, t } = useLocale();
+
   return (
     <div className={`flex w-full flex-row items-start justify-between gap-12 ${GUTTER} py-20`}>
       <div className="font-display text-[40px] uppercase leading-[48px] tracking-normal text-off-black">
-        {HERO_LINES.map((line) => (
-          <p key={line.map((fragment) => fragment.text).join(" ")}>
+        {getHeroLines(locale).map((line, lineIndex) => (
+          <p key={lineIndex}>
             {line.map((fragment, index) => (
-              <Fragment key={fragment.text}>
+              <Fragment key={index}>
                 {index > 0 && " "}
                 <span className={fragment.bold ? "font-semibold" : undefined}>
                   {fragment.text}
@@ -202,12 +204,12 @@ function StatementBand({ isContactPage }: { isContactPage: boolean }) {
             tightUnderline
             className="text-[26px] leading-[31px]"
           >
-            CONTACT US
+            {t.footer.contactCta}
           </HoverButton>
           <p className="whitespace-nowrap text-[26px] leading-[31px]">
-            LET&apos;S BRING
+            {t.footer.contactLines[0]}
             <br />
-            YOUR IDEAS TO LIFE
+            {t.footer.contactLines[1]}
           </p>
         </div>
       )}
@@ -225,6 +227,8 @@ function StatementBand({ isContactPage }: { isContactPage: boolean }) {
  * (mockup de esa ruta); el resto de las rutas internas lo omite.
  */
 function ScriptBand({ isContactPage }: { isContactPage: boolean }) {
+  const { t } = useLocale();
+
   return (
     <div className="relative w-full overflow-hidden bg-off-black">
       <Image
@@ -243,12 +247,12 @@ function ScriptBand({ isContactPage }: { isContactPage: boolean }) {
             tone="dark"
             className="text-[26px] leading-[31px]"
           >
-            JOIN OUR CLUB
+            {t.footer.clubCta}
           </HoverButton>
           <p className="mt-3 whitespace-nowrap text-[22px] leading-[26px]">
-            BECOME PART OF A
+            {t.footer.clubLines[0]}
             <br />
-            CREATIVE COMMUNITY
+            {t.footer.clubLines[1]}
           </p>
         </div>
       )}
@@ -285,6 +289,8 @@ function SiteFooter({ isContactPage }: { isContactPage: boolean }) {
  * solo va la fila de info, con el logo script como último elemento a la derecha.
  */
 function HomeFooter() {
+  const { t } = useLocale();
+
   return (
     <footer className={`w-full border-none bg-off-white ${GUTTER} py-10`}>
       <InfoRow
@@ -294,7 +300,7 @@ function HomeFooter() {
         align="items-center"
         trailing={
           <div className="flex-shrink-0">
-            <LogoScript size="sm" />
+            <LogoScript size="sm" ariaLabel={t.nav.logoHome} />
           </div>
         }
       />

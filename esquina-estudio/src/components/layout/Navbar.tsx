@@ -5,17 +5,34 @@ import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useRouteTransition } from "@/components/layout/RouteTransitionProvider";
 import LocaleToggle from "@/components/layout/LocaleToggle";
+import { useLocale } from "@/lib/i18n";
+import type { Dictionary } from "@/lib/i18n";
 import LogoScript from "@/components/ui/LogoScript";
 import HoverButton from "@/components/ui/HoverButton";
 
+/**
+ * Las rutas del menú, en orden. El rótulo NO vive acá: lo pone el diccionario
+ * por `key`, porque cambia con el idioma mientras la ruta no.
+ */
 const NAV_LINKS = [
-  { label: "WORK", href: "/work" },
-  { label: "SERVICES", href: "/services" },
-  { label: "TEAM", href: "/team" },
-  { label: "FUN GALLERY", href: "/fun-gallery" },
-] as const;
+  { key: "work", href: "/work" },
+  { key: "services", href: "/services" },
+  { key: "team", href: "/team" },
+  { key: "gallery", href: "/fun-gallery" },
+] as const satisfies readonly {
+  key: keyof Dictionary["nav"];
+  href: DesktopNavHref;
+}[];
 
-const MOBILE_LINKS = [...NAV_LINKS, { label: "CONTACT US", href: "/contact" }];
+/** El menú de mobile suma CONTACT US, que en desktop vive aparte. */
+const MOBILE_LINKS = [
+  ...NAV_LINKS,
+  { key: "contact", href: "/contact" },
+] as const satisfies readonly {
+  key: keyof Dictionary["nav"];
+  href: DesktopNavHref;
+}[];
+
 const EASE_EXIT: [number, number, number, number] = [0.76, 0, 0.24, 1];
 const NAV_INDICATOR_DURATION = 0.62;
 const NAV_INDICATOR_DOT_WIDTH = 5;
@@ -114,6 +131,7 @@ function isHomePath(pathname: string) {
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { t } = useLocale();
   const { pendingPathname } = useRouteTransition();
   const visualPathname = pendingPathname ?? pathname;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -327,7 +345,7 @@ export default function Navbar() {
         className="pointer-events-auto relative flex h-[var(--header-height)] items-center justify-between px-12 py-10 lg:px-16"
       >
         <div ref={desktopLogoRef} className="flex-shrink-0">
-          <LogoScript size="md" tone={navTone} />
+          <LogoScript size="md" tone={navTone} ariaLabel={t.nav.logoHome} />
         </div>
 
         <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex">
@@ -345,7 +363,7 @@ export default function Navbar() {
                   balancedPadding
                   className={`text-[17px] uppercase font-body font-[480] tracking-normal ${linkTextClass}`}
                 >
-                  {link.label}
+                  {t.nav[link.key]}
                 </HoverButton>
               </span>
             );
@@ -379,7 +397,7 @@ export default function Navbar() {
               balancedPadding
               className={`text-[17px] uppercase font-body font-medium tracking-normal ${linkTextClass}`}
             >
-              CONTACT US
+              {t.nav.contact}
             </HoverButton>
           </span>
 
@@ -408,7 +426,7 @@ export default function Navbar() {
         <button
           type="button"
           className="md:hidden flex flex-col gap-[5px] p-2"
-          aria-label="Open menu"
+          aria-label={t.nav.openMenu}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen(true)}
         >
@@ -430,7 +448,7 @@ export default function Navbar() {
             <button
               type="button"
               className="absolute right-6 top-6 font-body text-[17px] uppercase text-off-white"
-              aria-label="Close menu"
+              aria-label={t.nav.closeMenu}
               onClick={() => setMenuOpen(false)}
             >
               X
@@ -445,7 +463,7 @@ export default function Navbar() {
                   className="font-display text-[48px] uppercase leading-none"
                   onClick={() => setMenuOpen(false)}
                 >
-                  {link.label}
+                  {t.nav[link.key]}
                 </HoverButton>
               ))}
 

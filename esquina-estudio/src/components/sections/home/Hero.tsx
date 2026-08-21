@@ -3,7 +3,8 @@
 import { Fragment } from "react";
 import { motion, type Variants } from "framer-motion";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
-import { HERO_LINES } from "@/lib/site-copy";
+import { getHeroLines } from "@/lib/site-copy";
+import { useLocale } from "@/lib/i18n";
 
 const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 const TITLE_DELAY = 0.12;
@@ -32,7 +33,7 @@ const lineVariants: Variants = {
 
 /**
  * Hero de home: la frase de la marca, centrada, 40/48/0. El texto sale de
- * `HERO_LINES` (fuente única compartida con el footer de las rutas internas), y
+ * `site-copy` (fuente única compartida con el footer de las rutas internas), y
  * el espacio entre fragmentos se emite fuera del `<span>` que aplica la negrita
  * — contrato documentado en `site-copy.ts` — para que su avance no dependa del
  * peso de la Manrope variable. La entrada es por línea, con stagger, gateada por
@@ -40,6 +41,7 @@ const lineVariants: Variants = {
  */
 export default function Hero() {
   const { isPreloaderDone } = usePreloader();
+  const { locale } = useLocale();
 
   return (
     <section className="flex h-full min-h-0 flex-col items-center justify-center overflow-hidden px-6 py-4 text-center md:px-12">
@@ -55,13 +57,15 @@ export default function Hero() {
           animate={isPreloaderDone ? "visible" : "hidden"}
           className="font-display text-[40px] uppercase leading-[48px] tracking-normal text-off-black"
         >
-          {HERO_LINES.map((line) => (
-            <motion.p
-              key={line.map((fragment) => fragment.text).join(" ")}
-              variants={lineVariants}
-            >
+          {getHeroLines(locale).map((line, lineIndex) => (
+            // `key` por índice y no por texto: con el texto, cambiar de idioma
+            // desmontaría y volvería a montar estos `<p>`, y como tienen
+            // animación de entrada la frase se reanimaría en cada cambio. Las
+            // dos variantes tienen tres líneas —lo garantiza `ThreeLines`—, así
+            // que el índice es estable.
+            <motion.p key={lineIndex} variants={lineVariants}>
               {line.map((fragment, index) => (
-                <Fragment key={fragment.text}>
+                <Fragment key={index}>
                   {index > 0 && " "}
                   <span className={fragment.bold ? "font-semibold" : undefined}>
                     {fragment.text}

@@ -8,6 +8,7 @@ import {
   FUN_GALLERY_PATH,
   useFunGalleryReturnOnMount,
 } from "@/lib/fun-gallery-return";
+import { useLocale } from "@/lib/i18n";
 import { Project } from "@/types/project";
 import ProjectContentRenderer from "@/components/ui/ProjectContentRenderer";
 
@@ -23,6 +24,7 @@ export default function ProjectDetailClient({
   nextProject,
 }: ProjectDetailClientProps) {
   const { isPreloaderDone } = usePreloader();
+  const { t } = useLocale();
   const pathname = usePathname();
 
   /*
@@ -68,7 +70,7 @@ export default function ProjectDetailClient({
               href={FUN_GALLERY_PATH}
               className="mt-12 w-fit font-body text-[13px] uppercase text-gray-brand tracking-wider hover:text-off-black transition-colors duration-300"
             >
-              ← Back to Fun Gallery
+              ← {t.work.backToGallery}
             </Link>
           )}
         </div>
@@ -97,7 +99,7 @@ export default function ProjectDetailClient({
           href="/work"
           className="font-body text-[13px] uppercase text-gray-brand tracking-wider hover:text-off-black transition-colors duration-300"
         >
-          All Projects
+          {t.work.allProjects}
         </Link>
 
         {/* Right — Next Project */}
@@ -107,7 +109,7 @@ export default function ProjectDetailClient({
             className="group text-right"
           >
             <span className="font-body text-[13px] uppercase text-gray-brand tracking-wider block mb-1">
-              Next →
+              {t.work.next} →
             </span>
             <span className="font-display text-[24px] uppercase text-off-black group-hover:text-gray-brand transition-colors duration-300">
               {nextProject.title}
@@ -119,7 +121,7 @@ export default function ProjectDetailClient({
             className="group text-right"
           >
             <span className="font-body text-[13px] uppercase text-gray-brand tracking-wider block mb-1">
-              Next →
+              {t.work.next} →
             </span>
             <span className="font-display text-[24px] uppercase text-off-black group-hover:text-gray-brand transition-colors duration-300">
               {prevProject.title}

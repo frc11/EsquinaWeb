@@ -16,6 +16,7 @@ import {
   rememberFunGalleryReturn,
   useFunGalleryReturnOnMount,
 } from "@/lib/fun-gallery-return";
+import { useLocale } from "@/lib/i18n";
 import { urlFor } from "@/lib/sanity";
 import { FunGalleryImage } from "@/types/fun-gallery-image";
 
@@ -306,8 +307,6 @@ const IMAGE_FADE_STAGGER_BUCKET = 6;
 
 const EAGER_IMAGE_COUNT = 6;
 const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
-
-const TITLE_LINES = ["HAVE FUN EXPLORING", "OUR PROJECTS!"] as const;
 
 /**
  * Ancho de la composición, resuelto por CSS: el ancho que le da al objeto mayor
@@ -728,6 +727,8 @@ function GalleryCard({
   onInkMeasured: (id: string, coverage: number) => void;
 }) {
   const { navigateWithTransition } = useRouteTransition();
+  const { t } = useLocale();
+  const viewLabel = t.gallery.viewItem;
   const [isLoaded, setIsLoaded] = useState(false);
   const followTargetX = useMotionValue(0);
   const followTargetY = useMotionValue(0);
@@ -812,7 +813,7 @@ function GalleryCard({
       onPointerLeave={reduceMotion ? undefined : handlePointerLeave}
       role={interactive ? "link" : undefined}
       tabIndex={interactive ? 0 : undefined}
-      aria-label={interactive ? `View ${item.title}` : undefined}
+      aria-label={interactive ? `${viewLabel} ${item.title}` : undefined}
       // Sin proyecto vinculado el ítem no es interactivo: tampoco se le cuelgan
       // los handlers. Antes se colgaban siempre y salían por un early return.
       onClick={interactive ? handleNavigate : undefined}
@@ -915,6 +916,7 @@ export default function FunGallery({
   randomSeed: string;
 }) {
   const reduceMotion = usePrefersReducedMotion();
+  const { t } = useLocale();
   const [deployed, setDeployed] = useState(false);
   // Hay vuelta cuando esta pestaña tiene anotado un proyecto abierto desde acá.
   const returning = useFunGalleryReturnOnMount() !== null;
@@ -953,7 +955,7 @@ export default function FunGallery({
     <section
       className="relative overflow-x-clip bg-off-white px-12 pb-32 text-off-black lg:px-16"
       style={{ paddingTop: SECTION_PAD_TOP }}
-      aria-label="Fun Gallery"
+      aria-label={t.gallery.sectionLabel}
     >
       {/*
         El interlineado va inline y no en una clase: el encuadre necesita saber
@@ -964,8 +966,10 @@ export default function FunGallery({
         className="text-center font-display text-[40px] uppercase tracking-normal"
         style={{ lineHeight: `${TITLE_LINE_HEIGHT}px` }}
       >
-        {TITLE_LINES.map((line) => (
-          <span key={line} className="block">
+        {t.gallery.title.map((line, index) => (
+          // `key` por índice: el texto cambia con el idioma y las líneas son
+          // siempre dos, garantizado por el tipo.
+          <span key={index} className="block">
             {line}
           </span>
         ))}
@@ -1020,7 +1024,7 @@ export default function FunGallery({
                     top: `${(composition.captionY / composition.aspect) * 100}%`,
                   }}
                 >
-                  (click to view)
+                  {t.gallery.hint}
                 </span>
               </motion.button>
             )}

@@ -8,12 +8,19 @@ interface LogoScriptProps {
   className?: string;
   size?: "sm" | "md";
   tone?: "light" | "dark";
+  /**
+   * Nombre accesible del link. Llega por prop y no se lee del diccionario acá
+   * para que este componente siga siendo de servidor: sus dos consumidores
+   * —Navbar y Footer— ya son de cliente y ya tienen el idioma a mano.
+   */
+  ariaLabel?: string;
 }
 
 export default function LogoScript({
   className = "",
   size = "md",
   tone = "light",
+  ariaLabel = "ESQUINA ESTUDIO home",
 }: LogoScriptProps) {
   const isFooter = size === "sm";
   const isDark = tone === "dark";
@@ -28,7 +35,7 @@ export default function LogoScript({
     <Link
       href="/"
       className={`inline-flex items-center ${className}`}
-      aria-label="ESQUINA ESTUDIO home"
+      aria-label={ariaLabel}
     >
       <Image
         src={logoSrc}

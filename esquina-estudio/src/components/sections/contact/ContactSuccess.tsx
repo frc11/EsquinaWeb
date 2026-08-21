@@ -2,12 +2,14 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
+import { useLocale } from "@/lib/i18n";
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 export default function ContactSuccess() {
   const reduceMotion = useReducedMotion();
   const { isPreloaderDone } = usePreloader();
+  const { t } = useLocale();
   const shouldReduceMotion = Boolean(reduceMotion);
 
   // La pantalla de éxito ocupa una pantalla completa **en flujo normal** (antes
@@ -19,7 +21,7 @@ export default function ContactSuccess() {
   return (
     <section
       className="relative z-[90] -mt-[var(--header-height)] h-[100svh] overflow-hidden"
-      aria-label="Inquiry sent confirmation"
+      aria-label={t.success.sectionLabel}
     >
       {/* ── Dark panel that rises from below ── */}
       <motion.div
@@ -81,15 +83,13 @@ export default function ContactSuccess() {
       >
         <div className="max-w-4xl">
           <h1 className="font-display text-[clamp(40px,5vw,64px)] uppercase leading-[1.05] text-off-white">
-            YOUR INQUIRY WAS SENT
+            {t.success.title[0]}
             <br />
-            SUCCESSFULLY!
+            {t.success.title[1]}
           </h1>
 
           <p className="mx-auto mt-8 max-w-3xl font-body text-[17px] uppercase leading-[1.45] text-off-white/80">
-            WE APPRECIATE YOU TAKING THE TIME TO SHARE YOUR VISION WITH US. OUR
-            TEAM WILL REVIEW YOUR SUBMISSION AND GET BACK TO YOU AS SOON AS
-            POSSIBLE.
+            {t.success.body}
           </p>
         </div>
       </motion.div>

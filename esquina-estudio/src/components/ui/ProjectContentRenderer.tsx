@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { PortableText, PortableTextComponents } from "@portabletext/react";
+import { useLocale } from "@/lib/i18n";
 import { urlFor } from "@/lib/sanity";
 
 /* ── Portable Text overrides ────────────────────────────────── */
@@ -18,6 +19,7 @@ const ptComponents: PortableTextComponents = {
 /* ── Single media block (image, gif, or video) ──────────────── */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function SingleMedia({ block }: { block: any }) {
+  const { t } = useLocale();
   const { file, video, caption } = block;
 
   // Video URL (Vimeo / YouTube / direct .mp4)
@@ -30,7 +32,7 @@ function SingleMedia({ block }: { block: any }) {
           <div className="relative w-full aspect-video overflow-hidden">
             <iframe
               src={video}
-              title={caption || "Project video"}
+              title={caption || t.work.videoTitle}
               className="absolute inset-0 w-full h-full"
               allow="autoplay; fullscreen; picture-in-picture"
               allowFullScreen
@@ -82,7 +84,7 @@ function SingleMedia({ block }: { block: any }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageUrl}
-              alt={caption || "Project media"}
+              alt={caption || t.work.mediaAlt}
               className="h-full w-full object-cover"
             />
           </div>
@@ -100,7 +102,7 @@ function SingleMedia({ block }: { block: any }) {
         <div className="relative w-full aspect-[4/3] max-h-[88vh] mx-auto overflow-hidden">
           <Image
             src={imageUrl}
-            alt={caption || "Project media"}
+            alt={caption || t.work.mediaAlt}
             fill
             sizes="(max-width: 768px) 100vw, 800px"
             className="object-cover"
@@ -121,6 +123,7 @@ function SingleMedia({ block }: { block: any }) {
 /* ── Dual media block (two images side by side, single-height) ── */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function DualMedia({ block }: { block: any }) {
+  const { t } = useLocale();
   const { left, right } = block;
   const leftUrl = left ? urlFor(left).width(800).url() : null;
   const rightUrl = right ? urlFor(right).width(800).url() : null;
@@ -136,7 +139,7 @@ function DualMedia({ block }: { block: any }) {
         <figure className="relative m-0 h-full flex-1 overflow-hidden">
           <Image
             src={leftUrl}
-            alt="Project media"
+            alt={t.work.mediaAlt}
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover"
@@ -147,7 +150,7 @@ function DualMedia({ block }: { block: any }) {
         <figure className="relative m-0 h-full flex-1 overflow-hidden">
           <Image
             src={rightUrl}
-            alt="Project media"
+            alt={t.work.mediaAlt}
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover"
@@ -161,10 +164,12 @@ function DualMedia({ block }: { block: any }) {
 /* ── Main renderer ──────────────────────────────────────────── */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function ProjectContentRenderer({ content }: { content: any[] }) {
+  const { t } = useLocale();
+
   if (!content || content.length === 0) {
     return (
       <p className="font-body text-[30px] leading-[1.3] text-gray-brand italic">
-        Project content coming soon.
+        {t.work.contentSoon}
       </p>
     );
   }

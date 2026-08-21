@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import FunGallery from "@/components/sections/gallery/FunGallery";
+import GalleryNotice from "@/components/sections/gallery/GalleryNotice";
 import { client } from "@/lib/sanity";
 import { FUN_GALLERY_IMAGES_QUERY } from "@/lib/sanity.queries";
 import { FunGalleryImage } from "@/types/fun-gallery-image";
@@ -48,52 +49,13 @@ function getLayoutSeed(images: FunGalleryImage[]) {
   return images.map((image) => image._id).join("|");
 }
 
-/**
- * Pantallas de error y de vacío. La galería dejó de ser un viewport fijo, así
- * que el aviso es una sección más del flujo: reserva una pantalla de alto para
- * no quedar pegado al header, y el Footer va debajo como en cualquier ruta.
- */
-function GalleryNotice({
-  heading,
-  detail,
-}: {
-  heading: string;
-  detail: string;
-}) {
-  return (
-    <section className="flex min-h-[60vh] w-full items-center justify-center bg-off-white px-6 py-32 text-center text-off-black">
-      <div className="max-w-2xl">
-        <h1 className="font-display text-[40px] uppercase leading-[48px]">
-          {heading}
-        </h1>
-        <p className="mt-6 font-body text-[17px] uppercase leading-[21px] text-gray-brand">
-          {detail}
-        </p>
-      </div>
-    </section>
-  );
-}
-
 export default async function FunGalleryPage() {
   const images = await getGalleryImages();
 
-  if (!images) {
-    return (
-      <GalleryNotice
-        heading="THE GALLERY IS NOT AVAILABLE RIGHT NOW"
-        detail="WE COULD NOT LOAD THE IMAGES. PLEASE TRY AGAIN IN A FEW MINUTES."
-      />
-    );
-  }
-
-  if (images.length === 0) {
-    return (
-      <GalleryNotice
-        heading="THE GALLERY IS EMPTY FOR NOW"
-        detail="NEW IMAGES ARE ON THEIR WAY."
-      />
-    );
-  }
+  // El texto de las dos pantallas lo pone `GalleryNotice`, que es de cliente y
+  // por eso sigue al idioma; acá queda solo la decisión de cuál corresponde.
+  if (!images) return <GalleryNotice variant="error" />;
+  if (images.length === 0) return <GalleryNotice variant="empty" />;
 
   return <FunGallery images={images} randomSeed={getLayoutSeed(images)} />;
 }
