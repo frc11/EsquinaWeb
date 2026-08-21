@@ -1,4 +1,13 @@
 import { Metadata } from "next";
+import ServicesIntro from "@/components/sections/services/ServicesIntro";
+import BrandingPacksHeading from "@/components/sections/services/BrandingPacksHeading";
+import ServicePackSection from "@/components/sections/services/ServicePackSection";
+import {
+  CONTENT_INSET,
+  GUTTER,
+} from "@/components/sections/services/services-layout";
+import { SERVICE_PACKS } from "@/lib/services-content";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Services - ESQUINA ESTUDIO(TM)",
@@ -7,30 +16,33 @@ export const metadata: Metadata = {
 };
 
 /**
- * PROVISIONAL (B3.4/F1). El desmontaje se llevó la máquina de scroll-jack del
- * intro, el acordeón con sus `ScrollTrigger`, los slideshows y el catálogo viejo
- * de 6 servicios. El contenido real de las cinco secciones llega en F2.
+ * `/services` — rediseño B3.4.
  *
- * La página es un componente de servidor sin estado: nadie toca `body`, ni
- * `history.scrollRestoration`, ni registra listeners globales. El layout del
- * sitio ya envuelve el contenido en `<main>`, así que acá va un `<section>`
- * —mismo criterio que `/contact`— y no un `<main>` anidado.
+ * Componente de servidor sin estado: no toca `body`, no toca
+ * `history.scrollRestoration` y no registra listeners globales. Lo único con
+ * comportamiento es el sidebar (F3) y el gatillo del intro (F4), que son
+ * componentes de cliente acotados.
+ *
+ * El layout del sitio ya envuelve el contenido en `<main>`, así que acá van
+ * `<section>` sueltas —mismo criterio que `/contact`— y no un `<main>` anidado.
+ *
+ * El intro va **fuera** de la banda que el contenido le reserva al sidebar
+ * (`CONTENT_INSET`) porque su frase está centrada en la **pantalla**, no en la
+ * columna de contenido: así lo muestra `08a`.
  */
 export default function ServicesPage() {
   return (
-    <section className="bg-off-white text-off-black">
-      <div className="flex min-h-[calc(100vh-var(--header-height))] w-full items-center justify-center px-6">
-        <p className="max-w-5xl text-center font-display text-[40px] uppercase leading-[48px] tracking-normal">
-          WE TRANSLATE IDEAS INTO LIVING IDENTITIES — CRAFTED THROUGH STRATEGY,
-          AESTHETICS AND EVERYTHING IN-BETWEEN.
-        </p>
-      </div>
+    <div className="bg-off-white text-off-black">
+      <div className={cn("relative", GUTTER)}>
+        <ServicesIntro />
 
-      <div className="min-h-[150vh] px-12 pb-32 lg:px-16">
-        <h2 className="font-body text-[30px] uppercase leading-[36px]">
-          BRANDING PACKS
-        </h2>
+        <div className={CONTENT_INSET}>
+          <BrandingPacksHeading />
+          {SERVICE_PACKS.map((pack) => (
+            <ServicePackSection key={pack.id} pack={pack} />
+          ))}
+        </div>
       </div>
-    </section>
+    </div>
   );
 }
