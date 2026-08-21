@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import ServicesIntro from "@/components/sections/services/ServicesIntro";
 import BrandingPacksHeading from "@/components/sections/services/BrandingPacksHeading";
 import ServicePackSection from "@/components/sections/services/ServicePackSection";
+import ServicesSidebar from "@/components/sections/services/ServicesSidebar";
 import {
   CONTENT_INSET,
   GUTTER,
@@ -42,6 +43,14 @@ export default function ServicesPage() {
             <ServicePackSection key={pack.id} pack={pack} />
           ))}
         </div>
+
+        {/*
+          El sidebar es hermano del contenido y vive dentro de este `relative`,
+          que abarca del intro a Add-ons: por eso queda pegado desde el intro
+          —como en `08a`— y se suelta al terminar los packs, antes de LATEST
+          PROJECTS, que no tiene entrada en el menú.
+        */}
+        <ServicesSidebar />
       </div>
     </div>
   );

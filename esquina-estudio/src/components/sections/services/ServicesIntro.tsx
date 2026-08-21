@@ -1,3 +1,4 @@
+import SpySentinel from "@/components/sections/services/SpySentinel";
 import { SERVICES_COPY } from "@/lib/services-content";
 
 /**
@@ -25,8 +26,10 @@ export default function ServicesIntro() {
     <section
       id="intro"
       aria-label="Intro"
-      className="flex min-h-[calc(100vh-var(--header-height))] w-full flex-col items-center justify-center text-center"
+      className="relative flex min-h-[calc(100vh-var(--header-height))] w-full flex-col items-center justify-center scroll-mt-[var(--header-height)] text-center"
     >
+      <SpySentinel id="intro" />
+
       <p className="max-w-[1000px] font-display text-[40px] uppercase leading-[48px] tracking-normal text-off-black">
         {phrase}
       </p>

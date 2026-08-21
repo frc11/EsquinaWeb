@@ -73,6 +73,18 @@ export function getHeaderOffset(): number {
 }
 
 /**
+ * Atributo del centinela del scroll-spy. Cada sección renderiza el suyo pegado a
+ * su tope y el sidebar los observa; ver `ServicesSidebar` para la regla completa.
+ * Se declara en el marcado —y no lo inyecta el sidebar— para que el árbol del
+ * DOM no dependa de que un efecto haya corrido.
+ */
+export const SPY_SENTINEL_ATTR = "data-services-spy";
+
+/** Centinela de 1 px. La sección que lo lleva tiene que ser `relative`. */
+export const SPY_SENTINEL_CLASS =
+  "pointer-events-none absolute left-0 top-0 block h-px w-px";
+
+/**
  * Regla larga entre secciones. Más liviana que las de los ítems: medidas sobre
  * el mockup, la de sección pinta ~0,39 px de tinta por píxel y la de ítem ~0,84,
  * o sea que la línea grande es la **más tenue** de las dos. Es al revés de lo

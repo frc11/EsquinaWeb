@@ -1,6 +1,7 @@
 import Link from "next/link";
 import HoverButton from "@/components/ui/HoverButton";
 import ServicesArrow from "@/components/sections/services/ServicesArrow";
+import SpySentinel from "@/components/sections/services/SpySentinel";
 import {
   ITEM_GRID,
   ITEM_RULE_BORDER,
@@ -30,8 +31,10 @@ export default function ServicePackSection({ pack }: { pack: ServicePack }) {
     <section
       id={pack.id}
       aria-labelledby={`${pack.id}-name`}
-      className="scroll-mt-[var(--header-height)]"
+      className="relative scroll-mt-[var(--header-height)]"
     >
+      <SpySentinel id={pack.id} />
+
       <div className={cn("h-px w-full", SECTION_RULE)} aria-hidden="true" />
 
       <div className={cn(SECTION_GRID, "pt-[160px] pb-[120px]")}>
@@ -46,7 +49,11 @@ export default function ServicePackSection({ pack }: { pack: ServicePack }) {
             id={`${pack.id}-name`}
             className="font-body text-[30px] uppercase leading-[36px] text-off-black"
           >
-            {pack.name}
+            {pack.name.map((line) => (
+              <span key={line} className="block">
+                {line}
+              </span>
+            ))}
           </h3>
 
           <div className="mt-[56px] space-y-[22px] font-body text-[20px] leading-[26px] text-off-black">

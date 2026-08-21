@@ -44,7 +44,15 @@ export interface ServicePack {
   readonly navLabel: string;
   /** `01`, `02`, `+`. `null` en Consultation, que no lleva número. */
   readonly number: string | null;
-  readonly name: string;
+  /**
+   * Una entrada por línea: **el corte lo decide el mockup, no el ancho de la
+   * columna** —mismo criterio que los labels de `ContactForm`—. No es un
+   * capricho: «BRAND UNIVERSE» mide 241 px a 30 px y entra holgado en la
+   * columna de 270, así que librado al ancho quedaría en una línea mientras los
+   * otros dos packs quedan en dos. En el PDF los tres cortan después de
+   * «BRAND».
+   */
+  readonly name: readonly string[];
   /** Un párrafo por entrada. */
   readonly description: readonly string[];
   /** Nota al pie de la descripción (hoy solo Universe). */
@@ -128,7 +136,7 @@ export const SERVICE_PACKS: readonly ServicePack[] = [
     id: "consultation",
     navLabel: "CONSULTATION",
     number: null,
-    name: "BRAND CONSULTATION",
+    name: ["BRAND", "CONSULTATION"],
     description: [
       "A focused deep-dive into your brand and customer experience.",
       "Where you are, where you can go, and how to get there.",
@@ -163,7 +171,7 @@ export const SERVICE_PACKS: readonly ServicePack[] = [
     id: "essentials",
     navLabel: "ESSENTIALS",
     number: "01",
-    name: "BRAND ESSENTIALS",
+    name: ["BRAND", "ESSENTIALS"],
     description: [
       "For brands ready to take shape. We define who you are and build a distinctive visual identity, plus the core tools to show up consistently from day one.",
     ],
@@ -202,7 +210,7 @@ export const SERVICE_PACKS: readonly ServicePack[] = [
     id: "universe",
     navLabel: "UNIVERSE",
     number: "02",
-    name: "BRAND UNIVERSE",
+    name: ["BRAND", "UNIVERSE"],
     description: [
       "Our most complete pack — for brands that want a whole world to grow into. Everything in Essentials, expanded so your brand launches fully formed and ready to scale.",
     ],
@@ -261,7 +269,7 @@ export const SERVICE_PACKS: readonly ServicePack[] = [
     id: "addons",
     navLabel: "+ ADD-ONS",
     number: "+",
-    name: "ADD-ONS",
+    name: ["ADD-ONS"],
     description: [
       "Complementary services to extend any brand — available with branding, consultation, or as standalone projects.",
     ],
