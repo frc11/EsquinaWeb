@@ -7,6 +7,7 @@ import {
   ITEM_RULE_BORDER,
   SECTION_GRID,
   SECTION_RULE,
+  SERVICES_ANCHOR_ATTR,
 } from "@/components/sections/services/services-layout";
 import { SERVICES_COPY, type ServicePack } from "@/lib/services-content";
 import { cn } from "@/lib/utils";
@@ -37,7 +38,15 @@ export default function ServicePackSection({ pack }: { pack: ServicePack }) {
 
       <div className={cn("h-px w-full", SECTION_RULE)} aria-hidden="true" />
 
-      <div className={cn(SECTION_GRID, "pt-[160px] pb-[120px]")}>
+      {/*
+        El salto del sidebar aterriza **acá adentro**, no en el tope de la
+        sección: apuntando al tope, la divisoria quedaba clavada bajo el header
+        (B3.4b/F3). Ver el criterio único en `services-layout`.
+      */}
+      <div
+        {...{ [SERVICES_ANCHOR_ATTR]: "" }}
+        className={cn(SECTION_GRID, "pt-[160px] pb-[120px]")}
+      >
         {pack.number ? (
           <p className="mb-[12px] font-body text-[30px] leading-[36px] text-off-black lg:col-start-1 lg:row-start-1">
             {pack.number}

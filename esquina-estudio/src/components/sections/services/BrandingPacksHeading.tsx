@@ -1,3 +1,4 @@
+import SpySentinel from "@/components/sections/services/SpySentinel";
 import {
   BRANDING_PACKS_ID,
   SPLIT_GRID,
@@ -9,10 +10,16 @@ import { cn } from "@/lib/utils";
  * Encabezado de la zona de packs: el rótulo a la izquierda y, a la derecha, el
  * título y la bajada.
  *
- * No tiene `id` ni entrada en el sidebar. La regla del scroll-spy («manda la
- * última sección cuyo tope cruzó la línea de lectura») lo deja bajo INTRO
- * mientras se lee, que es lo que muestra el mockup `08a`: la flecha sigue en
- * INTRO con BRANDING PACKS ya asomando.
+ * No tiene entrada en el sidebar. La regla del scroll-spy («manda la última
+ * sección cuyo tope cruzó la línea de lectura») lo deja bajo INTRO mientras se
+ * lee, que es lo que muestra el mockup `08a`: la flecha sigue en INTRO con
+ * BRANDING PACKS ya asomando.
+ *
+ * Lleva centinela igual, y no para el spy —el menú no lo lista— sino porque es
+ * lo que decide **si el sidebar se muestra**: aparece justo acá y desaparece al
+ * volver al intro (B3.4b/F3). Se pregunta por el centinela y no por este bloque
+ * porque el bloque es alto y sigue intersecando un buen rato después de que su
+ * tope cruzó; el centinela mide 1 px y cambia de estado exactamente en el cruce.
  *
  * La negrita es la del PDF y va en `font-semibold`: el peso acá es la excepción
  * deliberada que marca el énfasis del texto, no la herramienta de jerarquía.
@@ -23,8 +30,10 @@ export default function BrandingPacksHeading() {
   return (
     <div
       id={BRANDING_PACKS_ID}
-      className={cn(SPLIT_GRID, "pt-[160px] pb-[160px]")}
+      className={cn(SPLIT_GRID, "relative pt-[160px] pb-[160px]")}
     >
+      <SpySentinel id={BRANDING_PACKS_ID} />
+
       <h2 className="font-body text-[30px] uppercase leading-[36px] text-off-black">
         {label}
       </h2>

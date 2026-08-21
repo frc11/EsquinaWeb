@@ -100,6 +100,66 @@ export function getHeaderOffset(): number {
 }
 
 /**
+ * # El criterio único de aterrizaje y marcado (B3.4b/F3)
+ *
+ * Las dos reglas —a dónde salta el sidebar y qué ítem marca la flecha— comparten
+ * una sola geometría, y hay que leerlas juntas o no cierran:
+ *
+ * - **La flecha marca la última sección cuyo _tope_ cruzó la línea de lectura**
+ *   (el borde inferior del header). El tope de una sección de packs es su
+ *   **divisoria**, que es donde vive su centinela.
+ * - **El salto aterriza el _contenido_ de la sección**, no su tope, a
+ *   `HEADER + LANDING_BREATH` de la línea.
+ *
+ * Entre uno y otro hay 161 px —la divisoria de 1 px más el `pt-[160px]` del
+ * cuerpo—, así que al terminar el salto el centinela queda **137 px por encima**
+ * de la línea de lectura. Eso es lo que arregla las dos cosas de un tiro:
+ *
+ * 1. La divisoria termina fuera de la pantalla (medido: y = −9), no pegada bajo
+ *    el header como en B3.4.
+ * 2. El aterrizaje cae **holgadamente dentro** del rango en el que el spy marca
+ *    esa sección, en vez de apoyarse justo en el borde. Eso era el bug: con el
+ *    destino exactamente sobre la línea, el `IntersectionObserver` avisa un par
+ *    de píxeles **antes** de llegar, y en la desaceleración final del
+ *    desplazamiento ese aviso medía todavía «no cruzó». Después no llegaba
+ *    ningún aviso más y la flecha se quedaba en la sección anterior.
+ *
+ * `LANDING_BREATH` no puede crecer sin romper (1): a partir de 33 px la
+ * divisoria vuelve a asomar por debajo del header. 24 deja 9 px de resguardo
+ * contra el redondeo a medio píxel del scroll.
+ */
+export const LANDING_BREATH = 24;
+
+/**
+ * Marca el bloque de contenido de una sección: lo que el sidebar aterriza. Va en
+ * el elemento cuyo **cuadro de contenido** —o sea, ya descontado su relleno
+ * superior— empieza donde empieza lo que se lee.
+ */
+export const SERVICES_ANCHOR_ATTR = "data-services-anchor";
+
+/**
+ * Posición en el documento del contenido de una sección. Sin marca —el intro—
+ * cae en la sección misma, que no tiene relleno ni divisoria y por eso aterriza
+ * en el tope de la página, como en `08a`.
+ */
+export function getSectionAnchorTop(section: Element): number {
+  const anchor =
+    section.querySelector(`[${SERVICES_ANCHOR_ATTR}]`) ?? section;
+  const paddingTop =
+    Number.parseFloat(window.getComputedStyle(anchor).paddingTop) || 0;
+
+  return anchor.getBoundingClientRect().top + window.scrollY + paddingTop;
+}
+
+/** Destino de scroll de una sección. Ver el criterio único de arriba. */
+export function getSectionScrollTarget(section: Element): number {
+  return Math.max(
+    0,
+    getSectionAnchorTop(section) - getHeaderOffset() - LANDING_BREATH,
+  );
+}
+
+/**
  * Destino del gatillo del intro (`IntroScrollTrigger`). Es el encabezado de la
  * zona de packs, que **no** es una sección del sidebar: el menú no lo lista y el
  * spy no lo observa. Vive acá porque lo comparten quien lo emite y quien lo
