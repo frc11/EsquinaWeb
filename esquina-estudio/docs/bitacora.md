@@ -1091,3 +1091,287 @@ Formato de entrada:
 - **Pendientes que deja:** **(1)** **`CLAUDE.md` §6 quedó desincronizado** —describe el gatillo como que «se re-arma al volver arriba», que «no hay booleano armado» y que su `preventDefault` dura «solo mientras dura el desplazamiento», y no menciona ni la aparición del sidebar ni el criterio único de aterrizaje—; no está en los archivos autorizados de este microsprint y la mantiene la capa de planificación. **(2)** El destino del gatillo contra el criterio del sidebar (desvío 4). **(3)** Siguen abiertos los de B3.4: GSAP sin consumidores en `package.json`, las diferencias menores contra el mockup, los apóstrofos rectos y el hover de las portadas que también responde al foco de teclado.
 
 - **Commits:** `8f3ec85`, `acb1415`, `db3aff5`, `e19d92a`, `564bbf3`, más el de este cierre.
+
+## B4 — Idioma EN/ES (2026-08-21)
+
+Último bloque de la ronda. **El sitio funciona completo en inglés y en
+castellano, con un toggle en el header, hecho a mano y sin librerías.** Ocho
+fases, ocho commits: `49c080c` · `ba37779` · `28fddd8` · `d02b26d` · `4f2e885` ·
+`1dd83e5` · `4857687` · `df8f35a`, más el de este cierre.
+
+- **Línea base (Fase 0), medida sobre `build` + `start` en 3010, DPR 1.** `lint`
+  exit 0 · `build` exit 0 · **11 rutas / 15 páginas**. Altos a 1920×1080: `/`
+  **1080** · `/work` **2154** · `/services` **7653** · `/team` **4257** ·
+  `/fun-gallery` **2228** · `/contact` **1664** · `/contact/success` **1244**. El
+  bloque del formulario, **498 px** a 1920, con las pills en 4 filas y el borde
+  inferior en 682. Esos nueve números son la vara de la no-regresión y **los
+  nueve siguen idénticos al cerrar**.
+
+- **El censo, y qué se decidió no traducir.** **407 cadenas** traducidas, de las
+  cuales 196 son países: **211 de texto propio del sitio**. Repartidas en cuatro
+  archivos, que son todos los que hay:
+
+  | archivo | cadenas | qué lleva |
+  |---|---|---|
+  | `src/lib/i18n/es.ts` | **93** | cromo (nav 8 · footer 11), Team 15, formulario 35, galería 9, éxito 4, ficha de proyecto 6, Services a11y 2, idioma 3 |
+  | `src/lib/services-content.ts` | **95** | los cuatro packs con sus 26 ítems y detalles, más los tres bloques de página |
+  | `src/lib/contact.ts` | **214** | 196 países + 10 pills + 4 tipos de negocio + 4 plazos |
+  | `src/lib/site-copy.ts` | **5** | los cinco fragmentos de la frase de la marca |
+
+  **No se traduce**, y en cada caso por una razón distinta: `ESQUINA ESTUDIO`,
+  `develOP`, `INSTAGRAM`, `LINKEDIN` y los nombres de los proyectos son **marcas**;
+  `ARGENTINA` se escribe igual; los `id` de Services, `quoteService` y los `href`
+  son **identidad, no texto**; los rangos de presupuesto son **cifras y una
+  moneda** —poner el punto de miles a la argentina sobre dólares se lee «2,5»—;
+  el `content` de los proyectos y los títulos de la Fun Gallery **no tienen
+  casilla ES**; el placeholder `VIDEO O GIF` de Team es **una nota para las
+  clientas**, no copy; y la **metadata** y el `<html lang>` que sirve el servidor
+  quedan en inglés para todos, que es la aceptación escrita del plan.
+
+- **La infraestructura, y las tres cosas que hacen que no se rompa sola.**
+  `src/lib/i18n/`: un tipo `Locale`, un `Dictionary`, un contexto y `useLocale()`.
+  Tres decisiones que valen más que el código:
+
+  1. **`Dictionary` es una interfaz explícita, no `typeof EN`.** Las dos
+     variantes se declaran `const EN: Dictionary` y `const ES: Dictionary`, así
+     que **una clave que falte es un error de compilación**. Se verificó
+     borrando una a propósito: `TS2741`. El mismo contrato se extendió a las
+     tablas de rótulos de `contact.ts` (tipos mapeados sobre la lista canónica:
+     un país sin traducir no compila) y a `ServicePackList`, que fija los cuatro
+     `id` de Services en su orden.
+  2. **Los cortes de línea viajan como tuplas de largo fijo** —`ThreeLines`,
+     `TwoLines`, los nueve labels del formulario, la frase del intro de
+     Services—. El corte es decisión de diseño en los dos idiomas y está escrito
+     en el código, nunca librado al ancho del navegador.
+  3. **`key` por índice y no por texto** en toda lista que cambie con el idioma.
+     Con el texto como `key`, cambiar de idioma desmonta y vuelve a montar los
+     nodos, y en el Hero eso **reanima la frase entera** en cada click. El largo
+     fijo de las tuplas es lo que hace que el índice sea estable.
+
+- **Detección y persistencia, verificadas una por una.** El estado arranca en
+  `"en"` en el servidor y en el primer render del cliente; el idioma real se
+  resuelve en un efecto de montaje. Cuatro casos medidos con `navigator.language`
+  = `es-AR`: sin preferencia guardada → **`lang="es"`** y **no escribe nada** (la
+  detección no persiste, solo la elección explícita); con `"en"` guardado →
+  **`lang="en"`**, o sea la elección le gana a la detección; con `"es"` →
+  `lang="es"`; con un valor basura → cae a la detección. En pestaña nueva la
+  preferencia viaja (es `localStorage`) y el HTML servido de las siete rutas
+  sigue trayendo `lang="en"`, comprobado con `curl`.
+
+- **El toggle sale del mockup, no de la intuición.** Medido sobre `08a` (export
+  de 1327 px sobre un diseño de 1920, factor 0,691) y contrastado contra el
+  render:
+
+  | | mockup | render |
+  |---|---|---|
+  | texto de CONTACT US | 1650,9 → 1755,1 | **1650,7 → 1755,4** |
+  | `EN` | 1794,1 → 1814,4 | **1793,4 → 1815** |
+  | `ES` | 1830,3 → 1849,1 | **1829,8 → 1850** |
+  | ancho del bloque | 55,0 | **56,6** |
+
+  El color tampoco se interpretó: muestreando el mockup, `EN` da 153, la barra
+  160 y `ES` 151 sobre un `CONTACT US` de 12 — o sea el `gray-brand` del sitio
+  (#939393). Lo que marca el idioma activo es **el subrayado**, y ese subrayado
+  no copia un número: los botones llevan el mismo relleno vertical de 6 px que
+  `balancedPadding` y **la fila del header pasó a `items-start`**, así que la
+  caja del toggle termina en el mismo borde inferior que la de los tabs (79,75 px
+  medidos) — que es exactamente la referencia que `measureFillBox` le da al
+  indicador del menú. Quedan **0,25 px** entre los centros de las dos líneas, y
+  vienen de que el indicador redondea su `top` desde JavaScript y el CSS no
+  puede.
+
+  **`items-start` no es un gusto, es una medida.** El `<span>` que envuelve a
+  CONTACT US mide 43,5 px —6 más que la caja de `HoverButton`, porque el `<a>`
+  que hay adentro aporta el hueco de descendentes de los 16 px del body— mientras
+  el toggle mide los 37,5 de su propia caja. Centrados, el toggle bajaba 3 px.
+  CONTACT US no se mueve: es el ítem más alto, así que la alineación no lo toca.
+
+- **El toggle no remonta ni navega, y está probado, no supuesto.** Con seis nodos
+  marcados antes del click —`main`, el `<form>`, el `footer`, el `nav`, el `h1` y
+  un `<input>`— **los seis siguen siendo el mismo nodo** después de cambiar de
+  idioma; el overlay de la transición de página se queda en opacidad 0, el
+  `pathname` no cambia y el scroll tampoco. Son `<button>` y no `<a>`, así que el
+  listener de captura de `RouteTransitionProvider` —que solo mira `a[href]`— ni
+  se entera. El recorrido por teclado los toma en su lugar visual (logo → los
+  cuatro tabs → CONTACT US → EN → ES → hamburguesa) y el estado viaja en
+  `aria-pressed`.
+
+- **Traducción: las decisiones, no las palabras.** Voseo en todo el sitio
+  —«divertite», «probá», «contanos», «sumate», «formá parte», «elegí», «escribí»,
+  «querés», «tenés», «conociste»—. Los términos del rubro se decidieron por uso
+  real en Argentina y no por diccionario: **branding, packaging, rebranding,
+  motion graphics, startup y landing se quedan en inglés**; *brand guidelines* →
+  «manual de marca», *SWOT* → **FODA**, *stationery* → «papelería», *letterhead*
+  → «hoja membretada», *signage* → «señalética», *roadmap* → «hoja de ruta»,
+  *quote* → «presupuesto», *social media* → «redes», *industry/field* → **«rubro»**.
+  Tres decisiones de marca que conviene que Valentino confirme: **`WORK` →
+  `PROYECTOS`**, **`FUN GALLERY` → `GALERÍA`** —lo lúdico del nombre lo sostiene
+  el título de la pantalla, «¡Divertite explorando nuestros proyectos!»— y
+  **`LET'S BRING YOUR IDEAS TO LIFE` → `HAGAMOS REALIDAD TUS IDEAS`**, una sola
+  frase que se corta distinto en cada uno de los tres lugares donde aparece: tres
+  líneas en el aside de Contact, dos en el footer, una en el link de Services.
+
+- **La brevedad no fue una concesión: fue la palanca.** Cada pieza se eligió
+  contra su piso medido, con un medidor de texto que usa las fuentes reales del
+  documento, **antes** de escribirla. Los tres números que decidieron todo:
+
+  | pieza | inglés | castellano | quién manda |
+  |---|---|---|---|
+  | tinta de las 10 pills a 17 px | 1503 px | **1413** | fija el ancho mínimo del bloque |
+  | subtítulo del aside a 17 px | 269,2 px | **267,9** | fija el piso de 272 px de esa pista |
+  | fila más ancha del sidebar de Services | 161,1 px | **156,6** | tiene que entrar en 180 |
+
+  En los tres, el castellano pide **menos** ancho que el inglés. Por eso la Fase 7
+  no tocó ninguna palanca.
+
+- **El formulario: valores canónicos, rótulos traducidos.** El formulario guarda
+  siempre el valor inglés y traduce solo lo que se ve. Resuelve tres cosas de una
+  y las tres se verificaron: **(a)** cambiar de idioma con el formulario a medio
+  llenar **no pierde nada** —las dos pills, el tipo de negocio, el país, el plazo
+  y el presupuesto sobreviven ir a inglés y volver—; **(b)**
+  `MonochromeCountryFlag` sigue resolviendo por el nombre inglés, así que no hubo
+  que tocar ninguna de sus 196 entradas —elegido «Alemania», la bandera dibuja—;
+  **(c)** `?service=` no depende del idioma. Al enviar, `localizeContactValues`
+  los pasa a los rótulos **una sola vez, en el borde**: el payload sale con
+  `Ilustración`, `Packaging`, `Negocio establecido`, `Alemania` y `Cuanto antes`,
+  y el resto del mail queda en inglés, que es como lo leen ellas.
+
+  **El esquema de zod pasó a llevar claves en vez de frases**, y eso tampoco es
+  cosmético: `react-hook-form` guarda el mensaje al validar, así que con la frase
+  adentro del esquema un cambio de idioma con errores en pantalla no los
+  actualizaría nunca. Verificado: los dos mensajes cambian de idioma **en el
+  acto**, sin revalidar.
+
+  **`?service=` probado en 18 combinaciones**, nueve por idioma: `CONSULTATION`,
+  `BRANDING`, `Packaging`, `consultoria`, `ilustracion`, `Publicidad/Campaña`,
+  `Identidad de evento` y `packaging design` resuelven en los dos y marcan la
+  pill del idioma activo; un valor desconocido no marca nada, que es lo que
+  corresponde.
+
+  **Ningún mail salió.** Todas las pruebas de envío corrieron con `fetch`
+  interceptado: submit vacío → los dos mensajes y **cero requests**; con
+  respuesta 500 → un POST con los nueve campos y el mensaje de error en
+  castellano, sin redirigir; con respuesta 200 → **redirect efectivo a
+  `/contact/success`**. El payload en castellano se validó aparte contra el mismo
+  esquema que usa el route handler, en Node, sin tocar la red.
+
+- **La matriz del fit, en los dos idiomas, y por qué no hubo nada que ajustar.**
+  Siete anchos × cinco altos, limpio y con los dos mensajes de validación en
+  pantalla. El bloque no depende del alto del viewport (verificado 1280×720
+  contra 1280×1080), así que la matriz se resuelve por ancho:
+
+  | ancho | bloque | borde inf. | c/errores | borde inf. c/err | pills | label máx. | desborde X |
+  |---|---|---|---|---|---|---|---|
+  | 1920 | 498 | 682 | 556 | 740 | 4 filas | 2 líneas | 0 |
+  | 1728 | 498 | 682 | 556 | 740 | 4 filas | 2 líneas | 0 |
+  | 1600 | 498 | 682 | 556 | 740 | 4 filas | 2 líneas | 0 |
+  | 1536 | 450 | 634 | 508 | 692 | 4 filas | 3 líneas | 0 |
+  | 1440 | 450 | 634 | 508 | 692 | 4 filas | 3 líneas | 0 |
+  | 1366 | 450 | 634 | 508 | 692 | 4 filas | 3 líneas | 0 |
+  | 1280 | 426 | 610 | 484 | 668 | 4 filas | 3 líneas | 0 |
+
+  **Los mismos números en inglés y en castellano, campo por campo**, con los
+  mismos +58 exactos al aparecer los errores y la misma diferencia entre columnas
+  (57,5 en el escalón grande, 54 en los otros dos). De los 35 cruces entran los
+  35 limpios y **32 con los dos errores**; los tres que no —1920, 1728 y 1600 por
+  720 de alto, que piden 740— **fallan exactamente igual en inglés**: es el piso
+  que dejó B2.7, no una regresión del castellano. Aplicar una palanca solo al
+  español ahí habría separado los dos idiomas por un problema que el inglés
+  también tiene.
+
+- **Las tres composiciones de tres líneas.** Hero, franja del footer e intro de
+  Services cierran en **1L / 1L / 1L** en los dos idiomas y en los cinco anchos
+  medidos. La frase de la marca: 500 / 546 / 260 px en inglés y **587 / 541 /
+  279** en castellano, a 40 px. El intro de Services pasó de `string` a **tupla
+  de tres líneas** —es el único cambio de estructura que pidió el sprint— y en
+  inglés son exactamente las tres que ya producía el ancho de 1000 px, así que el
+  render no se movió: `/services` sigue midiendo **7653**. En castellano los
+  cortes se eligieron y se midieron: 832 / 797 / 606.
+
+- **Services y Sanity.** La estructura que dejó preparada B3.4 alcanzó sin
+  rediseño. `BrandingPacksHeading` y `ServicePackSection` pasaron a componentes de
+  cliente —vivían en la página, que es de servidor y siempre rendiría inglés— y
+  reciben el `id` del pack, no el pack; los `id` del scroll-spy salieron a
+  `SERVICES_NAV_IDS`, que **no depende del idioma**, así que el
+  `IntersectionObserver` no se reconstruye al cambiar. Lo mismo con las pantallas
+  de error y de vacío de la galería, que salieron a `GalleryNotice`. En Sanity,
+  `projectText()` resuelve los tres campos con **fallback cruzado** en las dos
+  direcciones, y «vacía» cubre el `null` de GROQ, la clave ausente y los
+  espacios. Con las **doce casillas ES del dataset vacías**, el sitio en
+  castellano muestra los cuatro proyectos completos: **cero huecos**. Las
+  traducciones propuestas quedaron en `docs/sanity-piezas-es.md`; **no se escribió
+  en Sanity**.
+
+- **Altos en castellano** (1920×1080): `/` 1080 · `/work` 2154 · `/services`
+  **7715** (+62, tres nombres de ítem que cortan en dos líneas contra los dos del
+  inglés) · `/team` **4220** (−37) · `/fun-gallery` 2228 · `/contact` 1664 ·
+  `/contact/success` 1244. A 1280 el `/services` castellano mide **8213** contra
+  los 8225 del inglés: doce píxeles menos. **Cero desborde horizontal** en las
+  siete rutas, en los dos idiomas, a 1920 y a 1280.
+
+- **Hidratación: cero errores.** Las ocho rutas —las siete más `/work/[slug]`—
+  recorridas en los dos idiomas con captura de consola activa: no aparece un solo
+  desajuste, ni `Warning:`, ni excepción. Persiste únicamente la deprecación
+  conocida de `@sanity/image-url`. Era el riesgo declarado del sprint (precedente
+  de B3.3) y se evita por construcción: el servidor y el primer render del
+  cliente coinciden siempre, porque los dos son inglés.
+
+- **Puertas, con el servidor bajado.** `lint` exit 0 · `build` exit 0 · **11
+  rutas / 15 páginas**, las mismas de la línea base; `/services` y `/fun-gallery`
+  siguen `○ (Static)` con `revalidate 1m`. Cero errores y cero warnings nuevos.
+
+- **Desvíos, dichos de frente.** **(1)** El **toggle se agregó también al menú de
+  mobile**: el sprint lo pedía en el header y debajo de `md` el header solo tiene
+  la hamburguesa, así que sin eso el control quedaba inalcanzable en pantallas
+  chicas. Son cuatro líneas y el menú de mobile sigue siendo el que había. **(2)**
+  La **Fase 7 no ajustó nada**, porque no había nada que ajustar; el commit de esa
+  fase deja escrita la matriz donde el código ya documenta sus pisos, que es lo
+  único que correspondía hacer. **(3)** El **envío real de un mail no se hizo**,
+  a propósito: todas las pruebas corrieron con `fetch` interceptado y el envío de
+  punta a punta queda declarado como verificación humana, igual que en B2.7.
+  **(4)** Se corrigieron **cuatro afirmaciones falsas de `CLAUDE.md` §6** que no
+  eran de este sprint —el gatillo del intro, la aparición del sidebar, el conteo
+  de call sites de `HoverButton` y `TITLE_LINE_COUNT`—; la Fase 8 pedía
+  sincronizar y sincronizar incluye corregir lo que miente. **(5)** El
+  `LATEST_PROJECTS_QUERY` sumó `titleEs`, que le faltaba: el título es el `alt` y
+  el `aria-label` de cada portada. **(6)** Los **196 países en castellano** se
+  generaron con ICU y después se corrigieron a mano nueve: `Costa de Marfil`,
+  `RD del Congo` (que conserva la abreviatura del inglés, y es lo que evita que
+  vuelva el problema de truncado de B2.7), `Myanmar`, `Palestina`, `Malí`,
+  `Arabia Saudita`, `Qatar`, `Rumania` y `Bangladesh`. La lista se ordena
+  alfabéticamente **en el idioma que se muestra**.
+
+- **Nota de método — tres instrumentos que conviene reusar.** **(1)** El `iframe`
+  same-origin de tamaño fijo, que ya venía de B3.4b, sigue siendo la única forma
+  de tener un viewport exacto de 1080 de alto. **(2)** Nuevo: un **medidor de
+  texto con las fuentes reales del documento**, que permite probar una traducción
+  contra su piso **antes** de escribirla; buena parte de este sprint fue medir
+  candidatas y quedarse con la que entraba. **(3)** Nuevo: el **espía de `fetch`**
+  dentro del iframe, que deja ejercitar el formulario entero —validación, payload,
+  error, redirect— sin que salga un solo mail. Sigue vigente el límite de siempre:
+  con la pestaña en segundo plano **no corre `requestAnimationFrame`**, así que
+  ninguna animación se puede observar; las capturas de este sprint salieron
+  completas porque la pestaña estaba activa.
+
+- **Verificación humana pendiente (declarada, no la da por cumplida el agente).**
+  En `localhost:3010`, DPR 1: **(a)** **leer todo el sitio en castellano** — es lo
+  más importante y lo único que no puede medir una máquina: el tono de marca de un
+  estudio de branding lo valida una persona, y cualquier texto que suene traducido
+  hay que marcarlo; **(b)** la frase de la marca en castellano, en home y en el
+  footer, con sus cortes y sus negritas; **(c)** el formulario en castellano,
+  **enviado de verdad**, y confirmar el mail; **(d)** el toggle en cada ruta,
+  mirando que no parpadee ni reinicie nada; **(e)** primera visita con el
+  navegador en castellano, en pestaña nueva, y la persistencia de la elección;
+  **(f)** que el inglés siga **exactamente igual**; **(g)** las tres decisiones de
+  tono de la traducción (`PROYECTOS`, `GALERÍA`, `HAGAMOS REALIDAD TUS IDEAS`).
+
+- **Pendientes que deja.** Los nueve están en `docs/pendientes.md`. Los cuatro que
+  importan: **GSAP** sigue instalado sin un solo consumidor y la prop **`blend`**
+  de `HoverButton` sin un solo llamador —las dos son decisiones de dependencias,
+  de alcance global—; el **contraste del gris**, que da **2,77:1** medido sobre
+  off-white contra el 4,5:1 de AA (sobre off-black da 6,24:1 y sí pasa), y es una
+  decisión de diseño que conviene tomar una vez para todo el sitio; y las **doce
+  casillas ES de Sanity**, que no bloquean nada porque hay fallback cruzado.
+
+- **Commits:** `49c080c`, `ba37779`, `28fddd8`, `d02b26d`, `4f2e885`, `1dd83e5`,
+  `4857687`, `df8f35a`, más el de este cierre.
