@@ -19,6 +19,8 @@
  * bloques que sí pueden fluir —los párrafos de Team— van como arreglo suelto.
  */
 
+import type { ContactErrorKey } from "@/lib/contact";
+
 export type Locale = "en" | "es";
 
 /** Orden en que se muestra el control del header: primero el idioma servido. */
@@ -104,6 +106,44 @@ export interface Dictionary {
     readonly errorDetail: string;
     readonly emptyTitle: string;
     readonly emptyDetail: string;
+  };
+
+  readonly form: {
+    /** Título del aside, tres líneas; el corte es del mockup. */
+    readonly title: readonly [string, string, string];
+    readonly subtitle: TwoLines;
+    /** Nombre accesible del `<form>`. */
+    readonly formLabel: string;
+    /**
+     * Los nueve labels. **Tupla de exactamente dos líneas** cada uno: el corte
+     * lo decide el diseño y no el ancho de la columna, en los dos idiomas. Cada
+     * línea puede repartirse sola dentro de su columna en los escalones chicos,
+     * pero nunca pasa de tres renglones (medido en los tres escalones).
+     */
+    readonly labels: {
+      readonly fullName: TwoLines;
+      readonly email: TwoLines;
+      readonly workType: TwoLines;
+      readonly businessType: TwoLines;
+      readonly industry: TwoLines;
+      readonly country: TwoLines;
+      readonly timeline: TwoLines;
+      readonly budget: TwoLines;
+      readonly hearAbout: TwoLines;
+    };
+    readonly placeholders: {
+      readonly name: string;
+      readonly email: string;
+      readonly select: string;
+      readonly shortAnswer: string;
+      readonly search: string;
+    };
+    readonly noResults: string;
+    readonly submit: string;
+    readonly submitting: string;
+    readonly submitError: string;
+    /** Indexado por la clave que emite el esquema de zod. */
+    readonly validation: { readonly [K in ContactErrorKey]: string };
   };
 
   readonly success: {

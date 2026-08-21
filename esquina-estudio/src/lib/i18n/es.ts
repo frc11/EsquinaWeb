@@ -97,6 +97,42 @@ Nos mueve la idea de ayudar a otros a construir algo propio: convertir ideas en 
     emptyDetail: "SE VIENEN IMÁGENES NUEVAS.",
   },
 
+  form: {
+    // «Hagamos realidad tus ideas», la misma frase del footer, cortada en tres.
+    title: ["HAGAMOS", "REALIDAD", "TUS IDEAS"],
+    // Medido: la línea más ancha da 267,9 px a 17 px contra los 269,2 de la
+    // inglesa, y ese número es justo el que fija el piso de la pista del aside.
+    // O sea que el castellano no la mueve.
+    subtitle: ["CONTANOS SOBRE TU PROYECTO", "Y TE MANDAMOS UNA PROPUESTA"],
+    formLabel: "Cuestionario de proyecto",
+    labels: {
+      fullName: ["TU NOMBRE", "Y APELLIDO *"],
+      email: ["DIRECCIÓN", "DE MAIL *"],
+      workType: ["¿EN QUÉ", "QUERÉS TRABAJAR?"],
+      businessType: ["¿CÓMO DEFINIRÍAS", "TU NEGOCIO?"],
+      industry: ["¿CUÁL ES TU", "RUBRO?"],
+      country: ["¿EN QUÉ PAÍS", "ESTÁS?"],
+      timeline: ["¿TENÉS UN", "PLAZO EN MENTE?"],
+      budget: ["¿CUÁL ES TU", "PRESUPUESTO?"],
+      hearAbout: ["¿CÓMO NOS", "CONOCISTE?"],
+    },
+    placeholders: {
+      name: "NOMBRE",
+      email: "MAIL",
+      select: "ELEGÍ UNA OPCIÓN",
+      shortAnswer: "RESPUESTA CORTA",
+      search: "BUSCAR",
+    },
+    noResults: "Sin resultados",
+    submit: "ENVIAR FORMULARIO",
+    submitting: "ENVIANDO...",
+    submitError: "No pudimos enviar tu formulario. Probá de nuevo.",
+    validation: {
+      fullName: "Escribí tu nombre y apellido",
+      email: "Escribí un mail válido",
+    },
+  },
+
   success: {
     title: ["¡TU CONSULTA SE ENVIÓ", "CON ÉXITO!"],
     body: "GRACIAS POR TOMARTE EL TIEMPO DE CONTARNOS TU VISIÓN. VAMOS A LEER TODO CON CALMA Y TE RESPONDEMOS A LA BREVEDAD.",

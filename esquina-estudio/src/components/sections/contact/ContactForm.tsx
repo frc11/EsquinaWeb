@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -11,15 +11,25 @@ import HoverButton from "@/components/ui/HoverButton";
 import {
   BUDGET_OPTIONS,
   BUSINESS_TYPE_OPTIONS,
-  COUNTRY_OPTIONS,
   TIMELINE_OPTIONS,
   WORK_TYPE_OPTIONS,
+  budgetLabel,
+  businessTypeLabel,
   contactSchema,
+  countryLabel,
+  getCountryOptions,
+  localizeContactValues,
+  timelineLabel,
+  workTypeLabel,
 } from "@/lib/contact";
-import type { ContactFormValues } from "@/lib/contact";
+import type {
+  ContactErrorKey,
+  ContactFormValues,
+  WorkTypeOption,
+} from "@/lib/contact";
+import { useLocale } from "@/lib/i18n";
 
 type FieldError = string | undefined;
-type WorkTypeOption = (typeof WORK_TYPE_OPTIONS)[number];
 
 export const CONTACT_FORM_ID = "contact-form";
 // Gap (px) kept between an open dropdown and the viewport edge when the page
@@ -160,6 +170,12 @@ function normalizeServiceParam(value: string) {
  * emitidos sigan resolviendo después del rename `PACKAGING DESIGN` →
  * `PACKAGE DESIGN`. El orden importa: `brand` va último porque también está
  * dentro de `rebranding`.
+ *
+ * **Los trozos en castellano (B4/F5) van intercalados con la misma regla de
+ * orden.** El catálogo sigue emitiendo los valores en inglés —`quoteService` no
+ * se traduce— así que esto es para links escritos a mano o pegados: `?service=
+ * consultoria`, `?service=packaging`, `?service=ilustracion`. `marca` va al
+ * final por lo mismo que `brand`: está adentro de casi todos los demás.
  */
 const SERVICE_KEYWORDS: ReadonlyArray<readonly [string, WorkTypeOption]> = [
   ["consult", "Consultation"],
@@ -169,23 +185,37 @@ const SERVICE_KEYWORDS: ReadonlyArray<readonly [string, WorkTypeOption]> = [
   ["motion", "Motion Graphics"],
   ["advertis", "Advertising/Campaign"],
   ["campaign", "Advertising/Campaign"],
+  ["publicid", "Advertising/Campaign"],
+  ["campan", "Advertising/Campaign"],
   ["illustrat", "Illustration"],
+  ["ilustra", "Illustration"],
   ["editorial", "Editorial Design"],
   ["brand", "Branding"],
+  ["marca", "Branding"],
 ];
 
 /**
  * Un valor desconocido devuelve `null`: el formulario abre sin nada marcado en
  * vez de elegir una opción por la clienta.
+ *
+ * Devuelve siempre el valor **canónico**: es el que guarda el formulario. El
+ * match exacto se prueba contra los rótulos de los dos idiomas, así que
+ * `?service=Packaging` (castellano) resuelve igual que `?service=Package
+ * Design`.
  */
-function resolveWorkTypeFromService(service: string | null): WorkTypeOption | null {
+function resolveWorkTypeFromService(
+  service: string | null,
+): WorkTypeOption | null {
   if (!service) return null;
 
   const normalized = normalizeServiceParam(service);
   if (!normalized) return null;
 
-  const exactMatch = WORK_TYPE_OPTIONS.find(
-    (option) => normalizeServiceParam(option) === normalized,
+  const exactMatch = WORK_TYPE_OPTIONS.find((option) =>
+    (["en", "es"] as const).some(
+      (locale) =>
+        normalizeServiceParam(workTypeLabel(locale, option)) === normalized,
+    ),
   );
   if (exactMatch) return exactMatch;
 
@@ -226,8 +256,10 @@ function FieldShell({
   const labelClassName = `${
     alignLabelTop ? "self-start" : "self-center"
   } font-body text-[14px] uppercase leading-[1.15] text-off-black md:max-[1279.98px]:text-[16px] min-[1280px]:max-[1359.98px]:text-[12px] min-[1600px]:text-[16px]`;
-  const labelLines = label.map((line) => (
-    <span key={line} className="block">
+  // `key` por índice: el texto cambia con el idioma y las líneas son siempre
+  // dos, garantizado por el tipo.
+  const labelLines = label.map((line, index) => (
+    <span key={index} className="block">
       {line}
     </span>
   ));
@@ -290,10 +322,14 @@ function ContactFocusSurface({
 
 function WorkTypePill({
   option,
+  label,
   selected,
   onToggle,
 }: {
+  /** Valor canónico: es lo que guarda el formulario. */
   option: WorkTypeOption;
+  /** Lo que se ve. En inglés coincide con el valor. */
+  label: string;
   selected: boolean;
   onToggle: (option: WorkTypeOption) => void;
 }) {
@@ -352,7 +388,7 @@ function WorkTypePill({
           }
         />
       )}
-      <span className="relative z-10">{option}</span>
+      <span className="relative z-10">{label}</span>
     </button>
   );
 }
@@ -375,21 +411,35 @@ function CustomSelect({
   id,
   value,
   options,
+  labelOf,
   placeholder,
   searchable = false,
   renderOptionMeta,
   renderValueMeta,
+  emptyLabel,
+  searchPlaceholder,
   openSelectId,
   setOpenSelectId,
   onChange,
 }: {
   id: string;
+  /** Valor canónico elegido. */
   value: string;
+  /** Valores canónicos, en el orden en que se muestran. */
   options: readonly string[];
+  /**
+   * Rótulo visible de un valor canónico. Todo lo demás —el valor guardado, el
+   * `renderOptionMeta` que dibuja la bandera— sigue viendo el canónico.
+   */
+  labelOf: (option: string) => string;
   placeholder: string;
   searchable?: boolean;
   renderOptionMeta?: (option: string) => React.ReactNode;
   renderValueMeta?: (value: string) => React.ReactNode;
+  /** Texto de «sin resultados» del buscador. */
+  emptyLabel: string;
+  /** Placeholder del buscador. Solo lo usa el select de países. */
+  searchPlaceholder: string;
   openSelectId: string | null;
   setOpenSelectId: React.Dispatch<React.SetStateAction<string | null>>;
   onChange: (value: string) => void;
@@ -402,10 +452,12 @@ function CustomSelect({
     const normalized = query.trim().toLowerCase();
     if (!normalized) return options;
 
+    // Se filtra por lo que se ve, no por el valor canónico: quien escribe
+    // «alemania» espera encontrar Alemania.
     return options.filter((option) =>
-      option.toLowerCase().includes(normalized),
+      labelOf(option).toLowerCase().includes(normalized),
     );
-  }, [options, query]);
+  }, [labelOf, options, query]);
 
   // The dropdown is rendered out of flow (absolute overlay), so opening it no
   // longer changes the field height. When it would spill past the bottom of
@@ -487,7 +539,7 @@ function CustomSelect({
                   siquiera a 1920. El campo crece, pero es el de la columna
                   corta: el alto del bloque no se mueve en ningún rango
                   (medido). */}
-              <span className="min-w-0">{value}</span>
+              <span className="min-w-0">{labelOf(value)}</span>
               {renderValueMeta?.(value)}
             </span>
           ) : (
@@ -526,7 +578,7 @@ function CustomSelect({
                 type="text"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="SEARCH"
+                placeholder={searchPlaceholder}
                 className={SELECT_SEARCH_CLASS}
               />
             </ContactFocusSurface>
@@ -548,13 +600,13 @@ function CustomSelect({
                   setQuery("");
                 }}
               >
-                <span>{option}</span>
+                <span>{labelOf(option)}</span>
                 {renderOptionMeta?.(option)}
               </button>
             ))}
             {filteredOptions.length === 0 && (
               <p className="px-2 py-4 font-body text-[13px] uppercase tracking-wider text-gray-brand">
-                No results
+                {emptyLabel}
               </p>
             )}
           </div>
@@ -568,13 +620,53 @@ export default function ContactForm({ service = null }: { service?: string | nul
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const { isPreloaderDone } = usePreloader();
+  const { locale, t } = useLocale();
+  const copy = t.form;
   const shouldReduceMotion = Boolean(reduceMotion);
   const prefilledWorkType = useMemo(() => {
     const resolvedService = resolveWorkTypeFromService(service);
     return resolvedService ? [resolvedService] : [];
   }, [service]);
-  const [submitError, setSubmitError] = useState("");
+  const [submitFailed, setSubmitFailed] = useState(false);
   const [openSelectId, setOpenSelectId] = useState<string | null>(null);
+
+  /*
+    Los rótulos se recalculan por idioma, no se guardan: lo que vive en el
+    formulario es siempre el valor canónico. Van en `useCallback` porque
+    `CustomSelect` los usa dentro de un `useMemo` (el filtrado del buscador).
+  */
+  const businessLabel = useCallback(
+    (option: string) => businessTypeLabel(locale, option),
+    [locale],
+  );
+  const countryLabelFor = useCallback(
+    (option: string) => countryLabel(locale, option),
+    [locale],
+  );
+  const timelineLabelFor = useCallback(
+    (option: string) => timelineLabel(locale, option),
+    [locale],
+  );
+  const budgetLabelFor = useCallback(
+    (option: string) => budgetLabel(locale, option),
+    [locale],
+  );
+  const countryOptions = useMemo(() => getCountryOptions(locale), [locale]);
+
+  /*
+    El esquema de zod emite **claves** y no frases (ver `contact.ts`): la frase
+    la pone el render, así que un cambio de idioma con errores en pantalla los
+    traduce en el acto, sin revalidar.
+  */
+  const errorText = useCallback(
+    (message?: string): FieldError => {
+      if (!message) return undefined;
+      return (
+        copy.validation[message as ContactErrorKey] ?? message
+      );
+    },
+    [copy],
+  );
 
   const {
     register,
@@ -621,12 +713,14 @@ export default function ContactForm({ service = null }: { service?: string | nul
   };
 
   const onSubmit = async (data: ContactFormValues) => {
-    setSubmitError("");
+    setSubmitFailed(false);
 
     const res = await fetch("/api/contact", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      // Los valores elegidos viajan **como se muestran**; el resto del mail que
+      // le llega al estudio sigue en inglés, que es como lo leen ellas.
+      body: JSON.stringify(localizeContactValues(data, locale)),
     });
 
     if (res.ok) {
@@ -634,7 +728,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
       return;
     }
 
-    setSubmitError("We could not send your questionnaire. Please try again.");
+    setSubmitFailed(true);
   };
 
   return (
@@ -662,11 +756,11 @@ export default function ContactForm({ service = null }: { service?: string | nul
           variants={shouldReduceMotion ? undefined : contactTitleVariants}
         >
           <h1 className="font-display text-[40px] font-thin uppercase leading-[48px] tracking-normal">
-            LET&apos;S BRING
+            {copy.title[0]}
             <br />
-            YOUR IDEAS
+            {copy.title[1]}
             <br />
-            TO LIFE
+            {copy.title[2]}
           </h1>
         </motion.div>
 
@@ -677,9 +771,9 @@ export default function ContactForm({ service = null }: { service?: string | nul
           variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
         >
           <p>
-            SHARE YOUR PROJECT DETAILS
+            {copy.subtitle[0]}
             <br />
-            TO RECEIVE A CUSTOM PROPOSAL
+            {copy.subtitle[1]}
           </p>
         </motion.div>
       </aside>
@@ -698,7 +792,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
               setOpenSelectId(null);
             }
           }}
-          aria-label="Project questionnaire"
+          aria-label={copy.formLabel}
           className="w-full"
           initial={shouldReduceMotion ? false : "hidden"}
           animate={isPreloaderDone ? "visible" : "hidden"}
@@ -757,15 +851,15 @@ export default function ContactForm({ service = null }: { service?: string | nul
             <div>
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
-                  label={["STATE YOUR", "FULL NAME *"]}
+                  label={copy.labels.fullName}
                   controlId="full-name"
-                  error={errors.fullName?.message}
+                  error={errorText(errors.fullName?.message)}
                 >
                   <ContactFocusSurface>
                     <input
                       id="full-name"
                       type="text"
-                      placeholder="NAME"
+                      placeholder={copy.placeholders.name}
                       className={CONTROL_TEXT_CLASS}
                       {...register("fullName")}
                     />
@@ -775,15 +869,15 @@ export default function ContactForm({ service = null }: { service?: string | nul
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
-                  label={["EMAIL", "ADDRESS *"]}
+                  label={copy.labels.email}
                   controlId="email"
-                  error={errors.email?.message}
+                  error={errorText(errors.email?.message)}
                 >
                   <ContactFocusSurface>
                     <input
                       id="email"
                       type="email"
-                      placeholder="EMAIL"
+                      placeholder={copy.placeholders.email}
                       className={CONTROL_TEXT_CLASS}
                       {...register("email")}
                     />
@@ -793,9 +887,9 @@ export default function ContactForm({ service = null }: { service?: string | nul
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
-                  label={["WHAT ARE YOU", "LOOKING TO WORK ON?"]}
+                  label={copy.labels.workType}
                   controlId="work-type"
-                  error={errors.workType?.message}
+                  error={errorText(errors.workType?.message)}
                   alignLabelTop
                   asGroup
                 >
@@ -804,6 +898,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
                       <WorkTypePill
                         key={option}
                         option={option}
+                        label={workTypeLabel(locale, option)}
                         selected={workType.includes(option)}
                         onToggle={toggleWorkType}
                       />
@@ -814,14 +909,17 @@ export default function ContactForm({ service = null }: { service?: string | nul
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
-                  label={["WHAT BEST DESCRIBES", "YOUR BUSINESS?"]}
+                  label={copy.labels.businessType}
                   controlId="business-type"
                 >
                   <CustomSelect
                     id="business-type"
                     value={businessType}
                     options={BUSINESS_TYPE_OPTIONS}
-                    placeholder="SELECT OPTION"
+                    labelOf={businessLabel}
+                    emptyLabel={copy.noResults}
+                    searchPlaceholder={copy.placeholders.search}
+                    placeholder={copy.placeholders.select}
                     openSelectId={openSelectId}
                     setOpenSelectId={setOpenSelectId}
                     onChange={(value) =>
@@ -836,14 +934,14 @@ export default function ContactForm({ service = null }: { service?: string | nul
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
-                  label={["WHAT IS YOUR", "INDUSTRY/FIELD"]}
+                  label={copy.labels.industry}
                   controlId="industry"
                 >
                   <ContactFocusSurface>
                     <input
                       id="industry"
                       type="text"
-                      placeholder="SHORT ANSWER"
+                      placeholder={copy.placeholders.shortAnswer}
                       className={CONTROL_TEXT_CLASS}
                       {...register("industry")}
                     />
@@ -855,14 +953,17 @@ export default function ContactForm({ service = null }: { service?: string | nul
             <div className="min-[1280px]:max-[1359.98px]:[--contact-label-w:84px] min-[1360px]:max-[1599.98px]:[--contact-label-w:98px] min-[1600px]:[--contact-label-w:140px]">
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
-                  label={["WHERE ARE", "YOU BASED?"]}
+                  label={copy.labels.country}
                   controlId="country"
                 >
                   <CustomSelect
                     id="country"
                     value={country}
-                    options={COUNTRY_OPTIONS}
-                    placeholder="SELECT OPTION"
+                    options={countryOptions}
+                    labelOf={countryLabelFor}
+                    emptyLabel={copy.noResults}
+                    searchPlaceholder={copy.placeholders.search}
+                    placeholder={copy.placeholders.select}
                     searchable
                     openSelectId={openSelectId}
                     setOpenSelectId={setOpenSelectId}
@@ -896,14 +997,17 @@ export default function ContactForm({ service = null }: { service?: string | nul
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
-                  label={["DO YOU HAVE A", "TIMELINE IN MIND?"]}
+                  label={copy.labels.timeline}
                   controlId="timeline"
                 >
                   <CustomSelect
                     id="timeline"
                     value={timeline}
                     options={TIMELINE_OPTIONS}
-                    placeholder="SELECT OPTION"
+                    labelOf={timelineLabelFor}
+                    emptyLabel={copy.noResults}
+                    searchPlaceholder={copy.placeholders.search}
+                    placeholder={copy.placeholders.select}
                     openSelectId={openSelectId}
                     setOpenSelectId={setOpenSelectId}
                     onChange={(value) =>
@@ -918,14 +1022,17 @@ export default function ContactForm({ service = null }: { service?: string | nul
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
-                  label={["WHAT IS YOUR", "BUDGET RANGE?"]}
+                  label={copy.labels.budget}
                   controlId="budget"
                 >
                   <CustomSelect
                     id="budget"
                     value={budget}
                     options={BUDGET_OPTIONS}
-                    placeholder="SELECT OPTION"
+                    labelOf={budgetLabelFor}
+                    emptyLabel={copy.noResults}
+                    searchPlaceholder={copy.placeholders.search}
+                    placeholder={copy.placeholders.select}
                     openSelectId={openSelectId}
                     setOpenSelectId={setOpenSelectId}
                     onChange={(value) =>
@@ -940,14 +1047,14 @@ export default function ContactForm({ service = null }: { service?: string | nul
 
               <ContactFieldReveal reduceMotion={shouldReduceMotion}>
                 <FieldShell
-                  label={["HOW DID YOU", "HEAR ABOUT US?"]}
+                  label={copy.labels.hearAbout}
                   controlId="hear-about"
                 >
                   <ContactFocusSurface>
                     <input
                       id="hear-about"
                       type="text"
-                      placeholder="SHORT ANSWER"
+                      placeholder={copy.placeholders.shortAnswer}
                       className={CONTROL_TEXT_CLASS}
                       {...register("hearAbout")}
                     />
@@ -994,7 +1101,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
                       as="span"
                       className="font-body text-[21px] uppercase md:max-[1279.98px]:text-[24px] min-[1600px]:text-[24px]"
                     >
-                      {isSubmitting ? "SENDING..." : "SEND QUESTIONNAIRE"}
+                      {isSubmitting ? copy.submitting : copy.submit}
                     </HoverButton>
                   </button>
                 </div>
@@ -1002,10 +1109,10 @@ export default function ContactForm({ service = null }: { service?: string | nul
             </div>
           </div>
 
-          {submitError && (
+          {submitFailed && (
             <ContactFieldReveal reduceMotion={shouldReduceMotion}>
               <p className="mt-6 text-right font-body text-[13px] uppercase tracking-wider text-off-black">
-                {submitError}
+                {copy.submitError}
               </p>
             </ContactFieldReveal>
           )}

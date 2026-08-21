@@ -79,6 +79,38 @@ We're driven by the idea of helping others build something of their own — turn
     emptyDetail: "NEW IMAGES ARE ON THEIR WAY.",
   },
 
+  form: {
+    title: ["LET'S BRING", "YOUR IDEAS", "TO LIFE"],
+    subtitle: ["SHARE YOUR PROJECT DETAILS", "TO RECEIVE A CUSTOM PROPOSAL"],
+    formLabel: "Project questionnaire",
+    labels: {
+      fullName: ["STATE YOUR", "FULL NAME *"],
+      email: ["EMAIL", "ADDRESS *"],
+      workType: ["WHAT ARE YOU", "LOOKING TO WORK ON?"],
+      businessType: ["WHAT BEST DESCRIBES", "YOUR BUSINESS?"],
+      industry: ["WHAT IS YOUR", "INDUSTRY/FIELD"],
+      country: ["WHERE ARE", "YOU BASED?"],
+      timeline: ["DO YOU HAVE A", "TIMELINE IN MIND?"],
+      budget: ["WHAT IS YOUR", "BUDGET RANGE?"],
+      hearAbout: ["HOW DID YOU", "HEAR ABOUT US?"],
+    },
+    placeholders: {
+      name: "NAME",
+      email: "EMAIL",
+      select: "SELECT OPTION",
+      shortAnswer: "SHORT ANSWER",
+      search: "SEARCH",
+    },
+    noResults: "No results",
+    submit: "SEND QUESTIONNAIRE",
+    submitting: "SENDING...",
+    submitError: "We could not send your questionnaire. Please try again.",
+    validation: {
+      fullName: "Please enter your full name",
+      email: "Please enter a valid email",
+    },
+  },
+
   success: {
     title: ["YOUR INQUIRY WAS SENT", "SUCCESSFULLY!"],
     body: "WE APPRECIATE YOU TAKING THE TIME TO SHARE YOUR VISION WITH US. OUR TEAM WILL REVIEW YOUR SUBMISSION AND GET BACK TO YOU AS SOON AS POSSIBLE.",
