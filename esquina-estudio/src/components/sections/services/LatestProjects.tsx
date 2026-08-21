@@ -1,0 +1,182 @@
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import ServicesArrow from "@/components/sections/services/ServicesArrow";
+import {
+  CONTENT_INSET,
+  GUTTER,
+} from "@/components/sections/services/services-layout";
+import { SERVICES_COPY } from "@/lib/services-content";
+import { urlFor } from "@/lib/sanity";
+import type { Project } from "@/types/project";
+import { cn } from "@/lib/utils";
+
+/**
+ * Cierre de `/services`: el rótulo a la izquierda, el párrafo al centro, los dos
+ * links a la derecha y, debajo, las cuatro portadas más recientes pegadas entre
+ * sí ocupando todo el ancho.
+ *
+ * # Los dos links
+ *
+ * No usan `HoverButton`. No es por gusto: el mockup pide que **el subrayado
+ * aparezca en el hover**, y `HoverButton` lo tiene como booleano fijo. Atarlo a
+ * un estado tampoco funciona: su relleno negro sube en el mismo gesto y taparía
+ * la línea, que también es negra. Así que van como link con su propia línea que
+ * crece de izquierda a derecha. No es un primitivo nuevo ni compite con
+ * `HoverButton`: es un estilo de link local a esta sección.
+ *
+ * La flecha queda **fuera** del subrayado, como en `08e`.
+ *
+ * # El hover de las portadas
+ *
+ * La que recibe el cursor se agranda y el resto se difumina. **Las de los bordes
+ * crecen hacia adentro**: el origen de la transformación es su lado exterior, así
+ * que esa línea queda clavada y la portada no se sale de la pantalla. Las del
+ * medio crecen hacia los dos lados. Como el crecimiento es un `transform`, no
+ * mueve a las vecinas —las tapa—, y por eso la que crece sube de `z-index`.
+ *
+ * No hay recorte en la fila: recortarla anularía justamente el efecto. Tampoco
+ * hace falta, porque con el origen en el borde exterior no hay desborde
+ * horizontal; lo único que se sale es un poco de alto, y para eso está el aire
+ * de abajo.
+ */
+
+/** Cuánto crece la portada con el cursor encima. */
+const HOVER_SCALE = 1.08;
+/** Difuminado y opacidad de las que no reciben el cursor. */
+const DIMMED = "blur-[4px] opacity-70";
+/** Ancho pedido al CDN: 4 portadas en 1920 dan 480 CSS px, y el doble en DPR 2. */
+const COVER_CDN_WIDTH = 1200;
+const COVER_CDN_HEIGHT = 900;
+const COVER_CDN_FORMAT = "webp" as const;
+
+function UnderlineOnHoverLink({
+  href,
+  label,
+}: {
+  href: string;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group inline-flex w-fit items-center gap-3 font-body text-[24px] uppercase leading-[28px] text-off-black"
+    >
+      <span className="relative inline-block">
+        {label}
+        <span
+          aria-hidden="true"
+          className="absolute bottom-0 left-0 right-0 h-px origin-left scale-x-0 bg-off-black transition-transform duration-300 ease-out group-hover:scale-x-100 motion-reduce:transition-none"
+        />
+      </span>
+      <ServicesArrow />
+    </Link>
+  );
+}
+
+export default function LatestProjects({
+  projects,
+}: {
+  projects: readonly Project[];
+}) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const { label, paragraph, links } = SERVICES_COPY.latestProjects;
+  const lastIndex = projects.length - 1;
+
+  return (
+    <section aria-labelledby="latest-projects" className="pb-[120px]">
+      {/*
+        El texto conserva la misma medida que los packs —`CONTENT_INSET`—, aunque
+        acá el sidebar ya no esté: es lo que muestra `08e` y lo que mantiene un
+        margen derecho parejo en toda la página. La fila de portadas, en cambio,
+        va a sangre y por eso queda fuera de este bloque.
+      */}
+      <div
+        className={cn(
+          GUTTER,
+          CONTENT_INSET,
+          "grid grid-cols-1 gap-y-10 pt-[160px] lg:grid-cols-[18%_minmax(0,1fr)_auto] lg:gap-x-[3%] lg:gap-y-0",
+        )}
+      >
+        <h2
+          id="latest-projects"
+          className="font-body text-[30px] uppercase leading-[36px] text-off-black"
+        >
+          {label}
+        </h2>
+
+        <p className="max-w-[720px] font-body text-[30px] leading-[36px] text-off-black">
+          {paragraph}
+        </p>
+
+        <div className="flex flex-col items-start gap-[14px]">
+          {links.map((link) => (
+            <UnderlineOnHoverLink
+              key={link.href}
+              href={link.href}
+              label={link.label}
+            />
+          ))}
+        </div>
+      </div>
+
+      {projects.length > 0 ? (
+        <div className="relative mt-[160px] flex w-full">
+          {projects.map((project, index) => {
+            const isHovered = hoveredIndex === index;
+            const isDimmed = hoveredIndex !== null && !isHovered;
+            const source =
+              typeof project.coverImage === "string"
+                ? project.coverImage
+                : project.coverImage
+                  ? urlFor(project.coverImage)
+                      .width(COVER_CDN_WIDTH)
+                      .height(COVER_CDN_HEIGHT)
+                      .format(COVER_CDN_FORMAT)
+                      .url()
+                  : null;
+
+            return (
+              <Link
+                key={project._id}
+                href={`/work/${project.slug.current}`}
+                aria-label={project.title}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                onFocus={() => setHoveredIndex(index)}
+                onBlur={() => setHoveredIndex(null)}
+                className={cn(
+                  "relative block aspect-[4/3] flex-1 transition-[transform,filter,opacity] duration-500 ease-out motion-reduce:transition-none",
+                  isDimmed && DIMMED,
+                )}
+                style={{
+                  backgroundColor: project.coverColor || undefined,
+                  transform: isHovered ? `scale(${HOVER_SCALE})` : undefined,
+                  transformOrigin:
+                    index === 0
+                      ? "left center"
+                      : index === lastIndex
+                        ? "right center"
+                        : "center",
+                  zIndex: isHovered ? 2 : 1,
+                }}
+              >
+                {source ? (
+                  <Image
+                    src={source}
+                    alt={project.title}
+                    fill
+                    sizes="25vw"
+                    className="object-cover"
+                  />
+                ) : null}
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
+    </section>
+  );
+}

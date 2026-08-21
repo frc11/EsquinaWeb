@@ -32,3 +32,21 @@ export const FUN_GALLERY_IMAGES_QUERY = `
     "projectSlug": linkedProject->slug.current
   }
 `;
+
+// Las cuatro portadas más recientes, para el cierre de `/services`.
+//
+// El criterio de «más reciente» es `_createdAt` descendente, que es el que quedó
+// cerrado en B3.3: el campo `order` de `project` ordena la grilla de `/work` a
+// gusto de las clientas y no tiene nada que ver con cuándo se cargó cada
+// proyecto. `_id` desempata porque `_createdAt` no es único por definición —dos
+// documentos creados en el mismo milisegundo comparten marca— y sin orden total
+// GROQ no garantiza la misma secuencia entre dos lecturas.
+//
+// El filtro por `coverImage.asset` no es cosmético: la sección **son** las
+// portadas, así que un proyecto sin portada no es candidato. En `project` solo
+// `title` y `slug` son requeridos, así que el caso existe de verdad.
+export const LATEST_PROJECTS_QUERY = `
+  *[_type == "project" && defined(coverImage.asset)] | order(_createdAt desc, _id desc)[0...4] {
+    _id, title, slug, coverImage, coverColor
+  }
+`;
