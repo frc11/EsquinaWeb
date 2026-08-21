@@ -4,6 +4,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useRouteTransition } from "@/components/layout/RouteTransitionProvider";
+import LocaleToggle from "@/components/layout/LocaleToggle";
 import LogoScript from "@/components/ui/LogoScript";
 import HoverButton from "@/components/ui/HoverButton";
 
@@ -353,7 +354,23 @@ export default function Navbar() {
 
         <div className="flex-1" />
 
-        <div className="hidden md:block">
+        {/*
+          El toggle de idioma va a la derecha de CONTACT US (mockups 02, 08a,
+          12, 14 y 15). El `gap-8` es el mismo del menú: con los 6 px de relleno
+          de CONTACT US da los 38-39 px de aire que muestra el mockup.
+
+          `items-start` y no `items-center`, y es una medida y no un gusto: el
+          `<span>` que envuelve a CONTACT US mide 43,5 px —6 más que la caja de
+          `HoverButton`, porque el `<a>` que hay adentro aporta el hueco de
+          descendentes de los 16 px del body— mientras el toggle mide los 37,5
+          de su propia caja. Centrados, el toggle bajaba 3 px y su subrayado
+          quedaba desalineado del indicador del menú. Alineados arriba, las dos
+          cajas comparten el borde inferior (79,75 px medidos), que es
+          exactamente la referencia que `measureFillBox` le da al indicador.
+          CONTACT US no se mueve: es el ítem más alto, así que la alineación no
+          lo toca.
+        */}
+        <div className="hidden items-start gap-8 md:flex">
           <span ref={setDesktopLinkRef("/contact")} className="inline-flex">
             <HoverButton
               href="/contact"
@@ -365,6 +382,8 @@ export default function Navbar() {
               CONTACT US
             </HoverButton>
           </span>
+
+          <LocaleToggle tone={navTone} />
         </div>
 
         {indicator ? (
@@ -429,6 +448,15 @@ export default function Navbar() {
                   {link.label}
                 </HoverButton>
               ))}
+
+              {/*
+                El menú de mobile es la única puerta al toggle debajo de `md`:
+                sin esto el control de idioma quedaría inalcanzable en pantallas
+                chicas. La adaptación mobile completa es una ronda aparte.
+              */}
+              <div className="mt-6">
+                <LocaleToggle tone="dark" />
+              </div>
             </div>
           </motion.div>
         )}
