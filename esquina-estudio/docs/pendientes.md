@@ -1,14 +1,16 @@
 # Registro de pendientes — Esquina Estudio
 
-Deuda diferida, con contexto para retomarla. Lo mantiene la capa de planificación. Formato: **[origen]** descripción — cuándo se retoma.
+Deuda diferida, con contexto para retomarla. Lo mantiene la capa de planificación (B4/F8 lo actualizó, para cerrar la ronda). Formato: **[origen]** descripción — cuándo se retoma.
+
+**Estado al 2026-08-21: la ronda está cerrada.** Lo de abajo es todo lo que queda, y nada de eso bloquea el deploy.
 
 - **[Clientas]** Formato de entrega del logo grande del footer (lo preguntan en Final.pdf pág. 4). Responderles; es insumo del sprint de footer (B2).
 - **[Clientas]** Gif/video de Team: contenido pendiente de ellas; el placeholder `VIDEO O GIF` queda hasta que llegue. No bloquea código.
 - **[PDF]** La frase nueva difiere en puntuación entre el hero (pág. 2: «NOISE,») y el footer (págs. 4/8/12: «STAND OUT.»). Definir una sola contra mockup en el sprint B2-home/footer.
 - **[Auditoría 6.4]** Tokens de font-size del `@theme` huérfanos, `--cursor-*` y `--footer-height` sin consumidores: adoptar como punto central o borrar. Decisión del ritual de B2.
-- **[Planificación]** Forma exacta de la variante ES del Portable Text de `project` (duplicar solo texto, no media). Ritual de B3.
+- ~~**[Planificación]** Forma exacta de la variante ES del Portable Text de `project`.~~ **Resuelto: no hay variante.** El `content` no se traduce; quedó confirmado en B4.
 - **[Auditoría 1.c]** `NEXT_PUBLIC_SITE_URL` no está definida → `metadataBase` cae al placeholder `your-site-name.netlify.app`. Fix chico: definirla en Netlify y `.env.local`. Colar en B2 o resolver a mano.
-- **[Auditoría]** Corroborar las mediciones (tipografía / Contact) contra un build de producción antes del cierre de la ronda (todo se midió sobre `next dev`).
+- ~~**[Auditoría]** Corroborar las mediciones (tipografía / Contact) contra un build de producción antes del cierre de la ronda.~~ **Resuelto:** desde B3.4 todo se mide sobre `npm run build` + `npm run start`, y B4 volvió a levantar la matriz completa de Contact así, en los dos idiomas.
 - **[Auditoría 2.c/5]** `<main>` anidados en /team, /work, /work/[slug] y /fun-gallery (Contact y, desde B3.4, /services lo evitan y lo documentan). Semántica/a11y. Fuera de ronda.
 - **[Auditoría 1.a]** No existen `error.tsx` ni `not-found.tsx`. Fuera de ronda.
 - **[Repo]** 12 branches locales mergeadas a `main` (verificado 2026-08-15, `--no-merged` vacío). Borrado opcional manual: `git branch -d …`.
@@ -24,3 +26,15 @@ Deuda diferida, con contexto para retomarla. Lo mantiene la capa de planificaci�
 - **[B3.4]** Diferencias menores contra el mockup, asumidas y documentadas: (a) las reglas de ítems y las de sección terminan en el **mismo** borde derecho, mientras el mockup deja 51 px de sangría entre ellas; (b) la lista de ítems arranca a la altura del **nombre** del pack en los cuatro, mientras `08b` la baja una línea solo en Consultation; (c) los cortes de línea del título y la bajada de Branding Packs los decide el ancho de columna, así que pueden diferir en una palabra.
 - **[B3.4]** Los apóstrofos del contenido de Services son **rectos** (`we're`, `can't`, `LET'S`), tal como llegaron en el Apéndice A. Los mockups los muestran tipográficos (’). Si las clientas quieren el curvo, es una edición de `src/lib/services-content.ts` y nada más.
 - **[B3.4]** El hover de LATEST PROJECTS también se dispara con el **foco de teclado**, para que quien tabula vea lo mismo que quien apunta. No está en el mockup; si molesta, se saca el par `onFocus`/`onBlur`.
+
+## Abiertos al cerrar la ronda (B4/F8, 2026-08-21)
+
+- **[B4 · Dependencias]** **GSAP sigue instalado y sin un solo consumidor** (verificado de nuevo en B4: cero imports de `gsap` y de `gsap/ScrollTrigger` en `src/`). Desinstalarlo es un cambio de `package.json`, o sea alcance global: se decide en el chat de planificación, no en un sprint de sección.
+- **[B4 · Dependencias]** La prop **`blend` de `HoverButton` quedó huérfana**: la define y la usa el propio componente, pero **ningún call site la pasa** (9 call sites en 4 archivos, verificado). Se quedó sin llamador cuando `/fun-gallery` dejó de tener cromo superpuesto en B3.3. Borrarla toca el primitivo compartido, así que va junto con la decisión de arriba.
+- **[B4 · Diseño]** **Contraste del gris.** `gray-brand` (#939393) sobre off-white da **2,77:1** medido, por debajo del 4,5:1 de AA para texto normal y del 3:1 para texto grande; sobre off-black da 6,24:1 y sí pasa. Afecta a los detalles de Services, las pills sin marcar, los placeholders del formulario, los links secundarios de la ficha y el toggle EN/ES. Es atenuación deliberada, no un descuido: la decisión es de diseño y conviene tomarla una vez para todo el sitio.
+- **[B4 · Contenido]** **Las doce casillas ES de los cuatro proyectos de Sanity están vacías.** El sitio en castellano muestra los proyectos en inglés por el fallback cruzado, así que no hay hueco ni error. Las traducciones propuestas están listas en `docs/sanity-piezas-es.md` para cargarlas a mano en el Studio.
+- **[B4 · Contenido]** Dos cosas del dataset que decidieron mirar las clientas, anotadas en el mismo archivo: el tipeo **`FOOD & SEVERAGES`** por `FOOD & BEVERAGES`, y el proyecto **`matsutrabajo`**, que duplica a `matsu` y es candidato del cierre de `/services` (las cuatro portadas más recientes).
+- **[B4 · Traducción]** **Dos decisiones de tono que conviene que Valentino confirme o cambie**, porque son de marca y no de código: (a) **`FUN GALLERY` → `GALERÍA`** en el menú —lo lúdico del nombre lo sostiene el título de la pantalla, «¡Divertite explorando nuestros proyectos!»— y (b) **`WORK` → `PROYECTOS`**. Las dos son una línea en `src/lib/i18n/es.ts`.
+- **[B4 · Fit]** El questionnaire **no entra sin scroll con los dos mensajes de validación a 720 px de alto** en los anchos ≥ 1600 (pide 740). Es el piso que dejó B2.7 y **falla igual en los dos idiomas**: no es una regresión del castellano. Solo se retoma si aparece un caso real de 1920×720.
+- **[B4 · Mobile]** El `LocaleToggle` se sumó al menú de mobile para que el control no quede inalcanzable debajo de `md`, pero **el menú de mobile no está diseñado**: es el que había. Entra en la ronda de mobile.
+- **[B4 · Método]** La **técnica de medición** que quedó afinada: `iframe` same-origin de tamaño fijo para tener el viewport exacto (la pantalla física no llega a 1080 de alto útil), medidor de texto con las fuentes reales del documento para probar traducciones **antes** de escribirlas, y espía de `fetch` para ejercitar el formulario entero sin que salga un solo mail. Sigue vigente el límite de siempre: con la pestaña en segundo plano **no corre `requestAnimationFrame`**, así que ninguna animación se puede observar y las capturas salen parciales; las capturas de este sprint salieron bien porque la pestaña estaba activa.
