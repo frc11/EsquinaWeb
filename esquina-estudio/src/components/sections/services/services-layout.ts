@@ -160,6 +160,22 @@ export function getSectionScrollTarget(section: Element): number {
 }
 
 /**
+ * Teclas que mueven el scroll. La comparten los dos gestos programados de la
+ * ruta: el gatillo del intro las **bloquea** mientras dura el lock, y el salto
+ * del sidebar las toma como señal de que el usuario quiere manejar y **se
+ * aparta**. Una sola lista para que no se separen.
+ */
+export const SCROLL_KEYS: ReadonlySet<string> = new Set([
+  " ",
+  "PageDown",
+  "PageUp",
+  "ArrowDown",
+  "ArrowUp",
+  "Home",
+  "End",
+]);
+
+/**
  * Destino del gatillo del intro (`IntroScrollTrigger`). Es el encabezado de la
  * zona de packs, que **no** es una sección del sidebar: el menú no lo lista y el
  * spy no lo observa. Vive acá porque lo comparten quien lo emite y quien lo

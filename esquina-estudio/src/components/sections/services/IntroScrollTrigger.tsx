@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { getHeaderOffset } from "@/components/sections/services/services-layout";
+import {
+  SCROLL_KEYS,
+  getHeaderOffset,
+} from "@/components/sections/services/services-layout";
 import { usePrefersReducedMotion } from "@/components/layout/RouteTransitionProvider";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
 
@@ -104,16 +107,6 @@ const TOP_TOLERANCE_PX = 8;
 const SCROLL_DURATION_MS = 900;
 /** Techo del lock: nunca dura más que esto, pase lo que pase. */
 const MAX_LOCK_MS = SCROLL_DURATION_MS + 400;
-/** Teclas que mueven el scroll y que el lock bloquea mientras dura. */
-const SCROLL_KEYS = new Set([
-  " ",
-  "PageDown",
-  "PageUp",
-  "ArrowDown",
-  "ArrowUp",
-  "Home",
-  "End",
-]);
 
 function normalizeDelta(event: WheelEvent, viewportHeight: number) {
   if (event.deltaMode === 1) return event.deltaY * LINE_PX;

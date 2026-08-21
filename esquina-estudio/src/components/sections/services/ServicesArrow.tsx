@@ -13,6 +13,15 @@ import { cn } from "@/lib/utils";
  * El trazo cae en medios píxeles (`5.5`) para que el 1 px quede sobre la grilla
  * y no salga difuminado entre dos filas.
  */
+
+/**
+ * El ancho se exporta porque el sidebar necesita el número: su gesto corre la
+ * fila entera el equivalente al hueco que ocupa la flecha, y si los dos valores
+ * se separan el rótulo deja de quedar alineado con los inactivos.
+ */
+export const SERVICES_ARROW_WIDTH = 26;
+export const SERVICES_ARROW_HEIGHT = 11;
+
 export default function ServicesArrow({
   direction = "right",
   className,
@@ -23,8 +32,8 @@ export default function ServicesArrow({
   return (
     <svg
       viewBox="0 0 26 11"
-      width={26}
-      height={11}
+      width={SERVICES_ARROW_WIDTH}
+      height={SERVICES_ARROW_HEIGHT}
       fill="none"
       aria-hidden="true"
       focusable="false"

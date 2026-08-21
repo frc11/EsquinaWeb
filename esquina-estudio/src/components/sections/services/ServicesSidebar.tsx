@@ -1,9 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import ServicesArrow from "@/components/sections/services/ServicesArrow";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { animate, motion, type Transition } from "framer-motion";
+import ServicesArrow, {
+  SERVICES_ARROW_WIDTH,
+} from "@/components/sections/services/ServicesArrow";
 import {
   BRANDING_PACKS_ID,
+  SCROLL_KEYS,
   SIDEBAR_WIDTH,
   SPY_SENTINEL_ATTR,
   getHeaderOffset,
@@ -88,15 +92,93 @@ import { cn } from "@/lib/utils";
  *
  * `rootMargin` no depende del alto de la ventana —el header mide siempre lo
  * mismo—, así que el observer tampoco se reconstruye al redimensionar.
+ *
+ * # El salto y la flecha (B3.4b/F4)
+ *
+ * ## El salto: resorte, no `behavior: "smooth"`
+ *
+ * El suave nativo llega de golpe y no se puede modelar: no expone ni duración ni
+ * curva. Se cambia por un resorte de Framer —el mismo vocabulario que el
+ * despliegue de Fun Gallery, `visualDuration` + `bounce`— que aterriza con un
+ * rebote corto. La duración **escala con la distancia**: los saltos entre
+ * secciones vecinas son de unos 900 px y la vuelta al intro desde Add-ons es de
+ * casi 5000, y un solo número no puede servir para los dos.
+ *
+ * Como es una animación propia y no del navegador, no se cancela sola: se le
+ * agrega la parte que el nativo trae de fábrica —**si el usuario scrollea, el
+ * salto se aparta**— con rueda, dedo o tecla de scroll. Sin eso, un gesto a
+ * mitad de camino pelearía contra la animación por todo lo que le queda.
+ *
+ * ## La flecha: fijar el destino mientras dura
+ *
+ * Durante un salto largo el spy atraviesa todas las secciones intermedias y la
+ * flecha las recorrería una por una: un parpadeo que no informa nada. Mientras
+ * dura el salto **se fija el destino** (`pinnedId`) y el spy sigue midiendo pero
+ * no manda. Al terminar —o al cancelarse— se suelta y se recalcula de una, así
+ * que la posición final la decide siempre la misma medición y no el azar de qué
+ * aviso llegó último.
+ *
+ * ## El gesto
+ *
+ * La flecha ya no aparece y desaparece en su lugar: **se retira hacia la derecha
+ * y vuelve a entrar empujando la palabra de destino**. La mecánica es una sola
+ * propiedad: la fila entera se corre `ARROW_SLOT` px a la derecha cuando el ítem
+ * no está activo —lo que deja su rótulo alineado con los demás, con la flecha
+ * fuera del bloque y en opacidad cero— y vuelve a cero cuando se activa,
+ * arrastrando la palabra con ella. Es `transform` + `opacity`: no toca el
+ * layout, así que ningún ítem empuja a los otros.
  */
 
 /** Cuánto tarda el menú en aparecer y en irse. Suave, no un corte. */
 const REVEAL_MS = 500;
 
+/** Aire entre el rótulo y la flecha. Va inline porque el gesto necesita el número. */
+const ARROW_GAP = 12;
+/** Lo que se corre la fila: el hueco entero que ocupa la flecha. */
+const ARROW_SLOT = SERVICES_ARROW_WIDTH + ARROW_GAP;
+
+/** Entra empujando: resorte corto, con un asentamiento apenas perceptible. */
+const ARROW_ENTER: Transition = {
+  type: "spring",
+  visualDuration: 0.34,
+  bounce: 0.22,
+  delay: 0.09,
+};
+/** Se retira acelerando, y arranca antes que la entrada para que se lea uno solo. */
+const ARROW_EXIT: Transition = { duration: 0.24, ease: [0.4, 0, 1, 1] };
+const ARROW_FADE_IN: Transition = { duration: 0.2, delay: 0.09 };
+const ARROW_FADE_OUT: Transition = { duration: 0.16 };
+const INSTANT: Transition = { duration: 0 };
+
+/** Rebote del aterrizaje. Es el del despliegue de Fun Gallery; no se inventa otro. */
+const JUMP_BOUNCE = 0.18;
+/** Piso y techo de la duración del salto, en segundos. */
+const JUMP_MIN_DURATION = 0.9;
+const JUMP_MAX_DURATION = 1.5;
+/** Base y pendiente: cada 6000 px de recorrido suman un segundo. */
+const JUMP_BASE_DURATION = 0.75;
+const JUMP_PX_PER_SECOND = 6000;
+
+function jumpDuration(distance: number) {
+  return Math.min(
+    JUMP_MAX_DURATION,
+    Math.max(
+      JUMP_MIN_DURATION,
+      JUMP_BASE_DURATION + distance / JUMP_PX_PER_SECOND,
+    ),
+  );
+}
+
 export default function ServicesSidebar() {
   const [activeId, setActiveId] = useState<string>(SERVICES_NAV[0].id);
+  const [pinnedId, setPinnedId] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
   const reduceMotion = usePrefersReducedMotion();
+
+  // El spy mide dentro de su efecto; el salto necesita pedirle un recálculo al
+  // terminar, que es lo que garantiza que la flecha quede donde aterrizó.
+  const resolveActiveRef = useRef<(() => void) | null>(null);
+  const jumpRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const headerOffset = getHeaderOffset();
@@ -131,6 +213,8 @@ export default function ServicesSidebar() {
       setActiveId(active);
     };
 
+    resolveActiveRef.current = resolveActive;
+
     // El borde de la raíz va **dos píxeles por debajo** de la línea de lectura,
     // y los dos están medidos, no elegidos de arriba: uno lo come el alto del
     // propio centinela y el otro, el contacto de borde, que Chrome cuenta como
@@ -156,8 +240,28 @@ export default function ServicesSidebar() {
 
     targets.forEach((target) => observer.observe(target));
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      resolveActiveRef.current = null;
+    };
   }, []);
+
+  /**
+   * Única salida del salto: corta la animación, da de baja sus listeners, suelta
+   * el destino fijado y le pide al spy la palabra final. Idempotente.
+   */
+  const endJump = useCallback(() => {
+    const teardown = jumpRef.current;
+    if (!teardown) return;
+
+    jumpRef.current = null;
+    teardown();
+    setPinnedId(null);
+    resolveActiveRef.current?.();
+  }, []);
+
+  // Si alguien navega a otra ruta a mitad de un salto, el salto se va con él.
+  useEffect(() => endJump, [endJump]);
 
   const handleJump = useCallback(
     (event: React.MouseEvent<HTMLAnchorElement>, id: string) => {
@@ -166,29 +270,54 @@ export default function ServicesSidebar() {
       if (!section) return;
 
       event.preventDefault();
+      endJump();
 
-      // Acá **no** se marca el ítem a mano. Se probó y sobra: con el criterio
-      // único de aterrizaje el destino cae 137 px adentro del rango del spy, y
-      // adelantarlo solo agregaba un parpadeo —la flecha saltaba al destino y
-      // volvía atrás en el cuadro siguiente, cuando el observer recalculaba
-      // sobre el scroll todavía en el origen—. Una sola fuente de verdad.
+      // El destino sale del criterio único: aterriza el contenido de la sección,
+      // no su tope. Ver `services-layout`.
       const target = getSectionScrollTarget(section);
-
-      // Sin Lenis en esta ruta: el salto suave es el nativo. El `behavior` del
-      // método le gana a la propiedad CSS, que `SmoothScrollProvider` deja en
-      // `auto` fuera de /team y /work*.
-      window.scrollTo({
-        top: target,
-        behavior: reduceMotion ? "auto" : "smooth",
-      });
 
       // Continuidad para quien navega por teclado o con lector de pantalla: el
       // foco viaja al destino sin volver a mover el scroll.
       section.setAttribute("tabindex", "-1");
       section.focus({ preventScroll: true });
+
+      if (reduceMotion) {
+        window.scrollTo(0, target);
+        resolveActiveRef.current?.();
+        return;
+      }
+
+      const from = window.scrollY;
+      setPinnedId(id);
+
+      const interrupt = () => endJump();
+      const interruptByKey = (keyEvent: KeyboardEvent) => {
+        if (SCROLL_KEYS.has(keyEvent.key)) endJump();
+      };
+
+      const controls = animate(from, target, {
+        type: "spring",
+        visualDuration: jumpDuration(Math.abs(target - from)),
+        bounce: JUMP_BOUNCE,
+        onUpdate: (value) => window.scrollTo(0, value),
+        onComplete: () => endJump(),
+      });
+
+      window.addEventListener("wheel", interrupt, { passive: true });
+      window.addEventListener("touchstart", interrupt, { passive: true });
+      window.addEventListener("keydown", interruptByKey);
+
+      jumpRef.current = () => {
+        controls.stop();
+        window.removeEventListener("wheel", interrupt);
+        window.removeEventListener("touchstart", interrupt);
+        window.removeEventListener("keydown", interruptByKey);
+      };
     },
-    [reduceMotion],
+    [endJump, reduceMotion],
   );
+
+  const markedId = pinnedId ?? activeId;
 
   return (
     <div
@@ -216,29 +345,52 @@ export default function ServicesSidebar() {
       >
         <ul className="flex flex-col items-end gap-[27px]">
           {SERVICES_NAV.map((item) => {
-            const isActive = item.id === activeId;
+            const isMarked = item.id === markedId;
 
             return (
               <li key={item.id} className="flex w-full justify-end">
-                <a
+                <motion.a
                   href={`#${item.id}`}
                   onClick={(event) => handleJump(event, item.id)}
-                  aria-current={isActive ? "true" : undefined}
+                  aria-current={isMarked ? "true" : undefined}
+                  style={{ gap: ARROW_GAP }}
+                  initial={false}
+                  animate={{ x: isMarked ? 0 : ARROW_SLOT }}
+                  transition={
+                    reduceMotion
+                      ? INSTANT
+                      : isMarked
+                        ? ARROW_ENTER
+                        : ARROW_EXIT
+                  }
                   className={cn(
-                    // Fila alineada a la derecha: al activarse aparece la flecha
-                    // y el rótulo se corre a la izquierda para hacerle lugar,
-                    // manteniendo fijo el borde derecho. Así lo muestran `08a` y
-                    // `08b`.
-                    "flex items-center gap-3 font-body text-[17px] uppercase leading-[20px]",
+                    // Fila alineada a la derecha: al activarse la flecha vuelve
+                    // a su lugar y el rótulo se corre a la izquierda para
+                    // hacerle sitio, manteniendo fijo el borde derecho. Así lo
+                    // muestran `08a` y `08b`.
+                    "flex items-center font-body text-[17px] uppercase leading-[20px]",
                     "transition-colors duration-200",
-                    isActive
+                    isMarked
                       ? "text-off-black"
                       : "text-gray-brand hover:text-off-black",
                   )}
                 >
                   <span>{item.label}</span>
-                  {isActive ? <ServicesArrow direction="left" /> : null}
-                </a>
+                  <motion.span
+                    className="flex"
+                    initial={false}
+                    animate={{ opacity: isMarked ? 1 : 0 }}
+                    transition={
+                      reduceMotion
+                        ? INSTANT
+                        : isMarked
+                          ? ARROW_FADE_IN
+                          : ARROW_FADE_OUT
+                    }
+                  >
+                    <ServicesArrow direction="left" />
+                  </motion.span>
+                </motion.a>
               </li>
             );
           })}
