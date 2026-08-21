@@ -16,8 +16,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Cierre de `/services`: el rótulo a la izquierda, el párrafo al centro, los dos
- * links a la derecha y, debajo, las cuatro portadas más recientes pegadas entre
- * sí ocupando todo el ancho.
+ * links a la derecha y, debajo, la fila de las cuatro portadas más recientes.
  *
  * # Los dos links
  *
@@ -30,22 +29,54 @@ import { cn } from "@/lib/utils";
  *
  * La flecha queda **fuera** del subrayado, como en `08e`.
  *
+ * # Las separaciones (B3.4b/F5)
+ *
+ * B3.4 las pidió pegadas entre sí y a sangre; el mockup `08e` muestra otra cosa
+ * y manda el mockup. Medido sobre el export (1328 px de ancho, factor 0,690
+ * contra 1920): los huecos entre portadas dan 4,0 · 4,0 · 5,0 px del export, o
+ * sea unos **6 px** a 1920; los márgenes contra los bordes dan 3,5 y 6,8, o sea
+ * entre 5 y 10, de donde salen los **8 px** de acá. Las dos medidas son fijas y
+ * no proporcionales, igual que el gutter del cromo.
+ *
+ * Van como estilo en línea y no como clases porque el hover necesita los mismos
+ * números (ver abajo) y no pueden quedar escritos en dos lados.
+ *
  * # El hover de las portadas
  *
- * La que recibe el cursor se agranda y el resto se difumina. **Las de los bordes
- * crecen hacia adentro**: el origen de la transformación es su lado exterior, así
- * que esa línea queda clavada y la portada no se sale de la pantalla. Las del
- * medio crecen hacia los dos lados. Como el crecimiento es un `transform`, no
- * mueve a las vecinas —las tapa—, y por eso la que crece sube de `z-index`.
+ * La que recibe el cursor se agranda y el resto se difumina. Como el crecimiento
+ * es un `transform`, no mueve a las vecinas —las tapa—, y por eso la que crece
+ * sube de `z-index`.
+ *
+ * **Las de los bordes seguían creciendo hacia adentro con el borde exterior
+ * clavado**, y con el margen nuevo eso ya no se sostiene: la portada dejó de
+ * estar pegada al viewport, así que clavar su lado exterior deja un margen que
+ * no se mueve mientras todo lo demás crece, y se lee como si la portada no
+ * cupiera. Ahora crecen **hasta comerse el margen y ni un píxel más**: el origen
+ * de la transformación se corre hacia adentro justo lo necesario para que el
+ * lado exterior llegue al borde de la pantalla.
+ *
+ * La distancia sale de despejar `d · (escala − 1) = margen`, y el resultado es
+ * **independiente del ancho de la portada**, así que es un número y no una
+ * medición: a cualquier viewport, el origen va a `EDGE_ORIGIN_PX` del lado
+ * exterior. Las del medio siguen creciendo hacia los dos lados.
  *
  * No hay recorte en la fila: recortarla anularía justamente el efecto. Tampoco
- * hace falta, porque con el origen en el borde exterior no hay desborde
- * horizontal; lo único que se sale es un poco de alto, y para eso está el aire
- * de abajo.
+ * hace falta, porque con ese origen el crecimiento hacia afuera termina
+ * exactamente en el borde del viewport; lo único que se sale es un poco de alto,
+ * y para eso está el aire de abajo.
  */
 
 /** Cuánto crece la portada con el cursor encima. */
 const HOVER_SCALE = 1.08;
+/** Separación entre portadas. La «línea delgada» de `08e`. */
+const COVER_GAP = 6;
+/** Margen de la fila contra los bordes de la página. */
+const COVER_EDGE = 8;
+/**
+ * Origen del crecimiento de las portadas de los bordes, medido desde su lado
+ * exterior: `d · (HOVER_SCALE − 1) = COVER_EDGE`. Con estos valores, 100 px.
+ */
+const EDGE_ORIGIN_PX = COVER_EDGE / (HOVER_SCALE - 1);
 /** Difuminado y opacidad de las que no reciben el cursor. */
 const DIMMED = "blur-[4px] opacity-70";
 /** Ancho pedido al CDN: 4 portadas en 1920 dan 480 CSS px, y el doble en DPR 2. */
@@ -123,7 +154,10 @@ export default function LatestProjects({
       </div>
 
       {projects.length > 0 ? (
-        <div className="relative mt-[160px] flex w-full">
+        <div
+          className="relative mt-[160px] flex w-full"
+          style={{ gap: COVER_GAP, paddingInline: COVER_EDGE }}
+        >
           {projects.map((project, index) => {
             const isHovered = hoveredIndex === index;
             const isDimmed = hoveredIndex !== null && !isHovered;
@@ -156,9 +190,9 @@ export default function LatestProjects({
                   transform: isHovered ? `scale(${HOVER_SCALE})` : undefined,
                   transformOrigin:
                     index === 0
-                      ? "left center"
+                      ? `${EDGE_ORIGIN_PX}px center`
                       : index === lastIndex
-                        ? "right center"
+                        ? `calc(100% - ${EDGE_ORIGIN_PX}px) center`
                         : "center",
                   zIndex: isHovered ? 2 : 1,
                 }}
