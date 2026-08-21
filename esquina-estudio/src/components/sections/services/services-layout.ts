@@ -28,12 +28,39 @@ export const SIDEBAR_GAP = 40;
 export const CONTENT_INSET = "lg:pr-[220px]";
 
 /**
+ * Ancho de la columna izquierda: **18 % con piso de 270 px**.
+ *
+ * El 18 % sale del mockup y a 1920 da exactamente esos 270 px. El piso no es
+ * redundante: el porcentaje es del ancho disponible, así que a 1366 la columna
+ * caía a 175 px y «CONSULTATION» —que mide 245 px a 30 px— se le montaba encima
+ * a la lista de ítems. Medido, no supuesto. Con el piso, de 1920 para arriba
+ * manda el porcentaje y por debajo manda el piso; lo que se estira o se encoge
+ * es la columna de ítems, que es la que puede.
+ *
+ * Las clases van escritas enteras y repetidas —no armadas con una constante—
+ * porque Tailwind v4 busca los nombres de clase como **literales** en el código:
+ * una clase compuesta en runtime no llega nunca al CSS.
+ */
+
+/**
  * Columnas del cuerpo de una sección: izquierda (nombre + descripción) y derecha
  * (ítems + botón). Los porcentajes son del ancho de la caja de contenido;
  * medidos contra el mockup caen dentro de 3 px.
  */
 export const SPLIT_GRID =
-  "grid grid-cols-1 lg:grid-cols-[18%_minmax(0,1fr)] gap-x-[3%] lg:pr-[4.5%]";
+  "grid grid-cols-1 lg:grid-cols-[minmax(270px,18%)_minmax(0,1fr)] gap-x-[3%] lg:pr-[4.5%]";
+
+/**
+ * Grilla del cierre (LATEST PROJECTS): rótulo, párrafo y links.
+ *
+ * Los links **no se pueden achicar** —van a 24 px fijos y el más largo mide unos
+ * 430 px con la flecha—, así que las tres columnas solo entran de unos 1600 px
+ * de viewport para arriba. Por debajo de `2xl` los links bajan a una segunda
+ * fila dentro de la columna del párrafo, en vez de espicharlo a un renglón por
+ * palabra.
+ */
+export const LATEST_GRID =
+  "grid grid-cols-1 lg:grid-cols-[minmax(270px,18%)_minmax(0,1fr)] 2xl:grid-cols-[minmax(270px,18%)_minmax(0,1fr)_auto] gap-x-[3%]";
 
 /**
  * Igual que `SPLIT_GRID` pero con **dos filas explícitas**: la primera es solo

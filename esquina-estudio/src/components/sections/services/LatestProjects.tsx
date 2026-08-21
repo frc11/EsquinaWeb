@@ -7,6 +7,7 @@ import ServicesArrow from "@/components/sections/services/ServicesArrow";
 import {
   CONTENT_INSET,
   GUTTER,
+  LATEST_GRID,
 } from "@/components/sections/services/services-layout";
 import { SERVICES_COPY } from "@/lib/services-content";
 import { urlFor } from "@/lib/sanity";
@@ -93,13 +94,7 @@ export default function LatestProjects({
         margen derecho parejo en toda la página. La fila de portadas, en cambio,
         va a sangre y por eso queda fuera de este bloque.
       */}
-      <div
-        className={cn(
-          GUTTER,
-          CONTENT_INSET,
-          "grid grid-cols-1 gap-y-10 pt-[160px] lg:grid-cols-[18%_minmax(0,1fr)_auto] lg:gap-x-[3%] lg:gap-y-0",
-        )}
-      >
+      <div className={cn(GUTTER, CONTENT_INSET, LATEST_GRID, "pt-[160px]")}>
         <h2
           id="latest-projects"
           className="font-body text-[30px] uppercase leading-[36px] text-off-black"
@@ -107,11 +102,16 @@ export default function LatestProjects({
           {label}
         </h2>
 
-        <p className="max-w-[720px] font-body text-[30px] leading-[36px] text-off-black">
+        <p className="mt-10 max-w-[720px] font-body text-[30px] leading-[36px] text-off-black lg:mt-0">
           {paragraph}
         </p>
 
-        <div className="flex flex-col items-start gap-[14px]">
+        {/*
+          Hasta `2xl` los links van debajo del párrafo, en su misma columna: a
+          esos anchos las tres columnas no entran sin espicharlo (ver
+          `LATEST_GRID`).
+        */}
+        <div className="mt-10 flex flex-col items-start gap-[14px] lg:col-start-2 lg:row-start-2 2xl:col-start-3 2xl:row-start-1 2xl:mt-0">
           {links.map((link) => (
             <UnderlineOnHoverLink
               key={link.href}
