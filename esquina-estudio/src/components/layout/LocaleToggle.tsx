@@ -169,7 +169,7 @@ export default function LocaleToggle({
       {LOCALES.map((code: Locale, index) => (
         <span key={code} className="flex items-center">
           {index > 0 && (
-            <span aria-hidden="true" className="select-none px-[4px]">
+            <span aria-hidden="true" className="select-none px-[4px] max-lg:px-[12px]">
               /
             </span>
           )}
@@ -179,7 +179,18 @@ export default function LocaleToggle({
             lang={code}
             aria-pressed={code === selectedLocale}
             onClick={() => setLocale(code)}
-            className={`relative block cursor-pointer transition-colors duration-200 ${
+            /*
+              El área tocable de mobile la agranda un pseudo-elemento y NO el
+              relleno del botón, y la razón es la barrita: `measureFillBox` mide
+              la caja del botón, así que un `px` de 12 la dejaría de 45 px de
+              ancho debajo de un rótulo de 21. El `::after` no cambia la caja
+              —el rótulo sigue midiendo lo que mide— pero sí recibe el toque,
+              porque es hijo del propio botón. Con 12 px por lado da 45,6 de
+              ancho contra el piso de 44, y el separador sube a `px-[12px]` para
+              que los dos rectángulos no se pisen: quedan 28,7 px entre los
+              botones contra los 24 que ocupan las dos extensiones.
+            */
+            className={`relative block cursor-pointer transition-colors duration-200 max-lg:after:absolute max-lg:after:inset-y-0 max-lg:after:-inset-x-[12px] max-lg:after:content-[''] ${
               code === selectedLocale ? fullToneClass : inactiveClass
             }`}
           >
@@ -189,7 +200,16 @@ export default function LocaleToggle({
               caja, y el nodo de texto tiene que colgar de un elemento sin
               posición. Es el mismo reparto que hace `HoverButton`.
             */}
-            <span className="block py-[6px]">{code.toUpperCase()}</span>
+            {/*
+              El relleno sube a 11 px debajo de `lg`, que es donde el toggle
+              solo existe adentro del menú de mobile: 23,2 px de caja de texto
+              más 22 dan 45,2 px de alto tocable, sobre el piso de 44 (§3.4.3
+              de M1). De `lg` para arriba —el header— queda en los 6 px del
+              `balancedPadding` del menú, sin mover un píxel.
+            */}
+            <span className="block py-[6px] max-lg:py-[11px]">
+              {code.toUpperCase()}
+            </span>
             {/*
               El espacio va ADENTRO del `sr-only` y no como `{" "}` suelto: un
               nodo de texto entre los dos elementos sí ocuparía ancho —4,5 px a

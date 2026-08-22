@@ -7,6 +7,7 @@ import LogoScript from "@/components/ui/LogoScript";
 import HoverButton from "@/components/ui/HoverButton";
 import { getHeroLines } from "@/lib/site-copy";
 import { useLocale } from "@/lib/i18n";
+import { CHROME_GUTTER, TOUCH_LINKS } from "@/lib/mobile-layout";
 import developLogo from "../../../logos/logodevelOP.png";
 import footerScriptLarge from "../../../logos/logo-footer-grande.png";
 
@@ -22,8 +23,11 @@ const SOCIAL_LINKS = [
 
 const COPYRIGHT = "© 2024";
 
-/** Gutter horizontal del chrome: alinea el footer con el Navbar. */
-const GUTTER = "px-12 lg:px-16";
+/**
+ * Gutter horizontal del chrome: alinea el footer con el Navbar. Sale del módulo
+ * compartido para que los dos corten en el mismo ancho (M1).
+ */
+const GUTTER = CHROME_GUTTER;
 
 /** Sistema tipográfico de la información del footer: 17 px, interletrado 0. */
 const INFO_TYPE = "font-body font-[550] text-[17px] uppercase tracking-normal";
@@ -107,6 +111,12 @@ function InfoRow({
   tone: "light" | "dark";
   leadingClass: string;
   stackGap: string;
+  /**
+   * Alineación de la fila **de `lg` para arriba**, que es donde la fila existe:
+   * debajo de 1024 el footer es una columna y todo va alineado a la izquierda.
+   * Llega como clase entera (`lg:items-center`) y no como sufijo porque
+   * Tailwind v4 busca los nombres de clase como literales en el código.
+   */
   align: string;
   trailing?: React.ReactNode;
   /** Rutas internas: copyright y crédito develOP van a la misma altura, no apilados. */
@@ -128,10 +138,15 @@ function InfoRow({
   );
 
   return (
+    // Debajo de 1024 la fila es una COLUMNA: los dos pares de lugar, el
+    // copyright, el crédito, las redes y el logo se apilan y quedan alineados a
+    // la izquierda. Es lo único que hacía falta para que el footer entre —medido
+    // en F0: la fila pide 789 px de ancho contra 294 de caja útil a 390— y por
+    // eso el corte es `lg` y no `md`: a 768 tampoco entraba.
     <div
-      className={`flex w-full flex-row ${align} justify-between gap-12 ${INFO_TYPE} ${leadingClass} ${textClass}`}
+      className={`flex w-full flex-col items-start gap-y-8 lg:flex-row lg:justify-between lg:gap-x-12 lg:gap-y-0 ${align} ${TOUCH_LINKS} ${INFO_TYPE} ${leadingClass} ${textClass}`}
     >
-      <div className="flex flex-row items-start gap-x-12">
+      <div className="flex flex-col items-start gap-y-5 lg:flex-row lg:items-start lg:gap-x-12 lg:gap-y-0">
         {t.footer.places.map(([first, second], index) => (
           // `key` por índice: el texto cambia con el idioma y los pares son
           // siempre dos, garantizado por el tipo.
@@ -154,11 +169,11 @@ function InfoRow({
         )}
       </div>
 
-      <div className="flex flex-row items-center gap-12">
+      <div className="flex flex-col items-start gap-y-5 lg:flex-row lg:items-center lg:gap-x-12 lg:gap-y-0">
         <div
           className={
             inlineSocial
-              ? "flex flex-row items-center gap-x-5"
+              ? "flex flex-col items-start gap-y-[8px] lg:flex-row lg:items-center lg:gap-x-5 lg:gap-y-0"
               : `flex flex-col items-start ${stackGap}`
           }
         >
@@ -180,8 +195,18 @@ function StatementBand({ isContactPage }: { isContactPage: boolean }) {
   const { locale, t } = useLocale();
 
   return (
-    <div className={`flex w-full flex-row items-start justify-between gap-12 ${GUTTER} py-20`}>
-      <div className="font-display text-[40px] uppercase leading-[48px] tracking-normal text-off-black">
+    <div
+      className={`flex w-full flex-col items-start gap-y-10 lg:flex-row lg:justify-between lg:gap-x-12 lg:gap-y-0 ${TOUCH_LINKS} ${GUTTER} py-12 lg:py-20`}
+    >
+      {/*
+        La frase baja a 26/31 debajo de `md`. Los cortes de tres líneas siguen
+        siendo tres `<p>` —las negritas son por fragmento y viven adentro de su
+        línea—, pero cada línea envuelve sola: a 320 la más larga del castellano
+        mide 381,7 px contra 272 de caja, así que se parte en dos. Es lo que
+        pide §3.3 de la instrucción: el corte escrito no aplica en mobile, las
+        negritas se conservan.
+      */}
+      <div className="font-display text-[26px] uppercase leading-[31px] tracking-normal text-off-black md:text-[40px] md:leading-[48px]">
         {getHeroLines(locale).map((line, lineIndex) => (
           <p key={lineIndex}>
             {line.map((fragment, index) => (
@@ -197,7 +222,7 @@ function StatementBand({ isContactPage }: { isContactPage: boolean }) {
       </div>
 
       {!isContactPage && (
-        <div className="flex flex-col items-end gap-y-[8px] text-right font-body font-[550] uppercase tracking-normal text-off-black">
+        <div className="flex flex-col items-start gap-y-[8px] text-left font-body font-[550] uppercase tracking-normal text-off-black lg:items-end lg:text-right">
           <HoverButton
             href="/contact"
             underline
@@ -239,7 +264,13 @@ function ScriptBand({ isContactPage }: { isContactPage: boolean }) {
       />
 
       {isContactPage && (
-        <div className="absolute left-12 top-[46%] lg:left-16 font-body font-[550] uppercase tracking-normal text-off-white">
+        // Debajo de `md` el bloque sale del modo superpuesto y pasa a FLUJO
+        // NORMAL, debajo del logo: a 390 la imagen mide 116 px de alto y el
+        // bloque, apoyado en el 46 % de esa altura, terminaba 39 px por debajo
+        // de ella, encima de la fila de informacion. Medido en F0.
+        <div
+          className={`static mt-8 px-6 md:absolute md:left-12 md:top-[46%] md:mt-0 md:px-0 lg:left-16 ${TOUCH_LINKS} font-body font-[550] uppercase tracking-normal text-off-white`}
+        >
           <HoverButton
             href="/contact"
             underline
@@ -262,7 +293,7 @@ function ScriptBand({ isContactPage }: { isContactPage: boolean }) {
           tone="dark"
           leadingClass="leading-none"
           stackGap="gap-y-[8px]"
-          align="items-start"
+          align="lg:items-start"
           inlineCredit
           inlineSocial
         />
@@ -297,7 +328,7 @@ function HomeFooter() {
         tone="light"
         leadingClass="leading-[20px]"
         stackGap="gap-y-0"
-        align="items-center"
+        align="lg:items-center"
         trailing={
           <div className="flex-shrink-0">
             <LogoScript size="sm" ariaLabel={t.nav.logoHome} />

@@ -16,6 +16,7 @@ import {
 } from "@/components/layout/nav-indicator";
 import { useLocale } from "@/lib/i18n";
 import type { Dictionary } from "@/lib/i18n";
+import { CHROME_GUTTER, TOUCH_LINKS } from "@/lib/mobile-layout";
 import LogoScript from "@/components/ui/LogoScript";
 import HoverButton from "@/components/ui/HoverButton";
 
@@ -173,13 +174,13 @@ export default function Navbar() {
     >
       <div
         ref={desktopNavRef}
-        className="pointer-events-auto relative flex h-[var(--header-height)] items-center justify-between px-12 py-10 lg:px-16"
+        className={`pointer-events-auto relative flex h-[var(--header-height)] items-center justify-between py-10 ${CHROME_GUTTER}`}
       >
         <div ref={desktopLogoRef} className="flex-shrink-0">
           <LogoScript size="md" tone={navTone} ariaLabel={t.nav.logoHome} />
         </div>
 
-        <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex">
+        <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 lg:flex">
           {NAV_LINKS.map((link) => {
             return (
               <span
@@ -219,7 +220,7 @@ export default function Navbar() {
           CONTACT US no se mueve: es el ítem más alto, así que la alineación no
           lo toca.
         */}
-        <div className="hidden items-start gap-8 md:flex">
+        <div className="hidden items-start gap-8 lg:flex">
           <span ref={setDesktopLinkRef("/contact")} className="inline-flex">
             <HoverButton
               href="/contact"
@@ -237,12 +238,19 @@ export default function Navbar() {
 
         <NavIndicator
           animation={indicator}
-          className={`hidden md:block ${linkTextClass}`}
+          className={`hidden lg:block ${linkTextClass}`}
         />
 
+        {/*
+          La caja tocable es de 44x44 (§3.4.3) y las tres líneas siguen
+          alineadas a la izquierda como estaban. El margen negativo de 20 px
+          compensa el ancho que sobra a la derecha, así que el borde izquierdo
+          de las líneas queda donde lo dejaba el `p-2` viejo: la caja crece
+          hacia el gutter, que es aire.
+        */}
         <button
           type="button"
-          className="md:hidden flex flex-col gap-[5px] p-2"
+          className="-mr-5 flex h-11 w-11 flex-col items-start justify-center gap-[5px] lg:hidden"
           aria-label={t.nav.openMenu}
           aria-expanded={menuOpen}
           onClick={() => {
@@ -268,20 +276,30 @@ export default function Navbar() {
           >
             <button
               type="button"
-              className="absolute right-6 top-6 font-body text-[17px] uppercase text-off-white"
+              className="absolute right-2 top-3 flex h-11 w-11 items-center justify-center font-body text-[17px] uppercase text-off-white"
               aria-label={t.nav.closeMenu}
               onClick={() => setMenuOpen(false)}
             >
               X
             </button>
 
-            <div className="flex flex-col items-center gap-3 text-center">
+            {/*
+              48 px no entraban: `CONTACTANOS` mide 348,6 px y a 320 la caja
+              útil es de 272. A 34 px da 246,9 y entra en los cinco anchos de
+              prueba; de `sm` para arriba vuelve a la escala de display del
+              sitio (40/48). El `leading` explícito no es cosmético: con
+              `leading-none` la caja del link medía 38,5 px de alto y no
+              llegaba al piso táctil.
+            */}
+            <div
+              className={`flex flex-col items-center gap-3 text-center ${TOUCH_LINKS}`}
+            >
               {MOBILE_LINKS.map((link) => (
                 <HoverButton
                   key={link.href}
                   href={link.href}
                   tone="dark"
-                  className="font-display text-[48px] uppercase leading-none"
+                  className="font-display text-[34px] uppercase leading-[40px] sm:text-[40px] sm:leading-[48px]"
                   onClick={() => setMenuOpen(false)}
                 >
                   {t.nav[link.key]}
