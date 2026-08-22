@@ -18,7 +18,7 @@ function StudioIntro() {
 
   return (
     <RevealOnScroll delay={0.5}>
-      <section className="mx-auto w-full text-center font-body text-[32px] leading-[1.2] text-off-black md:text-[40px]">
+      <section className="mx-auto w-full text-center font-body text-[22px] leading-[1.2] text-off-black md:text-[32px] lg:text-[40px]">
         {t.team.intro.map((line, index) => (
           <p
             key={index}
@@ -33,7 +33,7 @@ function StudioIntro() {
 
 function TeamVideo() {
   return (
-      <div className="mx-auto flex h-[clamp(260px,42vh,520px)] w-full max-w-[1500px] items-center justify-center border border-off-black/10 bg-gray-brand/20">
+      <div className="mx-auto flex h-[clamp(260px,42svh,520px)] w-full max-w-[1500px] items-center justify-center border border-off-black/10 bg-gray-brand/20">
         <span className="font-body text-sm uppercase tracking-wider text-gray-brand">
           VIDEO O GIF
         </span>
@@ -63,13 +63,23 @@ function TeamSubsection({
         initialY={TEAM_ASIDE_INITIAL_Y}
         className="md:sticky md:top-24 md:self-start"
       >
-        <aside className="grid w-[246px] grid-cols-[28px_1fr] gap-5 pt-[6px] font-body text-[17px] uppercase leading-none tracking-wide text-off-black">
+        <aside className="grid w-full grid-cols-[28px_1fr] gap-5 pt-[6px] font-body text-[17px] uppercase leading-none tracking-wide text-off-black md:w-[246px]">
           <span>{id}</span>
           <span>{label}</span>
         </aside>
       </RevealOnScroll>
 
-      <div className="min-w-0 flex-1 pl-10">
+      {/*
+        `pl-10` es una sangría de escritorio: a 320 se comía 40 de los 272 px
+        útiles. Y `max-md:overflow-x-clip` es lo que le da lugar al gesto de
+        entrada: `RevealOnScroll` arranca los bloques en `translateX(40px)` y
+        eso, medido en F0, era el ÚNICO desborde de página del sitio —16 px en
+        las cinco anchuras—. El recorte es local a esta columna y solo debajo
+        de `md`, así que no toca el `sticky` del aside (CLAUDE.md §7 prohíbe
+        `overflow` recortante en los ancestros de un `sticky`, y de `md` para
+        arriba no hay ninguno).
+      */}
+      <div className="min-w-0 flex-1 max-md:overflow-x-clip md:pl-10">
         <RevealOnScroll
           delay={TEAM_TEXT_DELAY}
           duration={TEAM_REVEAL_DURATION}
@@ -77,7 +87,7 @@ function TeamSubsection({
           initialY={0}
         >
           {id === "01" ? (
-            <div className="max-w-[1280px] space-y-8 font-body text-[24px] leading-[1.25] text-off-black md:text-[30px]">
+            <div className="max-w-[1280px] space-y-8 font-body text-[20px] leading-[1.25] text-off-black md:text-[30px]">
               <p>
                 {t.team.foundedBy[0]}
                 <strong className="font-medium">{t.team.foundedBy[1]}</strong>
@@ -86,7 +96,7 @@ function TeamSubsection({
               <p>{t.team.bio}</p>
             </div>
           ) : (
-            <div className={`max-w-[1285px] ${bodySpacingClass} whitespace-pre-line font-body text-[24px] leading-[1.25] text-off-black md:text-[30px]`}>
+            <div className={`max-w-[1285px] ${bodySpacingClass} whitespace-pre-line font-body text-[20px] leading-[1.25] text-off-black md:text-[30px]`}>
               {content?.split("\n\n").map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
@@ -101,7 +111,7 @@ function TeamSubsection({
             initialX={TEAM_IMAGE_INITIAL_X}
             initialY={0}
           >
-            <div className="mt-24 w-full overflow-hidden bg-gray-brand/20">
+            <div className="mt-12 w-full overflow-hidden bg-gray-brand/20 md:mt-24">
               <Image
                 src="/projects/team.jpg"
                 alt={t.team.photoAlt}
@@ -122,12 +132,12 @@ export default function TeamSection() {
   const { t } = useLocale();
 
   return (
-    <main className="px-6 pb-16 md:px-12 mb-32">
-      <section className="flex min-h-[calc(100vh-var(--header-height,96px))] flex-col items-center justify-start gap-[clamp(20px,3vh,34px)] pb-[clamp(24px,4vh,48px)] pt-[clamp(40px,7vh,78px)]">
+    <main className="mb-16 px-6 pb-16 md:mb-32 md:px-12">
+      <section className="flex min-h-[calc(100svh-var(--header-height,96px))] flex-col items-center justify-start gap-[clamp(20px,3svh,34px)] pb-[clamp(24px,4svh,48px)] pt-[clamp(40px,7svh,78px)]">
         <StudioIntro />
         <TeamVideo />
       </section>
-      <div className="space-y-32">
+      <div className="space-y-20 md:space-y-32">
         <TeamSubsection id="01" label={t.team.sections[0]} showSlide />
         <TeamSubsection
           id="02"

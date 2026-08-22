@@ -55,7 +55,7 @@ export default function Hero() {
           variants={containerVariants}
           initial="hidden"
           animate={isPreloaderDone ? "visible" : "hidden"}
-          className="font-display text-[40px] uppercase leading-[48px] tracking-normal text-off-black"
+          className="font-display text-[26px] uppercase leading-[31px] tracking-normal text-off-black md:text-[40px] md:leading-[48px]"
         >
           {getHeroLines(locale).map((line, lineIndex) => (
             // `key` por índice y no por texto: con el texto, cambiar de idioma
