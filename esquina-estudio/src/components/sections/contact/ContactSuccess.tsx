@@ -82,7 +82,11 @@ export default function ContactSuccess() {
         }
       >
         <div className="max-w-4xl">
-          <h1 className="font-display text-[clamp(40px,5vw,64px)] uppercase leading-[1.05] text-off-white">
+          {/* El piso del `clamp` baja de 40 a 26 px: a 320 la caja util es de 272
+              y el titulo va en dos lineas fijas. El termino que manda de 800 px
+              para arriba sigue siendo `5vw` con el mismo techo de 64, asi que
+              de 1024 en adelante no cambia nada. */}
+          <h1 className="font-display text-[clamp(26px,5vw,64px)] uppercase leading-[1.05] text-off-white">
             {t.success.title[0]}
             <br />
             {t.success.title[1]}

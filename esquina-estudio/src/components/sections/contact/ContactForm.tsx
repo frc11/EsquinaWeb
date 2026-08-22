@@ -70,10 +70,16 @@ const SCOPED_SELECTION =
 // arriba (la trampa que B2.5b y B2.6 verificaron dos veces).
 const CONTROL_SCALE =
   "md:max-[1279.98px]:min-h-[58px] md:max-[1279.98px]:text-[34px] min-[1280px]:max-[1359.98px]:min-h-[44px] min-[1280px]:max-[1359.98px]:text-[26px] min-[1600px]:min-h-[58px] min-[1600px]:text-[34px]";
+// Escalon de mobile (M1/F4), disjunto de los cuatro de arriba, que arrancan en
+// `md`. Los 28 px de base no entran a 320: el placeholder del select mide 242,6
+// px y la pista util del boton —descontados el `pl-1`, el `gap-4` y la flecha—
+// es de 234, asi que `ELEGI UNA OPCION` se truncaba. A 24 px mide 207,9 y sobra
+// aire; sigue muy por encima de los 16 px que evitan el zoom de iOS (§3.4.2).
+const CONTROL_SCALE_MOBILE = "max-md:text-[24px]";
 const CONTROL_TEXT_CLASS =
-  `min-h-[48px] w-full bg-transparent pl-1 font-body text-[28px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 ${CONTROL_SCALE}`;
+  `min-h-[48px] w-full bg-transparent pl-1 font-body text-[28px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 ${CONTROL_SCALE} ${CONTROL_SCALE_MOBILE}`;
 const SELECT_BUTTON_CLASS =
-  `flex min-h-[48px] w-full pl-1 items-center justify-between gap-4 bg-transparent text-left font-body text-[28px] uppercase leading-none text-off-black outline-none transition-colors duration-200 ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white ${CONTROL_SCALE}`;
+  `flex min-h-[48px] w-full pl-1 items-center justify-between gap-4 bg-transparent text-left font-body text-[28px] uppercase leading-none text-off-black outline-none transition-colors duration-200 ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white ${CONTROL_SCALE} ${CONTROL_SCALE_MOBILE}`;
 const SELECT_SEARCH_CLASS =
   `w-full bg-transparent pl-1  font-body text-[20px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 md:max-[1279.98px]:text-[22px] min-[1600px]:text-[22px]`;
 
@@ -361,7 +367,12 @@ function WorkTypePill({
       // El padding horizontal baja a su piso medido (4 px) debajo de 1600: es
       // lo que deja el bloque de pills en 4 filas dentro de 332 px en vez de
       // 356, y esos 24 px de ancho son los que sostienen el label al costado.
-      className={`relative shrink-0 cursor-pointer overflow-hidden border border-gray-brand px-2.5 py-1.5 font-body text-[15px] uppercase leading-none transition-colors duration-150 hover:bg-off-black hover:text-off-white focus-visible:bg-off-black focus-visible:text-off-white md:max-[1279.98px]:text-[17px] min-[1280px]:max-[1599.98px]:px-1 min-[1280px]:max-[1359.98px]:text-[13px] min-[1600px]:text-[17px] ${
+      // `max-lg:` y no `md:`: de 1024 para arriba la pill no cambia ni un
+      // pixel (la composicion de B2.5b/B2.7 esta medida y es intocable). Debajo
+      // de eso pasa a `inline-flex` con piso de 44 px de alto —§3.4.3— y el
+      // rotulo queda centrado en la caja nueva; el ancho ya estaba muy por
+      // encima del piso (la pill mas corta mide 80 px).
+      className={`relative shrink-0 cursor-pointer overflow-hidden border border-gray-brand px-2.5 py-1.5 font-body text-[15px] uppercase leading-none transition-colors duration-150 hover:bg-off-black hover:text-off-white focus-visible:bg-off-black focus-visible:text-off-white max-lg:inline-flex max-lg:min-h-[44px] max-lg:items-center md:max-[1279.98px]:text-[17px] min-[1280px]:max-[1599.98px]:px-1 min-[1280px]:max-[1359.98px]:text-[13px] min-[1600px]:text-[17px] ${
         selected
           ? "bg-off-black text-off-white"
           : "bg-transparent text-gray-brand"
@@ -593,7 +604,7 @@ function CustomSelect({
               <button
                 key={option}
                 type="button"
-                className="group flex w-full items-center justify-between gap-3 px-2 py-2 text-left font-body text-[18px] uppercase leading-none transition-colors hover:bg-off-black hover:text-off-white md:max-[1279.98px]:text-[20px] min-[1600px]:text-[20px]"
+                className="group flex w-full items-center justify-between gap-3 px-2 py-2 text-left font-body text-[18px] uppercase leading-none transition-colors hover:bg-off-black hover:text-off-white max-lg:min-h-[44px] md:max-[1279.98px]:text-[20px] min-[1600px]:text-[20px]"
                 onClick={() => {
                   onChange(option);
                   setOpenSelectId(null);
@@ -755,7 +766,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
           animate={isPreloaderDone ? "visible" : "hidden"}
           variants={shouldReduceMotion ? undefined : contactTitleVariants}
         >
-          <h1 className="font-display text-[40px] font-thin uppercase leading-[48px] tracking-normal">
+          <h1 className="font-display text-[26px] font-thin uppercase leading-[31px] tracking-normal md:text-[40px] md:leading-[48px]">
             {copy.title[0]}
             <br />
             {copy.title[1]}
@@ -1113,7 +1124,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
                     type="submit"
                     form={CONTACT_FORM_ID}
                     disabled={isSubmitting}
-                    className="w-fit disabled:opacity-50"
+                    className="w-fit disabled:opacity-50 max-lg:flex max-lg:min-h-[44px] max-lg:items-center"
                   >
                     <HoverButton
                       as="span"

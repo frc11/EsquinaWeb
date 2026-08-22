@@ -25,9 +25,9 @@ export default function GalleryNotice({
     variant === "error" ? t.gallery.errorDetail : t.gallery.emptyDetail;
 
   return (
-    <section className="flex min-h-[60vh] w-full items-center justify-center bg-off-white px-6 py-32 text-center text-off-black">
+    <section className="flex min-h-[60svh] w-full items-center justify-center bg-off-white px-6 py-20 text-center text-off-black md:py-32">
       <div className="max-w-2xl">
-        <h1 className="font-display text-[40px] uppercase leading-[48px]">
+        <h1 className="font-display text-[26px] uppercase leading-[31px] md:text-[40px] md:leading-[48px]">
           {heading}
         </h1>
         <p className="mt-6 font-body text-[17px] uppercase leading-[21px] text-gray-brand">
