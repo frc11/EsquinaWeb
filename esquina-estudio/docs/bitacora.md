@@ -2091,3 +2091,176 @@ tacha los dos pendientes que M1 cierra y abre los siete que deja.
 
 - **Commits:** `3fe5c6a` · `a50f229` · `7ca5ba9` · `bc2afa9` · `594da5b` ·
   `3f04a54` · `105041a` · `26696ec`, más el de este cierre.
+
+## B4c — Banderas, timing y limpieza (2026-08-22)
+
+**Cierre de la ronda.** Tres trabajos independientes entre sí, cuatro fases, un
+commit cada una. La instrucción llegó en dos partes: la primera describía mal el
+problema de las banderas, el agente frenó, y la corregida cambió el orden a
+**F2 → F3 → F1 → F4**.
+
+- **La PARADA de F1, y por qué estuvo bien.** La instrucción original decía que
+  las banderas del selector eran **emojis de indicadores regionales** y que
+  Windows no trae la fuente. Es falso: **no hay un solo emoji en el repo** (cero
+  ocurrencias del rango `U+1F1E6`–`U+1F1FF`, de `fromCodePoint` y de
+  `regional`). Lo que hay es un set propio de **SVG dibujados a mano** —1.408
+  líneas en `MonochromeCountryFlag.tsx` más 298 de paletas—, que por ser SVG se
+  ve **igual en Mac que en Windows**. El síntoma reportado era real, pero la
+  causa era otra: **países asignados a patrones que no son los de su bandera**.
+  Se reportó con una captura de los dibujos ampliados ocho veces y la decisión
+  de Valentino fue **corregir el set existente**, no reemplazarlo por banderas
+  reales: el tratamiento monocromo con color en hover es identidad (§8), y
+  cambiarlo era decisión de paleta.
+
+- **F2 — El acuse de recibo del toggle duraba lo que dura el color, no lo que
+  dura el gesto.** `ACK_DELAY` valía 0,2 s porque se había derivado del
+  `transition-colors duration-200` del propio toggle. Pero el click dispara
+  **dos** cosas y la otra es la barrita, que viaja `NAV_INDICATOR_DURATION` =
+  **620 ms**: la cortina arrancaba con la barrita a mitad de camino, comiéndose
+  los 420 ms que le faltaban. Ahora `ACK_DELAY` se **deriva de la constante del
+  módulo del indicador** —no copia su número: la duración del viaje la fija
+  `nav-indicator.tsx` y la comparte con el menú— y le suma **un cuadro**, porque
+  el viaje no arranca en el tick del click sino dentro del
+  `requestAnimationFrame` con el que `useIndicator` mide el rótulo ya pintado.
+
+  | etapa | antes | ahora |
+  |---|---|---|
+  | acuse de recibo | 200 ms | **636,67 ms** |
+  | cortina que sube | 650 | 650 |
+  | swap, con la cortina arriba | a los 850 | a los **1286,67** |
+  | cortina que baja | 650 | 650 |
+  | **total** | **1500 ms** | **1936,67 ms** |
+  | failsafe | 1900 | **2336,67** |
+
+  **El failsafe nunca estuvo escrito a mano:** ya era
+  `TRANSITION_MS + FAILSAFE_MARGIN_MS`, así que se corrió solo y sigue cayendo
+  400 ms después del final. Esa derivación es justamente lo que evitó el bug que
+  la instrucción anticipaba —la secuencia nueva dura casi los 1900 viejos—, y
+  quedó documentada en el código para que nadie la reemplace por un número.
+  Las dos mitades de la cortina y la duración del viaje **no se tocaron**. Con
+  `prefers-reduced-motion` no cambia nada: el idioma sigue cambiando al
+  instante, sin cortina ni etapas.
+
+- **F3 — Limpieza, con dos hallazgos de más.** GSAP: cero imports de `gsap` y de
+  `gsap/ScrollTrigger`, cero apariciones de la palabra en `src/` y sin
+  dependientes en `npm ls`; las únicas coincidencias eran `IntroScrollTrigger`
+  —componente propio, sin relación— y comentarios históricos. Desinstalado:
+  **5,97 MB en 179 archivos**, y el lockfile pasa de **1372 a 1371** paquetes con
+  **cero** agregados y **cero** cambios de versión o de `resolved` (el resto de
+  su diff es npm renormalizando banderas `dev`/`peer`, verificado comparando los
+  dos árboles). `HoverButton`: se fue `blend` como estaba previsto, y en el
+  camino aparecieron **dos props más igual de huérfanas**, `underlineDraw` y
+  `underlineDrawDelay`, cuyos consumidores —el CTA del Hero y el botón DISCOVER
+  de `ServicesIntro`— habían desaparecido en B2 y B3.4; con ellas se fue la rama
+  de render del subrayado que se dibujaba solo. `--color-gray`: una sola
+  ocurrencia en todo el repo, su propia declaración.
+
+- **Lo que se reportó sin borrar.** `as?: "button" | "a" | "span"` de
+  `HoverButton`: **nadie pasa `as="a"`** y además el componente **no lo
+  implementa** —cae al `<button>` del final—. Es ambiguo entre código muerto y
+  función sin terminar, así que se reporta y no se toca. Y un hallazgo de
+  documentación: `--footer-height`, `--cursor-size(-hover)` y los cinco tokens
+  de font-size que `CLAUDE.md` §2 y los pendientes daban por existentes **ya no
+  están en `globals.css`**; se habían ido en algún sprint anterior sin que nadie
+  sincronizara la ficha.
+
+- **F1 — El censo primero.** De los 196: **148 quedaron intactos**, **44
+  cambiaron de patrón** y **4 conservaron el patrón pero les faltaba paleta o la
+  tenían corta**. Y **8 no tenían ninguna paleta**, así que en hover se quedaban
+  en line-art: Dominica, Guinea-Bissau, Kiribati, Madagascar, Qatar, Santa
+  Lucía, San Vicente y las Granadinas y el **Reino Unido**, cuya `UnionJack` ni
+  siquiera aceptaba colores — era una grilla gris.
+
+  **El comodín más caro era `triangle`.** Dibujaba el triángulo del asta sobre un
+  campo liso y se comía las bandas, y **17 de sus 21 países son en realidad
+  bandas horizontales más triángulo**. Por eso Jordania salía como un campo
+  negro con una cuña roja, sin el blanco ni el verde: el caso que Valentino
+  reportó. La distinción que pedía la instrucción se respetó: los patrones
+  **legítimamente compartidos** —tricolor vertical para Francia, Italia, Irlanda
+  y Bélgica; cruz nórdica para cinco— **no se tocaron**.
+
+  | patrón nuevo | países | nota |
+  |---|---|---|
+  | `bicolor-triangle` · `tricolor-triangle` · `stripes-triangle` | **17** | **una sola implementación**, `BandedHoistTriangle`; el largo lo fija el patrón porque en reposo no hay paleta de donde deducirlo |
+  | `canton` | 3 | Samoa, Taiwán, Tonga |
+  | `full-cross` | 3 | la cruz que cruza la bandera entera, no la chica y centrada de Suiza |
+  | `saltire` | 2 | Jamaica, Burundi |
+
+  **`canton-stripes` no se creó: ya existía declarado y sin un solo consumidor**
+  —el enum tenía 38 entradas y `resolvePattern` devolvía 37—, y ahora lo usan
+  Liberia, Malasia y Togo reusando el dibujo de Estados Unidos. Los **44**
+  patrones declarados tienen consumidores. Las otras **19** correcciones fueron
+  **reasignaciones a patrones que ya existían**, que es el arreglo más barato:
+  Afganistán (era horizontal y es vertical), Malta, Bahréin y Qatar
+  (verticales), Macedonia del Norte, Bielorrusia, San Marino, Somalia, Arabia
+  Saudita, Marruecos, Belice, Santa Lucía, Kiribati, Angola, Omán y las tres que
+  cayeron en `full-cross` y `canton`.
+
+  **Tres dibujos rehechos:** la Union Jack, que no aceptaba colores; la hoja de
+  arce de Canadá, que era la misma `Star` de siete puntas del resto del set; y
+  el palio en Y de Sudáfrica, irreconocible.
+
+  **Un dato que es por país y no por patrón:** si el triángulo del asta lleva
+  emblema. Jordania lleva su estrella y Chequia no lleva nada, así que viaja
+  como parámetro de `drawPattern` en vez de duplicar cada patrón del triángulo
+  en dos entradas del enum.
+
+- **Verificación de F1, y la hoja de contactos.** Un chequeo automático confirma
+  que **los 196 resuelven a un patrón explícito** —nadie llega al `return` final
+  del `default`— y que **los 196 tienen paleta con la cantidad de ranuras que su
+  patrón necesita**. Cero faltantes. Para la parte que el agente **no puede
+  juzgar** —si una bandera se parece a la real— se levantó una **ruta temporal**
+  con los 196 en los dos estados y se compuso la hoja de contactos **a partir
+  del HTML servido**, sin navegador: la página es estática, así que el markup ya
+  trae los 392 SVG y alcanza con recomponerlos en una lámina propia y
+  rasterizarla con `sharp`. Salieron una lámina de 3740 × 5164 y cuatro páginas.
+  La ruta temporal se borró antes del commit y `git status` quedó limpio.
+
+- **Fit de Contact, que era el riesgo.** La caja del SVG sigue midiendo
+  **24 × 15** exactos —nunca se tocó ni el `viewBox` ni las clases del
+  envoltorio—, la fila del selector **354 px**, el campo **376**, el bloque del
+  formulario **498 px a 1920** y su borde inferior en **682**: los tres números
+  publicados en B2.7, reproducidos exactos. De los 196 rótulos, **ninguno se
+  recorta**; el único que no entra en una línea es «Saint Vincent and the
+  Grenadines» (348,13 px contra 302 disponibles), que es exactamente el caso que
+  B2.7 dejó documentado y resuelto partiendo el texto en dos líneas, no
+  truncándolo.
+
+- **No-regresión.** Altos de las ocho rutas a **1920** y a **390**, en los dos
+  idiomas, contra la vara de la Fase 0: **32 de 32 idénticos**, cero scroll
+  horizontal. Los de 390 son la prueba de que **la verificación de mobile en
+  curso no se vio afectada**. `lint` y `build` en verde antes y después de cada
+  fase, con el servidor bajado y la misma tabla de rutas.
+
+- **Método: el banco de medición y los temporizadores.** Con la pestaña oculta
+  Chrome **estrangula los `setTimeout` a uno por segundo** —medido: un
+  `setTimeout(50)` tardó 999 ms— y **no corre `requestAnimationFrame`**. El
+  banco de M1 se colgaba por eso. La salida es ceder con **`MessageChannel`**,
+  que no se estrangula y que además deja terminar la hidratación de React,
+  porque su scheduler usa el mismo mecanismo. Consecuencia que hay que aceptar y
+  que ya estaba en los pendientes: **el timing del toggle no se puede
+  cronometrar** desde el agente. Se verificó por derivación de las constantes,
+  se confirmó que la expresión `.62+1/60` viaja en el bundle de producción, y el
+  resto queda del lado humano.
+
+- **Desvíos, dichos de frente.** **(1)** La verificación de las tres
+  salvaguardas de B4b con el timing nuevo es **estructural, no cronometrada**:
+  el failsafe se calcula a partir de la duración total con un margen positivo,
+  así que no puede adelantarse por construcción; el intento de observarlo en
+  vivo se abandonó tras dejar el renderer sin responder. **(2)** El borrado de
+  la ruta temporal necesitó `git add -f` seguido de `git rm -f`: el entorno
+  bloqueó `git clean` y `Remove-Item`, y la instrucción prohíbe `rm`. **(3)** El
+  set de banderas **sigue siendo una aproximación por diseño**: las cinco
+  limitaciones conocidas —`diagonal` de dos colores, `panels` de dos bandas al
+  batiente, los emblemas resueltos con silueta, Antigua entrando por descarte y
+  los tercios parejos de `horizontal-tricolor`— están listadas en los
+  pendientes.
+
+- **Verificación humana pendiente:** la revisión **país por país** de la hoja de
+  contactos, que es el entregable central de F1; el cambio de idioma con el
+  timing nuevo —que la barrita **termine** antes de que empiece el
+  desvanecimiento y que los ~2 s no se sientan largos—; y un repaso de las ocho
+  rutas para confirmar que la limpieza no se llevó nada visible.
+
+- **Commits:** `ec5f074` (F2) · `a0d1dbd` (F3) · `5342931` (F1) · `386fdfc`
+  (F4), más el de este cierre.
