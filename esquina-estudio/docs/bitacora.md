@@ -1614,3 +1614,135 @@ cierre.
   navegación, o si conviene recortar el acuse de recibo.
 
 - **Commits:** `deadcd9`, `bfe42f9`, `7d1d926`, `087abfc`, más el de este cierre.
+
+---
+
+## M1 — Adaptación mobile (2026-08-22)
+
+Ronda de mobile, sprint único. El sitio se construyó desktop-first y la
+adaptación se difirió toda la ronda anterior; este sprint la resuelve. Nueve
+fases, un commit por fase. Las decisiones de diseño vienen cerradas en la
+instrucción (`docs/instrucciones/`, §3) y este agente las aplica, no las
+reinventa.
+
+### F0 — Auditoría de desbordes (línea base)
+
+**Cómo se midió.** `npm run build` + `npm run start -- -p 3010`, servidor propio
+por PID, y el banco de medición de siempre: un `iframe` same-origin de tamaño
+fijo dentro de una pestaña del mismo origen, con `sessionStorage` marcado para
+saltear la cortina del preloader y `localStorage` para fijar el idioma. Se
+compara `document.documentElement.scrollWidth` contra `clientWidth` y se listan
+los elementos que se pasan del borde, descartando los que quedan **recortados
+por un ancestro** (`overflow-x` distinto de `visible`) y los `fixed`, que no
+alargan el área scrolleable del documento. Cada desborde se reporta en su
+elemento más profundo: si un ancestro se pasa lo mismo que su hijo, manda el
+hijo.
+
+**Límite del banco, declarado.** Con la pestaña oculta Chrome estrangula los
+temporizadores (una ejecución por minuto) y **no corre `requestAnimationFrame`**.
+El banco se rearmó para no depender de ninguno de los dos: espera el evento
+`load` —que no se estrangula— y después bombea la cola de macrotareas con
+`MessageChannel`, que es la misma que usa el scheduler de React, así que la
+hidratación y los efectos terminan igual. Las mediciones sin temporizador dan
+**exactamente los mismos números** que las tomadas antes con 1400 ms de
+asentamiento (verificado ruta por ruta a 390 en castellano). Lo que sigue sin
+poder observarse es cualquier animación: lo que se mide es el estado inicial.
+
+**Puertas de la línea base:** `lint` exit 0 · `build` exit 0, **11 rutas / 15
+páginas**, cero errores y cero warnings nuevos. `git status --porcelain` con un
+solo renglón, `?? pngs-galeria/`, que ya estaba antes del sprint.
+
+**Vara de no-regresión del desktop** — alto del documento por ruta:
+
+| ruta | 1920 EN | 1920 ES | 1366 EN | 1366 ES |
+|---|---|---|---|---|
+| `/` | 1080 | 1080 | 768 | 768 |
+| `/work` | 2154 | 2154 | 1694 | 1694 |
+| `/services` | 7653 | 7715 | 7914 | 8024 |
+| `/team` | 4257 | 4220 | 3724 | 3799 |
+| `/fun-gallery` | 2228 | 2228 | 1805 | 1805 |
+| `/contact` | 1664 | 1664 | 1451 | 1451 |
+| `/contact/success` | 1244 | 1244 | 932 | 932 |
+| `/work/[slug]` (extra) | 2190 | 2190 | 1713 | 1713 |
+
+Los siete de 1920 EN coinciden **exactamente** con la línea base que dejó B4b.
+El ancho del documento es igual al del viewport en los cuatro casos: en desktop
+no hay scroll horizontal.
+
+**LA TABLA DEL SPRINT** — píxeles de desborde horizontal
+(`scrollWidth − clientWidth`), alto de viewport 844:
+
+| ruta | 320 | 360 | 390 | 414 | 430 |
+|---|---|---|---|---|---|
+| **inglés** | | | | | |
+| `/` | **517** | **477** | **447** | **423** | **407** |
+| `/work` | **227** | **187** | **157** | **133** | **117** |
+| `/services` | **227** | **187** | **157** | **133** | **117** |
+| `/team` | **227** | **187** | **157** | **133** | **117** |
+| `/fun-gallery` | **227** | **187** | **157** | **133** | **117** |
+| `/contact` | 0 | 0 | 0 | 0 | 0 |
+| `/contact/success` | **517** | **477** | **447** | **423** | **407** |
+| `/work/[slug]` | **227** | **187** | **157** | **133** | **117** |
+| **castellano** | | | | | |
+| `/` | **567** | **527** | **497** | **473** | **457** |
+| `/work` | **255** | **215** | **185** | **161** | **145** |
+| `/services` | **255** | **215** | **185** | **161** | **145** |
+| `/team` | **255** | **215** | **185** | **161** | **145** |
+| `/fun-gallery` | **255** | **215** | **185** | **161** | **145** |
+| `/contact` | 0 | 0 | 0 | 0 | 0 |
+| `/contact/success` | **567** | **527** | **497** | **473** | **457** |
+| `/work/[slug]` | **255** | **215** | **185** | **161** | **145** |
+
+**El número no depende de la ruta: depende del footer.** Las cinco rutas
+internas dan el mismo valor y las dos que usan el footer de home dan el otro. El
+castellano suma 28 px en un caso y 50 en el otro, que es lo que crecen sus
+rótulos.
+
+**Qué desborda, elemento por elemento.** Repetida la medición con el `<footer>`
+oculto, el desborde del documento cae a **cero en siete de las ocho rutas**:
+
+| ruta | desborde sin footer (320 / 390 / 430, los dos idiomas) |
+|---|---|
+| `/`, `/work`, `/services`, `/fun-gallery`, `/contact`, `/contact/success`, `/work/[slug]` | 0 / 0 / 0 |
+| `/team` | **16 / 16 / 16** |
+
+O sea que **hay exactamente dos causas** en todo el sitio:
+
+1. **La fila de información del footer (`InfoRow`), que nunca envuelve.** Es un
+   `flex-row` con `gap-12` y `whitespace-nowrap`, más el logo script `sm` de 120
+   px a la derecha en la variante de home. Medido a 390 en inglés: la fila pide
+   **789 px** de ancho —474,6 el bloque izquierdo (los dos pares de lugar, el
+   copyright y el crédito a develOP) y 146,4 el de redes— dentro de una caja de
+   294. Con el gutter `px-12` el footer entero pide **837** contra 390 de
+   pantalla. En las rutas internas la `ScriptBand` lleva `overflow-hidden`, así
+   que ahí una parte se **recorta** en vez de scrollear: el resultado es texto
+   cortado, y es el mismo defecto.
+2. **`/team`: los 16 px son el desplazamiento inicial de `RevealOnScroll`.** Los
+   bloques de texto y la foto entran con `initialX: 40`, y mientras no cruzan el
+   viewport se quedan en `translateX(40px)`. Medido a 320: la columna de
+   contenido va de 104 a 336 —24 del `px-6`, 40 del `pl-10` y 40 del
+   desplazamiento— contra 320 de pantalla. No es el ancho del texto: el texto
+   envuelve bien; es el gesto de entrada, que en mobile no tiene lugar para
+   ocurrir.
+
+`/contact` da 0 en la tabla porque su footer recorta, no porque esté sano: su
+`InfoRow` desborda igual y queda cortada.
+
+**Lo que NO desborda, y conviene dejar escrito porque acota el sprint.** Con el
+footer fuera, ningún contenido de página se pasa ni queda recortado en ninguna
+ruta, en ningún ancho, en ninguno de los dos idiomas: el único elemento
+«recortado» que aparece es el punto del cursor custom, que vive en `fixed
+left-0 top-0` estacionado en −100 px y solo se dibuja con puntero fino. Las
+grillas ya caen a una columna por debajo de sus breakpoints (`WorkGrid`
+`grid-cols-1`, `SPLIT_GRID` y `ITEM_GRID` de Services, el formulario de Contact
+debajo de 880) y los textos envuelven. **El sprint no es una pelea contra el
+desborde: es una pelea contra la escala, el hover y el gatillo.**
+
+**Estado de contenido al momento de auditar:** el dataset ya tiene **8
+`funGalleryImage`** publicadas (cuando se cerró B4 tenía cero), así que
+`/fun-gallery` renderiza la galería real y no la pantalla de vacío. A 390 px la
+composición mide 294 px de ancho por 150 de alto y los ocho objetos miden entre
+**56 y 73 px**: legibles en desktop a 384, ilegibles acá. Es el insumo de la
+fase 6.
+
+- **Commit F0:** `docs(bitacora): auditoria de desbordes en mobile [M1/F0]`
