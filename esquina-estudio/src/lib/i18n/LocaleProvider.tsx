@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { motion } from "framer-motion";
+import { NAV_INDICATOR_DURATION } from "@/components/layout/nav-indicator";
 import {
   PAGE_EXIT_DURATION,
   PAGE_EXIT_EASE,
@@ -58,8 +59,13 @@ import type { Dictionary, Locale } from "@/lib/i18n/types";
  *    recibo —repinta el activo y manda la barrita a viajar— mientras el
  *    diccionario todavía es el viejo.
  * 2. **El acuse de recibo dura `ACK_DELAY`**, que no es un número nuevo: es lo
- *    que tarda el propio toggle en cambiar de color (`transition-colors
- *    duration-200`). Durante ese rato la cortina todavía no empezó.
+ *    que tarda el gesto más largo de los dos que el toggle dispara en el click.
+ *    Son el repintado del activo (`transition-colors duration-200`) y el viaje
+ *    de la barrita (`NAV_INDICATOR_DURATION`, 620 ms), así que manda el viaje.
+ *    Durante todo ese rato la cortina todavía no empezó: **el desvanecimiento
+ *    arranca con la barrita ya apoyada en su destino**, no a mitad del viaje
+ *    (B4c/F2; hasta entonces el acuse duraba solo los 200 ms del color y la
+ *    cortina se comía los 420 ms que le faltaban a la barrita).
  * 3. **La cortina** es un `fixed inset-0` en off-white que sube a opacidad 1 con
  *    la duración y el easing de una navegación (`PAGE_EXIT_DURATION`,
  *    `PAGE_EXIT_EASE`) y después vuelve a 0. Tapa **todo**, el menú incluido,
@@ -67,10 +73,10 @@ import type { Dictionary, Locale } from "@/lib/i18n/types";
  * 4. **El idioma se cambia con la cortina arriba**, en el punto máximo del
  *    desvanecimiento. El texto nunca se ve cambiar.
  *
- * Total: `ACK_DELAY` + dos mitades de `PAGE_EXIT_DURATION` = 1500 ms. Las dos
+ * Total: `ACK_DELAY` + dos mitades de `PAGE_EXIT_DURATION` ≈ 1937 ms. Las dos
  * mitades son exactamente las de una navegación (650 ms cada una, mismo
- * easing); lo que suma es el acuse de recibo, que el sprint pidió ver **antes**
- * del desvanecimiento.
+ * easing) y **no se tocan**; lo único que suma es el acuse de recibo, que el
+ * sprint pidió ver entero **antes** del desvanecimiento.
  *
  * ## Por qué una cortina y no el sistema de transición de rutas
  *
@@ -121,16 +127,42 @@ const STORAGE_KEY = "esquina:locale";
 const DICTIONARIES: { readonly [L in Locale]: Dictionary } = { en: EN, es: ES };
 
 /**
- * El acuse de recibo del click, en segundos. Es la duración del
- * `transition-colors duration-200` del propio toggle: el desvanecimiento
- * arranca cuando el activo terminó de repintarse.
+ * Un cuadro a 60 Hz. El viaje de la barrita **no** arranca en el mismo tick del
+ * click: `useIndicator` mide adentro de un `requestAnimationFrame` para leer el
+ * rótulo nuevo ya pintado, así que el viaje empieza, como mucho, un cuadro
+ * después. Sin este margen la cortina podría arrancar con ese cuadro todavía
+ * pendiente. A más de 60 Hz sobra; a menos, la animación ya viene degradada.
  */
-const ACK_DELAY = 0.2;
+const INDICATOR_START_FRAME = 1 / 60;
 
-/** Lo que dura la secuencia entera: acuse + cortina que sube + cortina que baja. */
+/**
+ * El acuse de recibo del click, en segundos. Tiene que cubrir **las dos** cosas
+ * que el toggle hace al recibirlo: repintar el activo (`transition-colors
+ * duration-200`) y mandar la barrita a viajar (`NAV_INDICATOR_DURATION`, 620
+ * ms). Manda el viaje, que es tres veces más largo que el color, más el cuadro
+ * que tarda en arrancar.
+ *
+ * Se **deriva** de la constante del módulo del indicador en vez de copiar su
+ * número: la duración del viaje es la misma que la del indicador del menú y no
+ * la fija este archivo (`CLAUDE.md` §6). Si algún día cambia allá, el acuse la
+ * sigue solo.
+ */
+const ACK_DELAY = NAV_INDICATOR_DURATION + INDICATOR_START_FRAME;
+
+/**
+ * Lo que dura la secuencia entera: acuse + cortina que sube + cortina que baja.
+ * Con el acuse de B4c/F2 son ≈ 1937 ms (636,67 + 650 + 650).
+ */
 const TRANSITION_MS = (ACK_DELAY + PAGE_EXIT_DURATION * 2) * 1000;
 
-/** Margen del failsafe sobre la duración total. */
+/**
+ * Margen del failsafe sobre la duración total. El failsafe se **calcula**, no se
+ * escribe: es `TRANSITION_MS + FAILSAFE_MARGIN_MS`, así que alargar el acuse lo
+ * corre solo. Con el acuse de B4c/F2 quedó en ≈ **2337 ms** (antes 1900, contra
+ * una secuencia de 1500). Escribirlo a mano era la trampa: la secuencia nueva
+ * dura casi los 1900 viejos y el failsafe habría cortado la cortina a mitad del
+ * desvanecimiento de salida.
+ */
 const FAILSAFE_MARGIN_MS = 400;
 
 /**
