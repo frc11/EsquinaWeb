@@ -17,7 +17,9 @@ import {
   useFunGalleryReturnOnMount,
 } from "@/lib/fun-gallery-return";
 import { useLocale } from "@/lib/i18n";
+import { CHROME_GUTTER } from "@/lib/mobile-layout";
 import { urlFor } from "@/lib/sanity";
+import { useIsBelowDesktop } from "@/lib/use-media-query";
 import { FunGalleryImage } from "@/types/fun-gallery-image";
 
 /*
@@ -109,8 +111,17 @@ const COMPOSITION_MAX_WIDTH = 1664;
  */
 const TARGET_MAX_ITEM_VIEWPORT_SHARE = 0.2;
 
-/** Interlineado del título. Es el `line-height` real del `<h1>`. */
-const TITLE_LINE_HEIGHT = 48;
+/**
+ * Escala del título. Bajó a clases en M1/F6: en mobile el título va a 26/31,
+ * que es la escala de display del sitio en teléfonos, y el interlineado tiene
+ * que acompañar. Vivía como constante de JS desde B3.3b porque el encuadre de
+ * entonces necesitaba el número; B3.3c cambió el criterio de tamaño —el objeto
+ * sale del ANCHO y no del alto disponible— y desde ahí el único consumidor era
+ * el propio `style` del `<h1>`. Sin segundo consumidor, no hay dos fuentes de
+ * verdad que puedan separarse.
+ */
+const TITLE_SCALE =
+  "text-[26px] leading-[31px] md:text-[40px] md:leading-[48px]";
 
 /*
   Padding del bloque y aire entre el título y la composición: ceden alto en
@@ -712,6 +723,7 @@ function GalleryCard({
   spread,
   instant,
   reduceMotion,
+  hoverEnabled,
   pileZIndex,
   onInkMeasured,
 }: {
@@ -722,6 +734,16 @@ function GalleryCard({
   /** El objeto nace en su lugar, sin animar el despliegue. */
   instant: boolean;
   reduceMotion: boolean;
+  /**
+   * Hover y seguimiento del cursor, los dos gestos de escritorio de esta
+   * pantalla. En falso —debajo de 1024 px— el objeto no crece con el puntero y
+   * no acompaña al cursor: en touch el hover no existe y el `whileHover` de
+   * Framer se dispara con el tap y **se queda pegado**, así que un objeto
+   * tocado quedaría agrandado y por encima de los demás hasta tocar otra cosa.
+   * El flotado y el despliegue no dependen de esto: siguen corriendo (§3.3 de
+   * M1: se conserva el concepto).
+   */
+  hoverEnabled: boolean;
   /** Apilado del montón. Ausente mientras no estén las mediciones. */
   pileZIndex?: number;
   onInkMeasured: (id: string, coverage: number) => void;
@@ -801,16 +823,23 @@ function GalleryCard({
         x: followX,
         y: followY,
       }}
-      whileHover={{ scale: HOVER_SCALE, zIndex: HOVER_Z_INDEX }}
+      whileHover={
+        hoverEnabled ? { scale: HOVER_SCALE, zIndex: HOVER_Z_INDEX } : undefined
+      }
       transition={{
         duration: HOVER_DURATION,
         ease: EASE,
         zIndex: { duration: 0 },
       }}
       // Con `prefers-reduced-motion` no se cuelga el seguimiento: los motion
-      // values se quedan en 0 y el hover conserva solo su escala.
-      onPointerMove={reduceMotion ? undefined : handlePointerMove}
-      onPointerLeave={reduceMotion ? undefined : handlePointerLeave}
+      // values se quedan en 0 y el hover conserva solo su escala. Debajo de
+      // 1024 tampoco se cuelga: ahí no hay ni hover ni seguimiento.
+      onPointerMove={
+        reduceMotion || !hoverEnabled ? undefined : handlePointerMove
+      }
+      onPointerLeave={
+        reduceMotion || !hoverEnabled ? undefined : handlePointerLeave
+      }
       role={interactive ? "link" : undefined}
       tabIndex={interactive ? 0 : undefined}
       aria-label={interactive ? `${viewLabel} ${item.title}` : undefined}
@@ -916,6 +945,9 @@ export default function FunGallery({
   randomSeed: string;
 }) {
   const reduceMotion = usePrefersReducedMotion();
+  // Los dos gestos de puntero de esta pantalla —la escala del hover y el
+  // seguimiento del cursor— son de escritorio y se apagan debajo de 1024.
+  const hoverEnabled = !useIsBelowDesktop();
   const { t } = useLocale();
   const [deployed, setDeployed] = useState(false);
   // Hay vuelta cuando esta pestaña tiene anotado un proyecto abierto desde acá.
@@ -953,18 +985,12 @@ export default function FunGallery({
 
   return (
     <section
-      className="relative overflow-x-clip bg-off-white px-12 pb-32 text-off-black lg:px-16"
+      className={`relative overflow-x-clip bg-off-white pb-20 text-off-black md:pb-32 ${CHROME_GUTTER}`}
       style={{ paddingTop: SECTION_PAD_TOP }}
       aria-label={t.gallery.sectionLabel}
     >
-      {/*
-        El interlineado va inline y no en una clase: el encuadre necesita saber
-        cuánto mide el bloque del título, y con dos fuentes de verdad el día que
-        alguien toque una la cuenta queda mal sin que nada avise.
-      */}
       <h1
-        className="text-center font-display text-[40px] uppercase tracking-normal"
-        style={{ lineHeight: `${TITLE_LINE_HEIGHT}px` }}
+        className={`text-center font-display uppercase tracking-normal ${TITLE_SCALE}`}
       >
         {t.gallery.title.map((line, index) => (
           // `key` por índice: el texto cambia con el idioma y las líneas son
@@ -992,6 +1018,7 @@ export default function FunGallery({
             spread={spread}
             instant={instantSpread}
             reduceMotion={reduceMotion}
+            hoverEnabled={hoverEnabled}
             pileZIndex={pileStack?.[item.id]}
             onInkMeasured={handleInkMeasured}
           />
