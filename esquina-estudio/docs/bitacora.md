@@ -1746,3 +1746,348 @@ composición mide 294 px de ancho por 150 de alto y los ocho objetos miden entre
 fase 6.
 
 - **Commit F0:** `docs(bitacora): auditoria de desbordes en mobile [M1/F0]`
+
+### F1 — Cromo: navbar, menú y footer
+
+**El corte del cromo es `lg` (1024) y no `md`, y salió de medir.** El menú de
+escritorio está centrado en absoluto: con los rótulos en castellano pide 403 px
+y el logo ocupa hasta 244, así que a 768 se montan (el menú arrancaría en 182) y
+a 1024 entran con holgura. El `InfoRow` del footer pide **789 px** de ancho y con
+el gutter de 64 entra recién a partir de 1024. Debajo de eso mandan la
+hamburguesa y el footer en una columna.
+
+- **Módulo nuevo `src/lib/mobile-layout.ts`**: el gutter del cromo
+  (`px-6 md:px-12 lg:px-16` — los 24 px de mobile son el `px-6` que ya usaban
+  Contact, Team, la grilla de Work y las pantallas de aviso, no una medida
+  nueva) y `TOUCH_LINKS`. Este último resuelve un problema real: `HoverButton`
+  **no se puede tocar** (§4.2) y su `className` va al `<span>` de adentro, así
+  que engordar ese span con relleno arrastraría el subrayado, que está anclado a
+  su borde inferior. Desde afuera sí se alcanza el `<a>` con una variante
+  arbitraria: se vuelve un `inline-flex` de 44 px con el span centrado. El área
+  crece y la línea se queda pegada al texto.
+- **Footer en una columna** debajo de `lg`, en las dos variantes. La frase de la
+  marca baja a 26/31 y envuelve sola. El bloque `JOIN OUR CLUB` sale del modo
+  superpuesto y pasa a flujo debajo del logo grande: a 390 la imagen mide 116 px
+  de alto y el bloque, apoyado en el 46 % de esa altura, terminaba **39 px por
+  debajo de ella**, encima de la fila de información.
+- **Navbar**: hamburguesa y botón de cierre en cajas de 44 × 44 (venían de
+  40 × 30,5 y **10,3 × 25,5** medidos sobre el build de control). Los links del
+  menú bajan a 34/40: a 48 px `CONTACTANOS` mide **350,7 px** y la caja útil a
+  320 es de 272, así que se salía de la pantalla; a 34 mide 246,9. De `sm` para
+  arriba vuelven a 40/48.
+- **Toggle de idioma**: el relleno vertical sube a 11 px debajo de `lg` (45,2 px
+  de alto contra los 37,5 de antes) y el área horizontal la agranda un
+  `::after`, **no** el relleno del botón: `measureFillBox` mide la caja del
+  botón, así que un `px` de 12 dejaría la barrita de 45 px de ancho debajo de un
+  rótulo de 21. Con el pseudo-elemento la caja no cambia, el toque sí: 45,6 y
+  44,2 px de ancho, con 6,84 px de aire entre los dos rectángulos.
+
+**Resultado:** el desborde cae a cero en las ocho rutas y los cinco anchos, en
+los dos idiomas, salvo los 16 px de `/team`.
+
+- **Commit F1:** `feat(mobile): navbar, menu y footer [M1/F1]`
+
+### F2 — Home y Team
+
+- **Home.** La frase baja a **26/31** debajo de `md` —el par que ya usaba el
+  footer— y envuelve sola: a 320 la línea más larga del castellano mide 381,7 px
+  contra 272 de caja. Los cortes escritos de tres líneas no aplican en mobile y
+  **las negritas se conservan** en su fragmento, que es lo que pedía §3.3. El
+  bloque de «una pantalla exacta» queda para `lg`: debajo de 1024 el footer pasa
+  a una columna y mide **488 px**, así que la cuenta no cierra; el hero se queda
+  con la pantalla menos el header (512 px a 320×640, con la frase de 155 px
+  centrada) y el footer se alcanza scrolleando. Es la misma aceptación que §3.3
+  escribe para Contact.
+- **`100vh` → `100svh`** en el bloque de home, en la sección de entrada de Team y
+  en los topes de los medios de la ficha. En desktop las dos unidades valen lo
+  mismo y está verificado: los altos de `/` a 1920 y a 1366 no se mueven.
+- **Team.** Una columna, intro a 22 px y cuerpos a 20. El `pl-10` es sangría de
+  escritorio y se va debajo de `md`: a 320 se comía 40 de los 272 px útiles.
+- **Los 16 px de `/team` eran el gesto de entrada, no el texto.**
+  `RevealOnScroll` arranca los bloques en `translateX(40px)` y los deja ahí
+  mientras no cruzan el viewport; medido a 320, la columna iba de 104 a 336
+  —24 del `px-6`, 40 del `pl-10` y 40 del desplazamiento— contra 320 de pantalla.
+  **No se puede arreglar apagando el desplazamiento**: el HTML del servidor ya
+  lo trae puesto, así que el desborde existiría igual hasta que hidratara. Lo
+  resuelve un `max-md:overflow-x-clip` **local a esa columna**, que es como se
+  construye cualquier entrada deslizante. No toca el `sticky` del aside: de `md`
+  para arriba no hay ningún ancestro recortante (CLAUDE.md §7).
+
+- **Commit F2:** `feat(mobile): home y team [M1/F2]`
+
+### F3 — Work y ficha de proyecto
+
+**El texto de la portada va debajo, no encima, y la elección no fue de gusto.**
+§3.2 dejaba elegir; encima no se podía: el overlay tapa la portada entera con el
+`coverColor`, así que dejarlo «siempre visible» equivaldría a **no mostrar nunca
+la portada**. Debajo se lee sin ambigüedad y la portada se ve. El 5:4 se
+conserva y ahora lo lleva la portada —la celda tiene que poder crecer para
+alojar el texto—; medido a 390: portada de 342 × 273,6 (ratio 1,25 exacto) y
+bloque de texto de 342 × 109,8. El overlay de hover queda `hidden lg:flex`, con
+lo que en touch tampoco puede quedarse pegado por un tap.
+
+En la ficha, el aside ya se apilaba arriba del contenido: lo que faltaba era
+escala. Título 26/40, párrafos del Portable Text 20/30, título del proyecto
+siguiente 20/24, y el aire de la navegación de cierre de 96/48 a 64/40. Los tres
+links toman 44 px de alto tocable.
+
+- **Commit F3:** `feat(mobile): grilla de work y ficha de proyecto [M1/F3]`
+
+### F4 — Contact y pantallas de resultado
+
+Una columna y label arriba del control ya eran el estado base debajo de `md`.
+Lo que faltaba:
+
+- **Áreas táctiles**: pills (venían de **29 px** de alto), opciones del
+  desplegable (**34**) y botón de envío (**40**) pasan a 44. Las pills a
+  `inline-flex` para que el rótulo quede centrado en la caja nueva; el ancho ya
+  estaba muy por encima del piso (la más corta mide 61,8 px).
+- **Un escalón de control propio de mobile, y por una medida:** los 28 px de
+  base no entran a 320. El placeholder del select mide **243 px** contra **234**
+  de pista útil —descontados el `pl-1`, el `gap-4` y la flecha— y se truncaba a
+  «ELEGÍ UNA OPCI…» (verificado en el build de control: `scrollWidth` 243 contra
+  `clientWidth` 234). A 24 px mide 207,9 y sobra aire. Sigue muy por encima de
+  los 16 px que evitan el zoom automático de iOS.
+- Título del aside a 26/31; título de la pantalla de éxito con el piso del
+  `clamp` de 40 a 26 —el término que manda de 800 px para arriba sigue siendo
+  `5vw` con el mismo techo de 64, así que de 1024 en adelante no cambia: medido
+  51,2 px a 1024 y 64 a 1920—; pantallas de aviso de la galería a 26/31.
+
+**El bloque del formulario a 1920 sigue midiendo 498 px, con el borde inferior
+en 682, en los dos idiomas** — el mismo número que dejó B4/F7.
+
+- **Commit F4:** `feat(mobile): contacto y pantallas de resultado [M1/F4]`
+
+### F5 — Services
+
+**El gatillo del intro no se arma debajo de 1024, y se verificó que no deja
+residuo.** `IntroScrollTrigger` sale del efecto **antes de registrar un solo
+listener**. No es cosmético: sus tres listeners son no pasivos y cancelan desde
+el primer evento mientras el gatillo está armado, así que en un teléfono la
+pantalla no se movería hasta juntar 60 px y después daría un salto de una
+pantalla entera.
+
+La sonda —eventos sintéticos **cancelables** despachados sobre la ventana del
+documento— y sus dos lados:
+
+| viewport | `wheel` | 2.º `wheel` | `touchmove` | `scrollTo(0,400)` | `body` inline |
+|---|---|---|---|---|---|
+| 320×640 | no cancelado | no cancelado | no cancelado | `scrollY` 400 | ninguno |
+| 390×844 | no cancelado | no cancelado | no cancelado | `scrollY` 400 | ninguno |
+| 1024×768 | **cancelado** | **cancelado** | **cancelado** | `scrollY` 400 | ninguno |
+| 1920×1080 | **cancelado** | **cancelado** | **cancelado** | `scrollY` 400 | ninguno |
+
+Los dos últimos renglones son los que prueban que la sonda mide algo. El sidebar
+ya era `hidden lg:block`: verificado `display: none` a 320, 390 y 430.
+
+**Escala de mobile de la ruta: un solo mapeo** —40 → 26 · 30 → 20 · 24 → 20 ·
+20 → 17— declarado en `services-layout` para no inventar un tamaño por bloque, y
+válido solo debajo de `md`. El aire vertical baja de 160/120 a 64/64. Las
+secciones ya se apilaban y el detalle de cada ítem ya caía debajo de su nombre.
+
+**LATEST PROJECTS**: las cuatro portadas quietas —sin escala y sin difuminado— y
+sin colgar ninguno de los cuatro manejadores, así que un tap no puede dejar una
+portada agrandada. Los dos links llevan el subrayado siempre puesto: son los
+únicos del sitio que lo tenían en hover.
+
+**Hook nuevo y único de media queries** (`src/lib/use-media-query.ts`), del que
+pasó a colgar también `usePrefersReducedMotion`: una sola implementación, mismo
+contrato, sin cambio de comportamiento.
+
+- **Commit F5:** `feat(mobile): services [M1/F5]`
+
+### F6 — Fun Gallery
+
+Se conserva el concepto entero —montón centrado, «(clic para ver)», tap que
+despliega, flotado— y se apagan los dos gestos de puntero:
+
+- **`whileHover`** no se pasa debajo de 1024. En touch el hover no existe y el de
+  Framer se dispara con el tap y **se queda pegado**: el objeto tocado quedaría
+  agrandado y por encima del resto hasta tocar otra cosa.
+- **El seguimiento del cursor** tampoco cuelga sus manejadores.
+
+**El tap se verificó de punta a punta**: tocar un objeto con proyecto anota
+`esquina:fun-gallery-return` y navega (medido, `/work/akasha-blends`). De los
+ocho objetos del dataset, **dos** tienen proyecto vinculado; los otros seis no
+tienen `role`, ni `tabindex`, ni manejador — un tap no hace nada, que es lo que
+pedía §3.2. Mientras el montón está sin desplegar **ningún** objeto es
+interactivo: el click que despliega lo recibe el botón que los cubre (313 × 159
+a 390).
+
+**El tamaño de los objetos.** Con el gutter del cromo, la composición deja de
+estar limitada por el ancho del contenedor y vuelve a mandar el criterio de
+B3.3c: el objeto mayor mide **exactamente el 20 % del ancho del viewport**, que
+es la misma proporción que en desktop (384 px sobre 1920). Medido: **64 px a
+320, 78 a 390 y 86 a 430**. La escena de entrada entra completa en los tres: el
+borde inferior del cartel cae en 424 sobre 640, en 402 sobre 844 y en 414 sobre
+844. Si en la mano se siente chico es una constante y queda anotado en
+pendientes.
+
+- **Commit F6:** `feat(mobile): fun gallery [M1/F6]`
+
+### F7 — Imágenes y áreas táctiles
+
+**`sizes`: por qué un teléfono descargaba archivos de 640 px.** Los anchos de
+este sprint están **por debajo del corte más chico que `next/image` considera**:
+su `deviceSizes` arranca en 640 y `next.config.ts` no se toca (§4.2). El detalle
+que decide el peso está en `getWidths`, leído del código de la 16.2.6 y no de
+memoria: si el `sizes` trae un `vw` **suelto**, el candidato más chico del
+`srcset` pasa a ser `640 × el vw más chico` y todo lo que hay debajo —96, 128,
+256, 384— desaparece de la lista. Y como el regex que lo detecta pide que el
+número venga precedido por un espacio o por el inicio de la cadena, **un `vw`
+escrito dentro de un `calc()` no lo dispara** y la lista vuelve entera. No
+cambia lo que el navegador calcula: es la misma medida. La nota, con la cita del
+código, quedó en `src/lib/mobile-layout.ts`.
+
+Con eso, y ajustando cada declaración a la caja real de mobile, el **peso
+servido a 390 px y DPR 1** (medido de forma determinista: se resuelve el `sizes`
+contra el viewport, se elige del `srcset` real y se pide cada archivo con
+`cache: "no-store"` y el `Accept` de Chrome, para que el resultado no dependa de
+qué variante tenga el navegador en caché):
+
+| ruta | antes | después | corte |
+|---|---|---|---|
+| `/` | 5,9 KB | 5,9 KB | — |
+| `/work` | **186,5** | **89,8** | portadas 640 → 384 |
+| `/services` | **53,0** | **31,1** | portadas del cierre 256 → 128 |
+| `/team` | **44,2** | **31,1** | foto 640 → 384 |
+| `/fun-gallery` | **56,5** | **32,1** | objetos 256 → 96 |
+| `/contact` | 19,1 | 19,1 | — |
+| `/contact/success` | 9,7 | 9,7 | — |
+| `/work/[slug]` | 19,1 | 19,1 | — |
+| **total** | **394,0 KB** | **237,9 KB** | **−39,6 %** |
+
+Las rutas que no bajan solo cargan cromo, cuyas declaraciones ya eran exactas.
+El logo del header declaraba 196 px y mide 146,3: a DPR 2 pedía el corte de 640
+en vez del de 384.
+
+**En desktop no cambia un solo corte.** Verificado a 1920 sobre el `srcset` real:
+la lista de candidatos de una portada de Work es
+`256 384 640 750 828 1080 1200 1920 2048 3840` y el navegador elige **640** para
+una caja de 608, igual que antes. (Una advertencia de método: `currentSrc` **no
+sirve** para esta comparación, porque el navegador prefiere una variante que ya
+tenga en caché; hay que resolverlo desde `sizes` + `srcset`.)
+
+**Áreas táctiles.** Auditadas las **504** que aparecen en ocho rutas × tres
+anchos × dos idiomas: **ninguna por debajo de 44 × 44**. Lo que no llegaba
+antes, medido sobre el build de control a 320 y 390 en castellano:
+
+| elemento | antes | ahora |
+|---|---|---|
+| `Todos los proyectos` (ficha) | 158,5 × **19,5** | ≥ 44 |
+| `INSTAGRAM` (footer) | 98,4 × **20** | 98,4 × 44 |
+| `LINKEDIN` (footer) | 75,5 × **20** | 75,5 × 44 |
+| `SUMATE AL CLUB` (footer de `/contact`) | 211,9 × **22** | ≥ 44 |
+| `HECHO POR develOP` | 175,3 × **25** | 197,3 × 44 |
+| cerrar menú | 10,3 × **25,5** | 44 × 44 |
+| `VER MÁS PROYECTOS` (Services) | 276,9 × **28** | ≥ 44 |
+| las 10 pills de Contact | 61,8–181,5 × **29** | × 44 |
+| abrir menú (hamburguesa) | 40 × **30,5** | 44 × 44 |
+| opciones del desplegable | 250 × **34** | 250 × 44 |
+| `PEDIR PRESUPUESTO` (Services) | 275 × **36,5** | ≥ 44 |
+| toggle de idioma del menú | 21,6 × **37,5** | 45,6 × 47,5 |
+| `CONTACTANOS` (footer) | 194,8 × **38** | ≥ 44 |
+| `ENVIAR FORMULARIO` | 205,4 × **40** | ≥ 44 |
+
+- **Commit F7:** `perf(mobile): sizes de imagenes y areas tactiles [M1/F7]`
+
+### F8 — Puertas, mediciones de cierre y documentación
+
+**Puertas** con el servidor bajado: `lint` exit 0 · `build` exit 0, **11 rutas /
+15 páginas**, cero errores y cero warnings nuevos (siguen los mismos avisos de
+deprecación de `@sanity/image-url` que ya estaban en la línea base).
+
+**LA TABLA DEL SPRINT, repetida al cierre.** Píxeles de desborde horizontal,
+ocho rutas × cinco anchos × dos idiomas, con altos de 844 **y** de 640:
+
+| ruta | 320 | 360 | 390 | 414 | 430 |
+|---|---|---|---|---|---|
+| `/` | 0 | 0 | 0 | 0 | 0 |
+| `/work` | 0 | 0 | 0 | 0 | 0 |
+| `/services` | 0 | 0 | 0 | 0 | 0 |
+| `/team` | 0 | 0 | 0 | 0 | 0 |
+| `/fun-gallery` | 0 | 0 | 0 | 0 | 0 |
+| `/contact` | 0 | 0 | 0 | 0 | 0 |
+| `/contact/success` | 0 | 0 | 0 | 0 | 0 |
+| `/work/[slug]` | 0 | 0 | 0 | 0 | 0 |
+
+Idéntica en inglés y en castellano. Contra la tabla de la Fase 0, que iba de
+**117 a 567 px** según ruta, ancho e idioma.
+
+**No-regresión del desktop.** Alto del documento, contra el **código pre-sprint
+recompilado y medido con el mismo instrumento en la misma sesión**:
+
+| ruta | 1920 EN | 1920 ES | 1366 EN | 1366 ES | 1024 EN | 1024 ES |
+|---|---|---|---|---|---|---|
+| `/` | 1080 | 1080 | 768 | 768 | 768 | 768 |
+| `/work` | 2155 | 2155 | 1694 | 1694 | 1410 | 1410 |
+| `/services` | 7654 | 7716 | 7915 | 8025 | 9119 | 9239 |
+| `/team` | 4537 | 4499 | 3899 | 3974 | 4220 | 4268 |
+| `/fun-gallery` | 2228 | 2228 | 1805 | 1805 | 1563 | 1563 |
+| `/contact` | 1664 | 1664 | 1451 | 1451 | 1911 | 1911 |
+| `/contact/success` | 1244 | 1244 | 932 | 932 | 932 | 932 |
+| `/work/[slug]` | 2190 | 2190 | 1713 | 1713 | 1611 | 1611 |
+
+**Los 48 números son idénticos**, control contra final. El bloque del formulario
+a 1920 mide **498 px** con el borde inferior en **682**, en los dos idiomas.
+
+**Otras mediciones de cierre:**
+
+- **Tamaño de fuente de los inputs:** los cuatro de `/contact` a **24 px** y el
+  buscador de países a **20**; no hay ningún otro `input`, `select` o `textarea`
+  en el sitio. Todos por encima del piso de 16 que evita el zoom de iOS.
+- **`document.body` sin una sola propiedad inline** en las ocho rutas y los dos
+  idiomas.
+- **Peso de imágenes a 390 px:** 394,0 → 237,9 KB (tabla completa en F7).
+
+**Documentación:** `CLAUDE.md` estrena **§2b Mobile** —los tres rangos, por qué
+el cromo corta en 1024 y no en 768, los dos módulos nuevos, los cinco lugares de
+hover y las cinco reglas técnicas—, §1 deja de decir que mobile está diferido,
+§4 y §6 anotan que el sidebar y el gatillo de Services son de escritorio, §7 suma
+la lección de `sizes` y §10 saca mobile de «lo que sigue». `docs/pendientes.md`
+tacha los dos pendientes que M1 cierra y abre los siete que deja.
+
+- **Commit F8:** `docs: sincronizar documentacion tras la adaptacion mobile [M1/F8]`
+
+---
+
+### Cierre de M1
+
+- **Qué se hizo:** los nueve commits de arriba. El sitio pasa de tener entre 117
+  y 567 px de scroll horizontal en todas las rutas a **cero**, con las áreas
+  táctiles en 44 px, los inputs por encima del umbral de zoom de iOS, el hover
+  desmontado en los cinco lugares donde el sitio se apoyaba en él, el gatillo de
+  Services desarmado sin residuos y un 39,6 % menos de imagen servida.
+
+- **Decisiones tomadas en ejecución** (§3 no las cubría; ninguna es de producto):
+  1. **El corte del cromo es 1024 y no 768.** §3.1 dice que tablet «puede
+     compartir soluciones con mobile»; acá tuvo que hacerlo, porque el menú de
+     escritorio y el `InfoRow` del footer **no entran** a 768. Medido.
+  2. **El texto de Work va debajo de la portada.** §3.2 dejaba elegir; encima
+     era imposible sin ocultar la portada.
+  3. **Home deja de entrar en una pantalla exacta debajo de 1024**, porque el
+     footer en una columna mide 488 px. Se aplica por analogía la aceptación que
+     §3.3 escribe para Contact.
+  4. **El subrayado de los dos links de LATEST PROJECTS** pasa a estar siempre
+     puesto debajo de 1024. §3.2 lo pide para el footer y el menú; estos dos eran
+     los únicos que quedaban con subrayado en hover.
+  5. **El `calc()` en los `sizes`** (F7). Es una lectura del código de Next, no
+     una preferencia, y degrada sin romper.
+  6. **Un escalón de control de 24 px en Contact**, para que el placeholder del
+     select no se trunque a 320.
+
+- **Pendientes que deja:** siete, todos de diseño con el teléfono en la mano y
+  todos ajustables con una constante. Están en `docs/pendientes.md`.
+
+- **Verificación humana pendiente:** el agente **no puede simular gestos táctiles
+  ni observar animaciones** —con la pestaña oculta Chrome no corre
+  `requestAnimationFrame`—. Queda para Valentino, con el teléfono: que el tap
+  despliegue la galería y que el flotado se vea bien; que el scroll de Services
+  se sienta normal desde el arranque; completar y enviar el formulario entero,
+  selects incluidos, y confirmar que al enfocar un input la pantalla **no** hace
+  zoom; abrir y cerrar el menú y cambiar de idioma desde ahí; y recorrer las
+  siete rutas en los dos idiomas buscando textos que se sientan chicos o
+  apretados.
+
+- **Commits:** `3fe5c6a` · `a50f229` · `7ca5ba9` · `bc2afa9` · `594da5b` ·
+  `3f04a54` · `105041a` · `26696ec`, más el de este cierre.

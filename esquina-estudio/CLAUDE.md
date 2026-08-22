@@ -4,11 +4,11 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 
 **Regla de lectura:** este documento separa **ESTADO** (verificado contra el código en HEAD) de **PLAN** (decidido, todavía no ejecutado). No trates el PLAN como código existente, y no «corrijas» el código hacia versiones viejas de este archivo.
 
-Última sincronización: **2026-08-22** (microsprint B4b, refinamiento del toggle de idioma); antes, **2026-08-21** (cierre de B4, idioma EN/ES, y con él el cierre de la ronda); antes de eso, 2026-08-20 (B3.4 + B3.4b, rediseño de `/services`) y 2026-08-15 (Bloque 1) sobre la auditoría completa `docs/reportes/2026-08-13-auditoria-completa.md` (HEAD `2565d01`). Las secciones no tocadas por B3.4 ni por B4 siguen reflejando esa auditoría. Antes de ejecutar cualquier sprint: leer `docs/plan-maestro.md` y la última entrada de `docs/bitacora.md`. Ante conflicto entre este archivo y el plan maestro, **manda el plan maestro**.
+Última sincronización: **2026-08-22** (sprint **M1**, adaptación mobile); antes, 2026-08-22 (microsprint B4b, refinamiento del toggle de idioma); **2026-08-21** (cierre de B4, idioma EN/ES, y con él el cierre de la ronda); antes de eso, 2026-08-20 (B3.4 + B3.4b, rediseño de `/services`) y 2026-08-15 (Bloque 1) sobre la auditoría completa `docs/reportes/2026-08-13-auditoria-completa.md` (HEAD `2565d01`). Las secciones no tocadas por B3.4 ni por B4 siguen reflejando esa auditoría. Antes de ejecutar cualquier sprint: leer `docs/plan-maestro.md` y la última entrada de `docs/bitacora.md`. Ante conflicto entre este archivo y el plan maestro, **manda el plan maestro**.
 
 ## 1. Proyecto y stack — ESTADO
 
-- Portfolio de Esquina Estudio (estudio de branding). Producción en Netlify. **Desktop-first**; la adaptación mobile es una ronda futura separada.
+- Portfolio de Esquina Estudio (estudio de branding). Producción en Netlify. Se construyó **desktop-first** y **M1 (2026-08-22) hizo la adaptación mobile**: el sitio entra y se usa en teléfonos, con cero scroll horizontal medido en las ocho rutas, cinco anchos y los dos idiomas. Los puntos de corte y las decisiones están en §2b.
 - Raíz git: `C:/EsquinaWeb`. Proyecto Next: `esquina-estudio/`.
 - Next.js **16.2.6** (pin exacto, App Router, Turbopack) · React **19.2.4** (pin) · TypeScript estricto · Tailwind **v4** · Framer Motion 12 · GSAP 3 **sin ningún consumidor desde B3.4** (sigue en `package.json`; ver pendientes) · Lenis = paquete legacy **`@studio-freight/lenis`** · next-sanity · react-hook-form + zod **v4** · resend · sharp (devDependency). **El i18n es propio** (`src/lib/i18n/`, B4): no hay ni va a haber librería de idioma.
 - Scripts: `dev`, `build`, `start`, `lint`. No hay tests ni typegen.
@@ -23,6 +23,88 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 - `--footer-height: 480px` y `--cursor-size(-hover)` existen en `globals.css` pero **no los consume nadie** (el footer real en flujo mide 166 px). Los 5 tokens de font-size del `@theme` están **huérfanos**: el patrón vigente es el valor arbitrario por componente (`text-[13px]`, `text-[40px]`, …). Adoptarlos o borrarlos es decisión del ritual de B2 — no lo resuelvas por tu cuenta.
 - Todas las reglas de `globals.css` (salvo el `@theme`) están **fuera de `@layer`**: le ganan a cualquier utility. Para sobreescribir desde un componente: `!important` del lado layered, scopeado. Precedente correcto: `SCOPED_SELECTION` en `ContactForm.tsx:43-44`.
 - Cursor custom: punto fijo de 16 px (`h-4 w-4`, `mix-blend-difference`), activado por `body[data-custom-cursor]`; excluido de `/studio` por early-return de `RootClientShell`.
+
+## 2b. Mobile — ESTADO (M1, 2026-08-22)
+
+**Un solo corte manda: 1024 px.** De ahí para arriba **no cambió nada** —está
+verificado midiendo los altos de las ocho rutas a 1920, 1366 y 1024 contra el
+código pre-sprint recompilado, en los dos idiomas: los 48 números son
+idénticos—. Debajo de 1024 mandan las soluciones de mobile, sean CSS o
+JavaScript. Hay un segundo corte, `md` (768), pero es **solo tipográfico**: da
+un escalón intermedio de tamaño en las rutas que lo necesitaban.
+
+| rango | nombre | tratamiento |
+|---|---|---|
+| < 768 | mobile | una columna, gutter de 24 px, escala reducida |
+| 768–1023 | tablet | igual que mobile en estructura, gutter de 48 px, escala de escritorio |
+| ≥ 1024 | desktop | lo aprobado en los bloques 2, 3 y 4. **Intocable** |
+
+**Por qué el cromo corta en `lg` y no en `md`, que es lo que se esperaría:** el
+menú de escritorio está centrado en absoluto y con los rótulos en castellano
+pide 403 px, con el logo ocupando hasta 244 y el bloque de la derecha 217 — a
+768 se montan, a 1024 entran con holgura. Y el `InfoRow` del footer pide **789
+px** de ancho: con el gutter de 64 entra recién a partir de 1024. Los dos
+números están medidos.
+
+**Dos módulos nuevos, y son los únicos de su clase (§8.10):**
+
+- **`src/lib/mobile-layout.ts`** — el gutter del cromo (`px-6 md:px-12
+  lg:px-16`), el piso de área táctil y el helper `TOUCH_LINKS`, que le da 44 px
+  de alto tocable al `<a>` que emite `HoverButton` **sin tocar el primitivo**
+  (§4.2 lo prohíbe) y sin despegar su subrayado: el `className` de `HoverButton`
+  va al `<span>` de adentro, así que engordar ese span arrastraría la línea; se
+  alcanza el ancla desde afuera con una variante arbitraria. Lleva además la
+  nota larga sobre `sizes` (ver más abajo). Las clases van como literales
+  enteros: Tailwind v4 las busca como texto.
+- **`src/lib/use-media-query.ts`** — el hook de media queries del repo.
+  `usePrefersReducedMotion` pasó a colgarse de él, así que hay **una sola**
+  implementación. Arranca en `false` en el servidor y en el primer render, y se
+  corrige en un efecto: sirve para **apagar comportamiento** (un listener que se
+  registra un cuadro y se da de baja) y **no** para decidir layout, que tiene
+  que salir correcto del servidor. El layout se resuelve con variantes de
+  Tailwind.
+
+**El hover no existe en touch.** Los cinco lugares donde el sitio se apoyaba en
+hover, y qué hacen debajo de 1024:
+
+1. **Grilla de Work** — el texto del overlay va **siempre visible y debajo de la
+   portada**. Sobre ella no se podía: el overlay tapa la portada entera con el
+   `coverColor`, así que «siempre visible» ahí equivaldría a no mostrar nunca la
+   portada. El 5:4 se conserva y lo lleva la portada, no la celda. El overlay de
+   hover es `hidden lg:flex`, con lo que un tap tampoco puede dejarlo pegado.
+2. **LATEST PROJECTS** — las cuatro portadas **quietas**: ni escala ni
+   difuminado, y sin colgar los cuatro manejadores.
+3. **Fun Gallery** — sin `whileHover` y sin seguimiento del cursor. El tap en un
+   objeto con proyecto navega; de los ocho del dataset, seis no tienen proyecto
+   y no tienen `role`, ni `tabindex`, ni manejador.
+4. **Links del footer y del menú** — el subrayado ya era fijo; los dos links de
+   LATEST PROJECTS, que lo tenían en hover, lo llevan puesto debajo de 1024.
+5. **Pills e inputs de Contact** — el estado activo ya se veía sin hover;
+   verificado.
+
+**Lo que se desmontó, y cómo se verificó.** El **gatillo del intro de Services**
+(`IntroScrollTrigger`) sale del efecto **antes de registrar un solo listener**
+debajo de 1024. Sus tres listeners son no pasivos y cancelan desde el primer
+evento mientras está armado, así que en un teléfono la pantalla no se movería
+hasta juntar 60 px. Medido con eventos sintéticos cancelables despachados sobre
+la ventana: a 320 y 390 `wheel`, el segundo `wheel` del mismo gesto y
+`touchmove` salen con `defaultPrevented` en **false** y `scrollTo(0,400)` deja
+`scrollY` en 400; a 1024 y 1920 los tres salen en **true**. `document.body` no
+tiene una sola propiedad inline en ninguna ruta. El **sidebar de Services** ya
+era `hidden lg:block`.
+
+**Reglas técnicas que hay que respetar al tocar cualquier cosa de mobile:**
+
+1. **Cero scroll horizontal.** Es el criterio de aceptación y está en cero en
+   las ocho rutas × cinco anchos (320/360/390/414/430) × dos idiomas, con altos
+   de 640 y 844.
+2. **Ningún input por debajo de 16 px**, o iOS hace zoom al enfocar. Los cuatro
+   de Contact van a 24 y el buscador de países a 20.
+3. **Áreas táctiles de 44 × 44 como piso.** Auditadas las 504 que aparecen en
+   ocho rutas × tres anchos × dos idiomas: ninguna por debajo.
+4. **Nada de `100vh`**: `100svh`. En desktop valen lo mismo, así que la
+   sustitución es gratis.
+5. **`prefers-reduced-motion` sigue mandando** donde ya mandaba.
 
 ## 3. Shell, transiciones, preloader y scroll — ESTADO
 
@@ -39,7 +121,7 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 - `/` Home: `(site)/page.tsx` + `sections/home/Hero.tsx` — estática.
 - `/work`: `work/page.tsx` + `sections/work/WorkGrid.tsx` + `ProjectCard.tsx` — estática, fetch con `revalidate: 60`, fallback local.
 - `/work/[slug]`: `page.tsx` + `ProjectDetailClient.tsx` + `ProjectContentRenderer.tsx` — SSG (slugs del dataset), nav prev/next.
-- `/services`: **rediseñada en B3.4**. `services/page.tsx` es un **componente de servidor** —sin `<main>` anidado, como `/contact`— que compone `sections/services/{ServicesIntro,BrandingPacksHeading,ServicePackSection,ServicesSidebar,IntroScrollTrigger,LatestProjects,SpySentinel,ServicesArrow}` y trae las 4 portadas más recientes con `revalidate: 60`, así que clasifica `○ (Static)` como `/work`. **El scroll-jack ya no existe**: se fueron la máquina S0–S5, sus tres listeners con `preventDefault`, el lock de `body`, el acordeón con sus `ScrollTrigger`, los slideshows y el catálogo hardcodeado. El contenido vive en `src/lib/services-content.ts` —el inglés verbatim del PDF y, desde B4, la variante `SERVICE_PACKS_ES` / `SERVICES_COPY_ES` elegida por idioma— y las medidas compartidas en `sections/services/services-layout.ts`. `BrandingPacksHeading` y `ServicePackSection` pasaron a componentes de **cliente** en B4 (la página, que es de servidor, siempre rendiría inglés) y reciben el `id` del pack, no el pack. Cinco secciones —INTRO · CONSULTATION · 01 ESSENTIALS · 02 UNIVERSE · + ADD-ONS— con sidebar sticky y scroll-spy (§6), gatillo de un scroll en el intro (§6) y cierre LATEST PROJECTS. **GSAP quedó sin ningún consumidor en el repo** (sigue instalado; ver pendientes).
+- `/services`: **rediseñada en B3.4**. `services/page.tsx` es un **componente de servidor** —sin `<main>` anidado, como `/contact`— que compone `sections/services/{ServicesIntro,BrandingPacksHeading,ServicePackSection,ServicesSidebar,IntroScrollTrigger,LatestProjects,SpySentinel,ServicesArrow}` y trae las 4 portadas más recientes con `revalidate: 60`, así que clasifica `○ (Static)` como `/work`. **El scroll-jack ya no existe**: se fueron la máquina S0–S5, sus tres listeners con `preventDefault`, el lock de `body`, el acordeón con sus `ScrollTrigger`, los slideshows y el catálogo hardcodeado. El contenido vive en `src/lib/services-content.ts` —el inglés verbatim del PDF y, desde B4, la variante `SERVICE_PACKS_ES` / `SERVICES_COPY_ES` elegida por idioma— y las medidas compartidas en `sections/services/services-layout.ts`. `BrandingPacksHeading` y `ServicePackSection` pasaron a componentes de **cliente** en B4 (la página, que es de servidor, siempre rendiría inglés) y reciben el `id` del pack, no el pack. Cinco secciones —INTRO · CONSULTATION · 01 ESSENTIALS · 02 UNIVERSE · + ADD-ONS— con sidebar sticky y scroll-spy (§6), gatillo de un scroll en el intro (§6) y cierre LATEST PROJECTS. **El sidebar y el gatillo son de escritorio: debajo de 1024 no existen** (§2b). **GSAP quedó sin ningún consumidor en el repo** (sigue instalado; ver pendientes).
 - `/team`: `team/page.tsx` + `sections/team/TeamSection.tsx` — estática; el texto salió del componente al diccionario en B4. Placeholder visible `VIDEO O GIF` (contenido pendiente de las clientas; **no se traduce**, es una nota para ellas).
 - `/fun-gallery`: `fun-gallery/page.tsx` + `sections/gallery/FunGallery.tsx` — **estática**, fetch con `revalidate: 60` (B3.2 retiró `force-dynamic` y el `randomUUID()` por request). Lee del schema propio `funGalleryImage`: **ya no deriva de los `project`**. El seed del mapa se deriva de los `_id` en el orden de la query, así que el mismo contenido da siempre el mismo mapa. **Sin fallback local**: si el fetch falla hay pantalla de error, y con cero imágenes, pantalla de vacío. B4 las sacó de `page.tsx` a `sections/gallery/GalleryNotice.tsx`, de cliente, para que sigan al idioma; la página conserva la decisión de cuál corresponde. Pipeline de imagen: `w=1200&fm=webp` al CDN, sin prop `quality` en `<Image>`, `object-contain`, y la capa de parallax sin recorte (`inset-0`, sin `overflow-hidden`) porque con `contain` el overscan negativo recortaba el producto. El rediseño de la pantalla es B3.3.
 - `/contact`: `contact/page.tsx` (dinámica por `searchParams` `?service=`) + `sections/contact/{ContactForm,ContactSuccess}.tsx` + `lib/contact.ts` — scroll natural, aside en flujo normal (sin sticky, B3.2b), selección scopeada ya implementada.
@@ -55,6 +137,7 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 
 ## 6. Primitivos compartidos y contratos frágiles — ESTADO
 
+- **Mobile — `src/lib/mobile-layout.ts` y `src/lib/use-media-query.ts` (M1).** Los dos son únicos de su clase y están documentados en §2b: el primero lleva el gutter del cromo, el piso de área táctil y la nota sobre `sizes`; el segundo es **el** hook de media queries, del que ya cuelga `usePrefersReducedMotion`. Cualquier cosa nueva que necesite preguntar por el ancho desde JavaScript se cuelga de ahí; el layout, en cambio, se resuelve con variantes de Tailwind.
 - **`HoverButton`**: **9** call sites en 4 archivos (Navbar 3, Footer 4, ContactForm 1, ServicePackSection 1). *(Corregido en B4: este archivo decía 10 en 5 e incluía a Hero, que no lo usa.)* Su prop **`blend` no la pasa nadie**: quedó huérfana cuando `/fun-gallery` dejó de tener cromo superpuesto en B3.3. **No define font-size**: cada consumidor porta el suyo. `FunGallery.tsx` **no** lo importa; el riesgo con la galería es indirecto (Navbar/Footer con `blend` renderizados encima). Tocarlo es global: no modificarlo desde un sprint de sección. **Lo que no sabe hacer:** subrayado que aparezca en hover — es un booleano fijo, y atarlo a un estado no sirve porque su relleno negro sube en el mismo gesto y taparía la línea. Los dos links de LATEST PROJECTS resuelven eso con una línea propia, local a esa sección; **no es un primitivo paralelo** y no se promueve a uno sin decisión.
 - **`RevealOnScroll`**: **1** consumidor (TeamSection ×4), gateado por preloader. B3.4 se llevó el otro (`ServiceItem`).
 - Sistemas de «aparecer» conviven **4**: 2 por scroll (inline de WorkGrid, `y:40` + stagger 0.7; `RevealOnScroll`) + 2 de entrada artesanales (Hero con `staggerChildren`, variants de Contact). El `RevealLine` de `ServicesIntro` desapareció con el desmontaje de B3.4.
@@ -67,8 +150,9 @@ Guía operativa para agentes que trabajan sobre este repositorio.
   1. **Se dispara una sola vez por visita y no se re-arma.** Hay una máquina de tres fases —`armed` junta delta · `locked` desplaza · `spent` ya no escucha nada— y volver arriba **no** vuelve a armarlo: el scroll queda normal. B3.4b revirtió a propósito lo que había pedido B3.4.
   2. **El `preventDefault` no dura «solo mientras dura el desplazamiento»:** el listener es **no pasivo desde el montaje** y cancela **desde el primer evento** mientras el gatillo está armado. Es por una regla de Chrome, no por gusto: de una secuencia de `wheel` **solo el primero llega cancelable**, así que juntar delta en modo pasivo pierde el derecho a cancelar y el scroll nativo le pelea a la animación cuadro a cuadro — eso era la vibración que se arregló. Consecuencia buscada: arriba de todo la página no se mueve hasta cruzar el umbral, y una vez cruzado el desplazamiento es **inmune al gesto**, inercia de trackpad incluida.
   3. **No toca `document.body`** —ni `overflow` ni `paddingRight`—: el lock son listeners, y `release()` es la única salida, llamada al terminar la animación, en el cleanup del efecto (o sea el desmontaje) y por un techo de tiempo.
+  4. **Debajo de 1024 px no se arma** (M1/F5): el efecto sale antes de registrar un solo listener, así que en un teléfono el scroll es normal desde el primer gesto. Verificado con eventos sintéticos, ver §2b.
   Si algún día se agrega un segundo gesto en Services, tiene que convivir con este, no duplicarlo.
-- **Aparición del sidebar y criterio único de aterrizaje (B3.4b).** El menú **no está durante el intro**: aparece cuando el centinela de `BRANDING PACKS` cruza la línea de lectura y se va al volver arriba, con un fundido de 0,5 s. La respuesta la da `isIntersecting` y **no una medición**, porque es la única forma de que el cruce sea exacto en las dos direcciones. `visibility` acompaña a la opacidad para que el menú apagado no sea clickeable ni enfocable, y transiciona al final del fundido de salida. `INTRO` sigue en la lista: es lo que permite volver arriba desde cualquier sección. **El salto aterriza el *contenido* de la sección, no su tope**, a `HEADER + LANDING_BREATH` (24 px) de la línea: entre uno y otro hay 161 px, así que la divisoria termina fuera de pantalla y el aterrizaje cae holgado dentro del rango en que el spy marca esa sección. `LANDING_BREATH` no puede pasar de 32 sin que la divisoria vuelva a asomar. Esta regla y la del spy son **una sola geometría** y están documentadas juntas en `services-layout`.
+- **Aparición del sidebar y criterio único de aterrizaje (B3.4b).** El sidebar es de escritorio: `hidden lg:block`, así que debajo de 1024 no existe y con él no existen ni el spy ni los saltos. El menú **no está durante el intro**: aparece cuando el centinela de `BRANDING PACKS` cruza la línea de lectura y se va al volver arriba, con un fundido de 0,5 s. La respuesta la da `isIntersecting` y **no una medición**, porque es la única forma de que el cruce sea exacto en las dos direcciones. `visibility` acompaña a la opacidad para que el menú apagado no sea clickeable ni enfocable, y transiciona al final del fundido de salida. `INTRO` sigue en la lista: es lo que permite volver arriba desde cualquier sección. **El salto aterriza el *contenido* de la sección, no su tope**, a `HEADER + LANDING_BREATH` (24 px) de la línea: entre uno y otro hay 161 px, así que la divisoria termina fuera de pantalla y el aterrizaje cae holgado dentro del rango en que el spy marca esa sección. `LANDING_BREATH` no puede pasar de 32 sin que la divisoria vuelva a asomar. Esta regla y la del spy son **una sola geometría** y están documentadas juntas en `services-layout`.
 - **Idioma — `src/lib/i18n/` (B4). Es el único sistema de idioma del repo y no se duplica.** Un tipo `Locale`, un `Dictionary` **explícito** (no `typeof EN`), las dos variantes declaradas `const EN: Dictionary` / `const ES: Dictionary`, un contexto y el hook `useLocale()`. Cinco contratos que **fallan en silencio si se rompen**, así que van acá:
   1. **Una clave que falte es error de compilación.** Es toda la gracia de la interfaz explícita. Lo mismo vale para las tablas de rótulos de `contact.ts` (tipos mapeados sobre la lista canónica: un país sin traducir no compila) y para `ServicePackList`, que fija los cuatro `id` de Services en su orden.
   2. **Los valores de opción son canónicos (inglés); lo que se traduce es el rótulo.** El formulario guarda `Package Design` y muestra «Packaging». Sin eso, cambiar de idioma a mitad de formulario vaciaría la selección, `MonochromeCountryFlag` —que resuelve por el nombre inglés— dejaría de encontrar la bandera, y `?service=` dependería del idioma. Al enviar, `localizeContactValues` los pasa a los rótulos **una sola vez, en el borde**: el mail viaja como se muestra.
@@ -91,6 +175,13 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 - `template.tsx` debe ser **solo opacidad** (sin transform ni overflow) o mata los `position: sticky` de las páginas (fix coordinado `b634521`).
 - `sticky` exige ancestros sin `overflow: hidden/clip`. El viejo `ServicesIntro` recorría los ancestros forzándoles `overflow: visible` por eso; **B3.4 lo eliminó y el sidebar sticky funciona sin ninguna de esas muletas**, así que la cadena real (`template` → `PageTransitionShell` → `main`) ya estaba limpia. No reintroducir el paseo por ancestros.
 - En esta etapa, el fix de una línea (`md:top-48`, opacidad idle) suele ganarle a la solución arquitectónica.
+- **`next/image` no puede servir nada más chico que 640 px si el `sizes` trae un
+  `vw` suelto** (M1/F7). Su `deviceSizes` arranca ahí, y `getWidths` filtra el
+  `srcset` con `640 × el vw más chico` del `sizes`; como el regex que lo detecta
+  pide que el número venga precedido por un espacio, un `vw` escrito dentro de un
+  `calc()` no lo dispara y vuelven los cortes de 96, 128, 256 y 384. Es lo que
+  bajó el peso servido a 390 px un **39,6 %** sin tocar `next.config.ts`. La nota
+  con la cita del código está en `src/lib/mobile-layout.ts`.
 
 ## 8. Reglas innegociables
 
@@ -128,4 +219,4 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 
 Ronda de devoluciones de las clientas (fuente: `Final.pdf`, 2026-08-13). **B1 Fundación** (docs y limpieza) → **B2 Devoluciones visuales** sobre lo existente (home, menú 17/0, footer nuevo global, Team, Work grid 5:4, Contact compacto) → **B3 Rediseños** (Fun Gallery con schema propio + Services con sidebar/spy; arrancó con la sonda de transparencia y cerró con B3.4b) → **B4 Idioma EN/ES** (toggle en header, diccionario, consumo bilingüe de Sanity). **La ronda está cerrada**: los cuatro bloques se ejecutaron. Detalle, decisiones cerradas y estado: `docs/plan-maestro.md`; lo que quedó abierto, en `docs/pendientes.md`.
 
-Lo que sigue **no** es de esta ronda y necesita su propio chat de planificación: la **adaptación mobile** (con skill dedicada), `error.tsx` / `not-found.tsx`, los `<main>` anidados y la instalación del harness ECC. Y hay dos decisiones de dependencias esperando el cierre: **desinstalar GSAP**, que no tiene un solo consumidor, y **borrar la prop `blend`** de `HoverButton`, que no la pasa nadie.
+Después de la ronda se ejecutó **M1 — Adaptación mobile** (2026-08-22, nueve fases): el sitio entra y se usa en teléfonos (§2b). Lo que sigue pendiente y necesita su propio chat de planificación: `error.tsx` / `not-found.tsx`, los `<main>` anidados y la instalación del harness ECC. Y hay dos decisiones de dependencias esperando el cierre: **desinstalar GSAP**, que no tiene un solo consumidor, y **borrar la prop `blend`** de `HoverButton`, que no la pasa nadie.
