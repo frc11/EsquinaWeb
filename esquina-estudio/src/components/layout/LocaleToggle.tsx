@@ -41,14 +41,20 @@ import { LOCALES, useLocale, type Locale } from "@/lib/i18n";
  * el subrayado no puede: es CSS. Si algún día cambia el relleno del menú, las
  * dos se mueven juntas.
  *
- * # Color
+ * # Color (revisado en B4b)
  *
- * Los tres elementos van en gris. No es una interpretación: muestreado sobre el
- * mockup, `EN` da 153, la barra 160 y `ES` 151 sobre un `CONTACT US` de 12 —o
- * sea el `gray-brand` del sitio (#939393) contra el off-black—. Lo que distingue
- * al idioma activo es el subrayado; lo que distingue al otro es que responde al
- * hover y al foco subiendo al color pleno, que es el mismo gesto que ya usan el
- * sidebar de Services y las pills de Contact.
+ * El mockup muestreaba los tres elementos en gris —`EN` 153, la barra 160, `ES`
+ * 151 sobre un `CONTACT US` de 12— y hasta B4 el idioma activo se distinguía
+ * **solo** por el subrayado. La verificación humana de B4 lo rechazó: con los dos
+ * códigos en el mismo gris, el activo no se lee como activo. Desde B4b **el
+ * idioma activo va en el color pleno del cromo** —off-black en las rutas claras,
+ * off-white en las oscuras— y el inactivo se queda en el `gray-brand` del sitio
+ * (#939393). El separador `/` no cambia nunca: es gris y no es interactivo.
+ *
+ * El contraste lo da el color y nada más: **mismo tamaño (17 px), mismo tracking
+ * y mismo peso** que el resto del menú. El inactivo sigue subiendo al color pleno
+ * con hover y foco, que es el mismo gesto del sidebar de Services y de las pills
+ * de Contact; ahora ese gesto se lee como una vista previa del estado activo.
  *
  * # Accesibilidad
  *
@@ -71,10 +77,13 @@ export default function LocaleToggle({
 }) {
   const { locale, setLocale, t } = useLocale();
 
-  const activeHoverClass =
+  // El color pleno del cromo: el mismo que porta el menú en cada tono. El activo
+  // lo lleva fijo; el inactivo lo alcanza con hover y foco.
+  const fullToneClass = tone === "dark" ? "text-off-white" : "text-off-black";
+  const inactiveClass =
     tone === "dark"
-      ? "hover:text-off-white focus-visible:text-off-white"
-      : "hover:text-off-black focus-visible:text-off-black";
+      ? "text-gray-brand hover:text-off-white focus-visible:text-off-white"
+      : "text-gray-brand hover:text-off-black focus-visible:text-off-black";
 
   return (
     <div
@@ -94,7 +103,9 @@ export default function LocaleToggle({
             lang={code}
             aria-pressed={code === locale}
             onClick={() => setLocale(code)}
-            className={`relative block cursor-pointer py-[6px] transition-colors duration-200 ${activeHoverClass}`}
+            className={`relative block cursor-pointer py-[6px] transition-colors duration-200 ${
+              code === locale ? fullToneClass : inactiveClass
+            }`}
           >
             {code.toUpperCase()}
             {/*
