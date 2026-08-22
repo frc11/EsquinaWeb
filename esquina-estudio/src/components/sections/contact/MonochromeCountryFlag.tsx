@@ -5,6 +5,8 @@ type FlagPattern =
   | "australia"
   | "brazil"
   | "canada"
+  | "bicolor-triangle"
+  | "canton"
   | "canton-stripes"
   | "center-disc"
   | "chile"
@@ -15,6 +17,7 @@ type FlagPattern =
   | "diagonal"
   | "ensign"
   | "field-emblem"
+  | "full-cross"
   | "greece"
   | "horizontal-bicolor"
   | "horizontal-bicolor-emblem"
@@ -28,10 +31,13 @@ type FlagPattern =
   | "paraguay"
   | "portugal"
   | "quartered"
+  | "saltire"
   | "south-africa"
   | "south-korea"
   | "spain"
+  | "stripes-triangle"
   | "triangle"
+  | "tricolor-triangle"
   | "union-jack"
   | "united-states"
   | "uruguay"
@@ -41,23 +47,21 @@ type FlagPattern =
   | "vertical-tricolor-emblem";
 
 const HORIZONTAL_BICOLOR = new Set([
-  "Angola",
-  "Burkina Faso",
-  "Haiti",
+  "Belarus",
   "Indonesia",
-  "Liechtenstein",
   "Monaco",
   "Poland",
   "Ukraine",
 ]);
 
 const HORIZONTAL_BICOLOR_EMBLEM = new Set([
-  "Bahrain",
+  "Angola",
   "Burkina Faso",
   "Haiti",
+  "Kiribati",
   "Liechtenstein",
-  "Malta",
   "Nauru",
+  "San Marino",
   "Singapore",
 ]);
 
@@ -80,7 +84,6 @@ const HORIZONTAL_TRICOLOR = new Set([
 ]);
 
 const HORIZONTAL_TRICOLOR_EMBLEM = new Set([
-  "Afghanistan",
   "Azerbaijan",
   "Cambodia",
   "Croatia",
@@ -115,15 +118,23 @@ const HORIZONTAL_TRICOLOR_EMBLEM = new Set([
 
 const FIELD_EMBLEM = new Set([
   "Albania",
+  "Belize",
   "Cyprus",
   "Micronesia",
   "Montenegro",
-  "Samoa",
+  "Morocco",
+  "Saint Lucia",
+  "Saudi Arabia",
   "Somalia",
   "Vietnam",
 ]);
 
-const VERTICAL_BICOLOR = new Set(["Malta", "Vatican City"]);
+const VERTICAL_BICOLOR = new Set([
+  "Bahrain",
+  "Malta",
+  "Qatar",
+  "Vatican City",
+]);
 
 const VERTICAL_TRICOLOR = new Set([
   "Belgium",
@@ -140,6 +151,7 @@ const VERTICAL_TRICOLOR = new Set([
 ]);
 
 const VERTICAL_TRICOLOR_EMBLEM = new Set([
+  "Afghanistan",
   "Andorra",
   "Barbados",
   "Cameroon",
@@ -147,23 +159,19 @@ const VERTICAL_TRICOLOR_EMBLEM = new Set([
   "Mexico",
   "Moldova",
   "Mongolia",
+  "Saint Vincent and the Grenadines",
   "Senegal",
 ]);
 
 const HORIZONTAL_STRIPES = new Set([
-  "Belarus",
   "Botswana",
   "Cabo Verde",
   "Central African Republic",
   "Costa Rica",
   "Gambia",
-  "Liberia",
-  "Malaysia",
   "Mauritius",
-  "North Macedonia",
   "Suriname",
   "Thailand",
-  "Togo",
   "Uganda",
 ]);
 
@@ -175,39 +183,85 @@ const NORDIC = new Set([
   "Sweden",
 ]);
 
-const TRIANGLE = new Set([
-  "Antigua and Barbuda",
-  "Bahamas",
-  "Comoros",
-  "Cuba",
+/*
+  LOS CUATRO CONJUNTOS DEL TRIANGULO DE ASTA (B4c/F1)
+  ---------------------------------------------------
+  `TRIANGLE` era el comodin mas caro del set: dibujaba el triangulo del asta
+  sobre un campo liso y se comia las bandas. La estructura real de casi todas
+  las banderas que caian ahi es **bandas horizontales + triangulo**, y por eso
+  Jordania salia como un campo negro con una cuna roja, sin el blanco ni el
+  verde. Los tres conjuntos nuevos se reparten por cantidad de bandas y los
+  atiende una sola implementacion, `BandedHoistTriangle`.
+
+  `TRIANGLE` queda para las que de verdad son campo liso mas triangulo.
+*/
+const TRIANGLE = new Set(["Eritrea", "Guyana", "Timor-Leste"]);
+
+const BICOLOR_TRIANGLE = new Set([
   "Czechia",
   "Djibouti",
+  "Philippines",
+  "Vanuatu",
+]);
+
+const TRICOLOR_TRIANGLE = new Set([
+  "Antigua and Barbuda",
+  "Bahamas",
   "Equatorial Guinea",
-  "Eritrea",
-  "Guyana",
   "Jordan",
   "Kuwait",
   "Mozambique",
-  "Oman",
   "Palestine",
-  "Philippines",
   "Sao Tome and Principe",
   "South Sudan",
   "Sudan",
+]);
+
+const STRIPES_TRIANGLE = new Set(["Comoros", "Cuba", "Zimbabwe"]);
+
+/**
+ * Cuales de las de arriba llevan algo adentro del triangulo. Es un dato **por
+ * pais**, no por patron —Jordania lleva su estrella de siete puntas y Chequia
+ * no lleva nada—, asi que viaja aparte y no multiplica el enum por dos.
+ */
+const TRIANGLE_EMBLEM = new Set([
+  "Antigua and Barbuda",
+  "Comoros",
+  "Cuba",
+  "Djibouti",
+  "Eritrea",
+  "Jordan",
+  "Mozambique",
+  "Philippines",
+  "South Sudan",
   "Timor-Leste",
   "Vanuatu",
   "Zimbabwe",
 ]);
 
+/** Campo liso + canton en el angulo superior del asta. */
+const CANTON = new Set(["Samoa", "Taiwan", "Tonga"]);
+
+/** Franjas + canton: reusa el dibujo de Estados Unidos, que ya existia. */
+const CANTON_STRIPES = new Set(["Liberia", "Malaysia", "Togo"]);
+
+/** Cruz que cruza la bandera entera, no el mas chico y centrado de Suiza. */
+const FULL_CROSS = new Set([
+  "Dominica",
+  "Dominican Republic",
+  "Georgia",
+]);
+
+/** Aspa. */
+const SALTIRE = new Set(["Burundi", "Jamaica"]);
+
 const DIAGONAL = new Set([
   "Bhutan",
   "Bosnia and Herzegovina",
   "Brunei",
-  "Burundi",
   "Congo",
   "DR Congo",
   "Grenada",
-  "Jamaica",
   "Marshall Islands",
   "Namibia",
   "Papua New Guinea",
@@ -223,37 +277,31 @@ const CENTER_DISC = new Set([
   "Japan",
   "Kazakhstan",
   "Kyrgyzstan",
+  "North Macedonia",
   "Palau",
-  "Somalia",
 ]);
 
 const CRESCENT = new Set([
   "Algeria",
   "Maldives",
   "Mauritania",
-  "Morocco",
   "Pakistan",
-  "Saudi Arabia",
   "Tunisia",
   "Turkey",
   "Turkmenistan",
 ]);
 
-const CROSS = new Set([
-  "Dominican Republic",
-  "Georgia",
-  "San Marino",
-  "Switzerland",
-  "Tonga",
-]);
+/** Solo la cruz chica y centrada, que es la de Suiza y nada mas. */
+const CROSS = new Set(["Switzerland"]);
 
 const PANELS = new Set([
-  "Belize",
   "Benin",
+  "Guinea-Bissau",
   "Israel",
+  "Madagascar",
+  "Oman",
   "South Korea",
   "Sri Lanka",
-  "Taiwan",
   "United Arab Emirates",
   "Zambia",
 ]);
@@ -306,8 +354,15 @@ function resolvePattern(country: string): FlagPattern {
       return "venezuela";
     default:
       if (NORDIC.has(country)) return "nordic";
+      if (BICOLOR_TRIANGLE.has(country)) return "bicolor-triangle";
+      if (TRICOLOR_TRIANGLE.has(country)) return "tricolor-triangle";
+      if (STRIPES_TRIANGLE.has(country)) return "stripes-triangle";
       if (TRIANGLE.has(country)) return "triangle";
+      if (SALTIRE.has(country)) return "saltire";
       if (DIAGONAL.has(country)) return "diagonal";
+      if (FULL_CROSS.has(country)) return "full-cross";
+      if (CANTON.has(country)) return "canton";
+      if (CANTON_STRIPES.has(country)) return "canton-stripes";
       if (CENTER_DISC.has(country)) return "center-disc";
       if (CRESCENT.has(country)) return "crescent";
       if (CROSS.has(country)) return "cross";
@@ -634,25 +689,205 @@ function NordicFlag({ colors }: { colors?: readonly string[] }) {
   );
 }
 
-// triangle: [hoist-triangle, field, star]
-function HoistTriangle({ colors }: { colors?: readonly string[] }) {
+/** El triangulo del asta, identico en las cuatro variantes que lo usan. */
+const HOIST_TRIANGLE_PATH = "M 0.5 0.5 L 10 7.5 L 0.5 14.5 Z";
+
+// triangle: [hoist-triangle, field, emblem]
+function HoistTriangle({
+  colors,
+  emblem = false,
+}: {
+  colors?: readonly string[];
+  emblem?: boolean;
+}) {
   const triangle = colorAt(colors, 0);
   const field = colorAt(colors, 1);
-  const star = colorAt(colors, 2);
+  const emblemColor = colorAt(colors, 2);
   if (triangle || field) {
     return (
       <>
         {field && <rect x="0.7" y="0.7" width="22.6" height="13.6" fill={field} stroke="none" />}
-        {triangle && <path d="M 0.5 0.5 L 10 7.5 L 0.5 14.5 Z" fill={triangle} stroke="none" />}
-        <Star cx={4.1} cy={7.5} size={1.15} color={star} />
+        {triangle && <path d={HOIST_TRIANGLE_PATH} fill={triangle} stroke="none" />}
+        {emblem && <Star cx={4.1} cy={7.5} size={1.15} color={emblemColor} />}
       </>
     );
   }
   return (
     <>
-      <path d="M 0.5 0.5 L 10 7.5 L 0.5 14.5 Z" fill="currentColor" fillOpacity="0.06" />
+      <path d={HOIST_TRIANGLE_PATH} fill="currentColor" fillOpacity="0.06" />
       <path d="M 10 7.5 H 23.5 M 10 7.5 L 23.5 3.5 M 10 7.5 L 23.5 11.5" />
-      <Star cx={4.1} cy={7.5} size={1.15} />
+      {emblem && <Star cx={4.1} cy={7.5} size={1.15} />}
+    </>
+  );
+}
+
+/**
+ * Bandas horizontales **mas** triangulo en el asta: la estructura que el
+ * comodin `triangle` se comia (ver el comentario de los conjuntos).
+ *
+ * Una sola implementacion para los tres largos que hacen falta. El largo lo
+ * fija el patron y no la paleta, porque en reposo no hay paleta: el dibujo
+ * monocromo tiene que saber cuantas lineas trazar sin que nadie le pase
+ * colores.
+ *
+ * Paleta: [triangulo, emblema, ...bandas de arriba hacia abajo]. Las dos
+ * primeras ranuras son fijas justamente para que el resto pueda ser variable.
+ */
+const BAND_TOPS: Record<2 | 3 | 5, readonly number[]> = {
+  2: [0.7, 7.5],
+  3: [0.7, 5.23, 9.77],
+  5: [0.7, 3.42, 6.14, 8.86, 11.58],
+};
+const BAND_HEIGHT: Record<2 | 3 | 5, number> = { 2: 6.8, 3: 4.53, 5: 2.72 };
+
+function BandedHoistTriangle({
+  bands,
+  colors,
+  emblem = false,
+}: {
+  bands: 2 | 3 | 5;
+  colors?: readonly string[];
+  emblem?: boolean;
+}) {
+  const triangle = colorAt(colors, 0);
+  const emblemColor = colorAt(colors, 1);
+  const tops = BAND_TOPS[bands];
+  const height = BAND_HEIGHT[bands];
+  const dividers = tops
+    .slice(1)
+    .map((top) => `M 0.5 ${top} H 23.5`)
+    .join(" ");
+
+  if (triangle || colorAt(colors, 2)) {
+    return (
+      <>
+        {tops.map((top, index) => {
+          const fill = colorAt(colors, 2 + index);
+          return fill ? (
+            <rect
+              key={top}
+              x="0.7"
+              y={top}
+              width="22.6"
+              height={height}
+              fill={fill}
+              stroke="none"
+            />
+          ) : null;
+        })}
+        <path
+          d={dividers}
+          stroke={COLORED_SEPARATOR}
+          strokeOpacity={COLORED_SEPARATOR_OPACITY}
+        />
+        {triangle && <path d={HOIST_TRIANGLE_PATH} fill={triangle} stroke="none" />}
+        {emblem && <Star cx={4.1} cy={7.5} size={1.15} color={emblemColor} />}
+      </>
+    );
+  }
+  return (
+    <>
+      <path d={dividers} />
+      <path d={HOIST_TRIANGLE_PATH} fill="currentColor" fillOpacity="0.08" />
+      {emblem && <Star cx={4.1} cy={7.5} size={1.15} />}
+    </>
+  );
+}
+
+/**
+ * Campo liso con canton en el angulo superior del asta. El canton lleva una
+ * estrella: es la silueta que sirve para las tres —el sol de Taiwan, la Cruz
+ * del Sur de Samoa y la cruz de Tonga— a 15 px de alto.
+ *
+ * Paleta: [canton, emblema, campo].
+ */
+function CantonFlag({ colors }: { colors?: readonly string[] }) {
+  const canton = colorAt(colors, 0);
+  const emblem = colorAt(colors, 1);
+  const field = colorAt(colors, 2);
+  if (canton || field) {
+    return (
+      <>
+        {field && <rect x="0.7" y="0.7" width="22.6" height="13.6" fill={field} stroke="none" />}
+        {canton && <rect x="0.7" y="0.7" width="10" height="7" fill={canton} stroke="none" />}
+        <Star cx={5.7} cy={4.2} size={1.5} color={emblem} />
+      </>
+    );
+  }
+  return (
+    <>
+      <rect x="0.7" y="0.7" width="10" height="7" fill="currentColor" fillOpacity="0.07" />
+      <rect x="0.5" y="0.5" width="10.2" height="7.2" fill="none" />
+      <Star cx={5.7} cy={4.2} size={1.5} />
+    </>
+  );
+}
+
+/**
+ * Cruz que cruza la bandera **entera** y parte el campo en cuatro. No es la de
+ * `CrossFlag`, que es la cruz chica y centrada de Suiza: con esa, Republica
+ * Dominicana y Georgia se veian como una Suiza mal pintada.
+ *
+ * Paleta: [arriba-izq, arriba-der, abajo-izq, abajo-der, cruz].
+ */
+function FullCrossFlag({ colors }: { colors?: readonly string[] }) {
+  const topLeft = colorAt(colors, 0);
+  const topRight = colorAt(colors, 1);
+  const bottomLeft = colorAt(colors, 2);
+  const bottomRight = colorAt(colors, 3);
+  const cross = colorAt(colors, 4);
+  if (topLeft || cross) {
+    return (
+      <>
+        {topLeft && <rect x="0.7" y="0.7" width="11.3" height="6.8" fill={topLeft} stroke="none" />}
+        {topRight && <rect x="12" y="0.7" width="11.3" height="6.8" fill={topRight} stroke="none" />}
+        {bottomLeft && <rect x="0.7" y="7.5" width="11.3" height="6.8" fill={bottomLeft} stroke="none" />}
+        {bottomRight && <rect x="12" y="7.5" width="11.3" height="6.8" fill={bottomRight} stroke="none" />}
+        {cross && <rect x="10.6" y="0.7" width="2.8" height="13.6" fill={cross} stroke="none" />}
+        {cross && <rect x="0.7" y="6.1" width="22.6" height="2.8" fill={cross} stroke="none" />}
+      </>
+    );
+  }
+  return (
+    <>
+      <path d="M 10.6 0.5 V 14.5 M 13.4 0.5 V 14.5 M 0.5 6.1 H 23.5 M 0.5 8.9 H 23.5" />
+      <rect x="10.6" y="0.7" width="2.8" height="13.6" fill="currentColor" fillOpacity="0.07" stroke="none" />
+      <rect x="0.7" y="6.1" width="22.6" height="2.8" fill="currentColor" fillOpacity="0.07" stroke="none" />
+    </>
+  );
+}
+
+/**
+ * Aspa. Parte el campo en cuatro cunas —arriba y abajo de un color, los dos
+ * costados de otro— y cruza las dos diagonales por encima.
+ *
+ * Paleta: [cunas arriba/abajo, cunas de los costados, aspa, emblema].
+ */
+function SaltireFlag({ colors }: { colors?: readonly string[] }) {
+  const wedge = colorAt(colors, 0);
+  const side = colorAt(colors, 1);
+  const saltire = colorAt(colors, 2);
+  const emblem = colorAt(colors, 3);
+  if (wedge || side || saltire) {
+    return (
+      <>
+        {side && <rect x="0.7" y="0.7" width="22.6" height="13.6" fill={side} stroke="none" />}
+        {wedge && <path d="M 0.7 0.7 H 23.3 L 12 7.5 Z" fill={wedge} stroke="none" />}
+        {wedge && <path d="M 0.7 14.3 H 23.3 L 12 7.5 Z" fill={wedge} stroke="none" />}
+        <path
+          d="M 0.5 0.5 L 23.5 14.5 M 23.5 0.5 L 0.5 14.5"
+          strokeWidth="2.1"
+          stroke={saltire ?? "currentColor"}
+        />
+        {emblem && <circle cx="12" cy="7.5" r="1.9" fill={emblem} stroke="none" />}
+      </>
+    );
+  }
+  return (
+    <>
+      <path d="M 0.5 0.5 L 23.5 14.5 M 23.5 0.5 L 0.5 14.5" strokeWidth="2.1" />
+      <path d="M 0.7 0.7 H 23.3 L 12 7.5 Z" fill="currentColor" fillOpacity="0.05" stroke="none" />
+      <path d="M 0.7 14.3 H 23.3 L 12 7.5 Z" fill="currentColor" fillOpacity="0.05" stroke="none" />
     </>
   );
 }
@@ -774,21 +1009,54 @@ function FieldEmblemFlag({ colors }: { colors?: readonly string[] }) {
   );
 }
 
-function UnionJack({ x = 0.5, y = 0.5, width = 23, height = 14 }: {
+/**
+ * Los tres colores de la Union Jack. Viven aca porque los usan dos consumidores
+ * —la bandera del Reino Unido y el canton de las cuatro ensenas— y copiarlos
+ * seria tener dos definiciones del mismo azul.
+ */
+const UNION_JACK_COLORS = ["#012169", "#FFFFFF", "#C8102B"] as const;
+
+// union-jack: [field, white, red]
+function UnionJack({
+  x = 0.5,
+  y = 0.5,
+  width = 23,
+  height = 14,
+  colors,
+}: {
   x?: number;
   y?: number;
   width?: number;
   height?: number;
+  colors?: readonly string[];
 }) {
   const right = x + width;
   const bottom = y + height;
   const centerX = x + width / 2;
   const centerY = y + height / 2;
+  const field = colorAt(colors, 0);
+  const white = colorAt(colors, 1);
+  const red = colorAt(colors, 2);
+  const diagonals = `M ${x} ${y} L ${right} ${bottom} M ${right} ${y} L ${x} ${bottom}`;
+  const upright = `M ${centerX} ${y} V ${bottom} M ${x} ${centerY} H ${right}`;
+  const scale = height / 14;
+
+  if (field || white || red) {
+    return (
+      <>
+        {field && <rect x={x} y={y} width={width} height={height} fill={field} stroke="none" />}
+        <path d={diagonals} strokeWidth={2.1 * scale} stroke={white ?? "none"} />
+        <path d={diagonals} strokeWidth={0.9 * scale} stroke={red ?? "none"} />
+        <path d={upright} strokeWidth={3.4 * scale} stroke={white ?? "none"} />
+        <path d={upright} strokeWidth={2 * scale} stroke={red ?? "none"} />
+      </>
+    );
+  }
 
   return (
     <>
-      <path d={`M ${x} ${y} L ${right} ${bottom} M ${right} ${y} L ${x} ${bottom}`} />
-      <path d={`M ${centerX} ${y} V ${bottom} M ${x} ${centerY} H ${right}`} strokeWidth="1.45" />
+      <path d={diagonals} />
+      <path d={upright} strokeWidth={1.45 * scale} />
     </>
   );
 }
@@ -901,6 +1169,13 @@ function BrazilFlag({ colors }: { colors?: readonly string[] }) {
   );
 }
 
+/**
+ * La hoja de arce, en silueta. La version vieja era la misma `Star` de siempre
+ * con siete puntas: a 15 px de alto Canada se leia como una estrella roja.
+ */
+const MAPLE_LEAF_PATH =
+  "M 12 3 L 12.55 4.9 L 13.8 4.55 L 13.45 6.2 L 15.4 5.8 L 15 7 L 16 7.9 L 14.1 9.15 L 14.65 9.9 L 12.7 9.6 L 12.9 12.2 L 11.1 12.2 L 11.3 9.6 L 9.35 9.9 L 9.9 9.15 L 8 7.9 L 9 7 L 8.6 5.8 L 10.55 6.2 L 10.2 4.55 L 11.45 4.9 Z";
+
 // canada: [left-bar, white-field, right-bar, leaf]
 function CanadaFlag({ colors }: { colors?: readonly string[] }) {
   const bar = colorAt(colors, 0);
@@ -912,18 +1187,14 @@ function CanadaFlag({ colors }: { colors?: readonly string[] }) {
         {field && <rect x="6" y="0.7" width="12" height="13.6" fill={field} stroke="none" />}
         {bar && <rect x="0.7" y="0.7" width="5.3" height="13.6" fill={bar} stroke="none" />}
         {bar && <rect x="18" y="0.7" width="5.3" height="13.6" fill={bar} stroke="none" />}
-        <path
-          d="M 12 3.2 L 13 5.4 L 15.1 4.9 L 14.1 7 L 16 8 L 13.4 8.4 L 13.6 11.4 L 12 9.9 L 10.4 11.4 L 10.6 8.4 L 8 8 L 9.9 7 L 8.9 4.9 L 11 5.4 Z"
-          fill={leaf ?? "none"}
-          stroke={leaf ?? "currentColor"}
-        />
+        <path d={MAPLE_LEAF_PATH} fill={leaf ?? "none"} stroke="none" />
       </>
     );
   }
   return (
     <>
       <path d="M 6 0.5 V 14.5 M 18 0.5 V 14.5" />
-      <path d="M 12 3.2 L 13 5.4 L 15.1 4.9 L 14.1 7 L 16 8 L 13.4 8.4 L 13.6 11.4 L 12 9.9 L 10.4 11.4 L 10.6 8.4 L 8 8 L 9.9 7 L 8.9 4.9 L 11 5.4 Z" />
+      <path d={MAPLE_LEAF_PATH} fill="currentColor" fillOpacity="0.18" />
     </>
   );
 }
@@ -1154,7 +1425,9 @@ function IsraelFlag({ colors }: { colors?: readonly string[] }) {
 }
 
 // south-africa: [field-top, field-bottom, Y-band, hoist-triangle, V-outline]
-// Approximate: full field plus the hoist triangle as the dominant colored marks.
+// El palio: los dos brazos que salen de los angulos del asta y la barra que
+// sale al batiente. Es lo que hace reconocible a Sudafrica.
+const PALL_PATH = "M 0.5 1.4 L 8.8 7.5 L 0.5 13.6 M 7.7 7.5 H 23.5";
 function SouthAfricaFlag({ colors }: { colors?: readonly string[] }) {
   const top = colorAt(colors, 0);
   const bottom = colorAt(colors, 1);
@@ -1165,21 +1438,16 @@ function SouthAfricaFlag({ colors }: { colors?: readonly string[] }) {
       <>
         {top && <rect x="0.7" y="0.7" width="22.6" height="6.8" fill={top} stroke="none" />}
         {bottom && <rect x="0.7" y="7.5" width="22.6" height="6.8" fill={bottom} stroke="none" />}
-        {triangle && <path d="M 0.5 0.5 L 9.1 7.5 L 0.5 14.5 Z" fill={triangle} stroke="none" />}
-        <path d="M 5.2 7.5 H 23.5" strokeWidth="1.4" stroke={band ?? "currentColor"} />
-        <path
-          d="M 0.5 1.3 L 9.1 7.5 L 0.5 13.7"
-          fill="none"
-          stroke={band ?? "currentColor"}
-        />
+        <path d={PALL_PATH} strokeWidth="3.2" stroke="#FFFFFF" fill="none" />
+        <path d={PALL_PATH} strokeWidth="2" stroke={band ?? "currentColor"} fill="none" />
+        {triangle && <path d="M 0.5 2.6 L 5.7 7.5 L 0.5 12.4 Z" fill={triangle} stroke="none" />}
       </>
     );
   }
   return (
     <>
-      <path d="M 0.5 1.3 L 9.1 7.5 L 0.5 13.7" />
-      <path d="M 0.5 4.1 L 5.2 7.5 L 0.5 10.9" />
-      <path d="M 5.2 7.5 H 23.5 M 9.1 7.5 L 23.5 2.1 M 9.1 7.5 L 23.5 12.9" />
+      <path d={PALL_PATH} strokeWidth="2" fill="none" />
+      <path d="M 0.5 2.6 L 5.7 7.5 L 0.5 12.4 Z" fill="currentColor" fillOpacity="0.12" />
     </>
   );
 }
@@ -1263,7 +1531,13 @@ function EnsignFlag({
   return (
     <>
       {field && <rect x="0.7" y="0.7" width="22.6" height="13.6" fill={field} stroke="none" />}
-      <UnionJack x={0.7} y={0.7} width={9.2} height={5.7} />
+      <UnionJack
+        x={0.7}
+        y={0.7}
+        width={9.2}
+        height={5.7}
+        colors={field ? UNION_JACK_COLORS : undefined}
+      />
       <Star cx={16.4} cy={4.3} size={newZealand ? 1.05 : 0.85} color={star} />
       <Star cx={19.2} cy={8.1} size={0.85} color={star} />
       <Star cx={15.3} cy={11.1} size={0.85} color={star} />
@@ -1299,10 +1573,31 @@ function NepalFlag({ colors }: { colors?: readonly string[] }) {
   );
 }
 
-function drawPattern(pattern: FlagPattern, colors?: readonly string[]) {
+/**
+ * `emblem` es un dato **por pais** y no por patron: Jordania lleva su estrella
+ * adentro del triangulo y Chequia no lleva nada. Viaja como parametro en vez de
+ * duplicar cada patron del triangulo en dos variantes del enum.
+ */
+function drawPattern(
+  pattern: FlagPattern,
+  colors: readonly string[] | undefined,
+  emblem: boolean,
+) {
   switch (pattern) {
     case "argentina":
       return <ArgentinaFlag colors={colors} />;
+    case "bicolor-triangle":
+      return <BandedHoistTriangle bands={2} colors={colors} emblem={emblem} />;
+    case "canton":
+      return <CantonFlag colors={colors} />;
+    case "full-cross":
+      return <FullCrossFlag colors={colors} />;
+    case "saltire":
+      return <SaltireFlag colors={colors} />;
+    case "stripes-triangle":
+      return <BandedHoistTriangle bands={5} colors={colors} emblem={emblem} />;
+    case "tricolor-triangle":
+      return <BandedHoistTriangle bands={3} colors={colors} emblem={emblem} />;
     case "australia":
       return <EnsignFlag colors={colors} />;
     case "brazil":
@@ -1362,9 +1657,9 @@ function drawPattern(pattern: FlagPattern, colors?: readonly string[]) {
     case "spain":
       return <SpainFlag colors={colors} />;
     case "triangle":
-      return <HoistTriangle colors={colors} />;
+      return <HoistTriangle colors={colors} emblem={emblem} />;
     case "union-jack":
-      return <UnionJack />;
+      return <UnionJack colors={colors} />;
     case "united-states":
       return <UnitedStatesFlag colors={colors} />;
     case "uruguay":
@@ -1402,7 +1697,11 @@ export default function MonochromeCountryFlag({
       strokeWidth="0.72"
     >
       <rect x="0.5" y="0.5" width="23" height="14" fill="none" />
-      {drawPattern(resolvePattern(country), colors)}
+      {drawPattern(
+        resolvePattern(country),
+        colors,
+        TRIANGLE_EMBLEM.has(country),
+      )}
     </svg>
   );
 }

@@ -15,10 +15,18 @@
  *   vertical-bicolor           → [left, right]
  *   horizontal-stripes         → [s1..s5] top→bottom, tiled cyclically
  *   nordic                     → [field, cross]
- *   triangle (hoist)           → [hoistTriangle, field, star]
+ *   triangle (hoist)           → [hoistTriangle, field, emblem]
+ *   bicolor-triangle           → [hoistTriangle, emblem, band1, band2]
+ *   tricolor-triangle          → [hoistTriangle, emblem, band1, band2, band3]
+ *   stripes-triangle           → [hoistTriangle, emblem, s1..s5]
+ *   canton                     → [canton, emblem, field]
+ *   canton-stripes             → [stripeOdd, stripeEven, canton, emblem]
+ *   full-cross                 → [tl, tr, bl, br, cross]
+ *   saltire                    → [wedgeTopBottom, wedgeSides, saltire, emblem]
+ *   union-jack                 → [field, white, red]
  *   diagonal                   → [upperLeft, lowerRight]
  *   center-disc                → [field, disc]
- *   cross                      → [field, cross]
+ *   cross (Suiza)              → [field, cross]
  *   crescent                   → [field, emblem]
  *   field-emblem               → [field, emblem]
  *   panels                     → [hoist, flyTop, flyBottom, emblem]
@@ -36,7 +44,7 @@
  *   greece                     → [stripeBlue, stripeWhite, canton, cross]
  *   united-states              → [stripeRed, stripeWhite, canton, stars]
  *   israel                     → [white, stripeBlue, star]
- *   south-africa               → [top, bottom, Yband, hoistTriangle]
+ *   south-africa               → [top, bottom, pall, hoistTriangle]
  *   south-korea                → [white, trigram, taegeukTop, taegeukBottom]
  *   quartered (Panama)         → [tl, tr, bl, br, starTl, starBr]
  *   ensign (AU/NZ/etc.)        → [field, canton, stars]
@@ -70,7 +78,7 @@ export const COUNTRY_FLAG_COLORS: Record<string, string[]> = {
   Yemen: ["#CE1126", W, K],
 
   // ── Horizontal tricolor + emblem [top, middle, bottom, seal] ──
-  Afghanistan: [K, "#BE0000", "#009900", W],
+  Afghanistan: ["#000000", "#BE0000", "#009900", "#FFFFFF"],
   Azerbaijan: ["#00B5E2", "#EF3340", "#509E2F", W],
   Cambodia: ["#032EA1", "#E00025", "#032EA1", W],
   Croatia: ["#FF0000", W, "#171796", "#FCD116"],
@@ -103,18 +111,18 @@ export const COUNTRY_FLAG_COLORS: Record<string, string[]> = {
   Uzbekistan: ["#0099B5", W, "#1EB53A", "#CE1126"],
 
   // ── Horizontal bicolor [top, bottom] ──
-  Angola: ["#CC092F", K],
+  Angola: ["#CE1126", "#000000", "#FFCB00"],
   Indonesia: ["#FF0000", W],
-  Liechtenstein: ["#002780", "#CE1126"],
+  Liechtenstein: ["#002B7F", "#CE1126", "#FFD83D"],
   Monaco: ["#CE1126", W],
   Poland: [W, "#DC143C"],
   Ukraine: ["#0057B7", "#FFD700"],
 
   // ── Horizontal bicolor + emblem [top, bottom, seal] ──
-  Bahrain: [W, "#CE1126", "#CE1126"],
+  Bahrain: ["#FFFFFF", "#CE1126"],
   "Burkina Faso": ["#EF2B2D", "#009E49", "#FCD116"],
   Haiti: ["#00209F", "#D21034", "#FFFFFF"],
-  Malta: [W, "#CF142B", "#CF142B"],
+  Malta: ["#FFFFFF", "#CF142B"],
   Nauru: ["#002B7F", "#002B7F", "#FFC61E"],
   Singapore: ["#EF3340", W, W],
 
@@ -145,19 +153,19 @@ export const COUNTRY_FLAG_COLORS: Record<string, string[]> = {
   "Vatican City": ["#FFE000", W],
 
   // ── Horizontal stripes [top→bottom, tiled] ──
-  Belarus: ["#C8313E", "#C8313E", "#4AA657", "#C8313E", "#C8313E"],
+  Belarus: ["#CE1720", "#007C30"],
   Botswana: ["#75AADB", W, K, W, "#75AADB"],
   "Cabo Verde": ["#003893", W, "#CF2027", W, "#003893"],
   "Central African Republic": ["#003082", W, "#289728", "#FFCE00", "#D21034"],
   "Costa Rica": ["#002B7F", W, "#CE1126", W, "#002B7F"],
   Gambia: ["#CE1126", W, "#0C1C8C", W, "#3A7728"],
-  Liberia: ["#BF0A30", W, "#BF0A30", W, "#BF0A30"],
-  Malaysia: ["#CC0001", W, "#CC0001", W, "#CC0001"],
+  Liberia: ["#BF0A30", "#FFFFFF", "#002B7F", "#FFFFFF"],
+  Malaysia: ["#CC0001", "#FFFFFF", "#010066", "#FFCC00"],
   Mauritius: ["#EA2839", "#1A206D", "#FFD500", "#00A551", "#EA2839"],
-  "North Macedonia": ["#D20000", "#FFE600", "#D20000", "#FFE600", "#D20000"],
+  "North Macedonia": ["#D20000", "#FFE600"],
   Suriname: ["#377E3F", W, "#B40A2D", W, "#377E3F"],
   Thailand: ["#A51931", W, "#2D2A4A", W, "#A51931"],
-  Togo: ["#006A4E", "#FFCE00", "#006A4E", "#FFCE00", "#D21034"],
+  Togo: ["#006A4E", "#FFCE00", "#D21034", "#FFFFFF"],
   Uganda: [K, "#FCDC04", "#D90000", K, "#FCDC04"],
 
   // ── Nordic [field, cross] ──
@@ -168,37 +176,36 @@ export const COUNTRY_FLAG_COLORS: Record<string, string[]> = {
   Sweden: ["#006AA7", "#FECC02"],
 
   // ── Triangle (hoist) [hoistTriangle, field, star] ──
-  "Antigua and Barbuda": ["#CE1126", K, "#FCD116"],
-  Bahamas: [K, "#00ABC9", "#FFC72C"],
-  Comoros: ["#3A8E2E", "#3A8E2E", W],
-  Cuba: ["#CB1515", "#002A8F", W],
-  Czechia: ["#11457E", W, W],
-  Djibouti: ["#D7141A", "#6AB2E7", "#FFFFFF"],
-  "Equatorial Guinea": ["#3E9A00", W, "#0073CE"],
+  "Antigua and Barbuda": ["#CE1126", "#FCD116", "#000000", "#0072C6", "#FFFFFF"],
+  Bahamas: ["#000000", "#FFC72C", "#00778B", "#FFC72C", "#00778B"],
+  Comoros: ["#3A75C4", "#FFFFFF", "#FFFF00", "#FFFFFF", "#CE1126", "#3D8E33", "#3D8E33"],
+  Cuba: ["#CF142B", "#FFFFFF", "#002A8F", "#FFFFFF", "#002A8F", "#FFFFFF", "#002A8F"],
+  Czechia: ["#11457E", "#FFFFFF", "#FFFFFF", "#D7141A"],
+  Djibouti: ["#FFFFFF", "#D7141A", "#6AB2E7", "#12AD2B"],
+  "Equatorial Guinea": ["#0073CE", "#FFFFFF", "#3E9A00", "#FFFFFF", "#E32118"],
   Eritrea: ["#EA0437", "#12AD2B", "#FFC726"],
-  Guyana: ["#009E49", "#FCD116", "#CE1126"],
-  Jordan: ["#CE1126", K, W],
-  Kuwait: ["#007A3D", W, K],
-  Mozambique: ["#CE1126", "#007168", "#FCE100"],
-  Oman: ["#C8102E", W, "#C8102E"],
-  Palestine: ["#CE1126", K, W],
-  Philippines: ["#0038A8", W, "#FCD116"],
-  "Sao Tome and Principe": ["#D21034", "#12AD2B", "#FFCE00"],
-  "South Sudan": ["#0F47AF", K, "#FCDD09"],
-  Sudan: ["#007229", "#D21034", W],
-  "Timor-Leste": ["#DC241F", "#FFC726", W],
-  Vanuatu: ["#D21034", "#009543", "#FDCE12"],
-  Zimbabwe: ["#FFFFFF", "#319208", "#FFD200"],
-
+  Guyana: ["#FCD116", "#009E49", "#CE1126"],
+  Jordan: ["#CE1126", "#FFFFFF", "#000000", "#FFFFFF", "#007A3D"],
+  Kuwait: ["#000000", "#FFFFFF", "#007A3D", "#FFFFFF", "#CE1126"],
+  Mozambique: ["#CE1126", "#FFFFFF", "#007168", "#000000", "#FCE100"],
+  Oman: ["#DB161B", "#FFFFFF", "#008000", "#FFFFFF"],
+  Palestine: ["#CE1126", "#FFFFFF", "#000000", "#FFFFFF", "#007A3D"],
+  Philippines: ["#FFFFFF", "#FCD116", "#0038A8", "#CE1126"],
+  "Sao Tome and Principe": ["#D21034", "#FFCE00", "#12AD2B", "#FFCE00", "#12AD2B"],
+  "South Sudan": ["#0F47AF", "#FCDD09", "#000000", "#DA121A", "#078930"],
+  Sudan: ["#007A3D", "#FFFFFF", "#D21034", "#FFFFFF", "#000000"],
+  "Timor-Leste": ["#000000", "#DC241F", "#FFFFFF"],
+  Vanuatu: ["#000000", "#FDCE12", "#D21034", "#009543"],
+  Zimbabwe: ["#FFFFFF", "#FFD700", "#319208", "#FFD200", "#000000", "#FFD200", "#319208"],
   // ── Diagonal [upperLeft, lowerRight] ──
   Bhutan: ["#FFD520", "#FF4E12"],
   "Bosnia and Herzegovina": ["#002395", "#002395"],
   Brunei: ["#FFFFFF", "#F7E017"],
-  Burundi: ["#CE1126", "#1EB53A"],
+  Burundi: ["#CE1126", "#1EB53A", "#FFFFFF", "#CE1126"],
   Congo: ["#009543", "#DC241F"],
   "DR Congo": ["#007FFF", "#007FFF"],
   Grenada: ["#CE1126", "#CE1126"],
-  Jamaica: ["#009B3A", "#009B3A"],
+  Jamaica: ["#009B3A", "#000000", "#FED100", "#FED100"],
   "Marshall Islands": ["#003893", "#003893"],
   Namibia: ["#003580", "#009543"],
   "Papua New Guinea": ["#CE1126", K],
@@ -216,19 +223,18 @@ export const COUNTRY_FLAG_COLORS: Record<string, string[]> = {
   Palau: ["#4AADD6", "#FFDE00"],
 
   // ── Cross [field, cross] ──
-  "Dominican Republic": ["#002D62", W],
-  Georgia: [W, "#FF0000"],
-  "San Marino": [W, "#5EB6E4"],
+  "Dominican Republic": ["#002D62", "#CE1126", "#CE1126", "#002D62", "#FFFFFF"],
+  Georgia: ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FF0000"],
+  "San Marino": ["#FFFFFF", "#5EB6E4", "#FFD700"],
   Switzerland: ["#FF0000", W],
-  Tonga: ["#C10000", "#C10000"],
-
+  Tonga: ["#FFFFFF", "#C10000", "#C10000"],
   // ── Crescent [field, emblem] ──
   Algeria: ["#FFFFFF", "#D21034"],
   Maldives: ["#D21034", W],
   Mauritania: ["#00A95C", "#FFD700"],
   Morocco: ["#C1272D", "#006233"],
   Pakistan: ["#01411C", W],
-  "Saudi Arabia": ["#006C35", W],
+  "Saudi Arabia": ["#006C35", "#FFFFFF"],
   Tunisia: ["#E70013", W],
   Turkey: ["#E30A17", W],
   Turkmenistan: ["#28AE66", W],
@@ -238,15 +244,15 @@ export const COUNTRY_FLAG_COLORS: Record<string, string[]> = {
   Cyprus: [W, "#D47600"],
   Micronesia: ["#75B2DD", W],
   Montenegro: ["#C40308", "#D4AF37"],
-  Samoa: ["#CE1126", W],
-  Somalia: ["#4189DD", W],
+  Samoa: ["#002B7F", "#FFFFFF", "#CE1126"],
+  Somalia: ["#4189DD", "#FFFFFF"],
   Vietnam: ["#DA251D", "#FFFF00"],
 
   // ── Panels [hoist, flyTop, flyBottom, emblem] ──
-  Belize: ["#003F87", "#003F87", "#003F87", "#CE1126"],
+  Belize: ["#003F87", "#CE1126"],
   Benin: ["#008751", "#FCD116", "#E8112D", "#008751"],
   "Sri Lanka": ["#FFBE29", "#8D153A", "#8D153A", "#FFBE29"],
-  Taiwan: ["#000095", "#FE0000", "#FE0000", W],
+  Taiwan: ["#000095", "#FFFFFF", "#FE0000"],
   "United Arab Emirates": ["#FF0000", "#00732F", K, W],
   Zambia: ["#198A00", "#EF7D00", "#000000", "#DE2010"],
 
@@ -295,4 +301,14 @@ export const COUNTRY_FLAG_COLORS: Record<string, string[]> = {
   // nepal: [field(crimson), border(blue), emblem(white)]
   Nepal: ["#DC143C", "#003893", W],
   // union-jack (UK) — drawn as line-art only; no fill regions defined.
+  // ── Agregadas en B4c/F1: no tenian ninguna paleta, asi que en el estado
+  //    coloreado se quedaban en el line-art monocromo. ──
+  Dominica: ["#006B3F", "#006B3F", "#006B3F", "#006B3F", "#FCD116"],
+  "Guinea-Bissau": ["#CE1126", "#FCD116", "#009E49", "#000000"],
+  Kiribati: ["#CE1126", "#003F87", "#FFD100"],
+  Madagascar: ["#FFFFFF", "#FC3D32", "#007E3A", "#FFFFFF"],
+  Qatar: ["#FFFFFF", "#8A1538"],
+  "Saint Lucia": ["#66CCFF", "#000000"],
+  "Saint Vincent and the Grenadines": ["#0072C6", "#FCD116", "#009E49", "#009E49"],
+  "United Kingdom": ["#012169", "#FFFFFF", "#C8102B"],
 };
