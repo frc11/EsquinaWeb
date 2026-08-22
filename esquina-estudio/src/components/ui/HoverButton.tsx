@@ -11,10 +11,7 @@ interface HoverButtonProps {
   as?: "button" | "a" | "span";
   tone?: "light" | "dark";
   underline?: boolean;
-  underlineDraw?: boolean;
-  underlineDrawDelay?: number;
   tightUnderline?: boolean;
-  blend?: boolean;
   /** When true, hover fill and text padding use equal spacing on all four sides.
    *  Default false = existing behaviour preserved exactly. */
   balancedPadding?: boolean;
@@ -29,27 +26,14 @@ export default function HoverButton({
   as,
   tone = "light",
   underline = true,
-  underlineDraw = false,
-  underlineDrawDelay = 0,
   tightUnderline = false,
-  blend = false,
   balancedPadding = false,
   onClick,
 }: HoverButtonProps) {
-  const fillClass = blend
-    ? "bg-current"
-    : tone === "dark"
-      ? "bg-off-white"
-      : "bg-off-black";
-  const underlineColorClass = blend
-    ? "bg-current"
-    : tone === "dark"
-      ? "bg-off-white"
-      : "bg-off-black";
+  const fillClass = tone === "dark" ? "bg-off-white" : "bg-off-black";
+  const underlineColorClass = tone === "dark" ? "bg-off-white" : "bg-off-black";
   const textClass =
-    blend
-      ? "text-current group-hover:text-off-black"
-      : tone === "dark"
+    tone === "dark"
       ? "text-off-white group-hover:text-off-black"
       : "text-off-black group-hover:text-off-white";
   const textPaddingClass = balancedPadding
@@ -84,27 +68,10 @@ export default function HoverButton({
         {children}
       </span>
 
-      {underline && !underlineDraw && (
+      {underline && (
         <span
           className={`absolute bottom-0 -left-[1px] -right-[1px] h-[1px] ${underlineColorClass}`}
           aria-hidden="true"
-        />
-      )}
-
-      {underline && underlineDraw && (
-        <motion.span
-          className={`absolute bottom-0 -left-[1px] -right-[1px] h-px origin-left ${underlineColorClass}`}
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          style={{
-            transformOrigin: "left",
-          }}
-          transition={{
-            delay: underlineDrawDelay,
-            duration: 2.5,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          aria-hidden
         />
       )}
     </motion.span>
