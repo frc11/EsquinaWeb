@@ -7,7 +7,7 @@ Deuda diferida, con contexto para retomarla. Lo mantiene la capa de planificaci�
 - **[Clientas]** Formato de entrega del logo grande del footer (lo preguntan en Final.pdf pág. 4). Responderles; es insumo del sprint de footer (B2).
 - **[Clientas]** Gif/video de Team: contenido pendiente de ellas; el placeholder `VIDEO O GIF` queda hasta que llegue. No bloquea código.
 - **[PDF]** La frase nueva difiere en puntuación entre el hero (pág. 2: «NOISE,») y el footer (págs. 4/8/12: «STAND OUT.»). Definir una sola contra mockup en el sprint B2-home/footer.
-- **[Auditoría 6.4]** Tokens de font-size del `@theme` huérfanos, `--cursor-*` y `--footer-height` sin consumidores: adoptar como punto central o borrar. Decisión del ritual de B2.
+- ~~**[Auditoría 6.4]** Tokens de font-size del `@theme` huérfanos, `--cursor-*` y `--footer-height` sin consumidores.~~ **Cerrado en B4c:** al ir a borrarlos se verificó que **ya no existen en `globals.css`** —se habían ido en algún sprint anterior sin que nadie sincronizara la ficha—. Lo único que quedaba era `--color-gray`, duplicado de `--color-gray-brand`, y B4c lo borró. `--color-beige` **se queda**: es decisión de paleta, no limpieza.
 - ~~**[Planificación]** Forma exacta de la variante ES del Portable Text de `project`.~~ **Resuelto: no hay variante.** El `content` no se traduce; quedó confirmado en B4.
 - **[Auditoría 1.c]** `NEXT_PUBLIC_SITE_URL` no está definida → `metadataBase` cae al placeholder `your-site-name.netlify.app`. Fix chico: definirla en Netlify y `.env.local`. Colar en B2 o resolver a mano.
 - ~~**[Auditoría]** Corroborar las mediciones (tipografía / Contact) contra un build de producción antes del cierre de la ronda.~~ **Resuelto:** desde B3.4 todo se mide sobre `npm run build` + `npm run start`, y B4 volvió a levantar la matriz completa de Contact así, en los dos idiomas.
@@ -21,7 +21,7 @@ Deuda diferida, con contexto para retomarla. Lo mantiene la capa de planificaci�
 - **[Ejecución B1]** Los types stale de `.next/dev/types/` rompen el typecheck cuando un sprint borra o renombra rutas con un `next dev` corriendo. Regla para sprints futuros: **regenerar** el artefacto (frenar el dev server y volver a correr el build), nunca editarlo a mano. Considerar bajar el dev server antes de sprints que muevan rutas.
 - **[Método]** La Fase 0 de todo sprint verifica que HEAD coincida con el commit sobre el que se auditó (o registra explícitamente el delta), además de que el árbol esté limpio. Origen: en B1 se descubrió tarde que HEAD ya no era `2565d01`; el delta (`a477018`) resultó ser solo documentación, sin `src/`, así que la auditoría sigue siendo base válida.
 - **[Docs]** Cuando la ronda cierre, revisar si las reglas de criterio y la directiva estética de `CLAUDE.md` §8 siguen reflejando cómo se trabajó, y ajustar con lo aprendido.
-- **[B3.4]** **GSAP quedó sin ningún consumidor en el repo** tras el desmontaje del acordeón de Services (verificado con grep: cero imports de `gsap` y de `gsap/ScrollTrigger`). Sigue en `package.json`. Desinstalarlo es un cambio de dependencias, fuera del alcance de un sprint de sección: decidir en el cierre de la ronda.
+- ~~**[B3.4]** **GSAP quedó sin ningún consumidor en el repo** tras el desmontaje del acordeón de Services.~~ **Resuelto en B4c/F3:** desinstalado de `package.json`, del lockfile y de `node_modules` (5,97 MB en 179 archivos). El lockfile pasa de 1372 a 1371 paquetes, cero agregados y cero cambios de versión.
 - **[B3.4]** El intro de `/services` mide exactamente una pantalla menos el header, así que Branding Packs empieza justo en el pliegue y **no asoma**. El mockup `08a` lo muestra asomando, pero el alto del recorte no es el de un viewport, así que no se puede deducir de ahí. Si la verificación visual quiere el asomo, es cambiar el `min-h` del intro por algo tipo `85vh`: una línea.
 - **[B3.4]** Diferencias menores contra el mockup, asumidas y documentadas: (a) las reglas de ítems y las de sección terminan en el **mismo** borde derecho, mientras el mockup deja 51 px de sangría entre ellas; (b) la lista de ítems arranca a la altura del **nombre** del pack en los cuatro, mientras `08b` la baja una línea solo en Consultation; (c) los cortes de línea del título y la bajada de Branding Packs los decide el ancho de columna, así que pueden diferir en una palabra.
 - **[B3.4]** Los apóstrofos del contenido de Services son **rectos** (`we're`, `can't`, `LET'S`), tal como llegaron en el Apéndice A. Los mockups los muestran tipográficos (’). Si las clientas quieren el curvo, es una edición de `src/lib/services-content.ts` y nada más.
@@ -29,8 +29,8 @@ Deuda diferida, con contexto para retomarla. Lo mantiene la capa de planificaci�
 
 ## Abiertos al cerrar la ronda (B4/F8, 2026-08-21)
 
-- **[B4 · Dependencias]** **GSAP sigue instalado y sin un solo consumidor** (verificado de nuevo en B4: cero imports de `gsap` y de `gsap/ScrollTrigger` en `src/`). Desinstalarlo es un cambio de `package.json`, o sea alcance global: se decide en el chat de planificación, no en un sprint de sección.
-- **[B4 · Dependencias]** La prop **`blend` de `HoverButton` quedó huérfana**: la define y la usa el propio componente, pero **ningún call site la pasa** (9 call sites en 4 archivos, verificado). Se quedó sin llamador cuando `/fun-gallery` dejó de tener cromo superpuesto en B3.3. Borrarla toca el primitivo compartido, así que va junto con la decisión de arriba.
+- ~~**[B4 · Dependencias]** **GSAP sigue instalado y sin un solo consumidor.**~~ **Resuelto en B4c/F3** (ver arriba).
+- ~~**[B4 · Dependencias]** La prop **`blend` de `HoverButton` quedó huérfana**.~~ **Resuelta en B4c/F3**, y en el camino aparecieron dos más con el mismo problema: **`underlineDraw` y `underlineDrawDelay`**, cuyos consumidores —el CTA del Hero y el botón DISCOVER de `ServicesIntro`— habían desaparecido en B2 y B3.4. Las tres se fueron, junto con la rama de render del subrayado que se dibujaba solo. Los 9 call sites en 4 archivos siguen intactos.
 - **[B4 · Diseño]** **Contraste del gris.** `gray-brand` (#939393) sobre off-white da **2,77:1** medido, por debajo del 4,5:1 de AA para texto normal y del 3:1 para texto grande; sobre off-black da 6,24:1 y sí pasa. Afecta a los detalles de Services, las pills sin marcar, los placeholders del formulario, los links secundarios de la ficha y el toggle EN/ES. Es atenuación deliberada, no un descuido: la decisión es de diseño y conviene tomarla una vez para todo el sitio.
 - **[B4 · Contenido]** **Las doce casillas ES de los cuatro proyectos de Sanity están vacías.** El sitio en castellano muestra los proyectos en inglés por el fallback cruzado, así que no hay hueco ni error. Las traducciones propuestas están listas en `docs/sanity-piezas-es.md` para cargarlas a mano en el Studio.
 - **[B4 · Contenido]** Dos cosas del dataset que decidieron mirar las clientas, anotadas en el mismo archivo: el tipeo **`FOOD & SEVERAGES`** por `FOOD & BEVERAGES`, y el proyecto **`matsutrabajo`**, que duplica a `matsu` y es candidato del cierre de `/services` (las cuatro portadas más recientes).
@@ -86,3 +86,32 @@ porque §3 de la instrucción no las cubría.
   Chrome **estrangula los temporizadores** a uno por minuto y **no corre
   `requestAnimationFrame`**, así que el banco no puede usar `setTimeout` para
   asentar ni observar una sola animación.
+
+## Abiertos al cerrar B4c (2026-08-22)
+
+- **[B4c · Diseño]** **La revisión país por país del set de banderas.** B4c
+  corrigió la estructura de 44 países y completó las paletas de los 196, pero
+  **el agente no puede juzgar el parecido**: la hoja de contactos con los 196 en
+  los dos estados quedó entregada en el reporte del sprint para que Valentino
+  marque las que sigan mal. Lo que ya se sabe que quedó aproximado, y por qué:
+  - **`diagonal` solo soporta dos colores**, así que las banderas de tres
+    diagonales pierden la del medio (Congo pierde el amarillo, RD del Congo
+    pierde la banda roja).
+  - **`panels` dibuja dos bandas en el batiente**, así que Emiratos y Omán
+    pierden una de sus tres.
+  - **Los emblemas complejos se resuelven con la silueta** (`Seal`, un par de
+    círculos concéntricos): el escudo de España, la rueda de la India y el
+    cedro del Líbano comparten dibujo. Es la regla del set a 15 px de alto, no
+    un descuido.
+  - **Antigua y Barbuda** entró en `tricolor-triangle` por descarte: su
+    triángulo real es invertido y central, no del asta.
+  - **`horizontal-tricolor` reparte las bandas en tercios parejos**, así que
+    Letonia muestra la banda blanca más ancha de lo que es.
+- **[B4c · Método]** **Con la pestaña oculta, Chrome estrangula los `setTimeout`
+  a uno por segundo y no corre `requestAnimationFrame`.** Ya estaba anotado; en
+  B4c costó dos intentos de banco de medición. La salida es **ceder con
+  `MessageChannel`**, que no se estrangula: `postMessage` sobre un canal propio
+  da un tick de macrotarea real y además deja terminar la hidratación de React,
+  que se programa sobre el mismo mecanismo. Consecuencia que hay que aceptar:
+  **el timing del toggle de idioma no se puede cronometrar** desde el agente;
+  se verifica por derivación de las constantes y a ojo, del lado humano.
