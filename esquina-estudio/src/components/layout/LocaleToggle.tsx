@@ -1,5 +1,13 @@
 "use client";
 
+import { useCallback, useRef } from "react";
+import {
+  NavIndicator,
+  measureTabIndicator,
+  useIndicator,
+  type IndicatorMeasure,
+} from "@/components/layout/nav-indicator";
+import { usePrefersReducedMotion } from "@/components/layout/RouteTransitionProvider";
 import { LOCALES, useLocale, type Locale } from "@/lib/i18n";
 
 /**
@@ -21,25 +29,27 @@ import { LOCALES, useLocale, type Locale } from "@/lib/i18n";
  * - Alrededor de la barra hay **5,8 y 4,3 px**, o sea un espacio de 17 px a cada
  *   lado. De ahí el `px-[4px]` del separador.
  *
- * # El subrayado es el mismo que el del menú
+ * # La barrita ES el indicador del menú (B4b)
  *
- * En los mockups el idioma activo se marca con una línea, y esa línea está a la
- * **misma altura** que el indicador del Navbar (medido en `14`: y = 99 contra
- * 100). Acá eso no se copia con un número, se comparte la geometría:
+ * En B4 el subrayado era un `<span>` de CSS adentro del botón activo: aparecía
+ * y desaparecía. Desde B4b **es el mismo sistema que marca el menú**
+ * (`nav-indicator.tsx`), con la misma medición, el mismo redondeo, la misma
+ * duración y el mismo easing: se contrae hasta un punto, viaja y se vuelve a
+ * abrir sobre el otro idioma. No hay un segundo sistema y no se copia ningún
+ * número (`CLAUDE.md` §8.10).
  *
- * 1. Los botones llevan el mismo relleno vertical de 6 px que `HoverButton` con
- *    `balancedPadding`, y el Navbar alinea la fila **arriba**, así que la caja
- *    del toggle termina en el mismo borde inferior que la de los tabs (79,75 px
- *    medidos a 1920) — que es justo lo que `measureFillBox` le entrega al
- *    indicador.
- * 2. El subrayado **cuelga** de ese borde en vez de apoyarse adentro
- *    (`-bottom-px`), que es la misma regla del indicador: «su borde superior se
- *    apoya en el borde inferior del fill, sin hueco».
+ * Para que la medición sea la misma y no una versión aparte, el botón cumple el
+ * contrato que `measureFillBox` le pide a `HoverButton`: **el `<button>` es el
+ * elemento posicionado** y el rótulo cuelga de un `<span>` sin posición, que es
+ * el que lleva el relleno de 6 px. Así la caja que se mide es la del botón, con
+ * el mismo relleno vertical que `balancedPadding`.
  *
- * Queda una diferencia de **0,25 px** entre los centros de las dos líneas, y
- * viene de que el indicador redondea su `top` a píxel entero desde JavaScript y
- * el subrayado no puede: es CSS. Si algún día cambia el relleno del menú, las
- * dos se mueven juntas.
+ * De ahí sale la alineación con la línea del menú, que ya no es aproximada: el
+ * Navbar alinea la fila **arriba** (`items-start`), así que la caja del toggle
+ * termina en el mismo borde inferior que la de los tabs, y el módulo redondea
+ * ese borde **en coordenadas de viewport**. Los 0,25 px de desfase que quedaban
+ * en B4 —cuando el subrayado era CSS y no podía redondear— desaparecieron: las
+ * dos líneas caen en la misma fila de píxeles.
  *
  * # Color (revisado en B4b)
  *
@@ -56,6 +66,14 @@ import { LOCALES, useLocale, type Locale } from "@/lib/i18n";
  * con hover y foco, que es el mismo gesto del sidebar de Services y de las pills
  * de Contact; ahora ese gesto se lee como una vista previa del estado activo.
  *
+ * La barrita hereda ese mismo color pleno (`bg-current` sobre el tono del cromo),
+ * igual que la línea del menú.
+ *
+ * # `prefers-reduced-motion`
+ *
+ * La barrita no viaja: se planta en el idioma nuevo. Es la puerta `animate` del
+ * módulo compartido, y no toca al indicador del menú, que sigue como estaba.
+ *
  * # Accesibilidad
  *
  * Son dos `<button>` dentro de un `role="group"` con nombre. El estado viaja en
@@ -67,15 +85,53 @@ import { LOCALES, useLocale, type Locale } from "@/lib/i18n";
  * # Lo que NO hace
  *
  * No navega. Son `<button>`, no `<a>`, así que el listener de captura de
- * `RouteTransitionProvider` —que solo mira `a[href]`— ni se entera: cambiar de
- * idioma no dispara la transición de página ni remonta el árbol.
+ * `RouteTransitionProvider` —que solo mira `a[href]`— ni se entera. La
+ * transición que sí ocurre al cambiar de idioma la gobierna `LocaleProvider`, no
+ * el router: el árbol no se remonta y la ruta no cambia.
  */
 export default function LocaleToggle({
   tone = "light",
+  measureKey,
 }: {
   tone?: "light" | "dark";
+  /**
+   * Lo pasa el menú de mobile cuando termina de entrar: hasta entonces el
+   * contenedor se está desplazando y la barrita redondearía contra un origen en
+   * movimiento. En el header no hace falta.
+   */
+  measureKey?: unknown;
 }) {
   const { locale, setLocale, t } = useLocale();
+  const reduceMotion = usePrefersReducedMotion();
+
+  const groupRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<Partial<Record<Locale, HTMLButtonElement | null>>>(
+    {},
+  );
+
+  const setButtonRef = useCallback(
+    (code: Locale) => (node: HTMLButtonElement | null) => {
+      buttonRefs.current[code] = node;
+    },
+    [],
+  );
+
+  const measureTarget = useCallback((): IndicatorMeasure | null => {
+    const group = groupRef.current;
+    const activeButton = buttonRefs.current[locale];
+
+    if (!group || !activeButton) {
+      return null;
+    }
+
+    return measureTabIndicator(activeButton, group.getBoundingClientRect());
+  }, [locale]);
+
+  const indicator = useIndicator({
+    measureTarget,
+    measureKey,
+    animate: !reduceMotion,
+  });
 
   // El color pleno del cromo: el mismo que porta el menú en cada tono. El activo
   // lo lleva fijo; el inactivo lo alcanza con hover y foco.
@@ -87,9 +143,10 @@ export default function LocaleToggle({
 
   return (
     <div
+      ref={groupRef}
       role="group"
       aria-label={t.common.language}
-      className="flex items-center pr-[6px] font-body text-[17px] font-medium uppercase tracking-normal text-gray-brand"
+      className="relative flex items-center pr-[6px] font-body text-[17px] font-medium uppercase tracking-normal text-gray-brand"
     >
       {LOCALES.map((code: Locale, index) => (
         <span key={code} className="flex items-center">
@@ -99,15 +156,22 @@ export default function LocaleToggle({
             </span>
           )}
           <button
+            ref={setButtonRef(code)}
             type="button"
             lang={code}
             aria-pressed={code === locale}
             onClick={() => setLocale(code)}
-            className={`relative block cursor-pointer py-[6px] transition-colors duration-200 ${
+            className={`relative block cursor-pointer transition-colors duration-200 ${
               code === locale ? fullToneClass : inactiveClass
             }`}
           >
-            {code.toUpperCase()}
+            {/*
+              El relleno va en este `<span>` y no en el botón: el botón tiene que
+              ser el elemento **posicionado** para que `measureFillBox` mida su
+              caja, y el nodo de texto tiene que colgar de un elemento sin
+              posición. Es el mismo reparto que hace `HoverButton`.
+            */}
+            <span className="block py-[6px]">{code.toUpperCase()}</span>
             {/*
               El espacio va ADENTRO del `sr-only` y no como `{" "}` suelto: un
               nodo de texto entre los dos elementos sí ocuparía ancho —4,5 px a
@@ -115,15 +179,11 @@ export default function LocaleToggle({
               fuera de flujo, así que su contenido no mide.
             */}
             <span className="sr-only">{` ${t.common.languageNames[code]}`}</span>
-            {code === locale && (
-              <span
-                aria-hidden="true"
-                className="absolute inset-x-0 -bottom-px h-px bg-current"
-              />
-            )}
           </button>
         </span>
       ))}
+
+      <NavIndicator animation={indicator} className={fullToneClass} />
     </div>
   );
 }
