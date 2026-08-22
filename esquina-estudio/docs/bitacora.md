@@ -1375,3 +1375,242 @@ fases, ocho commits: `49c080c` · `ba37779` · `28fddd8` · `d02b26d` · `4f2e88
 
 - **Commits:** `49c080c`, `ba37779`, `28fddd8`, `d02b26d`, `4f2e885`, `1dd83e5`,
   `4857687`, `df8f35a`, más el de este cierre.
+
+## B4b — El toggle de idioma (2026-08-22)
+
+Microsprint de refinamiento sobre lo que dejó B4. **La verificación humana pidió
+tres cosas, las tres sobre el toggle: que el idioma activo se lea como activo,
+que la barrita se deslice como el indicador del menú, y que cambiar de idioma
+dispare la transición de página completa.** La tercera **revierte una regla de
+B4** («el toggle no dispara la transición»), por decisión de Valentino. Se sumó
+una cuarta, F2b, que arreglaba un defecto que B4 había dejado. Cuatro fases,
+cuatro commits: `deadcd9` · `bfe42f9` · `7d1d926` · `087abfc`, más el de este
+cierre.
+
+- **Línea base y no-regresión, medidas las dos sobre `build` + `start` en 3010,
+  DPR 1, en un iframe same-origin de 1920×1080.** Para el control se volvió a
+  compilar el `src` del commit anterior al sprint y se midió con el mismo banco.
+  Los siete altos: `/` **1080** · `/work` **2154** · `/services` **7653** ·
+  `/team` **4257** · `/fun-gallery` **2228** · `/contact` **1664** ·
+  `/contact/success` **1244`. **Los siete idénticos** antes y después. La caja
+  del toggle también: `1793,39 → 1856`, `42,25 → 79,75`, 62,61 de ancho, la
+  misma en las siete rutas y en los dos builds. Puertas con el servidor bajado:
+  `lint` exit 0 · `build` exit 0 · **11 rutas / 15 páginas**, cero errores y cero
+  warnings nuevos.
+
+- **Fase 1 — el idioma activo, pintado.** Hasta B4 los dos códigos iban en el
+  mismo gris y lo único que distinguía al activo era el subrayado; con los dos
+  en gris el activo no se lee como activo. Ahora el activo va en **el color
+  pleno del cromo** y el inactivo se queda en el gris de identidad. Medido:
+  activo `rgb(15,15,15)` en las seis rutas claras y `rgb(243,243,243)` en
+  `/contact/success`, que es la única oscura; inactivo `rgb(147,147,147)` en las
+  siete; separador `/` `rgb(147,147,147)`, sin cambio y sin ser interactivo. **El
+  contraste lo da el color y nada más**: mismo tamaño de 17 px, mismo tracking y
+  mismo peso que el resto del menú.
+
+- **Fase 2 — la barrita es el indicador, no una copia de él.** El sistema que
+  vivía adentro de `Navbar.tsx` desde B2.2 salió a `src/components/layout/nav-indicator.tsx`
+  y ahora lo consumen los dos: el menú de escritorio y el toggle. Comparten la
+  medición (`measureFillBox`), el redondeo, la morfología del viaje —se contrae
+  al punto de 5 px, viaja, se vuelve a abrir—, la duración de 0,62 s, el easing y
+  el elemento pintado. **Nadie copia números del otro.** Para que la medición sea
+  literalmente la misma, el `<button>` del toggle pasó a cumplir el contrato que
+  `measureFillBox` le pide a `HoverButton`: el botón es el elemento posicionado y
+  el rótulo cuelga de un `<span>` sin posición, que es el que lleva el relleno de
+  6 px.
+
+- **El redondeo cambió de origen, y esa es la parte que se nota.** Antes se
+  redondeaba el borde **relativo al contenedor**; ahora se redondea **en
+  coordenadas de viewport** y recién después se descuenta el origen. Para el menú
+  da exactamente lo mismo, y no es una suposición: su contenedor arranca medido
+  en `(0, 0)`. Para el toggle es la única forma de que la línea caiga en una fila
+  entera de píxeles, porque su contenedor arranca en **42,25**. El efecto medido
+  a 1920:
+
+  | | B4 | B4b |
+  |---|---|---|
+  | barrita del toggle | `l 1793,39 · w 21,61 · top **79,75**` | `l 1793 · w 22 · top **80**` |
+  | indicador del menú | `l 748 · w 62 · top **80**` | `l 748 · w 62 · top **80**` |
+  | color de la barrita | `rgb(147,147,147)` | `rgb(15,15,15)` |
+
+  Los **0,25 px** de desfase entre las dos líneas que `CLAUDE.md` traía
+  documentados desde B4 **desaparecieron**: las dos caen en la misma fila. La
+  barrita del toggle era CSS (`-bottom-px`) y por eso no podía redondear; ahora
+  es el mismo elemento que el indicador.
+
+- **Fase 2b — el indicador se remedía tarde, y ahora se remide cuando tiene que
+  remedirse.** El defecto: al cambiar de idioma la línea del menú **quedaba con
+  la posición y el ancho del rótulo viejo**. Reproducido y medido en `/work`: con
+  el sitio ya en castellano, la línea seguía en `l 748 · w 62` (WORK) mientras
+  `PROYECTOS` ocupaba `732,42 → 842,20`. Son **16 px** de posición y **48** de
+  ancho. La causa no era la ruta: **la entrada de la medición es la caja del
+  rótulo pintado**, y esa cambia sin que cambie la ruta. El disparador pasa a ser
+  un `ResizeObserver` sobre los cinco tabs y el logo, dentro del mismo hook
+  compartido. Dos detalles que lo hacen funcionar:
+
+  1. Sus notificaciones se entregan **después del layout y antes del pintado**,
+     así que la línea nunca llega a verse en la posición vieja, y remide **sin
+     viaje**: no se ve saltando de un lugar a otro. Por el mismo camino queda
+     cubierta la tipografía que se aplica tarde, que también cambia el ancho de
+     la caja.
+  2. **El observador se suscribe una sola vez** y llega a la medición vigente por
+     referencia. Esto no es una optimización: `observe()` entrega una notificación
+     inicial por cada elemento, y los `ResizeObserver` se entregan **después** de
+     los `requestAnimationFrame`, así que un observador que se volviera a
+     suscribir en cada cambio de medición **pisaría con una medición sin viaje la
+     animación que el cuadro acababa de armar**. Se vio en la instrumentación
+     antes de corregirlo: la barrita saltaba de 1830 a 1793 en **13 ms** en vez de
+     viajar los 620. Verificado después del arreglo: un click de idioma no produce
+     **ningún** `observe()` ni `disconnect()` nuevo.
+
+  La verificación se hizo dentro del iframe de 1920 fijo, donde el `resize` del
+  viewport interno **nunca dispara** —contador en 0—, así que el único disparador
+  posible es el observador. Alineación de la línea con su rótulo, las cuatro
+  secciones en los dos idiomas:
+
+  | sección | idioma | barra (l–r) | caja del rótulo (l–r) | Δ izq | Δ der | Δ ancho |
+  |---|---|---|---|---|---|---|
+  | WORK / PROYECTOS | EN | 748–810 | 748,45–809,83 | −0,45 | +0,17 | +0,62 |
+  | | ES | 732–842 | 732,42–842,20 | −0,42 | −0,20 | +0,22 |
+  | SERVICES / SERVICIOS | EN | 842–932 | 841,83–932,06 | +0,17 | −0,06 | −0,23 |
+  | | ES | 874–972 | 874,20–971,64 | −0,20 | +0,36 | +0,56 |
+  | TEAM / EQUIPO | EN | 964–1021 | 964,06–1021,31 | −0,06 | −0,31 | −0,25 |
+  | | ES | 1004–1076 | 1003,64–1076,36 | +0,36 | −0,36 | −0,72 |
+  | FUN GALLERY / GALERÍA | EN | 1053–1172 | 1053,31–1171,55 | −0,31 | +0,45 | +0,77 |
+  | | ES | 1108–1188 | 1108,36–1187,58 | −0,36 | +0,42 | +0,78 |
+
+  **Ninguno pasa de 0,78 px**, contra el criterio de ±1 de B2.2b. La barrita del
+  toggle, en los dos anchos: a 1920, `1793–1815` contra `1793,39–1815,00` en
+  inglés y `1830–1850` contra `1829,84–1850,00` en castellano; a 1366,
+  `1239–1261` y `1276–1296` contra las mismas cajas corridas. Máximo **0,39 px**.
+
+- **La tipografía se verificó, y no es un problema en este sitio.** Medida la
+  caja de un tab en tres momentos —al terminar de cargar, después de
+  `document.fonts.ready` y un rato después— da **el mismo valor exacto**
+  (109,781 px), y `document.fonts.status` ya dice `loaded` en la primera
+  medición: la fuente es local y `next/font` la precarga. Igual el caso queda
+  cubierto por construcción, porque una aplicación tardía cambiaría el ancho de
+  la caja y eso es justo lo que el observador mira.
+
+- **Fase 3 — la transición al cambiar de idioma, sin navegación.** La secuencia
+  pedida es: click, el toggle acusa recibo, después se desvanece todo incluido el
+  menú, el idioma cambia **oculto**, y todo reaparece en el idioma nuevo. Lo que
+  la hace posible son **dos idiomas en el proveedor**: `selectedLocale` es lo que
+  la persona eligió y cambia en el mismo click; `locale` es lo que se está
+  renderizando y cambia mucho después. El toggle pinta y mide contra el primero,
+  todo lo demás lee el segundo. Los tiempos:
+
+  | etapa | duración | de dónde sale |
+  |---|---|---|
+  | acuse de recibo | **200 ms** | lo que tarda el propio toggle en cambiar de color (`transition-colors duration-200`) |
+  | la cortina sube | **650 ms** | `PAGE_EXIT_DURATION`, con `PAGE_EXIT_EASE` |
+  | swap del idioma | 0 | en el punto máximo, con la cortina arriba |
+  | la cortina baja | **650 ms** | los mismos dos |
+  | **total** | **1500 ms** | contra los **1300** de una navegación |
+
+  Las dos mitades son **exactamente** las de una navegación entre páginas, misma
+  duración y mismo easing; lo que suma son los 200 ms del acuse de recibo, que es
+  lo que el sprint pidió ver **antes** del desvanecimiento. Muestreada la curva
+  de la cortina cuadro a cuadro: a 638 ms desde el click da **0,040** (el valor
+  analítico del easing es 0,035) y a 982 ms da **0,951** (analítico 0,93).
+
+- **Por qué una cortina propia y no el sistema de rutas.** Ese sistema está atado
+  a la navegación: su estado de salida se cierra **cuando llega la ruta nueva** y
+  `template.tsx` se remonta. Acá no hay navegación, así que no habría nada que lo
+  cerrara — que es exactamente el riesgo que el sprint marcó. Y además su overlay
+  vive **adentro** de `PageTransitionShell`, que no cubre el Navbar. La cortina de
+  B4b es un `fixed inset-0` en off-white a la altura del `<body>` y por encima del
+  cromo: da el mismo resultado visual —todo se va a off-white y vuelve— y **no se
+  tocó una sola línea de `RouteTransitionProvider`**; solo se consumen tres cosas
+  que ya exportaba (`PAGE_EXIT_DURATION`, `PAGE_EXIT_EASE`,
+  `usePrefersReducedMotion`). Tiene además una ventaja de seguridad que conviene
+  dejar escrita: **como nada baja de opacidad, no puede quedar ningún elemento a
+  media opacidad**. Los dos únicos estados posibles son «la cortina está en el
+  DOM» y «no está».
+
+- **Las tres salvaguardas, y qué se midió de cada una.**
+  1. **El estado se revierte siempre.** Por la vía normal —un temporizador por
+     etapa— y por un **failsafe** armado en el mismo click, a 1900 ms (400 de
+     margen sobre los 1500), que apaga la cortina y aplica el idioma pase lo que
+     pase.
+  2. **Limpieza en el desmontaje.** Los temporizadores de etapa los limpia React
+     con el efecto y el failsafe tiene su propio efecto de limpieza. Navegar a
+     otra ruta del sitio **no** desmonta el proveedor —vive en el layout raíz—,
+     así que la secuencia termina sola; la única forma de desmontarlo es entrar a
+     `/studio`, y ahí se va con todo lo demás.
+  3. **El idioma cambia aunque la animación falle.** La elección se guarda en
+     `localStorage` **en el primer instante del click**, y el swap lo dispara un
+     temporizador, nunca un callback de animación. Comprobado del modo más crudo
+     posible: con la pestaña en segundo plano —donde `requestAnimationFrame` no
+     corre y las animaciones se congelan— el idioma cambió igual y la cortina se
+     fue igual.
+
+- **Los cuatro escenarios de riesgo, medidos.** **(a)** Click en el idioma **ya
+  activo**, tres veces seguidas: la cortina **no aparece nunca** y no cambia
+  nada. **(b)** Cinco clicks al otro idioma **durante** la transición: **un solo
+  ciclo de cortina**, el idioma que queda es el del primer click, y la cortina
+  termina ausente — no se encadenan ni se cortan a la mitad. **(c)** Navegar a
+  `/services` a mitad de la transición: el sitio queda en la ruta nueva, sin
+  cortina, sin opacidades residuales y con el indicador ya en `SERVICES`
+  (`842–932`). **(d)** Recargar a mitad de la transición: el idioma elegido
+  sobrevive (quedó guardado), no hay cortina y el cromo está entero. **En las
+  siete rutas**, después de cambiar de idioma: cortina **ausente** y **cero**
+  elementos con opacidad reducida — la única opacidad menor a 1 que aparece es el
+  `opacity-80` del logo de develOP en el footer, que es una decisión de diseño de
+  B2.1 y está en la línea base.
+
+- **`prefers-reduced-motion`.** Sin cortina, sin etapas y sin deslizamiento: el
+  idioma cambia al instante y la barrita se planta en su lugar. La puerta es la
+  opción `animate` del módulo compartido, que **no toca al indicador del menú**:
+  ese sigue exactamente como estaba.
+
+- **Desvíos, dichos de frente.** **(1)** Se tocó
+  `src/components/layout/LocaleToggle.tsx`, que **no estaba en la lista de
+  archivos autorizados** de la instrucción; es el archivo que implementa el
+  toggle, y las tres fases son sobre el toggle, así que la omisión se leyó como
+  un descuido de la lista y no como un límite. **(2)** Se creó
+  `src/components/layout/nav-indicator.tsx`, que tampoco estaba en la lista: es
+  la extracción que la propia regla §3.3 autoriza («si no es reusable tal cual,
+  extraer y usar en los dos lugares»). **(3)** El **redondeo del indicador cambió
+  de origen** (§ arriba). Es el corazón del pedido de la Fase 2 —«posición y
+  ancho redondeados a píxel entero»— y para el menú es un no-op medido, pero es
+  una modificación de código que B2.2 había afinado y corresponde declararla.
+  **(4)** El menú de mobile pasó a avisar cuándo terminó de entrar
+  (`measureKey`), porque su contenedor entra con un `y` animado y una medición
+  tomada a mitad de ese desplazamiento redondea contra un origen en movimiento.
+  Son tres líneas en `Navbar.tsx` y una prop opcional. **(5)** El **defecto del
+  observador que se resuscribía** (§ Fase 2b, punto 2) se encontró verificando la
+  Fase 3 y se corrigió **dentro del commit de la Fase 2b**, que es el que había
+  introducido el observador. **(6)** Se corrigieron dos afirmaciones de
+  `CLAUDE.md` que B4b vuelve falsas —que cambiar de idioma no dispara la
+  transición, y que el sistema del indicador vive dentro del Navbar—; dejarlas
+  escritas habría mandado al próximo agente en la dirección contraria.
+
+- **Nota de método.** El banco de medición volvió a ser el **iframe same-origin
+  de tamaño fijo**, y esta vez ganó una segunda función: como el iframe mide
+  1920×1080 pase lo que pase con la ventana, **su `resize` interno nunca
+  dispara**, y eso lo convierte en el discriminador que permitió aislar el
+  observador como único disparador de la remedición. El límite de siempre sigue
+  en pie y esta vez fue más duro que nunca: **con la pestaña en segundo plano no
+  corre `requestAnimationFrame`**, y sin él no hay medición del DOM animado ni
+  observación de ninguna animación. Se descubrió que un **scroll** sobre la
+  pestaña la despierta y deja correr cuadros un rato — es un instrumento más
+  barato y más confiable que la captura de pantalla, que además redimensiona el
+  viewport y contamina la medición.
+
+- **Verificación humana pendiente (declarada, no la da por cumplida el agente).**
+  El agente **no puede observar animaciones**: todo lo de arriba son estados
+  asentados y tiempos gobernados por temporizadores. En `localhost:3010`, DPR 1:
+  **(a)** la secuencia completa, mirando que el color y la barrita respondan **al
+  instante** y que el desvanecimiento venga **después**; **(b)** que el cambio de
+  texto **no se vea** ocurrir; **(c)** que la barrita **se deslice** con el gesto
+  del menú y no salte — es lo que el agente vio congelado a mitad de camino
+  (ancho 5, el punto en viaje) pero no puede mirar corriendo; **(d)** cambiar de
+  idioma en cada una de las siete rutas; **(e)** clicks repetidos y click en el
+  idioma ya activo; **(f)** navegar a otra ruta justo mientras cambia el idioma;
+  **(g)** que la navegación normal entre páginas siga igual que siempre; **(h)**
+  el toggle en el menú de mobile, que es el único lugar donde vive debajo de
+  `md`; **(i)** si los 1500 ms se sienten largos contra los 1300 de una
+  navegación, o si conviene recortar el acuse de recibo.
+
+- **Commits:** `deadcd9`, `bfe42f9`, `7d1d926`, `087abfc`, más el de este cierre.
