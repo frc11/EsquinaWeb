@@ -69,6 +69,18 @@ import { LOCALES, useLocale, type Locale } from "@/lib/i18n";
  * La barrita hereda ese mismo color pleno (`bg-current` sobre el tono del cromo),
  * igual que la línea del menú.
  *
+ * # El acuse de recibo (B4b, fase 3)
+ *
+ * El toggle pinta y mide contra `selectedLocale` —lo que la persona eligió— y
+ * no contra `locale` —lo que se está renderizando—. Los dos coinciden salvo
+ * durante la transición de idioma, y esa diferencia es justo lo que hace que el
+ * color y la barrita respondan **en el click**, antes de que empiece el
+ * desvanecimiento. El diccionario, y con él `aria-label` y los nombres de los
+ * idiomas, cambia después, con la cortina arriba.
+ *
+ * `aria-pressed` sigue a `selectedLocale` por la misma razón: lo que se anuncia
+ * es la elección, apenas se hizo.
+ *
  * # `prefers-reduced-motion`
  *
  * La barrita no viaja: se planta en el idioma nuevo. Es la puerta `animate` del
@@ -101,7 +113,7 @@ export default function LocaleToggle({
    */
   measureKey?: unknown;
 }) {
-  const { locale, setLocale, t } = useLocale();
+  const { selectedLocale, setLocale, t } = useLocale();
   const reduceMotion = usePrefersReducedMotion();
 
   const groupRef = useRef<HTMLDivElement>(null);
@@ -118,14 +130,14 @@ export default function LocaleToggle({
 
   const measureTarget = useCallback((): IndicatorMeasure | null => {
     const group = groupRef.current;
-    const activeButton = buttonRefs.current[locale];
+    const activeButton = buttonRefs.current[selectedLocale];
 
     if (!group || !activeButton) {
       return null;
     }
 
     return measureTabIndicator(activeButton, group.getBoundingClientRect());
-  }, [locale]);
+  }, [selectedLocale]);
 
   const indicatorHosts = useCallback(
     () => LOCALES.map((code) => buttonRefs.current[code]),
@@ -165,10 +177,10 @@ export default function LocaleToggle({
             ref={setButtonRef(code)}
             type="button"
             lang={code}
-            aria-pressed={code === locale}
+            aria-pressed={code === selectedLocale}
             onClick={() => setLocale(code)}
             className={`relative block cursor-pointer transition-colors duration-200 ${
-              code === locale ? fullToneClass : inactiveClass
+              code === selectedLocale ? fullToneClass : inactiveClass
             }`}
           >
             {/*
