@@ -127,8 +127,14 @@ export default function LocaleToggle({
     return measureTabIndicator(activeButton, group.getBoundingClientRect());
   }, [locale]);
 
+  const indicatorHosts = useCallback(
+    () => LOCALES.map((code) => buttonRefs.current[code]),
+    [],
+  );
+
   const indicator = useIndicator({
     measureTarget,
+    hosts: indicatorHosts,
     measureKey,
     animate: !reduceMotion,
   });

@@ -145,7 +145,25 @@ export default function Navbar() {
     return measureTabIndicator(activeLink, navRect);
   }, [activeDesktopHref, visualPathname]);
 
-  const indicator = useIndicator({ measureTarget });
+  /**
+   * Lo que se observa para remedir sin que cambie la ruta: los cinco tabs y el
+   * logo. Cuando cambia el idioma, `WORK` pasa a `PROYECTOS` y las cajas de la
+   * fila cambian de ancho; el `ResizeObserver` del módulo compartido lo levanta
+   * y vuelve a medir con el rótulo nuevo ya pintado. El logo entra porque el
+   * punto de la raíz se apoya en su borde derecho.
+   */
+  const indicatorHosts = useCallback(
+    () => [
+      desktopLogoRef.current,
+      ...MOBILE_LINKS.map((link) => desktopLinkRefs.current[link.href]),
+    ],
+    [],
+  );
+
+  const indicator = useIndicator({
+    measureTarget,
+    hosts: indicatorHosts,
+  });
 
   return (
     <nav

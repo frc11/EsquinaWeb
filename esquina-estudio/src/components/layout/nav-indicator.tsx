@@ -250,6 +250,13 @@ type UseIndicatorOptions = {
    */
   measureTarget: () => IndicatorMeasure | null;
   /**
+   * Los elementos cuya caja gobierna la medición. Se observan con
+   * `ResizeObserver`, que es lo que hace que la línea se remida sola cuando el
+   * rótulo cambia de ancho sin que cambie la ruta: **cambio de idioma** y
+   * también la aplicación tardía de la tipografía. Estable (`useCallback`).
+   */
+  hosts: () => ReadonlyArray<HTMLElement | null | undefined>;
+  /**
    * Cuando cambia, se remide **sin** viaje. Es para el caso en que el
    * contenedor terminó de moverse pero nadie cambió de tamaño: el menú de
    * mobile entra con un `y` animado, y una medición tomada a mitad de ese
@@ -264,18 +271,24 @@ type UseIndicatorOptions = {
  * El ciclo completo del indicador: mide, recuerda la medición anterior, arma la
  * animación y se vuelve a medir cuando algo de lo que mide cambió.
  *
- * Los tres disparadores, y por qué cada uno anima o no:
+ * Los cuatro disparadores, y por qué cada uno anima o no:
  *
  * - **Identidad de `measureTarget`** (ruta activa, idioma elegido en el toggle):
  *   remide **con** viaje en el cuadro siguiente. El `requestAnimationFrame` no
  *   es decorativo: la medición tiene que ocurrir con el DOM ya pintado con el
  *   rótulo nuevo, no en el mismo tick del cambio de estado, o se mide lo viejo.
  * - **`resize` de la ventana**: sin viaje.
+ * - **`ResizeObserver` sobre los anfitriones**: sin viaje. Es el disparador del
+ *   cambio de idioma —los rótulos del menú cambian de ancho sin que cambie la
+ *   ruta— y el de la tipografía que se aplica tarde. Sus notificaciones se
+ *   entregan **después del layout y antes del pintado**, así que la línea nunca
+ *   llega a verse en la posición vieja.
  * - **`measureKey`**: sin viaje, y saltando la primera corrida para no pisar la
  *   animación que acaba de armar el disparador de arriba.
  */
 export function useIndicator({
   measureTarget,
+  hosts,
   measureKey,
   animate = true,
 }: UseIndicatorOptions) {
@@ -316,6 +329,35 @@ export function useIndicator({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [remeasure]);
+
+  // El observador se suscribe **una sola vez** y llega a la medición vigente por
+  // referencia. No es un gusto: `observe()` entrega una notificación inicial por
+  // cada elemento, y esa notificación cae en el mismo cuadro en que el
+  // disparador de arriba acaba de armar el viaje —los `ResizeObserver` se
+  // entregan después de los `requestAnimationFrame`—, así que un observador que
+  // se volviera a suscribir cada vez que cambia `remeasure` **pisaría la
+  // animación con una medición sin viaje**. Con esto, la única notificación que
+  // llega en una navegación o en un click del toggle es la de un cambio de
+  // tamaño real, que es justo cuando no se quiere viaje.
+  const remeasureRef = useRef(remeasure);
+
+  useEffect(() => {
+    remeasureRef.current = remeasure;
+  });
+
+  useEffect(() => {
+    const observed = hosts().filter(
+      (host): host is HTMLElement => host instanceof HTMLElement,
+    );
+
+    if (observed.length === 0) return;
+
+    const observer = new ResizeObserver(() => remeasureRef.current(false));
+
+    observed.forEach((host) => observer.observe(host));
+
+    return () => observer.disconnect();
+  }, [hosts]);
 
   const settledKeyRef = useRef(measureKey);
 
