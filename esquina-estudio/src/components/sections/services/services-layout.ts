@@ -1,3 +1,5 @@
+import { CHROME_GUTTER } from "@/lib/mobile-layout";
+
 /**
  * Medidas compartidas del rediseño de `/services` (B3.4).
  *
@@ -12,8 +14,11 @@
  * debajo del menú.
  */
 
-/** Gutter del cromo. Alinea Services con el Navbar y el Footer. */
-export const GUTTER = "px-12 lg:px-16";
+/**
+ * Gutter del cromo. Alinea Services con el Navbar y el Footer: sale del módulo
+ * compartido de mobile para que los tres corten en el mismo ancho (M1).
+ */
+export const GUTTER = CHROME_GUTTER;
 
 /** Ancho de la columna del sidebar, en px. */
 export const SIDEBAR_WIDTH = 180;
@@ -73,6 +78,26 @@ export const LATEST_GRID =
  * unos píxeles respecto de las otras. El aire vertical va por márgenes.
  */
 export const SECTION_GRID = `${SPLIT_GRID} lg:grid-rows-[auto_auto]`;
+
+/**
+ * # Escala de mobile de Services (M1/F5)
+ *
+ * Un solo mapeo para toda la ruta, para no inventar un tamaño por bloque:
+ * **40 → 26 · 30 → 20 · 24 → 20 · 20 → 17**, con el interlineado bajando en la
+ * misma proporción. Los 17 px se quedan donde están: es el tamaño de
+ * información del sitio y ya era el piso.
+ *
+ * Vale debajo de `md`. De 768 para arriba la ruta conserva la escala del
+ * rediseño de B3.4, que está medida contra los mockups y no se toca.
+ */
+export const SERVICES_DISPLAY_40 =
+  "text-[26px] leading-[31px] md:text-[40px] md:leading-[48px]";
+export const SERVICES_HEADING_30 =
+  "text-[20px] leading-[24px] md:text-[30px] md:leading-[36px]";
+export const SERVICES_LINK_24 =
+  "text-[20px] leading-[24px] md:text-[24px] md:leading-[28px]";
+export const SERVICES_BODY_20 =
+  "text-[17px] leading-[21px] md:text-[20px] md:leading-[26px]";
 
 /** Fila de un ítem: nombre a la izquierda, detalle en gris a la derecha. */
 export const ITEM_GRID =

@@ -10,6 +10,9 @@ import {
   SECTION_GRID,
   SECTION_RULE,
   SERVICES_ANCHOR_ATTR,
+  SERVICES_BODY_20,
+  SERVICES_HEADING_30,
+  SERVICES_LINK_24,
 } from "@/components/sections/services/services-layout";
 import {
   getServicePack,
@@ -63,10 +66,15 @@ export default function ServicePackSection({
       */}
       <div
         {...{ [SERVICES_ANCHOR_ATTR]: "" }}
-        className={cn(SECTION_GRID, "pt-[160px] pb-[120px]")}
+        className={cn(SECTION_GRID, "pb-16 pt-16 md:pb-[120px] md:pt-[160px]")}
       >
         {pack.number ? (
-          <p className="mb-[12px] font-body text-[30px] leading-[36px] text-off-black lg:col-start-1 lg:row-start-1">
+          <p
+            className={cn(
+              "mb-[12px] font-body text-off-black lg:col-start-1 lg:row-start-1",
+              SERVICES_HEADING_30,
+            )}
+          >
             {pack.number}
           </p>
         ) : null}
@@ -74,7 +82,7 @@ export default function ServicePackSection({
         <div className="lg:col-start-1 lg:row-start-2">
           <h3
             id={`${pack.id}-name`}
-            className="font-body text-[30px] uppercase leading-[36px] text-off-black"
+            className={cn("font-body uppercase text-off-black", SERVICES_HEADING_30)}
           >
             {pack.name.map((line, index) => (
               <span key={index} className="block">
@@ -83,15 +91,20 @@ export default function ServicePackSection({
             ))}
           </h3>
 
-          <div className="mt-[56px] space-y-[22px] font-body text-[20px] leading-[26px] text-off-black">
+          <div
+            className={cn(
+              "mt-8 space-y-[22px] font-body text-off-black md:mt-[56px]",
+              SERVICES_BODY_20,
+            )}
+          >
             {pack.description.map((paragraph, index) => (
               <p key={index}>{paragraph}</p>
             ))}
           </div>
 
           {pack.footnote ? (
-            <div className="mt-[40px] font-body text-off-black">
-              <p className="text-[20px] leading-[26px]">{pack.footnote[0]}</p>
+            <div className="mt-8 font-body text-off-black md:mt-[40px]">
+              <p className={SERVICES_BODY_20}>{pack.footnote[0]}</p>
               <p className="mt-[16px] text-[17px] uppercase leading-[20px]">
                 {pack.footnote[1]}
               </p>
@@ -105,16 +118,26 @@ export default function ServicePackSection({
               <li
                 key={index}
                 className={cn(
-                  "py-[22px]",
+                  "py-4 md:py-[22px]",
                   index > 0 && ["border-t", ITEM_RULE_BORDER],
                 )}
               >
                 <div className={ITEM_GRID}>
-                  <p className="font-body text-[30px] leading-[36px] text-off-black">
+                  <p
+                    className={cn(
+                      "font-body text-off-black",
+                      SERVICES_HEADING_30,
+                    )}
+                  >
                     {item.name}
                   </p>
                   {item.detail ? (
-                    <p className="font-body text-[20px] leading-[26px] text-gray-brand md:text-right">
+                    <p
+                      className={cn(
+                        "font-body text-gray-brand md:text-right",
+                        SERVICES_BODY_20,
+                      )}
+                    >
                       {item.detail}
                     </p>
                   ) : null}
@@ -123,7 +146,7 @@ export default function ServicePackSection({
             ))}
           </ul>
 
-          <div className="mt-[88px] flex flex-col items-end">
+          <div className="mt-12 flex flex-col items-end md:mt-[88px]">
             {/*
               El link envuelve texto y flecha, pero el subrayado y el relleno de
               hover son solo del texto: en el mockup la flecha queda fuera de la
@@ -132,11 +155,11 @@ export default function ServicePackSection({
             */}
             <Link
               href={quoteHref}
-              className="flex items-center gap-3 text-off-black"
+              className="flex items-center gap-3 text-off-black max-lg:min-h-[44px]"
             >
               <HoverButton
                 as="span"
-                className="font-body text-[24px] uppercase leading-[28px]"
+                className={cn("font-body uppercase", SERVICES_LINK_24)}
               >
                 {getServicesCopy(locale).quoteLabel}
               </HoverButton>
@@ -144,7 +167,12 @@ export default function ServicePackSection({
             </Link>
 
             {pack.quoteNote ? (
-              <p className="mt-[14px] max-w-[340px] text-right font-body text-[20px] leading-[26px] text-gray-brand">
+              <p
+                className={cn(
+                  "mt-[14px] max-w-[340px] text-right font-body text-gray-brand",
+                  SERVICES_BODY_20,
+                )}
+              >
                 {pack.quoteNote}
               </p>
             ) : null}

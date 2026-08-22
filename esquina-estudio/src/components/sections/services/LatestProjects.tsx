@@ -8,11 +8,14 @@ import {
   CONTENT_INSET,
   GUTTER,
   LATEST_GRID,
+  SERVICES_HEADING_30,
+  SERVICES_LINK_24,
 } from "@/components/sections/services/services-layout";
 import { getServicesCopy } from "@/lib/services-content";
 import { useLocale } from "@/lib/i18n";
 import { urlFor } from "@/lib/sanity";
 import { projectText } from "@/lib/project-text";
+import { useIsBelowDesktop } from "@/lib/use-media-query";
 import type { Project } from "@/types/project";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +45,15 @@ import { cn } from "@/lib/utils";
  *
  * Van como estilo en línea y no como clases porque el hover necesita los mismos
  * números (ver abajo) y no pueden quedar escritos en dos lados.
+ *
+ * # El hover de las portadas — **de 1024 para arriba y nada más** (M1/F5)
+ *
+ * En touch el hover no existe, y el de Framer se dispara con el tap y se queda
+ * pegado: la portada tocada quedaría agrandada y las otras tres difuminadas
+ * hasta que alguien tocara otra cosa. Debajo de 1024 px, entonces, las cuatro
+ * portadas **se muestran quietas** —sin escala y sin difuminado, que es lo que
+ * pide §3.2 de la instrucción—: no se registran los cuatro manejadores y el
+ * estado no se toca nunca.
  *
  * # El hover de las portadas
  *
@@ -86,6 +98,12 @@ const COVER_CDN_WIDTH = 1200;
 const COVER_CDN_HEIGHT = 900;
 const COVER_CDN_FORMAT = "webp" as const;
 
+/**
+ * Debajo de 1024 px el subrayado va **siempre puesto** (`max-lg:scale-x-100`):
+ * es la misma regla que §3.2 escribe para los links del cromo —en touch el
+ * hover no existe—, y sin ella estos dos links serían los únicos del sitio sin
+ * línea. El área tocable toma los 44 px de piso por la misma razón.
+ */
 function UnderlineOnHoverLink({
   href,
   label,
@@ -96,13 +114,16 @@ function UnderlineOnHoverLink({
   return (
     <Link
       href={href}
-      className="group inline-flex w-fit items-center gap-3 font-body text-[24px] uppercase leading-[28px] text-off-black"
+      className={cn(
+        "group inline-flex w-fit items-center gap-3 font-body uppercase text-off-black max-lg:min-h-[44px]",
+        SERVICES_LINK_24,
+      )}
     >
       <span className="relative inline-block">
         {label}
         <span
           aria-hidden="true"
-          className="absolute bottom-0 left-0 right-0 h-px origin-left scale-x-0 bg-off-black transition-transform duration-300 ease-out group-hover:scale-x-100 motion-reduce:transition-none"
+          className="absolute bottom-0 left-0 right-0 h-px origin-left scale-x-0 bg-off-black transition-transform duration-300 ease-out group-hover:scale-x-100 motion-reduce:transition-none max-lg:scale-x-100"
         />
       </span>
       <ServicesArrow />
@@ -116,27 +137,35 @@ export default function LatestProjects({
   projects: readonly Project[];
 }) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  // El gesto de hover es de escritorio: debajo de 1024 no se cuelga ni un
+  // manejador y las portadas se quedan quietas.
+  const hoverEnabled = !useIsBelowDesktop();
   const { locale } = useLocale();
   const { label, paragraph, links } = getServicesCopy(locale).latestProjects;
   const lastIndex = projects.length - 1;
 
   return (
-    <section aria-labelledby="latest-projects" className="pb-[120px]">
+    <section aria-labelledby="latest-projects" className="pb-16 md:pb-[120px]">
       {/*
         El texto conserva la misma medida que los packs —`CONTENT_INSET`—, aunque
         acá el sidebar ya no esté: es lo que muestra `08e` y lo que mantiene un
         margen derecho parejo en toda la página. La fila de portadas, en cambio,
         va a sangre y por eso queda fuera de este bloque.
       */}
-      <div className={cn(GUTTER, CONTENT_INSET, LATEST_GRID, "pt-[160px]")}>
+      <div className={cn(GUTTER, CONTENT_INSET, LATEST_GRID, "pt-16 md:pt-[160px]")}>
         <h2
           id="latest-projects"
-          className="font-body text-[30px] uppercase leading-[36px] text-off-black"
+          className={cn("font-body uppercase text-off-black", SERVICES_HEADING_30)}
         >
           {label}
         </h2>
 
-        <p className="mt-10 max-w-[720px] font-body text-[30px] leading-[36px] text-off-black lg:mt-0">
+        <p
+          className={cn(
+            "mt-6 max-w-[720px] font-body text-off-black md:mt-10 lg:mt-0",
+            SERVICES_HEADING_30,
+          )}
+        >
           {paragraph}
         </p>
 
@@ -145,7 +174,7 @@ export default function LatestProjects({
           esos anchos las tres columnas no entran sin espicharlo (ver
           `LATEST_GRID`).
         */}
-        <div className="mt-10 flex flex-col items-start gap-[14px] lg:col-start-2 lg:row-start-2 2xl:col-start-3 2xl:row-start-1 2xl:mt-0">
+        <div className="mt-6 flex flex-col items-start gap-[14px] md:mt-10 lg:col-start-2 lg:row-start-2 2xl:col-start-3 2xl:row-start-1 2xl:mt-0">
           {links.map((link) => (
             <UnderlineOnHoverLink
               key={link.href}
@@ -158,13 +187,13 @@ export default function LatestProjects({
 
       {projects.length > 0 ? (
         <div
-          className="relative mt-[160px] flex w-full"
+          className="relative mt-16 flex w-full md:mt-[160px]"
           style={{ gap: COVER_GAP, paddingInline: COVER_EDGE }}
         >
           {projects.map((project, index) => {
-            const isHovered = hoveredIndex === index;
+            const isHovered = hoverEnabled && hoveredIndex === index;
             const title = projectText(project, locale, "title");
-            const isDimmed = hoveredIndex !== null && !isHovered;
+            const isDimmed = hoverEnabled && hoveredIndex !== null && !isHovered;
             const source =
               typeof project.coverImage === "string"
                 ? project.coverImage
@@ -181,10 +210,14 @@ export default function LatestProjects({
                 key={project._id}
                 href={`/work/${project.slug.current}`}
                 aria-label={title}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
-                onFocus={() => setHoveredIndex(index)}
-                onBlur={() => setHoveredIndex(null)}
+                onMouseEnter={
+                  hoverEnabled ? () => setHoveredIndex(index) : undefined
+                }
+                onMouseLeave={
+                  hoverEnabled ? () => setHoveredIndex(null) : undefined
+                }
+                onFocus={hoverEnabled ? () => setHoveredIndex(index) : undefined}
+                onBlur={hoverEnabled ? () => setHoveredIndex(null) : undefined}
                 className={cn(
                   "relative block aspect-[4/3] flex-1 transition-[transform,filter,opacity] duration-500 ease-out motion-reduce:transition-none",
                   isDimmed && DIMMED,

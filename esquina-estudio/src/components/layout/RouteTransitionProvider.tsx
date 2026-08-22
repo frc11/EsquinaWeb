@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useMediaQuery } from "@/lib/use-media-query";
 
 export const PAGE_EXIT_DURATION = 0.65;
 export const PAGE_EXIT_EASE: [number, number, number, number] = [
@@ -71,19 +72,10 @@ function getRouteHref(destination: URL) {
  * se corrige en el efecto, y además sí reacciona si la preferencia cambia.
  */
 export function usePrefersReducedMotion() {
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const updatePreference = () => setReduceMotion(media.matches);
-
-    updatePreference();
-    media.addEventListener("change", updatePreference);
-
-    return () => media.removeEventListener("change", updatePreference);
-  }, []);
-
-  return reduceMotion;
+  // Delega en el hook de media queries del repo (M1): la implementacion es una
+  // sola, con el mismo contrato de arrancar en `false` y corregirse en el
+  // efecto. El comportamiento no cambia.
+  return useMediaQuery("(prefers-reduced-motion: reduce)");
 }
 
 export function useRouteTransition() {

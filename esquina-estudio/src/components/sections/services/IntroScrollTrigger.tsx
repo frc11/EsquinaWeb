@@ -7,6 +7,7 @@ import {
 } from "@/components/sections/services/services-layout";
 import { usePrefersReducedMotion } from "@/components/layout/RouteTransitionProvider";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
+import { useIsBelowDesktop } from "@/lib/use-media-query";
 
 /**
  * Gatillo del intro: estando arriba de todo, **un solo scroll hacia abajo** baja
@@ -86,6 +87,23 @@ import { usePreloader } from "@/components/providers/PreloaderProvider";
  * dos roces separados en el tiempo no se suman entre sí; y un evento hacia
  * arriba la borra, porque el gesto cambió de idea.
  *
+ * # En mobile no existe (M1/F5)
+ *
+ * Debajo de 1024 px el gatillo **no se arma**: el efecto sale antes de
+ * registrar un solo listener, así que en un teléfono el scroll es normal desde
+ * el primer gesto. No es una preferencia estética: los tres listeners son **no
+ * pasivos** y cancelan desde el primer evento mientras el gatillo está armado,
+ * de modo que en touch la pantalla no se movería hasta juntar 60 px y después
+ * daría un salto de una pantalla entera. Es exactamente lo que §3.3 de la
+ * instrucción pide desactivar.
+ *
+ * La condición se lee con el hook de media queries del repo, que arranca en
+ * `false` y se corrige en el efecto: en un teléfono eso significa que los
+ * listeners llegan a registrarse durante un cuadro y se dan de baja en el
+ * siguiente, sin que nadie alcance a scrollear en el medio. Y como la
+ * dependencia está en el arreglo del efecto, girar el teléfono o redimensionar
+ * la ventana rearma o desarma el gatillo solo.
+ *
  * # Lo que el lock **no** toca
  *
  * `ctrl + rueda` es el zoom del navegador y nunca se cancela. Y estando armado
@@ -120,9 +138,13 @@ function easeInOutCubic(t: number) {
 
 export default function IntroScrollTrigger({ targetId }: { targetId: string }) {
   const reduceMotion = usePrefersReducedMotion();
+  const isBelowDesktop = useIsBelowDesktop();
   const { isPreloaderDone } = usePreloader();
 
   useEffect(() => {
+    // En mobile y en tablet el gatillo no existe: scroll normal desde el
+    // arranque, sin un solo listener registrado (M1/F5).
+    if (isBelowDesktop) return;
     // Con la preferencia activa no hay gatillo ni lock: scroll normal desde el
     // arranque.
     if (reduceMotion) return;
@@ -268,7 +290,7 @@ export default function IntroScrollTrigger({ targetId }: { targetId: string }) {
     window.addEventListener("touchmove", handleTouchMove, { passive: false });
 
     return release;
-  }, [isPreloaderDone, reduceMotion, targetId]);
+  }, [isBelowDesktop, isPreloaderDone, reduceMotion, targetId]);
 
   return null;
 }

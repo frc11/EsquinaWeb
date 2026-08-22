@@ -4,7 +4,9 @@ import { motion, type Variants } from "framer-motion";
 import SpySentinel from "@/components/sections/services/SpySentinel";
 import { usePrefersReducedMotion } from "@/components/layout/RouteTransitionProvider";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
+import { SERVICES_DISPLAY_40 } from "@/components/sections/services/services-layout";
 import { getServicesCopy } from "@/lib/services-content";
+import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/i18n";
 
 /**
@@ -73,7 +75,7 @@ export default function ServicesIntro() {
     <section
       id="intro"
       aria-label={t.services.introLabel}
-      className="relative flex min-h-[calc(100vh-var(--header-height))] w-full flex-col items-center justify-center scroll-mt-[var(--header-height)] text-center"
+      className="relative flex min-h-[calc(100svh-var(--header-height))] w-full flex-col items-center justify-center scroll-mt-[var(--header-height)] text-center"
     >
       <SpySentinel id="intro" />
 
@@ -84,7 +86,10 @@ export default function ServicesIntro() {
         variants={reduceMotion ? undefined : introVariants}
       >
         <motion.p
-          className="max-w-[1000px] font-display text-[40px] uppercase leading-[48px] tracking-normal text-off-black"
+          className={cn(
+            "max-w-[1000px] font-display uppercase tracking-normal text-off-black",
+            SERVICES_DISPLAY_40,
+          )}
           variants={reduceMotion ? undefined : fadeVariants}
         >
           {phrase.map((line, index) => (
@@ -97,7 +102,7 @@ export default function ServicesIntro() {
         </motion.p>
 
         <motion.p
-          className="mt-[48px] flex items-center gap-3 font-body text-[17px] uppercase leading-[20px] text-off-black"
+          className="mt-8 flex items-center gap-3 font-body text-[17px] uppercase leading-[20px] text-off-black md:mt-[48px]"
           variants={reduceMotion ? undefined : fadeVariants}
         >
           <span aria-hidden="true">&darr;</span>

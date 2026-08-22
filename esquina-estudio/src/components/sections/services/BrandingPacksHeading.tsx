@@ -3,6 +3,8 @@
 import SpySentinel from "@/components/sections/services/SpySentinel";
 import {
   BRANDING_PACKS_ID,
+  SERVICES_DISPLAY_40,
+  SERVICES_HEADING_30,
   SPLIT_GRID,
 } from "@/components/sections/services/services-layout";
 import { getServicesCopy } from "@/lib/services-content";
@@ -34,22 +36,22 @@ export default function BrandingPacksHeading() {
   return (
     <div
       id={BRANDING_PACKS_ID}
-      className={cn(SPLIT_GRID, "relative pt-[160px] pb-[160px]")}
+      className={cn(SPLIT_GRID, "relative pb-20 pt-20 md:pb-[160px] md:pt-[160px]")}
     >
       <SpySentinel id={BRANDING_PACKS_ID} />
 
-      <h2 className="font-body text-[30px] uppercase leading-[36px] text-off-black">
+      <h2 className={cn("font-body uppercase text-off-black", SERVICES_HEADING_30)}>
         {label}
       </h2>
 
       <div className="mt-10 lg:mt-0">
-        <p className="font-display text-[40px] leading-[48px] text-off-black">
+        <p className={cn("font-display text-off-black", SERVICES_DISPLAY_40)}>
           {title.lead}
           <span className="font-semibold">{title.emphasis}</span>
           {title.tail}
         </p>
 
-        <p className="mt-[40px] font-body text-[30px] leading-[36px] text-off-black">
+        <p className={cn("mt-6 font-body text-off-black md:mt-[40px]", SERVICES_HEADING_30)}>
           {subtitle.lead}
           <span className="font-semibold">{subtitle.emphasis}</span>
         </p>
