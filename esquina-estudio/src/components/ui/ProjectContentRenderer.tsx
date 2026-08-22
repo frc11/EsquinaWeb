@@ -9,7 +9,7 @@ import { urlFor } from "@/lib/sanity";
 const ptComponents: PortableTextComponents = {
   block: {
     normal: ({ children }) => (
-      <p className="font-body text-[30px] leading-[1.3] text-off-black mb-16">
+      <p className="mb-10 font-body text-[20px] leading-[1.3] text-off-black md:mb-16 md:text-[30px]">
         {children}
       </p>
     ),
@@ -56,7 +56,7 @@ function SingleMedia({ block }: { block: any }) {
           loop
           muted
           playsInline
-          className="w-full max-h-[88vh] object-contain"
+          className="w-full max-h-[88svh] object-contain"
         />
         {caption && (
           <figcaption className="mt-2 text-[13px] text-gray-brand font-body">
@@ -80,7 +80,7 @@ function SingleMedia({ block }: { block: any }) {
     if (isGif) {
       return (
         <figure className="w-full mb-[2px]">
-          <div className="relative w-full aspect-[4/3] max-h-[88vh] mx-auto overflow-hidden">
+          <div className="relative w-full aspect-[4/3] max-h-[88svh] mx-auto overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageUrl}
@@ -99,7 +99,7 @@ function SingleMedia({ block }: { block: any }) {
 
     return (
       <figure className="w-full mb-[2px]">
-        <div className="relative w-full aspect-[4/3] max-h-[88vh] mx-auto overflow-hidden">
+        <div className="relative w-full aspect-[4/3] max-h-[88svh] mx-auto overflow-hidden">
           <Image
             src={imageUrl}
             alt={caption || t.work.mediaAlt}
@@ -130,11 +130,11 @@ function DualMedia({ block }: { block: any }) {
 
   if (!leftUrl && !rightUrl) return null;
 
-  // Same effective height as SingleMedia (full-width 4:3, capped at 88vh):
+  // Same effective height as SingleMedia (full-width 4:3, capped at 88svh):
   // the row owns the height; each image fills half the width with object-cover.
   // Thin (2px) horizontal gap between the pair, thin vertical gap below.
   return (
-    <div className="relative flex w-full gap-[2px] aspect-[4/3] max-h-[88vh] mb-[2px]">
+    <div className="relative flex w-full gap-[2px] aspect-[4/3] max-h-[88svh] mb-[2px]">
       {leftUrl && (
         <figure className="relative m-0 h-full flex-1 overflow-hidden">
           <Image
@@ -168,7 +168,7 @@ export default function ProjectContentRenderer({ content }: { content: any[] }) 
 
   if (!content || content.length === 0) {
     return (
-      <p className="font-body text-[30px] leading-[1.3] text-gray-brand italic">
+      <p className="font-body text-[20px] leading-[1.3] text-gray-brand italic md:text-[30px]">
         {t.work.contentSoon}
       </p>
     );

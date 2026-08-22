@@ -43,8 +43,13 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
   return (
     <Link href={`/work/${project.slug.current}`} className="group block h-full">
+      {/*
+        La portada lleva el 5:4 propio debajo de `lg`, porque ahí la celda ya no
+        lo impone: el texto pasa a vivir DEBAJO. De `lg` para arriba sigue
+        llenando la celda, que es la que trae el ratio.
+      */}
       <div
-        className="relative h-full cursor-none overflow-hidden"
+        className="relative aspect-[5/4] cursor-none overflow-hidden lg:aspect-auto lg:h-full"
         style={{ backgroundColor: project.coverColor || "transparent" }}
       >
         {imageUrl && (
@@ -65,8 +70,14 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           </div>
         )}
 
+        {/*
+          El overlay de hover es de escritorio y de `lg` para arriba: en touch
+          el hover no existe, y este bloque tapa la portada entera con el
+          `coverColor`, así que dejarlo «siempre visible» en mobile equivaldría
+          a no mostrar nunca la portada. En mobile el mismo texto va debajo.
+        */}
         <motion.div
-          className={`absolute inset-0 flex flex-col justify-between px-[9%] py-[11%] ${contrastClass}`}
+          className={`absolute inset-0 hidden flex-col justify-between px-[9%] py-[11%] lg:flex ${contrastClass}`}
           style={{ backgroundColor: project.coverColor || "#EFEEDA" }}
           initial={{ opacity: 0 }}
           whileHover={{ opacity: 1 }}
@@ -93,6 +104,24 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             </p>
           </div>
         </motion.div>
+      </div>
+
+      {/*
+        El texto del overlay, **siempre visible**, debajo de la portada (§3.2 de
+        M1: el hover no existe en touch). Mismo contenido y mismo orden que el
+        overlay; lo que cambia es la escala —15 px en vez de 17— y el aire, que
+        acá es de lectura corrida y no de composición sobre una portada. El año
+        comparte renglón con el número, que es donde queda sin pedir una línea
+        propia.
+      */}
+      <div className="mt-3 font-body text-[15px] uppercase leading-[1.25] text-off-black lg:hidden">
+        <p className="flex items-baseline justify-between gap-3">
+          <span>{project.projectNumber}</span>
+          <span>{project.year}</span>
+        </p>
+        <h2 className="mt-2 font-medium">{title}</h2>
+        <p className="mt-1">{category}</p>
+        <p className="mt-1">{services}</p>
       </div>
     </Link>
   );

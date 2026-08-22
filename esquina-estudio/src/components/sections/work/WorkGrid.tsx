@@ -47,7 +47,10 @@ export default function WorkGrid({ projects }: WorkGridProps) {
         <motion.div
           key={project._id}
           variants={reduce ? undefined : itemVariants}
-          className="aspect-[5/4] cursor-none overflow-hidden"
+          // El 5:4 lo lleva la portada, no la celda: debajo de `lg` el texto va
+          // DEBAJO de la portada y siempre visible (§3.2 de M1), así que la
+          // celda tiene que poder crecer. El ratio de la portada se conserva.
+          className="cursor-none overflow-hidden lg:aspect-[5/4]"
         >
           <ProjectCard project={project} />
         </motion.div>
