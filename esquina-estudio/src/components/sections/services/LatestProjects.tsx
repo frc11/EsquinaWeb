@@ -239,7 +239,7 @@ export default function LatestProjects({
                     src={source}
                     alt={title}
                     fill
-                    sizes="25vw"
+                    sizes="calc(25vw)"
                     className="object-cover"
                   />
                 ) : null}

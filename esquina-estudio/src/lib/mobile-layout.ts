@@ -58,3 +58,40 @@ export const TOUCH_TARGET_MIN = 44;
  */
 export const TOUCH_LINKS =
   "max-lg:[&_a]:inline-flex max-lg:[&_a]:min-h-[44px] max-lg:[&_a]:items-center";
+
+/**
+ * # Nota sobre `sizes` en mobile — por qué algunos van dentro de `calc()`
+ *
+ * Los anchos de teléfono de este sprint (320 a 430) están **por debajo del
+ * corte más chico que `next/image` considera**. Su `deviceSizes` por defecto
+ * arranca en 640 y `next.config.ts` no lo cambia (y no se toca: `CLAUDE.md`
+ * §4.2). El detalle que decide el peso servido está en `getWidths`
+ * (`node_modules/next/dist/shared/lib/get-img-props.js:51-70` en la 16.2.6):
+ *
+ * ```js
+ * const viewportWidthRe = /(^|\s)(1?\d?\d)vw/g;   // vw precedido por inicio o espacio
+ * if (percentSizes.length) {
+ *   const smallestRatio = Math.min(...percentSizes) * 0.01;
+ *   return { widths: allSizes.filter(s => s >= deviceSizes[0] * smallestRatio) };
+ * }
+ * return { widths: allSizes };
+ * ```
+ *
+ * O sea: **si el `sizes` contiene un `vw` suelto, el candidato más chico del
+ * `srcset` es `640 × el vw más chico`**, y todo lo que hay debajo —96, 128,
+ * 256, 384— desaparece de la lista. Con `100vw` el piso es 640: en un teléfono
+ * se sirve un archivo de 640 px para una caja de 342. Y como el regex pide que
+ * el número esté precedido por un espacio o por el inicio de la cadena, un `vw`
+ * escrito **dentro de un `calc()`** no lo dispara y la lista vuelve a tener
+ * todos los cortes.
+ *
+ * Por eso varios `sizes` de este repo escriben su término de escritorio como
+ * `calc(80vw)` en vez de `80vw`: **no cambia lo que el navegador calcula** —es
+ * la misma medida— pero le devuelve los cortes chicos, que es lo único que hace
+ * falta para que un teléfono no descargue el archivo de 640. En desktop el
+ * resultado es idéntico, y está verificado corte por corte.
+ *
+ * Si una versión futura de Next cambiara ese regex, lo peor que puede pasar es
+ * volver al comportamiento de hoy: se sirve un archivo más grande de lo
+ * necesario. No rompe nada.
+ */

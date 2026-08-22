@@ -57,7 +57,10 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             src={imageUrl}
             alt={title}
             fill
-            sizes="(max-width: 768px) 100vw, 33vw"
+            // Debajo de 1024 la grilla es de una columna con `p-6`: la
+            // portada mide el viewport menos los 48 px de relleno, no el
+            // viewport entero (M1/F7).
+            sizes="(max-width: 1023.98px) calc(100vw - 48px), 33vw"
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
         )}

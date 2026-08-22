@@ -104,7 +104,7 @@ function SingleMedia({ block }: { block: any }) {
             src={imageUrl}
             alt={caption || t.work.mediaAlt}
             fill
-            sizes="(max-width: 768px) 100vw, 800px"
+            sizes="(max-width: 767.98px) calc(100vw - 48px), 800px"
             className="object-cover"
           />
         </div>
@@ -141,7 +141,7 @@ function DualMedia({ block }: { block: any }) {
             src={leftUrl}
             alt={t.work.mediaAlt}
             fill
-            sizes="(max-width: 768px) 100vw, 50vw"
+            sizes="(max-width: 767.98px) calc(50vw - 25px), calc(50vw)"
             className="object-cover"
           />
         </figure>
@@ -152,7 +152,7 @@ function DualMedia({ block }: { block: any }) {
             src={rightUrl}
             alt={t.work.mediaAlt}
             fill
-            sizes="(max-width: 768px) 100vw, 50vw"
+            sizes="(max-width: 767.98px) calc(50vw - 25px), calc(50vw)"
             className="object-cover"
           />
         </figure>

@@ -42,7 +42,12 @@ export default function LogoScript({
         alt="ESQUINA ESTUDIO"
         className={`${isFooter ? "h-20 w-auto" : "h-12 w-auto"}${isDark && isFooter ? " invert" : ""}`}
         priority={!isFooter}
-        sizes={isFooter ? "120px" : "196px"}
+        // Los dos son cajas de alto fijo y ancho automatico, asi que su ancho
+        // no cambia con el viewport: medidos, 146,3 px el del header y 120,5 el
+        // del footer. Los 196 px que declaraba el header eran de una version
+        // anterior y en un telefono a DPR 2 pedian el corte de 640 en vez del
+        // de 384 (M1/F7).
+        sizes={isFooter ? "120px" : "146px"}
       />
     </Link>
   );

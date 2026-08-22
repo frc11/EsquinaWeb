@@ -117,7 +117,9 @@ function TeamSubsection({
                 alt={t.team.photoAlt}
                 width={1600}
                 height={900}
-                sizes="(max-width: 768px) 100vw, 80vw"
+                // El `calc()` del término de escritorio es a propósito: ver la
+                // nota sobre `sizes` en `src/lib/mobile-layout.ts`.
+                sizes="(max-width: 767.98px) calc(100vw - 48px), calc(80vw)"
                 className="h-auto w-full"
               />
             </div>

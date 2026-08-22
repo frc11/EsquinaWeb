@@ -918,7 +918,11 @@ function GalleryCard({
               src={item.imageUrl}
               alt={item.alt}
               fill
-              sizes="(max-width: 768px) 30vw, 22vw"
+              // El objeto mayor mide el 20 % del ancho del viewport en TODAS
+              // las resoluciones —es el criterio de B3.3c— asi que el 22vw de
+              // desktop vale tambien en mobile y con margen. Los 30vw que habia
+              // pedian un corte mas grande del necesario (M1/F7).
+              sizes="calc(22vw)"
               priority={index < EAGER_IMAGE_COUNT}
               // El callback llega con el `<img>` ya decodificado, que es el
               // único momento en que se puede leer su alfa.
