@@ -2783,3 +2783,374 @@ Balance en código: **14 archivos, 991 inserciones contra 224 borrados**.
   pantalla de éxito.
 - **El idioma**: abrir el sitio con el castellano guardado y confirmar que el
   subrayado está bajo `ES` y que no viaja al entrar.
+
+## M3 — Preloader nuevo y quince correcciones (2026-08-23)
+
+Nueve fases, un commit cada una, más un décimo (`M3/F1b`) que salió de la
+verificación final. Ejecutado sobre `main`, sin `push` y sin tocar Sanity.
+
+**Puertas:** `lint` 0 y `build` 0 en la línea base y al cierre, con el servidor
+bajado. Tabla de rutas idéntica.
+
+**No-regresión al cierre:** ocho rutas × ocho anchos (320/360/390/414/430/768/
+1366/1920) × dos idiomas = **128 combinaciones, las 128 con cero scroll
+horizontal**. Alturas de las ocho rutas en las tres resoluciones y los dos
+idiomas: las únicas que se movieron son las que se tocaron a propósito —las seis
+de `/services`, por la cuadrícula nueva, y doce de 390, por los 8 px que creció
+el footer—.
+
+---
+
+### El prerrequisito
+
+El `.mp4` **no estaba en la raíz del proyecto**, que es donde lo pedía la
+instrucción: estaba en `C:/Users/Valentino/Downloads/ANIMACIÓN LOGO_FONDO
+NEGRO.mp4`. Se verificó contra la ficha del sprint antes de usarlo y coincide en
+todo: 3,000000 s, 12/1 fps, 36 cuadros, 1920 × 1080, `h264` `yuv420p`, 356.928
+bytes = 348 KB, y con la pista AAC de 2 canales a 48 kHz que había que quitar.
+Siendo el mismo archivo verificado dato por dato, se siguió adelante en vez de
+parar; queda declarado como desvío. El original **no se movió ni se borró**: el
+repo tiene solo el derivado procesado.
+
+---
+
+### Fase 1 — El preloader (puntos 1 y 2)
+
+**El defecto del punto 1 no era de duración sino de orden de montaje.** La
+cortina arrancaba en `shouldRender = false` y se prendía dentro de un
+`requestAnimationFrame` disparado desde un `useEffect`, o sea **después de la
+hidratación**, y el HTML del servidor no traía cortina ninguna. Y como `Navbar` y
+`Footer` viven en el layout —fuera del `template.tsx`, que es el único que
+apagaba el contenido con `isPreloaderDone`— el primer cuadro pintado era la
+página clara **con el header y el pie puestos**.
+
+**El arreglo es de raíz: la cortina se sirve en el HTML del servidor**, con
+estilos en línea, así que existe en el primer pintado y no depende ni de que la
+hoja de estilos esté aplicada. La regla de «una vez por pestaña» **no se resuelve
+en React** —resolverla en el primer render es lo que rompió la hidratación en el
+precedente de la media query—: la resuelve un **script bloqueante** que lee
+`sessionStorage` y `prefers-reduced-motion` antes del primer pintado y marca
+`data-preloader` en `<html>`. El primer render del cliente es idéntico al del
+servidor.
+
+**El asset.** 173,0 KB finales contra 348 de origen: `-an` saca la pista AAC y
+`-c:v copy` no recodifica, así que la imagen es la misma. `+faststart` deja el
+`moov` en el byte 0x20, o sea que la reproducción puede arrancar con los primeros
+bytes. El póster es un negro sólido de 16:9 y **101 bytes**, y no una captura del
+primer cuadro, porque el primer cuadro **es** negro puro: `ffprobe` da
+`YMIN = YMAX = YAVG = 16` con `U = V = 128` y el cuadro decodificado a RGB tiene
+un único color en todo el histograma.
+
+**El negro es `#000000` y no el `#0F0F0F` de la marca**, y eso se decidió
+midiendo, como pedía la instrucción: el video no tiene alfa, así que con
+`object-contain` las bandas de cortina quedan contra el rectángulo del video, y
+15 puntos de diferencia se ven.
+
+**La consecuencia que había que manejar.** `isPreloaderDone` gobierna la entrada
+de **nueve** componentes, y hasta M2 se prendía al terminar el deslizamiento. Con
+la cortina clara sobre página clara eso no se notaba; con la cortina negra, ese
+segundo de deslizamiento habría descubierto la página **vacía** en off-white. Se
+prende al **empezar** la salida: los 500 ms del fundido del contenido caen dentro
+de los 1000 del deslizamiento.
+
+**Mediciones.** Screencast desde el arranque, 105 cuadros: el `YAVG` máximo de
+todos los cuadros pintados antes de los 3000 ms es **18 sobre 255**, y de los 132
+a los 323 ms es exactamente **0**. Los seis primeros cuadros dan `CURTAIN` en los
+cinco puntos de sonda. A los 3674 ms —con la cortina a media subida— la captura
+muestra el footer ya pintado detrás: **no hay página vacía**. Video: reproduce,
+muteado, `readyState` 4, fondo computado `rgb(0, 0, 0)`. Cortina en `y = 0` hasta
+2900, en −8 a los 3200, en −513 a los 3600 y desmontada a los 4200. **Failsafe
+verificado bloqueando el `.mp4`**: se levanta igual a los 4132 ms. Segunda carga y
+`prefers-reduced-motion`: `data-preloader="skip"`, cortina ausente del DOM y cero
+cuadros con cortina. **Cero errores de hidratación en las ocho rutas.**
+
+`prefers-reduced-motion` se definió como **sin video y sin cortina**: la animación
+es la pieza entera, y una cortina negra estática de tres segundos sobre un sitio
+claro es peor que no tenerla.
+
+**React 19 sí emite `muted` en el HTML del servidor**, cosa que en versiones
+anteriores no pasaba y habría bloqueado la autorreproducción. Verificado en el
+HTML servido.
+
+### Fase 1b — El destello que apareció al final
+
+**Lo encontró la verificación del build completo, no la fase.** En un arranque
+lento el primer cuadro pintado era **blanco**: el nodo de la cortina es lo segundo
+que hay dentro de `<body>`, pero el navegador puede pintar antes de haberlo
+parseado, y lo que pinta entonces es el `bg-off-white` del body. Medido: primer
+pintado a los 2198 ms con la pantalla en blanco —`elementFromPoint` daba `BODY` en
+los cinco puntos, o sea **sin contenido ninguno**— y la cortina recién a los 2337.
+Eran ~140 ms.
+
+El script bloqueante ahora marca los dos casos —`"skip"` y `"on"`— y una regla de
+`globals.css` pinta `html` y `body` de negro con `"on"` puesto; lo saca
+`LoadingScreen` cuando la cortina **empieza** a irse. Verificado estrangulando la
+red: el primer cuadro pintado da **`YAVG = 0`** a 40 kB/s (a los 1997 ms) y a
+12 kB/s (a los 5249), contra los **243** de antes.
+
+### Fase 2 — Los footers (puntos 3, 8, 13-parte y 14)
+
+**Lo que estaba mal, medido a 390.** Las dos redes vivían apiladas dentro de
+**una** celda que abarcaba las filas 1 y 2, así que quedaban alineadas a la
+izquierda de su columna —INSTAGRAM terminaba en 336,1 contra los 366 del gutter,
+**29,9 px cortos**— y LINKEDIN caía en 692, **doce píxeles por encima** de
+WORKING. Y como la columna se dimensiona con su contenido, la posición del bloque
+dependía del largo de los rótulos de lugar: por eso en inglés se veían más a la
+izquierda que en castellano.
+
+**El punto 8, en qué se diferenciaba home del pre-footer de Work.** En dos cosas,
+las dos medidas a 1440: Work pone `© 2024` y el crédito **en la misma línea**
+(355,1 y 461,3) y home los **apila**; y Work pega LINKEDIN en **1376** —el borde
+exacto del gutter— mientras home lo deja en 1184,6, o sea **191,4 px corto**.
+
+**La composición de mobile la definió Valentino durante la ejecución** y difiere
+de lo que decía la instrucción: tres filas, con `© 2024` a la izquierda y el
+crédito centrado (la instrucción pedía los dos centrados juntos). Se le consultó
+el alcance y respondió **solo mobile**; el escritorio conserva su fila única.
+
+**Resultado, cinco anchos × dos idiomas × tres variantes.** INSTAGRAM y LINKEDIN
+pegados al borde derecho con **0,0 px** de sobra en las quince combinaciones, y
+cada una a la misma altura que su par de lugar. El crédito centra con **0,0 px de
+desvío** a 360, 390, 414 y 430 en los dos idiomas. **A 320 no se puede, y está
+medido**: cada columna lateral necesitaría 43,49 px y `© 2024` mide 51,36, o sea
+287,75 de total contra 272 de caja útil; debajo de 360 la fila cae a
+`justify-between`. El `gap-x-0` de la grilla tampoco es cosmético: con el
+`gap-x-4` heredado, a 360 el reparto dejaba 47,49 px por lado y empujaba el
+crédito 3,9 px.
+
+**El escritorio no se movió**: los ocho rótulos de las tres variantes miden
+idéntico al pre-F2, coordenada por coordenada, y los altos siguen en 164 y 839.
+
+El footer de mobile pasa de **236 a 244 px** porque el piso de área táctil de 44
+ahora se aplica por fila y no una sola vez sobre la celda que abarcaba dos.
+`HOME_BLOCK_HEIGHT_MOBILE` y `HOME_FOOTER_CLEARANCE` se actualizaron con el número
+medido.
+
+### Fase 3 — El scroll sobrante (puntos 4 y 13)
+
+**La causa raíz era una sola y estaba en el `<body>`: `min-h-screen`, que es
+`min-height: 100vh`.** En un teléfono `100vh` no es la pantalla que se ve, es la
+pantalla **con la barra del navegador oculta**. Así que el documento quedaba más
+alto que la pantalla aunque su contenido midiera exactamente `100svh`, y de ahí
+salían los dos síntomas: `/` se dejaba scrollear de más, y en `/contact/success`
+—donde el panel oscuro mide `100svh` clavados— la franja sobrante mostraba **el
+fondo off-white del propio body**. Ese era el blanco de abajo.
+
+Era además el último `100vh` del repo contra su propia regla escrita («nada de
+`100vh`: `100svh`»), junto con la ficha de proyecto.
+
+**El banco no puede emular la barra del navegador** —en un viewport emulado `vh`,
+`svh`, `lvh` y `dvh` valen todos lo mismo, y por eso ninguna medición de M2 lo
+detectó—, así que el mecanismo se demostró forzando a mano el `min-height` que
+declara `100vh` con la barra oculta (+72 px): las dos rutas pasan de `docH = 844`
+y `scrollY = 0` a `docH = 916` y `scrollY = 72`, y la captura de la pantalla de
+éxito muestra la franja clara al pie. Con `svh` eso no puede pasar **por
+construcción**.
+
+Se verificó además que la clase no quedara inerte —el precedente de M1—: la regla
+`.min-h-svh { min-height: 100svh }` está generada en la hoja.
+
+**Aparte, un scroll interno de 3 px a 320 × 640 en la pantalla de éxito, que era
+propio**: el footer creció 8 px en F2 y se comió el margen que M2 había dejado
+(276 útiles contra 271 que pide el bloque). Los dos huecos verticales pasan a
+`clamp(12px, 2.5svh, 20px)`: a 640 dan 16 y devuelven los 8; de 800 para arriba
+tocan el techo y miden 20 como antes.
+
+**Cierre:** `docH === viewH` y `scrollY = 0` tras intentar scrollear 5000 px, en
+1920, 1366, 430, 390 y 320, en las dos rutas, y cero contenedores anidados con
+scroll.
+
+### Fase 4 — El menú de mobile (puntos 5 y 6)
+
+**El cambio de tono no tenía transición ninguna.** `chromeOnDark` es un booleano
+y las clases se cambiaban de golpe: el header pasaba de blanco a negro en **0 ms**
+mientras el panel tardaba 500 en bajar. Eso era lo mecánico al abrir; al cerrar
+era peor, porque el blanco volvía también en 0 ms con el panel todavía puesto
+medio segundo más.
+
+**Las duraciones salen de cuándo el panel tapa la banda del header**, no de gusto.
+El panel viaja de `y: -100%` a `y: 0` en 500 ms con `EASE_EXIT`; la banda mide
+128 px sobre 844 de viewport, o sea el 15,2 % del recorrido, y como la curva
+arranca lenta ese avance recién llega cerca del 36 % del tiempo. **Medido en el
+banco: al abrir el panel toma la banda a los ~190 ms y al cerrar la suelta a los
+~338.** De ahí la ventana de 200 ms con retardo 0 al abrir y 300 al cerrar: las
+dos rampas son **espejo exacto** una de la otra sobre los mismos 500 ms, y dejan
+al cromo oscuro justo mientras el panel ocupa la banda. Los 200 ms no son un
+número nuevo: son los que `LocaleToggle` ya usaba.
+
+**Muestreado cada cuadro** (Chrome interpola en `oklab`, no en `rgb`, cosa que
+costó una pasada de diagnóstico):
+
+```
+ABRIR    L = 0,964 → 0,590 → 0,273 → 0,181 → rgb(15,15,15) a los 200 ms
+CERRAR   L = 0,168 constante hasta 258 ms, arranca a 308, termina a los ~500
+```
+
+**El logo se funde entre sus dos versiones** en vez de cambiar de `src`:
+`LogoScript` elige la imagen por `tone` y son dos PNG distintos, así que un cambio
+de tono es un corte instantáneo, y con la superficie transicionando eso habría
+dejado el logo blanco sobre fondo claro toda la ventana. Medido, el logo claro va
+en 0,457 cuando la superficie está en 0,590. No se resolvió invirtiendo el logo
+negro con un filtro: los dos archivos comparten silueta —63,9 dB de PSNR en el
+canal alfa— pero la tinta no se verificó como inversión exacta, y el logo es la
+marca.
+
+**Punto 6:** los cinco ítems centrados, con **desvío 0,0 px** respecto del centro
+del panel a 320, 390 y 430. Centrar no cambia lo que entra.
+
+**Geometría del escritorio intacta:** el logo sigue en `x = 64` con 146,28 px de
+ancho y la fila en 1920 × 128 con relleno 64/40.
+
+### Fase 5 — Indicador de carga (puntos 7 y 11)
+
+Un solo componente compartido por los tres lugares, que es la regla 10. Sin
+librerías: un anillo de 1,5 px en `currentColor` con el `animate-spin` de
+Tailwind, y `motion-reduce:animate-none` resolviendo `prefers-reduced-motion` en
+el CSS —verificado: `animationName` computa `none`—.
+
+**El umbral es 120 ms y tiene los dos lados medidos.** Por debajo, lo único que
+aporta el indicador es parpadeo; por arriba, 120 sigue debajo de los ~200 ms en
+que una espera se percibe como espera. Con la caché caliente las peticiones de
+`/_next/image` dan **0 ms** de duración y las imágenes completan antes del umbral.
+
+```
+imagen demorada 1500 ms      /work                opacidad máx 1,00  visible 407 → 1857 ms
+(solo la imagen)             /work/akasha-blends  opacidad máx 1,00  visible 259 → 1958 ms
+                             /team                opacidad máx 1,00  visible 227 → 1827 ms
+
+caché caliente, sin demora   las tres rutas       opacidad máx 0,00  0 de 152 cuadros visible
+```
+
+**La primera medición había dado 0 en los dos casos y era artefacto del banco:**
+estrangulando toda la red se demora también el bundle, React no hidrata y el
+efecto que enciende el anillo nunca corre. Se pasó a demorar solo `/_next/image`
+por el dominio `Fetch`.
+
+Nunca se queda puesto: `onLoad`, `onError` o un tope de 15 s, las tres
+independientes.
+
+### Fase 6 — Services (puntos 9 y 10)
+
+**El punto 9 no reproduce en el banco, y hay que leer eso antes que el arreglo.**
+Medido en **21 combinaciones** —1920, 1366 y 390 de ancho por siete u ocho altos
+cada uno, de 560 a 1200— el borde inferior del intro cae **exactamente** en el
+alto del viewport en todas, y el rótulo queda 160 px por debajo en escritorio y 80
+en mobile. La geometría es exacta y no depende del tamaño de pantalla.
+
+Queda un solo mecanismo posible, y es el mismo del punto 4: la barra del
+navegador. `svh` es el viewport **con** la barra puesta; al retraerse, lo visible
+pasa a ser `lvh`, entre 60 y 110 px más alto, y eso supera los 80 px de aire del
+rótulo en mobile. El intro pasa a `lvh`, o sea a medir lo más alto que el viewport
+puede llegar a ser.
+
+**El corolario, que conviene retener:** la regla «nada de `100vh`: `100svh`» vale
+para lo que tiene que **entrar** en la pantalla; una sección cuyo trabajo es que
+**no se vea nada debajo** necesita lo contrario, el máximo, o sea `lvh`.
+
+**Punto 10.** Las cuatro portadas pasan de una fila de cuatro a cuadrícula, y los
+dos links dejan de compartir fila con el texto para ir **después**:
+
+```
+1920 × 1080   2 col   949 × 711,8   bloque 1698 px   no entra junto
+1366 ×  768   2 col   672 × 504     bloque 1282 px   no entra junto
+ 768 × 1024   1 col   752 × 564     bloque 2618 px   no entra junto
+ 430 ×  932   1 col   414 × 310,5   bloque 1445 px   no entra junto
+ 390 ×  844   1 col   374 × 280,5   bloque 1349 px   no entra junto
+ 320 ×  640   1 col   304 × 228     bloque 1162 px   no entra junto
+```
+
+A 1920 cada portada pasa de 471,5 × 353,6 a **949 × 711,8**: cuatro veces el área.
+
+**El corte de columnas es `lg` y no `md`, y también salió de medir**: con el corte
+en 768 la tablet en vertical daba portadas de 373 × 280 y el bloque entero medía
+910 px contra 1024 de pantalla, o sea que **entraba todo junto**, que es justo lo
+que el punto no quiere.
+
+Se conservan las separaciones de B3.4b (6 px entre portadas, 8 contra los bordes).
+El ancho pedido al CDN sube de 1200 a 1800 porque a 949 CSS px y DPR 2 hacen falta
+1898. El origen del hover deja de tener rama para «las del medio»: en 2 × 2 las
+cuatro tocan un borde.
+
+### Fase 7 — Banderas y alias (puntos 12 y 13-alias)
+
+**12a y 12b.** El valor elegido va siempre a color; en la lista el gris pasa de
+`grayscale` a `lg:grayscale`, porque debajo de 1024 no hay hover que lo revierta.
+Va como **ausencia** de la clase y no como un `grayscale-0` encima: las dos son la
+misma propiedad y la misma especificidad, así que cuál gana lo decidiría el orden
+en que Tailwind las emite. Medido: `grayscale(1)` en la lista a 1920 y 1440,
+`none` a 430, 390 y 320, y `none` en el valor elegido en los cinco anchos.
+
+**13-alias.** La evaluación que pedía el sprint —si conviene generar el alias
+desde el nombre traducido— da que **sí**, y es lo que se hizo: `COUNTRY_ES` ya
+tiene los 196 nombres, así que meterlos en el corpus cubre **todos** los países
+sin escribir un solo alias y sin poder desincronizarse. La tabla de alias queda
+solo para lo que no es ni el nombre inglés ni el castellano: siglas, nombres
+históricos y formas de uso corriente. Varios países que la instrucción enumera
+**no están en la tabla y es correcto**: `Germany`, `Spain`, `Brazil`, `Japan`,
+`Switzerland`, las dos Coreas y `Vatican City` ya se encuentran por su nombre
+castellano, y `North Macedonia` por subcadena.
+
+El corpus son las tres cosas a la vez **sin mirar el idioma activo**, así que
+«germany» funciona con el sitio en castellano y «alemania» con el sitio en inglés.
+
+**Probado caso por caso: 33 consultas × 2 idiomas, 0 fallos.** El caso testigo,
+«republica democratica» → `RD del Congo` / `DR Congo`. También «congo» → dos
+resultados, «japon» y «japón» → Japón, «espana» → España, «sudafrica» →
+Sudáfrica, y «zzzz» → 0 resultados.
+
+### Fase 8 — Fun Gallery en touch (punto 15)
+
+**La escala es la del hover (1,13) y no una nueva**, y **la duración se deriva**:
+la mitad de `HOVER_DURATION`, o sea **250 ms**. Cae dentro de los 200–300 que pide
+la instrucción y es el mismo movimiento del hover al doble de velocidad, porque
+acá es preámbulo de una salida y no un estado.
+
+```
+CON proyecto      1,005 → 1,072 → 1,114 → 1,128 → 1,13, tope a los 214 ms,
+                  navega a los 982 ms (250 del gesto + 650 de la ruta)
+SIN proyecto      llega a 1,13 y vuelve a 1, y NO navega
+reduced-motion    escala máxima 1, navega a los 84 ms: inmediato
+escritorio 1440   escala máxima 1, navega a los 685 ms: la transición de siempre
+```
+
+**El doble camino no se puede confundir, y no por cuidado sino por construcción:**
+`interactive` y `tappable` derivan los dos de `spread`. Con el montón sin
+desplegar los dos son falsos y el objeto no tiene un solo manejador colgado
+—medido: `role = null`, `tabindex = null`— mientras el tap lo recibe el botón de
+`inset-0`, que a su vez solo existe mientras `!spread`.
+
+Los objetos sin proyecto reciben el tap pero **no** semántica de enlace. Son seis
+de los ocho del dataset.
+
+---
+
+### Lo que no se pudo verificar
+
+- **Las tres cosas del fenómeno de la barra del navegador.** En un viewport
+  emulado `vh`, `svh`, `lvh` y `dvh` valen todos lo mismo, así que: (a) el scroll
+  sobrante tal como se reportó no reproduce —el mecanismo sí se demostró
+  forzándolo—; (b) el asomo de «BRANDING PACKS» no reproduce en ninguna de las 21
+  combinaciones medidas; (c) el corrimiento de ~40 px que el paso a `lvh`
+  introduce en el intro con la barra puesta no se puede observar.
+- **El teléfono de verdad.** El tap de la galería, la coordinación del menú y el
+  arranque del preloader en una pestaña nueva son humanos.
+- **`/work/tukumi-takeaway` no tiene ningún bloque de media en Sanity**, así que
+  es la única ficha donde el indicador de carga no aparece nunca. `matsu` tiene
+  uno y `akasha-blends` tres.
+- Una lectura suelta de `/team` a 1920 dio 4258 px en una pasada del barrido
+  final. **Es flake de medición, no regresión**: cinco pasadas consecutivas más
+  una con 3 s de espera dan 4536, que es el valor de la línea base.
+
+### Verificación humana declarada
+
+- **El preloader**, que es lo más visible: en pestaña nueva, que la animación
+  arranque de inmediato, que no se vea la página antes y que el paso de negro a la
+  página no destelle.
+- **El menú** abriendo y cerrando, y si los 200/300 ms se sienten bien en la mano.
+- **Los indicadores de carga** con la caché vacía.
+- **El tap de la galería**, y si 250 ms son los correctos.
+- **Los tres footers**, en los dos idiomas.
+- **Buscar países por nombre en español.**
+- **La cuadrícula de LATEST PROJECTS**, que es un cambio de escala fuerte.
+- **`/` y `/contact/success` en un teléfono real**, con la barra del navegador
+  entrando y saliendo: es lo único que puede confirmar los puntos 4, 13 y 9.
