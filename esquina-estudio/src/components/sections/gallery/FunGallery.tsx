@@ -220,6 +220,44 @@ const INK_SAMPLE_SIZE = 48;
 /** Distancia del cartel «(click to view)» al centro del montón, en fracción del ancho. */
 const PILE_CAPTION_GAP = 0.18;
 
+/*
+  LA GRILLA DE MOBILE (M2/F3, punto 5)
+  ────────────────────────────────────
+  Debajo de 1024 la composición desplegada **no** es la dispersión de
+  escritorio: es una grilla de dos columnas en teléfono y tres en tablet, con el
+  objeto ocupando la celda entera. Las dos razones son la misma: a 390 el
+  criterio de escritorio —el objeto mayor al 20 % del ancho del viewport,
+  repartido en una grilla de cuatro columnas— dejaba objetos de 59 a 81 px, o
+  sea entre el 15 y el 21 % del ancho de la pantalla. Con dos columnas el objeto
+  pasa a medir la mitad del ancho útil: 136 px a 320, 171 a 390 y 191 a 430,
+  **más del doble**.
+
+  # Cómo conviven los dos repartos sin JavaScript
+
+  El layout tiene que salir correcto del servidor (`CLAUDE.md` §2b: el hook de
+  media queries sirve para apagar comportamiento, no para decidir layout), así
+  que los tres repartos —dos columnas, tres columnas y la dispersión— se
+  calculan **todos** al renderizar y viajan como **variables CSS** en el `style`
+  de cada objeto. Las clases que las consumen son literales enteros
+  (`lg:left-[var(--d-x)]`, `md:[--pile-x:var(--b-px)]`, …), que es la única
+  forma de que Tailwind v4 las genere. El que manda lo decide el `@media`, no el
+  cliente: no hay parpadeo ni salto al hidratar.
+
+  En mobile los objetos son celdas de una grilla real —`position: relative`— y
+  el `left`/`top`/`width` absoluto queda acotado a `lg:`. El viaje del montón,
+  en cambio, no es CSS sino una animación de Framer, así que se resuelve con una
+  variable intermedia: cada capa declara `--pile-x` / `--pile-y` apuntando al
+  juego que corresponde a su rango, y la animación anima **hacia
+  `var(--pile-x)`** —Framer resuelve variables CSS en sus destinos, leyendo el
+  valor ya computado del elemento—.
+
+  El abanico del montón es el mismo en los tres: mismo ángulo por objeto y
+  mismo radio, escalado por el tamaño de celda para que la apertura relativa al
+  objeto no cambie.
+*/
+const MOBILE_COLUMNS = 2;
+const TABLET_COLUMNS = 3;
+
 // ── Despliegue ───────────────────────────────────────────────────────────────
 
 /*
@@ -359,6 +397,13 @@ type LayoutItem = GalleryItem & {
   /** Viaje del montón al lugar, en porcentaje del propio lado del objeto. */
   pileOffsetX: number;
   pileOffsetY: number;
+  /**
+   * El abanico del montón, en crudo: el ángulo sorteado del objeto y su radio
+   * en fracción del ancho de la composición. Los publica el motor para que la
+   * grilla de mobile arme **el mismo** montón sin volver a sortear nada.
+   */
+  pileAngle: number;
+  pileRadius: number;
   rotate: number;
   zIndex: number;
   followFactor: number;
@@ -628,6 +673,8 @@ function buildComposition(
       size,
       pileOffsetX: ((pileX - x) / size) * 100,
       pileOffsetY: ((pileY - y) / size) * 100,
+      pileAngle: entry.angle,
+      pileRadius: radius,
       rotate: entry.rotate,
       zIndex: entry.zIndex,
       followFactor: entry.followFactor,
@@ -648,6 +695,67 @@ function buildComposition(
       ...item,
       deployOrder: deployOrder[index] ?? index,
     })),
+  };
+}
+
+type GridLayout = {
+  columns: number;
+  /** Alto de la composición dividido su ancho. */
+  aspect: number;
+  /** Alto del cartel, como porcentaje del alto de la composición. */
+  captionTop: string;
+  /** Viaje del montón por objeto, en porcentaje del lado del objeto. */
+  pile: { x: string; y: string }[];
+};
+
+/**
+ * El reparto en grilla de mobile: celdas cuadradas del ancho de la composición
+ * dividido las columnas, sin hueco —el aire lo ponen los propios recortes, que
+ * ocupan entre el 31 y el 88 % de su cuadrado— y el objeto llenando la celda.
+ *
+ * Devuelve, por objeto, el viaje desde el montón hasta su celda **en porcentaje
+ * del lado del objeto**, que es la unidad en la que Framer anima la capa del
+ * despliegue. El montón se centra en la primera fila y conserva el abanico del
+ * motor: mismo ángulo por objeto y el mismo radio, escalado por `celda /
+ * ladoMayorDeEscritorio` para que la apertura **relativa al objeto** sea la
+ * misma que arriba de 1024.
+ */
+function buildGridLayout(
+  items: LayoutItem[],
+  columns: number,
+  maxItemSize: number,
+): GridLayout {
+  const cell = 1 / columns;
+  const rows = Math.max(1, Math.ceil(items.length / columns));
+  const aspect = rows * cell;
+  const pileCenterY = cell / 2;
+  const radiusScale = cell / Math.max(maxItemSize, Number.EPSILON);
+
+  const pile = items.map((item, index) => {
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    const centerX = (column + 0.5) * cell;
+    const centerY = (row + 0.5) * cell;
+    const radius = item.pileRadius * radiusScale;
+    const pileX = PILE_CENTER_X + Math.cos(item.pileAngle) * radius;
+    const pileY = pileCenterY + Math.sin(item.pileAngle) * radius;
+
+    return {
+      x: `${((pileX - centerX) / cell) * 100}%`,
+      y: `${((pileY - centerY) / cell) * 100}%`,
+    };
+  });
+
+  // El cartel cuelga del montón a la misma distancia relativa que en
+  // escritorio, y se expresa contra el ALTO de la composición porque es ahí
+  // donde se posiciona.
+  const captionY = pileCenterY + PILE_CAPTION_GAP * radiusScale;
+
+  return {
+    columns,
+    aspect,
+    captionTop: `${(captionY / aspect) * 100}%`,
+    pile,
   };
 }
 
@@ -698,17 +806,22 @@ function measureInkCoverage(image: HTMLImageElement): number | null {
 function buildPileStack(
   items: LayoutItem[],
   inkCoverage: Record<string, number>,
+  /**
+   * En la grilla de mobile **todos los objetos miden lo mismo** —la celda—, así
+   * que el área pintada la decide sólo la cobertura de tinta. Usar los lados de
+   * la dispersión de escritorio daría un orden que en esa pantalla no
+   * corresponde a lo que se ve.
+   */
+  scatteredSizes: boolean,
 ): Record<string, number> | null {
   if (items.some((item) => inkCoverage[item.id] === undefined)) return null;
 
   const stack: Record<string, number> = {};
+  const area = (item: LayoutItem) =>
+    (scatteredSizes ? item.size * item.size : 1) * inkCoverage[item.id];
 
   [...items]
-    .sort(
-      (left, right) =>
-        right.size * right.size * inkCoverage[right.id] -
-        left.size * left.size * inkCoverage[left.id],
-    )
+    .sort((left, right) => area(right) - area(left))
     .forEach((item, rank) => {
       stack[item.id] = ITEM_Z_BASE + rank;
     });
@@ -720,6 +833,9 @@ function GalleryCard({
   item,
   index,
   aspect,
+  mobilePile,
+  tabletPile,
+  deployTurn,
   spread,
   instant,
   reduceMotion,
@@ -730,6 +846,17 @@ function GalleryCard({
   item: LayoutItem;
   index: number;
   aspect: number;
+  /** Viaje del montón en la grilla de dos columnas y en la de tres (M2/F3). */
+  mobilePile: { x: string; y: string };
+  tabletPile: { x: string; y: string };
+  /**
+   * Turno en el despliegue. En escritorio lo decide el orden de lectura sobre
+   * la dispersión (`deployOrder`); en la grilla de mobile el orden de lectura
+   * **es** el orden del DOM, así que alcanza con el índice. Lo resuelve el
+   * padre porque es lo único de la tarjeta que depende del rango y no puede
+   * salir de una variable CSS: es un retraso de animación, no una medida.
+   */
+  deployTurn: number;
   spread: boolean;
   /** El objeto nace en su lugar, sin animar el despliegue. */
   instant: boolean;
@@ -811,14 +938,30 @@ function GalleryCard({
 
   return (
     <motion.div
-      className={`absolute ${interactive ? "cursor-pointer" : ""}`}
+      /*
+        En mobile el objeto es una **celda de la grilla** y ocupa su ancho
+        entero; de 1024 para arriba vuelve a ser un absoluto colocado por el
+        motor de dispersión. Las tres medidas de escritorio viajan como
+        variables y las consumen clases literales acotadas a `lg:`, así que el
+        reparto de arriba de 1024 no cambia ni un píxel.
+      */
+      className={`relative aspect-square w-full lg:absolute lg:left-[var(--d-x)] lg:top-[var(--d-y)] lg:w-[var(--d-w)] ${
+        interactive ? "cursor-pointer" : ""
+      }`}
       style={{
-        left: `${item.x * 100}%`,
-        // `top` se mide contra el alto de la composición y las coordenadas
-        // están en unidades de ancho: de ahí la división por el aspecto.
-        top: `${(item.y / aspect) * 100}%`,
-        width: `${item.size * 100}%`,
-        aspectRatio: "1",
+        ...({
+          "--d-x": `${item.x * 100}%`,
+          // `top` se mide contra el alto de la composición y las coordenadas
+          // están en unidades de ancho: de ahí la división por el aspecto.
+          "--d-y": `${(item.y / aspect) * 100}%`,
+          "--d-w": `${item.size * 100}%`,
+          "--a-px": mobilePile.x,
+          "--a-py": mobilePile.y,
+          "--b-px": tabletPile.x,
+          "--b-py": tabletPile.y,
+          "--c-px": `${item.pileOffsetX}%`,
+          "--c-py": `${item.pileOffsetY}%`,
+        } as React.CSSProperties),
         zIndex: spread ? item.zIndex : (pileZIndex ?? item.zIndex),
         x: followX,
         y: followY,
@@ -848,13 +991,21 @@ function GalleryCard({
       onClick={interactive ? handleNavigate : undefined}
       onKeyDown={interactive ? handleKeyDown : undefined}
     >
-      {/* L1 — despliegue: corre una sola vez, del montón a su lugar. */}
+      {/*
+        L1 — despliegue: corre una sola vez, del montón a su lugar.
+
+        El destino se nombra con una variable intermedia y no con el número:
+        `--pile-x` apunta al juego de coordenadas del rango activo, y el `@media`
+        elige cuál. Framer resuelve `var(--…)` en sus destinos leyendo el valor
+        **ya computado** del elemento, así que el viaje sale con las coordenadas
+        del reparto que se está viendo y sin que el componente pregunte nada.
+      */}
       <motion.div
-        className="h-full w-full"
+        className="h-full w-full [--pile-x:var(--a-px)] [--pile-y:var(--a-py)] md:[--pile-x:var(--b-px)] md:[--pile-y:var(--b-py)] lg:[--pile-x:var(--c-px)] lg:[--pile-y:var(--c-py)]"
         initial={false}
         animate={{
-          x: spread ? "0%" : `${item.pileOffsetX}%`,
-          y: spread ? "0%" : `${item.pileOffsetY}%`,
+          x: spread ? "0%" : "var(--pile-x)",
+          y: spread ? "0%" : "var(--pile-y)",
         }}
         transition={
           instant
@@ -863,7 +1014,7 @@ function GalleryCard({
                 type: "spring",
                 visualDuration: DEPLOY_VISUAL_DURATION,
                 bounce: DEPLOY_BOUNCE,
-                delay: spread ? item.deployOrder * DEPLOY_STAGGER : 0,
+                delay: spread ? deployTurn * DEPLOY_STAGGER : 0,
               }
         }
       >
@@ -922,7 +1073,12 @@ function GalleryCard({
               // las resoluciones —es el criterio de B3.3c— asi que el 22vw de
               // desktop vale tambien en mobile y con margen. Los 30vw que habia
               // pedian un corte mas grande del necesario (M1/F7).
-              sizes="calc(22vw)"
+              // Tres escalones, uno por reparto: media pantalla en la grilla
+              // de dos columnas, un tercio en la de tres y el 22 % de siempre
+              // en la dispersión de escritorio. Los `vw` van adentro de
+              // `calc()` a propósito (ver la nota de `mobile-layout.ts`): así
+              // `next/image` conserva los cortes chicos del `srcset`.
+              sizes="(min-width: 1024px) calc(22vw), (min-width: 768px) calc(34vw), calc(51vw)"
               priority={index < EAGER_IMAGE_COUNT}
               // El callback llega con el `<img>` ya decodificado, que es el
               // único momento en que se puede leer su alfa.
@@ -969,8 +1125,28 @@ export default function FunGallery({
     );
   }, []);
   const pileStack = useMemo(
-    () => buildPileStack(composition.items, inkCoverage),
-    [composition.items, inkCoverage],
+    () => buildPileStack(composition.items, inkCoverage, hoverEnabled),
+    [composition.items, inkCoverage, hoverEnabled],
+  );
+  // Los dos repartos de mobile se calculan siempre y viajan como variables CSS:
+  // el `@media` elige, no el cliente (ver el bloque LA GRILLA DE MOBILE).
+  const mobileGrid = useMemo(
+    () =>
+      buildGridLayout(
+        composition.items,
+        MOBILE_COLUMNS,
+        composition.maxItemSize,
+      ),
+    [composition.items, composition.maxItemSize],
+  );
+  const tabletGrid = useMemo(
+    () =>
+      buildGridLayout(
+        composition.items,
+        TABLET_COLUMNS,
+        composition.maxItemSize,
+      ),
+    [composition.items, composition.maxItemSize],
   );
   /*
     El estado vive en el componente y `template.tsx` lo remonta en cada
@@ -1005,13 +1181,22 @@ export default function FunGallery({
         ))}
       </h1>
 
+      {/*
+        La caja de la composición. En mobile es una **grilla real** de dos
+        columnas (tres de `md` para arriba) y su alto lo dan las filas; de `lg`
+        para arriba vuelve a ser el bloque de siempre, con su tope de ancho y su
+        relación de aspecto. Las dos medidas de escritorio van como variables
+        para que las clases sigan siendo literales.
+      */}
       <div
-        className="relative mx-auto w-full"
-        style={{
-          marginTop: TITLE_GAP,
-          maxWidth: getCompositionMaxWidth(composition.maxItemSize),
-          aspectRatio: `1 / ${composition.aspect}`,
-        }}
+        className="relative mx-auto grid w-full grid-cols-2 md:grid-cols-3 lg:block lg:aspect-[var(--d-aspect)] lg:max-w-[var(--d-max-width)]"
+        style={
+          {
+            marginTop: TITLE_GAP,
+            "--d-max-width": getCompositionMaxWidth(composition.maxItemSize),
+            "--d-aspect": `1 / ${composition.aspect}`,
+          } as React.CSSProperties
+        }
       >
         {composition.items.map((item, index) => (
           <GalleryCard
@@ -1019,6 +1204,9 @@ export default function FunGallery({
             item={item}
             index={index}
             aspect={composition.aspect}
+            mobilePile={mobileGrid.pile[index]}
+            tabletPile={tabletGrid.pile[index]}
+            deployTurn={hoverEnabled ? item.deployOrder : index}
             spread={spread}
             instant={instantSpread}
             reduceMotion={reduceMotion}
@@ -1049,11 +1237,20 @@ export default function FunGallery({
                 exit={{ opacity: 0 }}
                 transition={{ duration: CAPTION_FADE_DURATION, ease: EASE }}
               >
+                {/*
+                  El cartel cuelga del montón, y el montón está en un lugar
+                  distinto en cada reparto: su altura viaja como tres variables y
+                  la elige el `@media`, igual que todo lo demás.
+                */}
                 <span
-                  className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-body text-[17px] leading-none text-off-black"
-                  style={{
-                    top: `${(composition.captionY / composition.aspect) * 100}%`,
-                  }}
+                  className="absolute left-1/2 top-[var(--a-cap)] -translate-x-1/2 whitespace-nowrap font-body text-[17px] leading-none text-off-black md:top-[var(--b-cap)] lg:top-[var(--c-cap)]"
+                  style={
+                    {
+                      "--a-cap": mobileGrid.captionTop,
+                      "--b-cap": tabletGrid.captionTop,
+                      "--c-cap": `${(composition.captionY / composition.aspect) * 100}%`,
+                    } as React.CSSProperties
+                  }
                 >
                   {t.gallery.hint}
                 </span>

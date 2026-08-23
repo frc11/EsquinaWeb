@@ -2,7 +2,9 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
+import HoverButton from "@/components/ui/HoverButton";
 import { useLocale } from "@/lib/i18n";
+import { HOME_FOOTER_CLEARANCE, TOUCH_LINKS } from "@/lib/mobile-layout";
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -60,7 +62,15 @@ export default function ContactSuccess() {
 
       {/* ── Centered text content ── */}
       <motion.div
-        className="relative flex h-full w-full items-center justify-center px-6 text-center md:px-12"
+        /*
+          Los dos rellenos son las dos franjas que este panel tapa: arriba la del
+          header —la sección sube con un margen negativo para cubrirla, así que
+          el contenido tiene que bajar de nuevo— y abajo la del footer, que desde
+          M2/F3 va superpuesto sobre este mismo panel. Sin ellos el bloque se
+          centra en la pantalla entera y se mete debajo del cromo: a 320 × 640 el
+          título quedaba encima del logo.
+        */
+        className={`relative flex h-full w-full flex-col overflow-y-auto px-6 pt-[var(--header-height)] text-center md:px-12 ${HOME_FOOTER_CLEARANCE}`}
         initial={
           shouldReduceMotion
             ? { opacity: 1, y: 0, filter: "blur(0px)" }
@@ -81,7 +91,15 @@ export default function ContactSuccess() {
               }
         }
       >
-        <div className="max-w-4xl">
+        {/*
+          `my-auto` y no `justify-center`: centra igual cuando hay lugar y **no
+          recorta por arriba** cuando no lo hay. La sección es `overflow-hidden`
+          —lo necesita el panel que sube—, así que un bloque más alto que la caja
+          se perdería sin más; con esta combinación, en un viewport
+          extremadamente bajo el contenido se desplaza dentro del panel y la ruta
+          sigue midiendo exactamente una pantalla.
+        */}
+        <div className="mx-auto my-auto w-full max-w-4xl">
           {/* El piso del `clamp` baja de 40 a 26 px: a 320 la caja util es de 272
               y el titulo va en dos lineas fijas. El termino que manda de 800 px
               para arriba sigue siendo `5vw` con el mismo techo de 64, asi que
@@ -92,9 +110,34 @@ export default function ContactSuccess() {
             {t.success.title[1]}
           </h1>
 
-          <p className="mx-auto mt-8 max-w-3xl font-body text-[17px] uppercase leading-[1.45] text-off-white/80">
+          {/*
+            La bajada y los dos huecos ceden escala en mobile, y es lo que hace
+            que la pantalla entre entera en un teléfono bajo: entre el header
+            (128) y el footer (236) quedan 276 px útiles a 640 de alto, y con la
+            escala de escritorio el bloque pedía 349.
+          */}
+          <p className="mx-auto mt-5 max-w-3xl font-body text-[15px] uppercase leading-[1.4] text-off-white/80 md:mt-8 md:text-[17px] md:leading-[1.45]">
             {t.success.body}
           </p>
+
+          {/*
+            La salida (M2/F3, punto 10). Es un link del sitio y nada más: la
+            misma escala de cuerpo del párrafo, el subrayado fijo de siempre y el
+            relleno del hover en tono oscuro. No es un botón con caja —el sitio
+            no tiene ninguno— y no repite lo que ya hace el menú: está para que
+            no haga falta abrirlo.
+          */}
+          <div className={`mt-5 md:mt-10 ${TOUCH_LINKS}`}>
+            <HoverButton
+              href="/"
+              tone="dark"
+              underline
+              tightUnderline
+              className="font-body text-[17px] font-medium uppercase tracking-normal"
+            >
+              {t.success.backHome}
+            </HoverButton>
+          </div>
         </div>
       </motion.div>
     </section>

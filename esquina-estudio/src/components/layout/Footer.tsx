@@ -409,14 +409,33 @@ function SiteFooter({ isContactPage }: { isContactPage: boolean }) {
 /**
  * Footer de home: una sola franja clara. El hero ya trae la frase, así que acá
  * solo va la fila de info, con el logo script como último elemento a la derecha.
+ *
+ * # La variante sobre fondo oscuro (M2/F3, puntos 8 y 9)
+ *
+ * `/contact/success` es una pantalla oscura de una sola vista, y una franja
+ * clara al pie no tenía sentido. Con `onDark` el footer **no pinta fondo** y se
+ * apoya sobre el panel negro de la pantalla: se saca del flujo y se ancla al pie
+ * del contenedor posicionado de `PageTransitionShell`, cuyo alto es el de la
+ * sección —`100svh`—, así que la ruta entera vuelve a medir **una pantalla**, en
+ * escritorio y en mobile. Es también el único lugar donde el footer no es
+ * `static`: en las otras siete rutas no cambia nada.
+ *
+ * El `z-[95]` se compara contra el `z-[90]` de la sección de éxito, que es
+ * posicionada: sin él el panel oscuro taparía la fila.
  */
-function HomeFooter() {
+function HomeFooter({ onDark = false }: { onDark?: boolean }) {
   const { t } = useLocale();
 
   return (
-    <footer className={`w-full border-none bg-off-white ${GUTTER} py-10`}>
+    <footer
+      className={`w-full border-none ${GUTTER} py-10 ${
+        onDark
+          ? "absolute inset-x-0 bottom-0 z-[95] bg-transparent"
+          : "bg-off-white"
+      }`}
+    >
       <InfoRow
-        tone="light"
+        tone={onDark ? "dark" : "light"}
         leadingClass="leading-[20px]"
         stackGap="gap-y-0"
         align="lg:items-center"
@@ -430,7 +449,11 @@ function HomeFooter() {
         */
         trailing={
           <div className="hidden flex-shrink-0 lg:block">
-            <LogoScript size="sm" ariaLabel={t.nav.logoHome} />
+            <LogoScript
+              size="sm"
+              tone={onDark ? "dark" : "light"}
+              ariaLabel={t.nav.logoHome}
+            />
           </div>
         }
       />
@@ -453,7 +476,15 @@ export default function Footer() {
   // footer interno (982 px de alto) terminaba justo debajo de la banda del
   // header: el menú desaparecía. La franja de home mide ~124 px, así que ni con
   // el scroll al máximo alcanza la banda [0, 128] que ocupa el Navbar.
-  if (pathname === "/" || pathname === "/contact/success") {
+  //
+  // Desde M2/F3 va además **sin fondo y superpuesta** en esa ruta (puntos 8
+  // y 9): la pantalla es oscura, la franja clara al pie no tenía sentido y la
+  // ruta tiene que entrar en una sola vista.
+  if (pathname === "/contact/success") {
+    return <HomeFooter onDark />;
+  }
+
+  if (pathname === "/") {
     return <HomeFooter />;
   }
 

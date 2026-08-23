@@ -150,6 +150,8 @@ export interface Dictionary {
     readonly title: TwoLines;
     readonly body: string;
     readonly sectionLabel: string;
+    /** Salida de la pantalla de éxito: el vínculo de vuelta a la raíz (M2/F3). */
+    readonly backHome: string;
   };
 
   readonly work: {

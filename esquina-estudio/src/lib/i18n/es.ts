@@ -137,6 +137,7 @@ Nos mueve la idea de ayudar a otros a construir algo propio: convertir ideas en 
     title: ["¡TU CONSULTA SE ENVIÓ", "CON ÉXITO!"],
     body: "GRACIAS POR TOMARTE EL TIEMPO DE CONTARNOS TU VISIÓN. VAMOS A LEER TODO CON CALMA Y TE RESPONDEMOS A LA BREVEDAD.",
     sectionLabel: "Confirmación de consulta enviada",
+    backHome: "VOLVER AL INICIO",
   },
 
   work: {

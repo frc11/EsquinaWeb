@@ -71,6 +71,20 @@ export const HOME_BLOCK_HEIGHT_MOBILE =
   "max-lg:h-[calc(100svh-var(--header-height)-236px)]";
 
 /**
+ * El hueco que ocupa el footer de home, como relleno inferior (M2/F3, punto 9).
+ *
+ * Lo consume `/contact/success`, donde el footer va **superpuesto** al panel
+ * oscuro en vez de apilado debajo: el contenido de la pantalla se centra en lo
+ * que queda por encima de esa franja y no en la pantalla entera, o a 320 × 640
+ * el párrafo terminaba 46 px por debajo del borde superior del footer.
+ *
+ * Los dos números son los mismos altos de siempre —236 en mobile (ver arriba) y
+ * 164 en escritorio, los `40 + 84 + 40` que `page.tsx` publica desde B2— y van
+ * escritos enteros por la misma razón: Tailwind busca literales.
+ */
+export const HOME_FOOTER_CLEARANCE = "pb-[236px] lg:pb-[164px]";
+
+/**
  * Le da los 44 px de alto tocable al `<a>` que emite `HoverButton`, **sin tocar
  * el primitivo** (`CLAUDE.md` §4.2 lo prohíbe) y sin despegar su subrayado.
  *

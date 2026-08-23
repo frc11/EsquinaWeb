@@ -115,6 +115,7 @@ We're driven by the idea of helping others build something of their own — turn
     title: ["YOUR INQUIRY WAS SENT", "SUCCESSFULLY!"],
     body: "WE APPRECIATE YOU TAKING THE TIME TO SHARE YOUR VISION WITH US. OUR TEAM WILL REVIEW YOUR SUBMISSION AND GET BACK TO YOU AS SOON AS POSSIBLE.",
     sectionLabel: "Inquiry sent confirmation",
+    backHome: "BACK TO HOME",
   },
 
   work: {
