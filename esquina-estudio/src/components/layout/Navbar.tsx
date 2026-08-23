@@ -51,6 +51,54 @@ const EASE_EXIT: [number, number, number, number] = [0.76, 0, 0.24, 1];
 const NAV_INDICATOR_HOME_GAP = 24;
 const MOBILE_MENU_ID = "mobile-menu";
 
+/**
+ * # El color del cromo acompana al panel (M3/F4, punto 5)
+ *
+ * Hasta M2 el cambio de tono **no tenia transicion ninguna**: `chromeOnDark`
+ * es un booleano y las clases se cambiaban de golpe, asi que el header pasaba
+ * de blanco a negro en 0 ms mientras el panel tardaba 500 en bajar. Eso es lo
+ * que se sentia mecanico al abrir; y al cerrar era peor, porque el blanco
+ * volvia en 0 ms con el panel todavia puesto medio segundo mas. El color se
+ * adelantaba en las dos direcciones.
+ *
+ * ## De donde salen los numeros
+ *
+ * No son de gusto: salen de **cuando el panel tapa la banda del header**. El
+ * panel viaja de `y: -100%` a `y: 0` en 500 ms con `EASE_EXIT`. La banda mide
+ * 128 px sobre un viewport de 844, o sea el 15,2 % del recorrido; y como
+ * `cubic-bezier(0.76, 0, 0.24, 1)` arranca lento, ese 15,2 % de avance recien
+ * se alcanza cerca del 36 % del tiempo:
+ *
+ * - **Al abrir**, el panel tapa la banda a partir de los ~180 ms.
+ * - **Al cerrar**, la suelta a los ~320 ms (le quedan 180 de recorrido).
+ *
+ * Asi que el cromo tiene que estar oscuro **antes** de los 180 ms al abrir, y
+ * seguir oscuro **hasta** los 320 al cerrar. Con una ventana de 200 ms:
+ *
+ * ```
+ *          0        200                    300       500
+ *   abrir  |=========|                                     el cromo oscurece
+ *   cerrar                                 |=========|     el cromo aclara
+ *                 el panel tapa la banda entre 180 y 320
+ * ```
+ *
+ * Las dos rampas son **espejo exacto** una de la otra: [0, 200] al abrir y
+ * [300, 500] al cerrar, que es [0, 200] leido al reves sobre los mismos
+ * 500 ms. Esa es la simetria que pide el punto 5, y de paso deja al cromo
+ * oscuro justo mientras el panel ocupa la banda: nunca hay una franja clara
+ * sobre el panel negro ni al reves.
+ *
+ * Los 200 ms **no son un numero nuevo**: son los que `LocaleToggle` ya usaba
+ * para su propio `transition-colors`, asi que las cuatro piezas del cromo —la
+ * superficie, el logo, el icono y el toggle— se mueven juntas.
+ */
+const CHROME_TONE_OUT_DELAY_MS = 300;
+
+/** Al abrir: el cromo arranca a oscurecer en el acto. */
+const CHROME_TONE_OPENING = "transition-colors duration-200 delay-0";
+/** Al cerrar: espera a que el panel suelte la banda y recien ahi aclara. */
+const CHROME_TONE_CLOSING = "transition-colors duration-200 delay-[300ms]";
+
 type DesktopNavHref =
   | "/work"
   | "/services"
@@ -101,6 +149,18 @@ export default function Navbar() {
   const navTone = chromeOnDark ? "dark" : "light";
   const linkTextClass = chromeOnDark ? "text-off-white" : "text-off-black";
   const iconLineClass = chromeOnDark ? "bg-off-white" : "bg-off-black";
+
+  /*
+    La ventana en que el cromo cambia de tono, y de que lado del panel cae.
+    Ver `CHROME_TONE_OPENING`: al abrir arranca ya, al cerrar espera los
+    300 ms que el panel tarda en soltar la banda del header.
+  */
+  const chromeToneClass = menuOpen ? CHROME_TONE_OPENING : CHROME_TONE_CLOSING;
+  const chromeToneDelay = menuOpen
+    ? "0ms"
+    : `${CHROME_TONE_OUT_DELAY_MS}ms`;
+  // Literal entero: Tailwind v4 busca los nombres de clase como texto.
+  const chromeToneDelayClass = menuOpen ? "delay-0" : "delay-[300ms]";
 
   /*
     La superficie de la fila, y por qué el `backdrop-blur` vive ACÁ y no en el
@@ -218,10 +278,42 @@ export default function Navbar() {
     <nav className="fixed left-0 right-0 top-0 z-[100] border-none">
       <div
         ref={desktopNavRef}
-        className={`pointer-events-auto relative z-[2] flex h-[var(--header-height)] items-center justify-between py-10 ${CHROME_GUTTER} ${rowSurfaceClass}`}
+        className={`pointer-events-auto relative z-[2] flex h-[var(--header-height)] items-center justify-between py-10 ${CHROME_GUTTER} ${chromeToneClass} ${rowSurfaceClass}`}
       >
-        <div ref={desktopLogoRef} className="flex-shrink-0">
-          <LogoScript size="md" tone={navTone} ariaLabel={t.nav.logoHome} />
+        {/*
+          El logo **se funde** entre sus dos versiones en vez de cambiar de
+          archivo de golpe (M3/F4, punto 5).
+
+          `LogoScript` elige la imagen por `tone`, y son dos PNG distintos: un
+          cambio de `tone` es un cambio de `src`, o sea un corte instantaneo.
+          Con la superficie ahora transicionando 200 ms, ese corte seria peor
+          que el defecto original —el logo blanco quedaria sobre el fondo
+          todavia claro durante toda la ventana—. Asi que se montan los dos y
+          se cruza la opacidad con la misma ventana y el mismo retardo que la
+          superficie.
+
+          No se resolvio invirtiendo el logo negro con un filtro, que hubiera
+          sido un nodo menos: los dos archivos comparten la silueta —sus
+          canales alfa dan 63,9 dB de PSNR, o sea identicos— pero la tinta no
+          se verifico como una inversion exacta, y el logo es la marca. Con
+          los dos assets reales no hay nada que verificar.
+
+          El de arriba va `inert`: es decorativo y no puede quedar un segundo
+          enlace al inicio en el orden de tabulacion.
+        */}
+        <div ref={desktopLogoRef} className="relative flex-shrink-0">
+          <LogoScript size="md" tone="light" ariaLabel={t.nav.logoHome} />
+          <div
+            inert
+            aria-hidden
+            className="pointer-events-none absolute inset-0 transition-opacity duration-200"
+            style={{
+              opacity: chromeOnDark ? 1 : 0,
+              transitionDelay: chromeToneDelay,
+            }}
+          >
+            <LogoScript size="md" tone="dark" ariaLabel={t.nav.logoHome} />
+          </div>
         </div>
 
         <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 lg:flex">
@@ -277,7 +369,7 @@ export default function Navbar() {
             </HoverButton>
           </span>
 
-          <LocaleToggle tone={navTone} />
+          <LocaleToggle tone={navTone} toneDelayClass={chromeToneDelayClass} />
         </div>
 
         <NavIndicator
@@ -299,7 +391,7 @@ export default function Navbar() {
           320 la fila entera pide 258,6 px de los 272 útiles.
         */}
         <div className="flex items-center gap-3 lg:hidden">
-          <LocaleToggle tone={navTone} />
+          <LocaleToggle tone={navTone} toneDelayClass={chromeToneDelayClass} />
 
           {/*
             Un solo botón para abrir y cerrar. La cruz vive en la misma ranura
@@ -335,17 +427,23 @@ export default function Navbar() {
               {menuOpen ? (
                 <>
                   <span
-                    className={`absolute left-1/2 top-1/2 h-[2px] w-[30px] -translate-x-1/2 -translate-y-1/2 rotate-45 ${iconLineClass}`}
+                    className={`absolute left-1/2 top-1/2 h-[2px] w-[30px] -translate-x-1/2 -translate-y-1/2 rotate-45 ${chromeToneClass} ${iconLineClass}`}
                   />
                   <span
-                    className={`absolute left-1/2 top-1/2 h-[2px] w-[30px] -translate-x-1/2 -translate-y-1/2 -rotate-45 ${iconLineClass}`}
+                    className={`absolute left-1/2 top-1/2 h-[2px] w-[30px] -translate-x-1/2 -translate-y-1/2 -rotate-45 ${chromeToneClass} ${iconLineClass}`}
                   />
                 </>
               ) : (
                 <>
-                  <span className={`block h-[2px] w-6 ${iconLineClass}`} />
-                  <span className={`block h-[2px] w-6 ${iconLineClass}`} />
-                  <span className={`block h-[2px] w-6 ${iconLineClass}`} />
+                  <span
+                    className={`block h-[2px] w-6 ${chromeToneClass} ${iconLineClass}`}
+                  />
+                  <span
+                    className={`block h-[2px] w-6 ${chromeToneClass} ${iconLineClass}`}
+                  />
+                  <span
+                    className={`block h-[2px] w-6 ${chromeToneClass} ${iconLineClass}`}
+                  />
                 </>
               )}
             </span>
@@ -376,19 +474,19 @@ export default function Navbar() {
             <div className="flex flex-1 flex-col overflow-y-auto pb-12">
               <div className={`my-auto w-full ${TOUCH_LINKS}`}>
                 {/*
-                  Alineado a la izquierda contra el gutter: los rótulos cuelgan
-                  de la misma línea que el logo de arriba y que el resto del
-                  sitio. La jerarquía la dan la escala y el aire —la lista en la
-                  escala de display, `CONTACT US` en la del cuerpo— y no un
-                  borde ni una caja.
+                  **Centrados** (M3/F4, punto 6). Hasta M2 la lista colgaba del
+                  gutter izquierdo, alineada con el logo de arriba. La jerarquía
+                  la siguen dando la escala y el aire —la lista en la escala de
+                  display, `CONTACT US` en la del cuerpo— y no un borde ni una
+                  caja: lo único que cambia es el eje.
 
-                  Los 40 px entran en los cinco anchos ahora que `CONTACT US`
-                  salió de la lista: el rótulo más ancho de los cuatro es
-                  `PROYECTOS`, que a 40 px mide 229,6 contra 272 de caja útil a
-                  320. `CONTACTANOS`, que medía 348,6, era el que obligaba a
-                  bajar a 34 en M1.
+                  Centrar no cambia lo que entra, porque no cambia el ancho de
+                  ningún rótulo: el más ancho de los cuatro sigue siendo
+                  `PROYECTOS`, 229,6 px a 40, contra 272 de caja útil a 320.
+                  `CONTACTANOS`, que medía 348,6, era el que obligaba a bajar a
+                  34 en M1 y ya no está en la lista.
                 */}
-                <div className="flex flex-col items-start gap-1">
+                <div className="flex flex-col items-center gap-1 text-center">
                   {NAV_LINKS.map((link) => (
                     <HoverButton
                       key={link.href}
@@ -401,7 +499,7 @@ export default function Navbar() {
                   ))}
                 </div>
 
-                <div className="mt-10">
+                <div className="mt-10 flex justify-center text-center">
                   <HoverButton
                     href={CONTACT_LINK.href}
                     tone="dark"

@@ -126,8 +126,23 @@ import { LOCALES, useLocale, type Locale } from "@/lib/i18n";
  */
 export default function LocaleToggle({
   tone = "light",
+  toneDelayClass = "",
 }: {
   tone?: "light" | "dark";
+  /**
+   * Retardo de la transición de color, como clase entera de Tailwind (M3/F4).
+   *
+   * El toggle ya transicionaba su color en 200 ms, pero **sin retardo**: al
+   * cerrar el menú volvía al tono claro en el acto, con el panel todavía puesto
+   * medio segundo más. Es el mismo defecto que el resto del cromo, y se
+   * corrige igual — el `Navbar` le pasa `delay-0` al abrir y `delay-[300ms]` al
+   * cerrar, que es lo que tarda el panel en soltar la banda del header.
+   *
+   * Llega como literal y no como número porque Tailwind v4 busca los nombres de
+   * clase como texto: `` `delay-[${n}ms]` `` no llegaría nunca al CSS. Vacío por
+   * defecto, así que el comportamiento sin la prop es el de siempre.
+   */
+  toneDelayClass?: string;
 }) {
   const { selectedLocale, setLocale, t } = useLocale();
   const reduceMotion = usePrefersReducedMotion();
@@ -223,7 +238,7 @@ export default function LocaleToggle({
               que los dos rectángulos no se pisen: quedan 28,7 px entre los
               botones contra los 24 que ocupan las dos extensiones.
             */
-            className={`relative block cursor-pointer transition-colors duration-200 max-lg:after:absolute max-lg:after:inset-y-0 max-lg:after:-inset-x-[12px] max-lg:after:content-[''] ${
+            className={`relative block cursor-pointer transition-colors duration-200 ${toneDelayClass} max-lg:after:absolute max-lg:after:inset-y-0 max-lg:after:-inset-x-[12px] max-lg:after:content-[''] ${
               code === selectedLocale ? fullToneClass : inactiveClass
             }`}
           >
