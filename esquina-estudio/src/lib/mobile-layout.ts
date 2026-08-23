@@ -43,6 +43,34 @@ export const CHROME_GUTTER = "px-6 md:px-12 lg:px-16";
 export const TOUCH_TARGET_MIN = 44;
 
 /**
+ * # El alto del bloque del hero de home en mobile (M2/F2, punto 4)
+ *
+ * `/` tiene que entrar en **una pantalla**: header + hero + footer = `100svh`,
+ * sin scroll, igual que en escritorio. Como el footer no se puede medir desde
+ * el bloque —son dos archivos hermanos y el layout tiene que salir correcto del
+ * servidor, sin JavaScript—, el alto del footer se **resta**, igual que hace el
+ * escritorio con sus 164 px desde B2.
+ *
+ * **El número es 236 y está medido**, no estimado: el `HomeFooter` de mobile
+ * mide 236,00 px en los cinco anchos de prueba (320, 360, 390, 414, 430) y en
+ * los dos idiomas. Se compone de `py-10` (40 + 40) más los tres renglones de la
+ * grilla del punto 7: 40 del primer par de lugar, 16 de hueco, 40 del segundo,
+ * 16 de hueco y 44 de la línea del copyright —los 44 los pone el piso de área
+ * táctil sobre el link del crédito—. 80 + 156 = 236.
+ *
+ * **Si el footer cambia, este número cambia.** La verificación es directa: medir
+ * `document.querySelector("footer").getBoundingClientRect().height` en los cinco
+ * anchos y los dos idiomas y confirmar que `docH === viewH` en `/`.
+ *
+ * Va escrito **entero** y no compuesto: Tailwind v4 busca los nombres de clase
+ * como literales en el código, y una clase armada con una plantilla no llega
+ * nunca al CSS. Es exactamente lo que le pasó a la variante de escritorio en M1
+ * y lo que quedó documentado como el punto 13 de este sprint.
+ */
+export const HOME_BLOCK_HEIGHT_MOBILE =
+  "max-lg:h-[calc(100svh-var(--header-height)-236px)]";
+
+/**
  * Le da los 44 px de alto tocable al `<a>` que emite `HoverButton`, **sin tocar
  * el primitivo** (`CLAUDE.md` §4.2 lo prohíbe) y sin despegar su subrayado.
  *

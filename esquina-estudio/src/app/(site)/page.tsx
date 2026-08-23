@@ -1,4 +1,5 @@
 import Hero from "@/components/sections/home/Hero";
+import { HOME_BLOCK_HEIGHT_MOBILE } from "@/lib/mobile-layout";
 
 /**
  * Alto del footer de home (`HomeFooter`, en `Footer.tsx`): `py-10` arriba y
@@ -7,13 +8,10 @@ import Hero from "@/components/sections/home/Hero";
  * término siga siendo rastreable hasta su decisión en el footer; el header, en
  * cambio, ya publica el suyo como variable global.
  *
- * **Vale de `lg` para arriba y nada más.** Debajo de 1024 el footer pasa a una
- * columna (M1/F1) y mide 488 px medidos, así que la cuenta de «una pantalla
- * exacta» deja de cerrar: en mobile el hero se queda con la pantalla completa
- * menos el header y el footer se alcanza scrolleando. Es la misma aceptación
- * que §3.3 escribe para Contact —en mobile se scrollea, y está bien— y la
- * única alternativa sería un footer de 488 px comiéndose tres cuartos de un
- * teléfono de 640.
+ * **Vale de `lg` para arriba y nada más.** El término de mobile vive aparte, en
+ * `HOME_BLOCK_HEIGHT_MOBILE`, porque su footer es otro: desde M2/F2 la fila de
+ * info de mobile son **dos niveles** y mide 236 px, no los 488 de M1. Los dos
+ * términos son excluyentes (`max-lg` contra `lg`), así que nunca compiten.
  */
 const HOME_FOOTER_HEIGHT = "40px+84px+40px";
 
@@ -32,7 +30,7 @@ const HOME_BLOCK_HEIGHT = `lg:h-[calc(100svh-var(--header-height)-(${HOME_FOOTER
 export default function HomePage() {
   return (
     <div
-      className={`flex min-h-[calc(100svh-var(--header-height))] w-full items-center justify-center overflow-hidden lg:min-h-[50vh] ${HOME_BLOCK_HEIGHT}`}
+      className={`flex w-full items-center justify-center overflow-hidden ${HOME_BLOCK_HEIGHT_MOBILE} lg:min-h-[50vh] ${HOME_BLOCK_HEIGHT}`}
     >
       <Hero />
     </div>

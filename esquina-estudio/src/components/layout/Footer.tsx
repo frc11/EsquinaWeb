@@ -24,13 +24,30 @@ const SOCIAL_LINKS = [
 const COPYRIGHT = "© 2024";
 
 /**
+ * En qué fila de la grilla de mobile cae cada par de lugar. Va como tabla de
+ * literales enteros porque Tailwind v4 busca los nombres de clase como texto:
+ * `` `row-start-${index + 1}` `` no llegaría nunca al CSS.
+ */
+const PLACE_ROW = ["max-lg:row-start-1", "max-lg:row-start-2"] as const;
+
+/**
  * Gutter horizontal del chrome: alinea el footer con el Navbar. Sale del módulo
  * compartido para que los dos corten en el mismo ancho (M1).
  */
 const GUTTER = CHROME_GUTTER;
 
-/** Sistema tipográfico de la información del footer: 17 px, interletrado 0. */
-const INFO_TYPE = "font-body font-[550] text-[17px] uppercase tracking-normal";
+/**
+ * Sistema tipográfico de la información del footer: 17 px, interletrado 0.
+ *
+ * **Baja a 15 px debajo de 1024 (M2/F2, punto 7)**, y sale de medir: la línea
+ * nueva del nivel 2 —`© 2024` y el crédito uno al lado del otro— pide 205,45 px
+ * de crédito más 58,2 de copyright a 17 px, o sea 271,65 contra los 272 de caja
+ * útil a 320. Entraba por 0,35 px, que no es entrar. A 15 px la misma línea pide
+ * 244, y quedan 28 px de aire. De `lg` para arriba **no cambia nada**: la fila
+ * de escritorio sigue en 17.
+ */
+const INFO_TYPE =
+  "font-body font-[550] text-[15px] uppercase tracking-normal lg:text-[17px]";
 
 function SocialLinks({ tone }: { tone: "light" | "dark" }) {
   return (
@@ -96,8 +113,43 @@ function DevelopCredit({
 }
 
 /**
- * Fila de información del footer nuevo: procedencia, alcance, copyright y
- * crédito a la izquierda; redes (y el logo script en home) a la derecha.
+ * Fila de información del footer.
+ *
+ * # Escritorio (≥ 1024): una fila, dos grupos
+ *
+ * Procedencia, alcance, copyright y crédito a la izquierda; redes (y el logo
+ * script en home) a la derecha. **No cambió en M2**: los dos grupos siguen
+ * siendo los mismos nodos y los mismos `gap`.
+ *
+ * # Mobile (< 1024): dos niveles (M2/F2, punto 7)
+ *
+ * ```
+ *   NACIDO EN            INSTAGRAM
+ *   ARGENTINA            LINKEDIN
+ *   TRABAJANDO
+ *   EN TODO EL MUNDO
+ *   © 2024  HECHO POR develOP
+ * ```
+ *
+ * Arriba, los dos pares de lugar a la izquierda y las dos redes a la derecha;
+ * debajo, el copyright y el crédito **uno al lado del otro**, a lo ancho. Antes
+ * era una sola columna de cinco bloques apilados, que medía 488 px de alto: más
+ * de la mitad de un teléfono de 844.
+ *
+ * **Los pares de lugar van apilados y no uno al lado del otro**, y es una
+ * medida: en castellano piden 71,58 + 121,83 px y con INSTAGRAM al costado dan
+ * 267 px de contenido **a 13 px de tipografía**, que ya no entra en los 272 de
+ * caja útil a 320. Apilados, el nivel 1 pide 159,31 + 96,44 = 255,75 a 17 px y
+ * entra en los cinco anchos.
+ *
+ * # Cómo se arma sin duplicar el markup
+ *
+ * La fila es una **grilla de dos columnas** debajo de 1024 y vuelve a ser una
+ * fila flex de `lg` para arriba. Los dos grupos de escritorio se declaran
+ * `display: contents` en mobile, así que sus hijos pasan a ser celdas de la
+ * grilla y cada uno se coloca por `col-start` / `row-start`. Es lo que permite
+ * que el **mismo** árbol dé los dos repartos: no hay una versión de mobile y
+ * otra de escritorio.
  */
 function InfoRow({
   tone,
@@ -113,9 +165,9 @@ function InfoRow({
   stackGap: string;
   /**
    * Alineación de la fila **de `lg` para arriba**, que es donde la fila existe:
-   * debajo de 1024 el footer es una columna y todo va alineado a la izquierda.
-   * Llega como clase entera (`lg:items-center`) y no como sufijo porque
-   * Tailwind v4 busca los nombres de clase como literales en el código.
+   * debajo de 1024 manda la grilla de dos niveles. Llega como clase entera
+   * (`lg:items-center`) y no como sufijo porque Tailwind v4 busca los nombres de
+   * clase como literales en el código.
    */
   align: string;
   trailing?: React.ReactNode;
@@ -138,38 +190,51 @@ function InfoRow({
   );
 
   return (
-    // Debajo de 1024 la fila es una COLUMNA: los dos pares de lugar, el
-    // copyright, el crédito, las redes y el logo se apilan y quedan alineados a
-    // la izquierda. Es lo único que hacía falta para que el footer entre —medido
-    // en F0: la fila pide 789 px de ancho contra 294 de caja útil a 390— y por
-    // eso el corte es `lg` y no `md`: a 768 tampoco entraba.
     <div
-      className={`flex w-full flex-col items-start gap-y-8 lg:flex-row lg:justify-between lg:gap-x-12 lg:gap-y-0 ${align} ${TOUCH_LINKS} ${INFO_TYPE} ${leadingClass} ${textClass}`}
+      className={`grid w-full grid-cols-[auto_auto] items-start justify-between gap-x-4 gap-y-4 lg:flex lg:flex-row lg:justify-between lg:gap-x-12 lg:gap-y-0 ${align} ${TOUCH_LINKS} ${INFO_TYPE} ${leadingClass} ${textClass}`}
     >
-      <div className="flex flex-col items-start gap-y-5 lg:flex-row lg:items-start lg:gap-x-12 lg:gap-y-0">
+      {/*
+        El grupo de la izquierda de escritorio. En mobile se declara
+        `display: contents` y sus tres hijos —los dos pares y el bloque del
+        copyright— pasan a ser celdas de la grilla de arriba.
+      */}
+      <div className="contents lg:flex lg:flex-row lg:items-start lg:gap-x-12">
         {t.footer.places.map(([first, second], index) => (
           // `key` por índice: el texto cambia con el idioma y los pares son
-          // siempre dos, garantizado por el tipo.
-          <div key={index} className={`flex flex-col ${stackGap}`}>
+          // siempre dos, garantizado por el tipo. Y por eso `PLACE_ROW` puede
+          // ser una tabla de dos entradas: el índice no se sale de rango.
+          <div
+            key={index}
+            className={`flex flex-col max-lg:col-start-1 ${PLACE_ROW[index]} ${stackGap}`}
+          >
             <span className="whitespace-nowrap">{first}</span>
             <span className="whitespace-nowrap">{second}</span>
           </div>
         ))}
 
-        {inlineCredit ? (
-          <>
-            <span className="whitespace-nowrap">{COPYRIGHT}</span>
-            {credit}
-          </>
-        ) : (
-          <div className={`flex flex-col items-start ${stackGap}`}>
-            <span className="whitespace-nowrap">{COPYRIGHT}</span>
-            {credit}
-          </div>
-        )}
+        {/*
+          El nivel 2: ocupa las dos columnas y va en fila **siempre** en mobile,
+          que es lo que pide el punto 7. De `lg` para arriba conserva las dos
+          formas que tenía —en fila con el `gap-x-12` del propio grupo para las
+          rutas internas, apilado para home— así que el escritorio no se mueve.
+        */}
+        <div
+          className={`flex max-lg:col-span-2 max-lg:row-start-3 max-lg:flex-row max-lg:items-center max-lg:gap-x-4 ${
+            inlineCredit
+              ? "lg:contents"
+              : `lg:flex-col lg:items-start ${stackGap}`
+          }`}
+        >
+          <span className="whitespace-nowrap">{COPYRIGHT}</span>
+          {credit}
+        </div>
       </div>
 
-      <div className="flex flex-col items-start gap-y-5 lg:flex-row lg:items-center lg:gap-x-12 lg:gap-y-0">
+      {/*
+        El grupo de la derecha. En mobile es una sola celda: columna 2, filas 1 y
+        2, o sea al costado de los dos pares de lugar.
+      */}
+      <div className="flex flex-col items-start gap-y-5 max-lg:col-start-2 max-lg:row-span-2 max-lg:row-start-1 max-lg:gap-y-0 lg:flex-row lg:items-center lg:gap-x-12 lg:gap-y-0">
         <div
           className={
             inlineSocial
@@ -195,8 +260,27 @@ function StatementBand({ isContactPage }: { isContactPage: boolean }) {
   const { locale, t } = useLocale();
 
   return (
+    /*
+      M2/F2, punto 6 — la franja pasa a ser una FILA también en mobile: la frase
+      a la izquierda y el bloque de contacto a la derecha, **alineado abajo**
+      (`items-end`), o sea a la altura de la última línea de la frase y no de la
+      primera.
+
+      `flex-wrap` no es decoración, es lo que hace que la regla se pueda aplicar
+      sin romper nada: los dos bloques tienen ancho mínimo propio —la frase, su
+      palabra más larga (146 px en castellano a 26 px); el bloque de contacto, su
+      corte de línea escrito, que **no se deja al ancho del navegador**
+      (`CLAUDE.md` §6.4)— y la suma no entra en cualquier teléfono. Medido a 320:
+      146 + 16 + 166 = 328 contra 272 de caja útil. Con `flex-wrap` el bloque de
+      contacto **baja solo** donde no entra y la franja queda como estaba, sin
+      desborde y sin un corte de ancho nuevo. Entra en fila a partir de 376 px de
+      viewport; de los cinco anchos de prueba, en 390, 414 y 430.
+
+      De `lg` para arriba se restituye exactamente lo de antes: `flex-nowrap`,
+      `items-start`, `gap-x-12` y `gap-y-0`.
+    */
     <div
-      className={`flex w-full flex-col items-start gap-y-10 lg:flex-row lg:justify-between lg:gap-x-12 lg:gap-y-0 ${TOUCH_LINKS} ${GUTTER} py-12 lg:py-20`}
+      className={`flex w-full flex-row flex-wrap items-end justify-between gap-x-4 gap-y-10 lg:flex-nowrap lg:items-start lg:gap-x-12 lg:gap-y-0 ${TOUCH_LINKS} ${GUTTER} py-12 lg:py-20`}
     >
       {/*
         La frase baja a 26/31 debajo de `md`. Los cortes de tres líneas siguen
@@ -206,7 +290,7 @@ function StatementBand({ isContactPage }: { isContactPage: boolean }) {
         pide §3.3 de la instrucción: el corte escrito no aplica en mobile, las
         negritas se conservan.
       */}
-      <div className="font-display text-[26px] uppercase leading-[31px] tracking-normal text-off-black md:text-[40px] md:leading-[48px]">
+      <div className="font-display text-[26px] uppercase leading-[31px] tracking-normal text-off-black max-lg:flex-1 max-lg:basis-[min-content] md:text-[40px] md:leading-[48px]">
         {getHeroLines(locale).map((line, lineIndex) => (
           <p key={lineIndex}>
             {line.map((fragment, index) => (
@@ -222,16 +306,23 @@ function StatementBand({ isContactPage }: { isContactPage: boolean }) {
       </div>
 
       {!isContactPage && (
-        <div className="flex flex-col items-start gap-y-[8px] text-left font-body font-[550] uppercase tracking-normal text-off-black lg:items-end lg:text-right">
+        /*
+          En mobile baja a la escala de cuerpo (17/21) y va alineado a la
+          derecha. La proporción es la del escritorio, no un número nuevo: allá
+          la frase va a 40 y este bloque a 26, o sea 0,65; en mobile la frase va
+          a 26 y 26 × 0,65 = 17. A 26 px este bloque medía lo mismo que la frase
+          y por eso los dos se leían con el mismo peso.
+        */
+        <div className="flex flex-col items-end gap-y-[8px] text-right font-body font-[550] uppercase tracking-normal text-off-black max-lg:flex-none">
           <HoverButton
             href="/contact"
             underline
             tightUnderline
-            className="text-[26px] leading-[31px]"
+            className="text-[17px] leading-[21px] lg:text-[26px] lg:leading-[31px]"
           >
             {t.footer.contactCta}
           </HoverButton>
-          <p className="whitespace-nowrap text-[26px] leading-[31px]">
+          <p className="whitespace-nowrap text-[17px] leading-[21px] lg:text-[26px] lg:leading-[31px]">
             {t.footer.contactLines[0]}
             <br />
             {t.footer.contactLines[1]}
@@ -329,8 +420,16 @@ function HomeFooter() {
         leadingClass="leading-[20px]"
         stackGap="gap-y-0"
         align="lg:items-center"
+        /*
+          El logo script cierra la composición ancha del escritorio y **no entra
+          en mobile**: el nivel 2 del footer nuevo pide 205,45 px de crédito más
+          58,2 de copyright, y con el logo al lado —72,3 px al alto de 48— la
+          línea se va a 335 contra 272 de caja útil a 320. El punto 7 enumera lo
+          que lleva la fila de mobile y el logo no está en esa lista. Arriba de
+          1024 no cambia nada.
+        */
         trailing={
-          <div className="flex-shrink-0">
+          <div className="hidden flex-shrink-0 lg:block">
             <LogoScript size="sm" ariaLabel={t.nav.logoHome} />
           </div>
         }
