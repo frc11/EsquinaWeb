@@ -413,12 +413,20 @@ function SiteFooter({ isContactPage }: { isContactPage: boolean }) {
  * # La variante sobre fondo oscuro (M2/F3, puntos 8 y 9)
  *
  * `/contact/success` es una pantalla oscura de una sola vista, y una franja
- * clara al pie no tenía sentido. Con `onDark` el footer **no pinta fondo** y se
- * apoya sobre el panel negro de la pantalla: se saca del flujo y se ancla al pie
- * del contenedor posicionado de `PageTransitionShell`, cuyo alto es el de la
- * sección —`100svh`—, así que la ruta entera vuelve a medir **una pantalla**, en
- * escritorio y en mobile. Es también el único lugar donde el footer no es
- * `static`: en las otras siete rutas no cambia nada.
+ * clara al pie no tenía sentido. Con `onDark` el footer **deja de ser una franja
+ * aparte y pasa a ser el pie de la pantalla oscura**: se saca del flujo y se
+ * ancla al pie del contenedor posicionado de `PageTransitionShell`, cuyo alto es
+ * el de la sección —`100svh`—, así que la ruta entera vuelve a medir **una
+ * pantalla**, en escritorio y en mobile. Es también el único lugar donde el
+ * footer no es `static`: en las otras siete rutas no cambia nada.
+ *
+ * **Pinta el off-black en vez de ir transparente, y es una medida.** El panel
+ * oscuro de la pantalla entra desde abajo, así que durante los primeros ~150 ms
+ * todavía no llegó al pie: con el footer transparente sus rótulos —que son
+ * off-white— quedaban sobre el off-white de la página, ilegibles. Medido: a los
+ * 80 ms el borde superior del panel está en 778 y el del footer en 608. Pintado
+ * del mismo negro que el panel, el resultado en reposo es idéntico y durante la
+ * entrada la pantalla oscura crece desde el pie en vez de dejar un fantasma.
  *
  * El `z-[95]` se compara contra el `z-[90]` de la sección de éxito, que es
  * posicionada: sin él el panel oscuro taparía la fila.
@@ -430,7 +438,7 @@ function HomeFooter({ onDark = false }: { onDark?: boolean }) {
     <footer
       className={`w-full border-none ${GUTTER} py-10 ${
         onDark
-          ? "absolute inset-x-0 bottom-0 z-[95] bg-transparent"
+          ? "absolute inset-x-0 bottom-0 z-[95] bg-off-black"
           : "bg-off-white"
       }`}
     >

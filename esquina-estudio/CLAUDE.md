@@ -148,8 +148,11 @@ era `hidden lg:block`.
    entrando completa en la primera pantalla, medido a 640 y a 844 de alto. Los
    tres repartos se calculan al renderizar y viajan como **variables CSS**; el
    `@media` elige. Ver §6.
-9. **`/contact/success` es una sola pantalla oscura.** El footer va **sin fondo
-   y superpuesto** sobre el panel negro (`absolute inset-x-0 bottom-0 z-[95]`),
+9. **`/contact/success` es una sola pantalla oscura.** El footer va
+   **superpuesto** al panel negro y pintado del mismo off-black
+   (`absolute inset-x-0 bottom-0 z-[95]`; en reposo es indistinguible de
+   transparente, y evita que sus rótulos blancos queden sobre la página clara
+   durante los ~150 ms en que el panel todavía está subiendo),
    así que la ruta mide `100svh` exactos en escritorio y en mobile, y ya no hay
    franja clara al pie. Suma un vínculo de salida (`BACK TO HOME` / `VOLVER AL
    INICIO`). **Es el único footer que no es `static`.**
