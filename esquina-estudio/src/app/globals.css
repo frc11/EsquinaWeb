@@ -24,6 +24,22 @@ body[data-custom-cursor="true"] * {
   cursor: none !important;
 }
 
+/*
+  Cortina de entrada: el escape sin parpadeo (M3/F1, punto 1).
+
+  El atributo lo pone el script bloqueante de `layout.tsx` mientras el navegador
+  parsea el documento, o sea ANTES del primer pintado y antes de que React
+  hidrate. Cuando la cortina no corresponde —ya se vio en esta pestaña, o el
+  visitante pidió menos movimiento— esta regla la esconde desde el cuadro cero.
+
+  Tiene que ser CSS y no React: el HTML del servidor trae la cortina SIEMPRE, y
+  esa es justamente la condición para que la hidratación no se rompa. Lo que
+  varía entre visitas se resuelve fuera del árbol de React.
+*/
+html[data-preloader="skip"] [data-preloader-curtain] {
+  display: none !important;
+}
+
 html {
   background-color: var(--color-off-white);
   color: var(--color-off-black);

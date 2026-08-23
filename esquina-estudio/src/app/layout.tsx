@@ -48,6 +48,26 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Script bloqueante de la cortina de entrada (M3/F1, punto 1).
+ *
+ * Va **primero dentro de `<body>` y sin `async`/`defer`**, así que el navegador
+ * lo ejecuta mientras parsea el documento: antes de leer el nodo de la cortina y
+ * mucho antes del primer pintado. Es lo único que puede resolver la regla de
+ * «una vez por pestaña» sin que participe de la hidratación.
+ *
+ * Decide y no hace nada más: marca `data-preloader="skip"` en `<html>` y deja
+ * que la regla de `globals.css` esconda la cortina con `display: none`. React
+ * ni se entera —su primer render es idéntico al del servidor, con cortina— y el
+ * `useEffect` de `LoadingScreen` la desmonta después, sobre algo que el usuario
+ * ya no estaba viendo.
+ *
+ * Todo va dentro de `try`: si `sessionStorage` tira (navegación privada,
+ * almacenamiento bloqueado) no se marca nada y la cortina se muestra. Es el lado
+ * seguro del error, porque la cortina siempre se levanta por temporizador.
+ */
+const PRELOADER_GATE = `(function(){try{var s=false;try{s=window.sessionStorage.getItem("esquina:preloaderShown")==="1"}catch(e){}if(!s&&window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){s=true}if(s){document.documentElement.setAttribute("data-preloader","skip")}}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -56,6 +76,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${manropeFont.variable} antialiased`}>
       <body className="bg-off-white text-off-black font-body min-h-screen">
+        <script dangerouslySetInnerHTML={{ __html: PRELOADER_GATE }} />
         <RootClientShell>{children}</RootClientShell>
       </body>
     </html>
