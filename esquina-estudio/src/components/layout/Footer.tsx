@@ -69,8 +69,11 @@ function SocialLinks({ tone }: { tone: "light" | "dark" }) {
 }
 
 /**
- * Crédito de develOP. Escala única: 17 px, heredada del contenedor. La variante
- * corta («BY») se fue con el footer fijo de `/fun-gallery` en B3.3.
+ * Crédito de develOP. **La escala la hereda del contenedor** —`INFO_TYPE`, o sea
+ * 15 px debajo de 1024 y 17 de ahí para arriba—: no fija tamaño propio. El logo
+ * de 22 px sí es fijo, y es lo que hace que la línea del nivel 2 mida 205,45 px
+ * a 17 px de tipografía (ver `INFO_TYPE`). La variante corta («BY») se fue con
+ * el footer fijo de `/fun-gallery` en B3.3.
  */
 function DevelopCredit({
   logoClassName,

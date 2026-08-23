@@ -27,12 +27,22 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 
 ## 2b. Mobile — ESTADO (M1, 2026-08-22; corregido por M2, 2026-08-23)
 
-**Un solo corte manda: 1024 px.** De ahí para arriba **no cambió nada** —está
-verificado midiendo los altos de las ocho rutas a 1920, 1366 y 1024 contra el
-código pre-sprint recompilado, en los dos idiomas: los 48 números son
-idénticos—. Debajo de 1024 mandan las soluciones de mobile, sean CSS o
-JavaScript. Hay un segundo corte, `md` (768), pero es **solo tipográfico**: da
-un escalón intermedio de tamaño en las rutas que lo necesitaban.
+**Un solo corte manda: 1024 px.** De ahí para arriba el escritorio es intocable.
+Debajo de 1024 mandan las soluciones de mobile, sean CSS o JavaScript. Hay un
+segundo corte, `md` (768), pero es **solo tipográfico**: da un escalón intermedio
+de tamaño en las rutas que lo necesitaban.
+
+**Cómo se verifica que el escritorio no se movió, y una advertencia que costó un
+sprint.** M1 declaró los 48 altos idénticos a 1920, 1366 y 1024 y **se le pasó una
+regresión**: `scrollHeight` nunca baja del alto del viewport, así que un
+documento de 1080 a 1920 no prueba que el contenido llegue al pie. El bloque del
+hero de `/` estuvo 248 px corto durante todo M1 sin que ninguno de esos 48
+números lo delatara (punto 13 de M2). **La vara buena tiene tres patas**: los
+altos de documento, el **borde inferior del último elemento** —la franja muerta—
+y la **geometría del cromo** medida contra el código pre-sprint recompilado. M2
+cerró con 28 de 32 altos idénticos —los cuatro que cambian son los de
+`/contact/success`, y ese cambio lo pidió la devolución— y **cero diferencias de
+geometría del header contra el código pre-M1**.
 
 | rango | nombre | tratamiento |
 |---|---|---|
