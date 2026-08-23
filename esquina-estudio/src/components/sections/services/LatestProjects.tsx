@@ -20,8 +20,34 @@ import type { Project } from "@/types/project";
 import { cn } from "@/lib/utils";
 
 /**
- * Cierre de `/services`: el rótulo a la izquierda, el párrafo al centro, los dos
- * links a la derecha y, debajo, la fila de las cuatro portadas más recientes.
+ * Cierre de `/services`: el rótulo a la izquierda y el párrafo a la derecha;
+ * debajo, las cuatro portadas más recientes en **cuadrícula de 2 × 2**; y
+ * después de la cuadrícula, los dos links.
+ *
+ * # El orden y el tamaño (M3/F6, punto 10)
+ *
+ * Hasta M2 las cuatro portadas iban en **una fila de cuatro** y los dos links
+ * compartían fila con el texto, o sea **arriba** de las portadas. Ahora el
+ * bloque se lee de arriba abajo: título y descripción → cuadrícula → links.
+ *
+ * Las portadas pasan de un cuarto del ancho a la mitad: a 1920 cada una va de
+ * 471,5 × 353,6 a **949 × 711,75**, o sea cuatro veces el área. Con eso la
+ * cuadrícula ocupa su propio espacio y deja de ser una franja: dos filas más el
+ * hueco dan 1429,5 px de alto, así que el título, la descripción y las cuatro
+ * portadas **no entran juntos en una pantalla**, que es lo que pidió Valentino.
+ *
+ * **Debajo de 1024 va en una sola columna, y salió de medir.** A 390 la
+ * cuadrícula de dos daría portadas de 184 × 138 px —más chicas que las tarjetas
+ * de `/work`, ilegibles para una portada— mientras que en una columna miden
+ * 374 × 280,5.
+ *
+ * El corte es `lg`, que es **el** corte del sitio, y no `md`, y eso también se
+ * midió: con el corte en 768 la tablet en vertical (768 × 1024) daba portadas de
+ * 373 × 280 y el bloque entero —título, descripción y las cuatro— medía 910 px
+ * contra 1024 de pantalla, o sea que **entraba todo junto**, que es justo lo que
+ * el punto 10 no quiere. Con el corte en 1024 esa tablet va en una columna, las
+ * portadas miden 752 × 564 y el bloque pasa a medir más del doble de la
+ * pantalla.
  *
  * # Los dos links
  *
@@ -93,9 +119,14 @@ const COVER_EDGE = 8;
 const EDGE_ORIGIN_PX = COVER_EDGE / (HOVER_SCALE - 1);
 /** Difuminado y opacidad de las que no reciben el cursor. */
 const DIMMED = "blur-[4px] opacity-70";
-/** Ancho pedido al CDN: 4 portadas en 1920 dan 480 CSS px, y el doble en DPR 2. */
-const COVER_CDN_WIDTH = 1200;
-const COVER_CDN_HEIGHT = 900;
+/**
+ * Ancho pedido al CDN. **Sube de 1200 a 1800 con la cuadrícula** (M3/F6): con
+ * cuatro portadas en fila cada una medía 471,5 CSS px y 1200 alcanzaba de sobra;
+ * en 2 × 2 miden 949, que a DPR 2 son 1898 px de dispositivo, y servir 1200
+ * dejaría la portada escalada hacia arriba. Se mantiene el 4:3.
+ */
+const COVER_CDN_WIDTH = 1800;
+const COVER_CDN_HEIGHT = 1350;
 const COVER_CDN_FORMAT = "webp" as const;
 
 /**
@@ -142,7 +173,6 @@ export default function LatestProjects({
   const hoverEnabled = !useIsBelowDesktop();
   const { locale } = useLocale();
   const { label, paragraph, links } = getServicesCopy(locale).latestProjects;
-  const lastIndex = projects.length - 1;
 
   return (
     <section aria-labelledby="latest-projects" className="pb-16 md:pb-[120px]">
@@ -169,25 +199,16 @@ export default function LatestProjects({
           {paragraph}
         </p>
 
-        {/*
-          Hasta `2xl` los links van debajo del párrafo, en su misma columna: a
-          esos anchos las tres columnas no entran sin espicharlo (ver
-          `LATEST_GRID`).
-        */}
-        <div className="mt-6 flex flex-col items-start gap-[14px] md:mt-10 lg:col-start-2 lg:row-start-2 2xl:col-start-3 2xl:row-start-1 2xl:mt-0">
-          {links.map((link) => (
-            <UnderlineOnHoverLink
-              key={link.href}
-              href={link.href}
-              label={link.label}
-            />
-          ))}
-        </div>
       </div>
 
       {projects.length > 0 ? (
         <div
-          className="relative mt-16 flex w-full md:mt-[160px]"
+          /*
+            Una columna debajo de 768 y dos de ahí para arriba. Las separaciones
+            son las mismas de siempre —`COVER_GAP` entre portadas y `COVER_EDGE`
+            contra los bordes—: la cuadrícula cambia el reparto, no las medidas.
+          */
+          className="relative mt-16 grid w-full grid-cols-1 md:mt-[160px] lg:grid-cols-2"
           style={{ gap: COVER_GAP, paddingInline: COVER_EDGE }}
         >
           {projects.map((project, index) => {
@@ -225,12 +246,19 @@ export default function LatestProjects({
                 style={{
                   backgroundColor: project.coverColor || undefined,
                   transform: isHovered ? `scale(${HOVER_SCALE})` : undefined,
+                  /*
+                    En 2 × 2 **las cuatro portadas tocan un borde**: las pares la
+                    izquierda y las impares la derecha. Antes solo la primera y la
+                    última lo hacían y las dos del medio crecían hacia los dos
+                    lados; ahora esa rama no existe. El número sigue siendo el
+                    mismo `EDGE_ORIGIN_PX`, que no depende del ancho de la
+                    portada. Debajo de 1024 el hover no se registra, así que en
+                    la columna única esto queda inerte.
+                  */
                   transformOrigin:
-                    index === 0
+                    index % 2 === 0
                       ? `${EDGE_ORIGIN_PX}px center`
-                      : index === lastIndex
-                        ? `calc(100% - ${EDGE_ORIGIN_PX}px) center`
-                        : "center",
+                      : `calc(100% - ${EDGE_ORIGIN_PX}px) center`,
                   zIndex: isHovered ? 2 : 1,
                 }}
               >
@@ -239,7 +267,10 @@ export default function LatestProjects({
                     src={source}
                     alt={title}
                     fill
-                    sizes="calc(25vw)"
+                    // Una columna debajo de 768, media pantalla de ahí para
+                    // arriba. Los `vw` van dentro de `calc()` a propósito: ver la
+                    // nota de `src/lib/mobile-layout.ts`.
+                    sizes="(max-width: 1023.98px) calc(100vw - 16px), calc(50vw)"
                     className="object-cover"
                   />
                 ) : null}
@@ -248,6 +279,28 @@ export default function LatestProjects({
           })}
         </div>
       ) : null}
+
+      {/*
+        Los dos links, **después de la cuadrícula** (punto 10). Van en la
+        columna 2 de la misma grilla que el texto, así que quedan alineados con
+        el párrafo y el cierre conserva las dos verticales de la página.
+
+        Los 120 px de aire no son un número nuevo: son los mismos que la sección
+        ya usa como relleno inferior. Los 160 quedan para lo que separa bloques
+        mayores —el texto de la cuadrícula—, y estos links son el cierre de la
+        cuadrícula, no un bloque aparte.
+      */}
+      <div className={cn(GUTTER, CONTENT_INSET, LATEST_GRID, "mt-16 md:mt-[120px]")}>
+        <div className="flex flex-col items-start gap-[14px] lg:col-start-2">
+          {links.map((link) => (
+            <UnderlineOnHoverLink
+              key={link.href}
+              href={link.href}
+              label={link.label}
+            />
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

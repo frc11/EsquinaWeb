@@ -40,6 +40,36 @@ import { useLocale } from "@/lib/i18n";
  * El alto es una pantalla **descontando el header fijo**, así que Branding Packs
  * empieza exactamente en el pliegue: el `<main>` del layout ya aporta el
  * `pt-[var(--header-height)]`.
+ *
+ * # Por qué `lvh` y no `svh` (M3/F6, punto 9)
+ *
+ * El reporte es que al entrar a `/services` **se asoma «BRANDING PACKS»**. En
+ * el banco no reproduce: medido en 21 combinaciones —1920, 1366 y 390 de
+ * ancho por siete u ocho altos cada uno— el borde inferior del intro cae
+ * **exactamente** en el alto del viewport en todas, y el rótulo queda 160 px
+ * por debajo en escritorio y 80 en mobile. La geometría es exacta y no depende
+ * del tamaño de la pantalla.
+ *
+ * Solo queda un mecanismo que pueda producirlo, y es el mismo que estaba
+ * detrás del punto 4: **la barra del navegador en un teléfono**. `svh` es el
+ * viewport chico, o sea el que queda **con la barra puesta**; cuando la barra
+ * se retrae, lo que se ve pasa a ser `lvh`, entre 60 y 110 px más alto según
+ * el navegador. El intro seguía midiendo `svh` y esa diferencia —mayor que los
+ * 80 px de aire que tiene el rótulo en mobile— es justo lo que se asoma.
+ *
+ * Con `lvh` el intro mide **lo más alto que el viewport puede llegar a ser**,
+ * así que no hay estado de la barra en que algo de abajo entre en la primera
+ * pantalla. No contradice la regla «nada de `100vh`: `100svh`»: esa regla es
+ * para lo que tiene que **entrar** en la pantalla, y acá se pide lo contrario
+ * —una sección que nunca sea **más baja** que lo que se ve—, y para eso el
+ * máximo es la unidad correcta. En escritorio las tres unidades valen lo
+ * mismo, así que ≥1024 no cambia ni un píxel (verificado).
+ *
+ * El costo, acotado: con la barra puesta la sección es `lvh − svh` más alta
+ * que lo visible, y como el contenido va centrado se corre hacia abajo la
+ * mitad de esa diferencia, unos 40 px. Debajo del indicador de scroll hay
+ * entre 137 y 283 px de aire medidos en los altos de mobile, así que la frase
+ * y el indicador siguen entrando con holgura.
  */
 
 /** La curva del Hero. Suave en las dos puntas: lo que pide un fundido largo. */
@@ -75,7 +105,7 @@ export default function ServicesIntro() {
     <section
       id="intro"
       aria-label={t.services.introLabel}
-      className="relative flex min-h-[calc(100svh-var(--header-height))] w-full flex-col items-center justify-center scroll-mt-[var(--header-height)] text-center"
+      className="relative flex min-h-[calc(100lvh-var(--header-height))] w-full flex-col items-center justify-center scroll-mt-[var(--header-height)] text-center"
     >
       <SpySentinel id="intro" />
 
