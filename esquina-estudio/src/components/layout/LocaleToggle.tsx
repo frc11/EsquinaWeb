@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   NavIndicator,
   measureTabIndicator,
@@ -96,10 +96,18 @@ import { LOCALES, useLocale, type Locale } from "@/lib/i18n";
  * `aria-pressed` sigue a `selectedLocale` por la misma razón: lo que se anuncia
  * es la elección, apenas se hizo.
  *
- * # `prefers-reduced-motion`
+ * # Cuándo viaja y cuándo se planta
  *
- * La barrita no viaja: se planta en el idioma nuevo. Es la puerta `animate` del
- * módulo compartido, y no toca al indicador del menú, que sigue como estaba.
+ * La misma puerta `animate` del módulo compartido decide las dos cosas, y las
+ * dos plantan la línea en vez de moverla:
+ *
+ * - **`prefers-reduced-motion`**: nunca viaja.
+ * - **Al cargar la página** (M2/F4, punto 14): tampoco. El idioma se resuelve en
+ *   el montaje, no en un click, y una barrita que se cruza sola apenas entra la
+ *   página no acusa recibo de nada. Viaja a partir de la primera elección
+ *   explícita en este control.
+ *
+ * Ninguna de las dos toca al indicador del menú, que sigue como estaba.
  *
  * # Accesibilidad
  *
@@ -123,6 +131,18 @@ export default function LocaleToggle({
 }) {
   const { selectedLocale, setLocale, t } = useLocale();
   const reduceMotion = usePrefersReducedMotion();
+  /**
+   * ¿Hubo una elección explícita en este control? (M2/F4, punto 14.)
+   *
+   * El viaje de la barrita es el **acuse de recibo de un click**: se contrae,
+   * cruza y se vuelve a abrir sobre el idioma nuevo. Al cargar la página no hay
+   * click, y sin embargo `selectedLocale` sí cambia —de `"en"`, que es lo que
+   * rinde el servidor, al idioma que resuelve `LocaleProvider` en el montaje—,
+   * así que sin esta puerta la barrita **viajaba sola al abrir el sitio**. Con
+   * ella, en el arranque se planta directamente en su lugar y el viaje queda
+   * para lo que fue hecho.
+   */
+  const [chosen, setChosen] = useState(false);
 
   const groupRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Partial<Record<Locale, HTMLButtonElement | null>>>(
@@ -155,7 +175,7 @@ export default function LocaleToggle({
   const indicator = useIndicator({
     measureTarget,
     hosts: indicatorHosts,
-    animate: !reduceMotion,
+    animate: chosen && !reduceMotion,
   });
 
   // El color pleno del cromo: el mismo que porta el menú en cada tono. El activo
@@ -185,7 +205,13 @@ export default function LocaleToggle({
             type="button"
             lang={code}
             aria-pressed={code === selectedLocale}
-            onClick={() => setLocale(code)}
+            onClick={() => {
+              // Las dos van en el mismo click y React las agrupa: el render que
+              // sigue ya tiene el idioma nuevo **y** la puerta abierta, así que
+              // la remedición de ese render sale con viaje.
+              setChosen(true);
+              setLocale(code);
+            }}
             /*
               El área tocable de mobile la agranda un pseudo-elemento y NO el
               relleno del botón, y la razón es la barrita: `measureFillBox` mide

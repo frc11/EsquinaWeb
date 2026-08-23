@@ -338,7 +338,22 @@ export function useIndicator({
   // tamaño real, que es justo cuando no se quiere viaje.
   const remeasureRef = useRef(remeasure);
 
-  useEffect(() => {
+  // **`useLayoutEffect` y no `useEffect`, y es la causa del punto 14 de M2.**
+  //
+  // La referencia tiene que quedar sincronizada con el DOM ya confirmado
+  // *antes* de que el navegador pueda entregar una notificación del
+  // `ResizeObserver`. Con un efecto pasivo eso no está garantizado: React puede
+  // diferir el flush al macrotask siguiente, y entonces la notificación inicial
+  // del observador —que llega en el cuadro de después del montaje— llama a un
+  // `remeasure` **viejo**, del render anterior. Medía el rótulo que ya dejó de
+  // estar activo y plantaba la línea ahí, sin viaje y sin nada que la
+  // corrigiera después.
+  //
+  // Es lo que hacía que al abrir el sitio con el castellano guardado el
+  // subrayado quedara bajo `EN` con la página ya en castellano: 4 fallas en 32
+  // arranques medidos. Los efectos de layout corren **dentro** del commit, así
+  // que la ventana se cierra.
+  useLayoutEffect(() => {
     remeasureRef.current = remeasure;
   });
 
