@@ -56,17 +56,33 @@ export const metadata: Metadata = {
  * mucho antes del primer pintado. Es lo único que puede resolver la regla de
  * «una vez por pestaña» sin que participe de la hidratación.
  *
- * Decide y no hace nada más: marca `data-preloader="skip"` en `<html>` y deja
- * que la regla de `globals.css` esconda la cortina con `display: none`. React
- * ni se entera —su primer render es idéntico al del servidor, con cortina— y el
- * `useEffect` de `LoadingScreen` la desmonta después, sobre algo que el usuario
- * ya no estaba viendo.
+ * Marca `data-preloader` en `<html>` con uno de dos valores, y de ahí cuelgan las
+ * dos reglas de `globals.css`:
+ *
+ * - **`"skip"`** — la cortina no corresponde (ya se vio en esta pestaña, o el
+ *   visitante pidió menos movimiento). La regla la esconde con `display: none`.
+ * - **`"on"`** — la cortina va a correr, y entonces **el lienzo se pinta de
+ *   negro**. Esto último no es redundante con la cortina, y es un defecto que
+ *   apareció midiendo el build final: el nodo de la cortina es lo segundo que
+ *   hay dentro de `<body>`, pero el navegador puede pintar **antes** de haberlo
+ *   parseado, y lo que pinta entonces es el `bg-off-white` del body. Medido en
+ *   un arranque lento: primer pintado a los 2198 ms con la pantalla en blanco
+ *   —`elementFromPoint` daba `BODY` en los cinco puntos, o sea sin contenido
+ *   ninguno— y la cortina recién a los 2337. Eran ~140 ms de destello claro
+ *   antes del negro. Pintando el lienzo desde el script, la pantalla está negra
+ *   desde el primer cuadro haya o no llegado el nodo.
+ *
+ * React ni se entera de ninguno de los dos —su primer render es idéntico al del
+ * servidor, con cortina— y el `useEffect` de `LoadingScreen` desmonta la cortina
+ * después, sobre algo que el usuario ya no estaba viendo. Es `LoadingScreen`
+ * también quien **saca** el atributo cuando la cortina empieza a irse, así que
+ * el off-white vuelve detrás de ella y no después.
  *
  * Todo va dentro de `try`: si `sessionStorage` tira (navegación privada,
  * almacenamiento bloqueado) no se marca nada y la cortina se muestra. Es el lado
  * seguro del error, porque la cortina siempre se levanta por temporizador.
  */
-const PRELOADER_GATE = `(function(){try{var s=false;try{s=window.sessionStorage.getItem("esquina:preloaderShown")==="1"}catch(e){}if(!s&&window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){s=true}if(s){document.documentElement.setAttribute("data-preloader","skip")}}catch(e){}})();`;
+const PRELOADER_GATE = `(function(){try{var s=false;try{s=window.sessionStorage.getItem("esquina:preloaderShown")==="1"}catch(e){}if(!s&&window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){s=true}document.documentElement.setAttribute("data-preloader",s?"skip":"on")}catch(e){}})();`;
 
 export default function RootLayout({
   children,
