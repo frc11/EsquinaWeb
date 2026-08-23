@@ -24,11 +24,16 @@ const SOCIAL_LINKS = [
 const COPYRIGHT = "© 2024";
 
 /**
- * En qué fila de la grilla de mobile cae cada par de lugar. Va como tabla de
- * literales enteros porque Tailwind v4 busca los nombres de clase como texto:
- * `` `row-start-${index + 1}` `` no llegaría nunca al CSS.
+ * En qué fila de la grilla de mobile cae cada par de lugar **y cada red**. Va
+ * como tabla de literales enteros porque Tailwind v4 busca los nombres de clase
+ * como texto: `` `row-start-${index + 1}` `` no llegaría nunca al CSS.
+ *
+ * Los dos consumidores comparten la tabla y no es casualidad: desde M3/F2 la
+ * red de índice *n* tiene que caer en la **misma fila** que el par de lugar de
+ * índice *n* —INSTAGRAM a la altura de BORN IN, LINKEDIN a la altura de
+ * WORKING—. Si algún día se desacoplan, se desacopla también la alineación.
  */
-const PLACE_ROW = ["max-lg:row-start-1", "max-lg:row-start-2"] as const;
+const MOBILE_ROW = ["max-lg:row-start-1", "max-lg:row-start-2"] as const;
 
 /**
  * Gutter horizontal del chrome: alinea el footer con el Navbar. Sale del módulo
@@ -49,20 +54,37 @@ const GUTTER = CHROME_GUTTER;
 const INFO_TYPE =
   "font-body font-[550] text-[15px] uppercase tracking-normal lg:text-[17px]";
 
+/**
+ * Las dos redes, cada una envuelta en su propia celda.
+ *
+ * El envoltorio no es decorativo: `HoverButton` **no expone la clase de su
+ * `<a>`** —el `className` que recibe va al `<span>` de adentro— y el primitivo
+ * no se toca (`CLAUDE.md` §4.2). Sin un div propio no hay dónde colgar el
+ * `col-start` / `row-start` que coloca cada red en su fila de la grilla de
+ * mobile, ni el `justify-self-end` que la pega al borde derecho.
+ *
+ * De `lg` para arriba el envoltorio se declara `contents` y desaparece: las dos
+ * anclas vuelven a ser hijas directas del grupo de escritorio, así que la fila
+ * de ≥1024 queda **exactamente** como estaba.
+ */
 function SocialLinks({ tone }: { tone: "light" | "dark" }) {
   return (
     <>
-      {SOCIAL_LINKS.map((link) => (
-        <HoverButton
+      {SOCIAL_LINKS.map((link, index) => (
+        <div
           key={link.label}
-          href={link.href}
-          external
-          underline
-          tightUnderline
-          tone={tone}
+          className={`flex max-lg:col-start-2 max-lg:justify-self-end ${MOBILE_ROW[index]} lg:contents`}
         >
-          {link.label}
-        </HoverButton>
+          <HoverButton
+            href={link.href}
+            external
+            underline
+            tightUnderline
+            tone={tone}
+          >
+            {link.label}
+          </HoverButton>
+        </div>
       ))}
     </>
   );
@@ -208,7 +230,7 @@ function InfoRow({
           // ser una tabla de dos entradas: el índice no se sale de rango.
           <div
             key={index}
-            className={`flex flex-col max-lg:col-start-1 ${PLACE_ROW[index]} ${stackGap}`}
+            className={`flex flex-col max-lg:col-start-1 ${MOBILE_ROW[index]} ${stackGap}`}
           >
             <span className="whitespace-nowrap">{first}</span>
             <span className="whitespace-nowrap">{second}</span>
@@ -216,13 +238,45 @@ function InfoRow({
         ))}
 
         {/*
-          El nivel 2: ocupa las dos columnas y va en fila **siempre** en mobile,
-          que es lo que pide el punto 7. De `lg` para arriba conserva las dos
-          formas que tenía —en fila con el `gap-x-12` del propio grupo para las
-          rutas internas, apilado para home— así que el escritorio no se mueve.
+          El nivel 3: ocupa las dos columnas y va en fila **siempre** en mobile.
+          De `lg` para arriba conserva las dos formas que tenía —en fila con el
+          `gap-x-12` del propio grupo para las rutas internas, apilado para
+          home— así que el escritorio no se mueve.
+
+          # El crédito va centrado, y desde 360 (M3/F2)
+
+          La fila pedida es `© 2024` a la izquierda y el crédito **centrado en el
+          ancho del footer**. Se arma con una grilla de tres columnas
+          `[1fr auto 1fr]`: las dos laterales miden lo mismo, así que la del
+          medio queda exactamente en el centro. La tercera va vacía en mobile
+          —el logo script no entra, ver `HomeFooter`— y no importa: lo que
+          centra es que las laterales sean iguales, no que las dos tengan
+          contenido.
+
+          El `gap-x-0` de la grilla no es cosmética: con el `gap-x-4` heredado,
+          los dos huecos de 16 px salen del reparto de las columnas laterales y
+          a 360 dejaban 47,49 px por lado, menos que los 51,36 de `© 2024`. La
+          columna crecía y empujaba el crédito 3,87 px a la derecha —medido,
+          3,9—. Sin hueco el reparto vuelve a 63,49 y centra exacto. El aire
+          entre copyright y crédito no lo pone el `gap` sino la columna: quedan
+          12,1 px a 360 en inglés y 15,7 en castellano.
+
+          **Debajo de 360 no se puede, y está medido.** Para que el crédito
+          quede centrado, cada columna lateral tiene que medir
+          `(caja − crédito) / 2`. A 320 la caja útil es 272 y el crédito pide
+          185,03 px en inglés, o sea 43,49 px por lado; pero `© 2024` mide 51,36
+          y no entra en esos 43,49. Forzarlo empujaría el total a 287,75 contra
+          272 de caja: **desborde horizontal**, que es la regla dura del sprint.
+          En castellano el crédito es más corto (177,83) y falta menos —4,28 px
+          contra 7,88— pero tampoco entra.
+
+          Así que debajo de 360 la fila cae a `justify-between`: copyright a la
+          izquierda, crédito a la derecha, 35,6 px de aire entre los dos y cero
+          desborde. De 360 para arriba —360, 390, 414 y 430— centra exacto en
+          los dos idiomas.
         */}
         <div
-          className={`flex max-lg:col-span-2 max-lg:row-start-3 max-lg:flex-row max-lg:items-center max-lg:gap-x-4 ${
+          className={`flex max-lg:col-span-2 max-lg:row-start-3 max-lg:flex-row max-lg:items-center max-lg:justify-between max-lg:gap-x-4 min-[360px]:max-lg:grid min-[360px]:max-lg:grid-cols-[1fr_auto_1fr] min-[360px]:max-lg:items-center min-[360px]:max-lg:gap-x-0 ${
             inlineCredit
               ? "lg:contents"
               : `lg:flex-col lg:items-start ${stackGap}`
@@ -234,15 +288,30 @@ function InfoRow({
       </div>
 
       {/*
-        El grupo de la derecha. En mobile es una sola celda: columna 2, filas 1 y
-        2, o sea al costado de los dos pares de lugar.
+        El grupo de la derecha.
+
+        Hasta M2 era **una sola celda** que abarcaba las filas 1 y 2, con las dos
+        redes apiladas adentro. Eso las dejaba a la deriva en dos sentidos, los
+        dos medidos a 390: quedaban alineadas a la izquierda de su columna
+        —INSTAGRAM terminaba en 336,1 contra los 366 del gutter, 29,9 px cortos—
+        y LINKEDIN caía en 692, doce píxeles por encima de WORKING en vez de a su
+        misma altura.
+
+        Ahora el grupo se declara `contents` en mobile y **cada red es su propia
+        celda**: columna 2, fila 1 y fila 2, con `justify-self-end`. Así cada una
+        se pega al borde derecho de la caja útil y cada una comparte fila con su
+        par de lugar, que es la composición que pidió Valentino.
+
+        De `lg` para arriba el grupo vuelve a ser una fila flex y **no cambia
+        nada**: los envoltorios de las redes se declaran `contents` allá arriba,
+        así que el árbol que ve el escritorio es el mismo de antes.
       */}
-      <div className="flex flex-col items-start gap-y-5 max-lg:col-start-2 max-lg:row-span-2 max-lg:row-start-1 max-lg:gap-y-0 lg:flex-row lg:items-center lg:gap-x-12 lg:gap-y-0">
+      <div className="contents lg:flex lg:flex-row lg:items-center lg:gap-x-12 lg:gap-y-0">
         <div
           className={
             inlineSocial
-              ? "flex flex-col items-start gap-y-[8px] lg:flex-row lg:items-center lg:gap-x-5 lg:gap-y-0"
-              : `flex flex-col items-start ${stackGap}`
+              ? "contents lg:flex lg:flex-row lg:items-center lg:gap-x-5 lg:gap-y-0"
+              : `contents ${stackGap} lg:flex lg:flex-col lg:items-start`
           }
         >
           <SocialLinks tone={tone} />

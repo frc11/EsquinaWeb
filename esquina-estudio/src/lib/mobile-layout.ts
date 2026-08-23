@@ -51,12 +51,19 @@ export const TOUCH_TARGET_MIN = 44;
  * servidor, sin JavaScript—, el alto del footer se **resta**, igual que hace el
  * escritorio con sus 164 px desde B2.
  *
- * **El número es 236 y está medido**, no estimado: el `HomeFooter` de mobile
- * mide 236,00 px en los cinco anchos de prueba (320, 360, 390, 414, 430) y en
+ * **El número es 244 y está medido**, no estimado: el `HomeFooter` de mobile
+ * mide 244,00 px en los cinco anchos de prueba (320, 360, 390, 414, 430) y en
  * los dos idiomas. Se compone de `py-10` (40 + 40) más los tres renglones de la
- * grilla del punto 7: 40 del primer par de lugar, 16 de hueco, 40 del segundo,
- * 16 de hueco y 44 de la línea del copyright —los 44 los pone el piso de área
- * táctil sobre el link del crédito—. 80 + 156 = 236.
+ * grilla: 44 de la fila de BORN IN + INSTAGRAM, 16 de hueco, 44 de la de
+ * WORKING + LINKEDIN, 16 de hueco y 44 de la línea del copyright. 80 + 164 =
+ * 244.
+ *
+ * **Eran 236 hasta M2, y los 8 px de diferencia son de M3/F2.** Antes las dos
+ * redes vivían apiladas en una única celda que abarcaba las filas 1 y 2, así que
+ * esas filas medían los 40 px del par de lugar y el piso de área táctil de 44 se
+ * aplicaba una sola vez, sobre la celda entera. Ahora cada red es su propia
+ * celda —es lo que las pone a la misma altura que su par y pegadas al borde
+ * derecho— y el piso de 44 se aplica **por fila**: 40 → 44 dos veces.
  *
  * **Si el footer cambia, este número cambia.** La verificación es directa: medir
  * `document.querySelector("footer").getBoundingClientRect().height` en los cinco
@@ -68,7 +75,7 @@ export const TOUCH_TARGET_MIN = 44;
  * y lo que quedó documentado como el punto 13 de este sprint.
  */
 export const HOME_BLOCK_HEIGHT_MOBILE =
-  "max-lg:h-[calc(100svh-var(--header-height)-236px)]";
+  "max-lg:h-[calc(100svh-var(--header-height)-244px)]";
 
 /**
  * El hueco que ocupa el footer de home, como relleno inferior (M2/F3, punto 9).
@@ -78,11 +85,11 @@ export const HOME_BLOCK_HEIGHT_MOBILE =
  * que queda por encima de esa franja y no en la pantalla entera, o a 320 × 640
  * el párrafo terminaba 46 px por debajo del borde superior del footer.
  *
- * Los dos números son los mismos altos de siempre —236 en mobile (ver arriba) y
+ * Los dos números son los mismos altos de siempre —244 en mobile (ver arriba) y
  * 164 en escritorio, los `40 + 84 + 40` que `page.tsx` publica desde B2— y van
  * escritos enteros por la misma razón: Tailwind busca literales.
  */
-export const HOME_FOOTER_CLEARANCE = "pb-[236px] lg:pb-[164px]";
+export const HOME_FOOTER_CLEARANCE = "pb-[244px] lg:pb-[164px]";
 
 /**
  * Le da los 44 px de alto tocable al `<a>` que emite `HoverButton`, **sin tocar
