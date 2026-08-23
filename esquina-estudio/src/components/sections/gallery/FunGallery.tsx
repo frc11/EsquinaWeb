@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import {
   AnimatePresence,
@@ -349,6 +349,28 @@ const FOLLOW_SPRING = { stiffness: 50, damping: 15, mass: 0.5 };
 const HOVER_SCALE = 1.13;
 const HOVER_DURATION = 0.5;
 const HOVER_Z_INDEX = 50;
+
+/**
+ * # El tap que agranda antes de navegar (M3/F8, punto 15)
+ *
+ * En touch no hay hover, así que hasta M2 un objeto con proyecto se iba en el
+ * acto: el gesto no se veía nunca. Ahora el tap **agranda primero y navega
+ * después**, y si el objeto no tiene proyecto vinculado agranda y vuelve.
+ *
+ * **La escala es la del hover y no una nueva**: agrandarse es el mismo gesto que
+ * hace esta pantalla en escritorio, y darle otro tamaño en touch sería inventar
+ * un segundo lenguaje para lo mismo.
+ *
+ * **La duración se deriva: es la mitad de `HOVER_DURATION`, o sea 250 ms.** Cae
+ * dentro de los 200–300 que pide la instrucción y el número no es de gusto: es
+ * el mismo movimiento del hover hecho al doble de velocidad, porque acá es un
+ * preámbulo de una salida y no un estado en el que uno se queda. Por debajo de
+ * ~150 ms un cambio de escala se lee como un salto y no como un gesto; por
+ * encima de ~300 empieza a sentirse como demora, sobre todo apilado a los 650 ms
+ * que dura la transición de ruta que viene detrás.
+ */
+const TAP_DURATION = HOVER_DURATION / 2;
+const TAP_DURATION_MS = TAP_DURATION * 1000;
 
 const IMAGE_FADE_DURATION = 1.2;
 const IMAGE_FADE_STAGGER = 0.3;
@@ -879,6 +901,8 @@ function GalleryCard({
   const { t } = useLocale();
   const viewLabel = t.gallery.viewItem;
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isTapping, setIsTapping] = useState(false);
+  const tapTimer = useRef<number | undefined>(undefined);
   const followTargetX = useMotionValue(0);
   const followTargetY = useMotionValue(0);
   const followX = useSpring(followTargetX, FOLLOW_SPRING);
@@ -887,6 +911,26 @@ function GalleryCard({
   // despliega lo recibe el botón que los cubre, así que nunca compite con el
   // click que navega a un proyecto.
   const interactive = spread && Boolean(item.href);
+
+  /*
+    El gesto de touch (M3/F8, punto 15). Vive donde **no** vive el hover, que es
+    exactamente el hueco que venía a llenar: debajo de 1024. Y se apaga con
+    `prefers-reduced-motion`, donde la instrucción pide navegación inmediata.
+
+    `tappable` incluye a los objetos **sin** proyecto —seis de los ocho del
+    dataset—: esos también se agrandan y vuelven. Lo que no reciben es semántica
+    de enlace: `role`, `tabIndex` y `aria-label` siguen colgando de
+    `interactive`, porque agrandarse no es navegar.
+
+    **Los dos caminos no se pueden confundir, y no por cuidado sino por
+    construcción**: los dos derivan de `spread`. Con el montón sin desplegar
+    `spread` es falso, así que `interactive` y `tappable` son los dos falsos y el
+    objeto no tiene ni un manejador colgado; el tap lo recibe el botón de
+    `inset-0` que cubre el montón, que a su vez solo existe mientras `!spread`.
+    No hay ningún estado en que los dos estén vivos a la vez.
+  */
+  const tapEnabled = !hoverEnabled && !reduceMotion;
+  const tappable = spread && tapEnabled;
   // Media vuelta de fase entre pares e impares: con ocho períodos distintos por
   // eje alcanza para que no arranquen todos en el mismo sentido.
   const driftX = index % 2 === 0 ? FLOAT_X : -FLOAT_X;
@@ -898,6 +942,43 @@ function GalleryCard({
     rememberFunGalleryReturn(item.href);
     navigateWithTransition(item.href);
   };
+
+  /**
+   * Lo que hace un tap. En escritorio —o con menos movimiento pedido— es lo de
+   * siempre: navegar y nada más. En touch agranda, y recién al terminar navega
+   * (si hay proyecto) o vuelve (si no lo hay).
+   */
+  const handleActivate = () => {
+    if (!tapEnabled) {
+      if (item.href) handleNavigate();
+      return;
+    }
+
+    // Un segundo tap mientras corre el primero no reinicia nada.
+    if (isTapping) return;
+
+    setIsTapping(true);
+    tapTimer.current = window.setTimeout(() => {
+      if (item.href) {
+        // No se baja la escala: el objeto se va agrandado, que es lo que hace
+        // que el gesto se lea como «este es el que abrí».
+        handleNavigate();
+      } else {
+        setIsTapping(false);
+      }
+    }, TAP_DURATION_MS);
+  };
+
+  // El temporizador no puede sobrevivir al desmontaje: la galería se desmonta
+  // justo cuando navega, que es cuando este timer está corriendo.
+  useEffect(
+    () => () => {
+      if (tapTimer.current !== undefined) {
+        window.clearTimeout(tapTimer.current);
+      }
+    },
+    [],
+  );
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (!item.href) return;
@@ -962,17 +1043,32 @@ function GalleryCard({
           "--c-px": `${item.pileOffsetX}%`,
           "--c-py": `${item.pileOffsetY}%`,
         } as React.CSSProperties),
-        zIndex: spread ? item.zIndex : (pileZIndex ?? item.zIndex),
+        // Agrandado tiene que quedar por encima de sus vecinos, igual que en el
+        // hover: en la grilla de mobile los objetos son celdas y sin esto los
+        // hermanos siguientes le taparían el borde que crece.
+        zIndex: isTapping
+          ? HOVER_Z_INDEX
+          : spread
+            ? item.zIndex
+            : (pileZIndex ?? item.zIndex),
         x: followX,
         y: followY,
       }}
       whileHover={
         hoverEnabled ? { scale: HOVER_SCALE, zIndex: HOVER_Z_INDEX } : undefined
       }
+      // Solo en touch: en escritorio la escala la sigue gobernando `whileHover`
+      // y este `animate` no existe, así que ≥1024 no cambia nada.
+      animate={tapEnabled ? { scale: isTapping ? HOVER_SCALE : 1 } : undefined}
       transition={{
         duration: HOVER_DURATION,
         ease: EASE,
         zIndex: { duration: 0 },
+        // La escala del tap corre en su propia ventana, más corta que la del
+        // hover. Va condicionada para no tocar la del hover en escritorio.
+        ...(tapEnabled
+          ? { scale: { duration: TAP_DURATION, ease: EASE } }
+          : {}),
       }}
       // Con `prefers-reduced-motion` no se cuelga el seguimiento: los motion
       // values se quedan en 0 y el hover conserva solo su escala. Debajo de
@@ -986,9 +1082,9 @@ function GalleryCard({
       role={interactive ? "link" : undefined}
       tabIndex={interactive ? 0 : undefined}
       aria-label={interactive ? `${viewLabel} ${item.title}` : undefined}
-      // Sin proyecto vinculado el ítem no es interactivo: tampoco se le cuelgan
-      // los handlers. Antes se colgaban siempre y salían por un early return.
-      onClick={interactive ? handleNavigate : undefined}
+      // Sin proyecto vinculado el ítem no lleva semántica de enlace, pero en
+      // touch **sí** recibe el tap: se agranda y vuelve (punto 15).
+      onClick={interactive || tappable ? handleActivate : undefined}
       onKeyDown={interactive ? handleKeyDown : undefined}
     >
       {/*
