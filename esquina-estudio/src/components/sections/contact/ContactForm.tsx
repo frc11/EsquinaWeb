@@ -6,7 +6,7 @@ import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
-import MonochromeCountryFlag from "@/components/sections/contact/MonochromeCountryFlag";
+import CountryFlag from "@/components/sections/contact/CountryFlag";
 import HoverButton from "@/components/ui/HoverButton";
 import {
   BUDGET_OPTIONS,
@@ -997,22 +997,23 @@ export default function ContactForm({ service = null }: { service?: string | nul
                     openSelectId={openSelectId}
                     setOpenSelectId={setOpenSelectId}
                     renderOptionMeta={(option) => (
-                      // Mono by default; the colored variant fades in on row
-                      // hover via `group-hover` (no per-option JS state).
-                      <span className="relative grid shrink-0 place-items-center">
-                        <span className="col-start-1 row-start-1 transition-opacity duration-150 group-hover:opacity-0">
-                          <MonochromeCountryFlag country={option} />
-                        </span>
-                        <span
-                          aria-hidden
-                          className="col-start-1 row-start-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
-                        >
-                          <MonochromeCountryFlag country={option} colored />
-                        </span>
-                      </span>
+                      // Gris en reposo, color en el hover de la fila. Antes eran
+                      // dos banderas apiladas cruzándose la opacidad; ahora es un
+                      // solo archivo y un filtro, así que la fila trae la mitad
+                      // de nodos y ninguna petición de más.
+                      <CountryFlag
+                        country={option}
+                        className="group-hover:grayscale-0"
+                      />
                     )}
                     renderValueMeta={(option) => (
-                      <MonochromeCountryFlag country={option} colored />
+                      // Misma regla para el valor elegido, con el disparador del
+                      // campo: hover sobre la superficie, y también foco, para
+                      // que quien navega con teclado vea lo mismo que el mouse.
+                      <CountryFlag
+                        country={option}
+                        className="group-hover/contact-focus:grayscale-0 group-focus-within/contact-focus:grayscale-0"
+                      />
                     )}
                     onChange={(value) =>
                       setValue("country", value, {

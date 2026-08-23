@@ -13,9 +13,10 @@ import type { Locale } from "@/lib/i18n/types";
   1. **Cambiar de idioma no pierde lo elegido.** Si el valor guardado fuera el
      rótulo visible, al pasar a castellano `workType` valdría «Package Design»
      mientras la pill dice «Packaging»: la selección se vería vacía.
-  2. **Las banderas siguen funcionando.** `MonochromeCountryFlag` resuelve el
-     patrón y los colores por el nombre **inglés** del país; recibiendo el valor
-     canónico no hay que tocar ni una de sus 196 entradas.
+  2. **Las banderas siguen funcionando.** `CountryFlag` resuelve el archivo por
+     el nombre **inglés** del país —`COUNTRY_FLAG_CODES` lo lleva a su código
+     ISO—; recibiendo el valor canónico no hay que tocar ni una de sus 196
+     entradas.
   3. **`?service=` no depende del idioma.** El catálogo de `/services` sigue
      emitiendo `CONSULTATION` y `BRANDING`, y el formulario los resuelve igual
      en las dos.
