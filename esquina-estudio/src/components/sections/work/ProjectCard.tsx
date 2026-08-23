@@ -7,6 +7,9 @@ import { Project } from "@/types/project";
 import { urlFor } from "@/lib/sanity";
 import { projectText } from "@/lib/project-text";
 import { useLocale } from "@/lib/i18n";
+import ImageLoadIndicator, {
+  useImageLoad,
+} from "@/components/ui/ImageLoadIndicator";
 
 interface ProjectCardProps {
   project: Project;
@@ -16,6 +19,7 @@ const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 
 export default function ProjectCard({ project }: ProjectCardProps) {
   const { locale } = useLocale();
+  const cover = useImageLoad();
   const title = projectText(project, locale, "title");
   const category = projectText(project, locale, "category");
   const services = projectText(project, locale, "services");
@@ -62,7 +66,21 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             // viewport entero (M1/F7).
             sizes="(max-width: 1023.98px) calc(100vw - 48px), 33vw"
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            onLoad={cover.onLoad}
+            onError={cover.onError}
           />
+        )}
+
+        {/*
+          El indicador toma el color de contraste que ya se calcula para el
+          overlay: la portada se apoya sobre el `coverColor` del proyecto, que
+          es contenido y puede ser cualquier color, así que el anillo tiene que
+          elegir tinta como lo hace el texto y no fijar una.
+        */}
+        {imageUrl && (
+          <div className={contrastClass}>
+            <ImageLoadIndicator show={cover.showIndicator} />
+          </div>
         )}
 
         {!imageUrl && (

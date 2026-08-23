@@ -4,6 +4,9 @@ import Image from "next/image";
 import { PortableText, PortableTextComponents } from "@portabletext/react";
 import { useLocale } from "@/lib/i18n";
 import { urlFor } from "@/lib/sanity";
+import ImageLoadIndicator, {
+  useImageLoad,
+} from "@/components/ui/ImageLoadIndicator";
 
 /* ── Portable Text overrides ────────────────────────────────── */
 const ptComponents: PortableTextComponents = {
@@ -20,6 +23,9 @@ const ptComponents: PortableTextComponents = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function SingleMedia({ block }: { block: any }) {
   const { t } = useLocale();
+  // Antes de cualquier retorno temprano: este bloque sale por video, por
+  // GIF o por imagen, y un hook no puede quedar detrás de una rama.
+  const single = useImageLoad();
   const { file, video, caption } = block;
 
   // Video URL (Vimeo / YouTube / direct .mp4)
@@ -99,14 +105,17 @@ function SingleMedia({ block }: { block: any }) {
 
     return (
       <figure className="w-full mb-[2px]">
-        <div className="relative w-full aspect-[4/3] max-h-[88svh] mx-auto overflow-hidden">
+        <div className="relative w-full aspect-[4/3] max-h-[88svh] mx-auto overflow-hidden text-off-black">
           <Image
             src={imageUrl}
             alt={caption || t.work.mediaAlt}
             fill
             sizes="(max-width: 767.98px) calc(100vw - 48px), 800px"
             className="object-cover"
+            onLoad={single.onLoad}
+            onError={single.onError}
           />
+          <ImageLoadIndicator show={single.showIndicator} />
         </div>
         {caption && (
           <figcaption className="mt-2 text-[13px] text-gray-brand font-body">
@@ -124,6 +133,10 @@ function SingleMedia({ block }: { block: any }) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function DualMedia({ block }: { block: any }) {
   const { t } = useLocale();
+  // Uno por imagen: las dos del par cargan por su cuenta y cada anillo se
+  // retira cuando llega la suya.
+  const leftImage = useImageLoad();
+  const rightImage = useImageLoad();
   const { left, right } = block;
   const leftUrl = left ? urlFor(left).width(800).url() : null;
   const rightUrl = right ? urlFor(right).width(800).url() : null;
@@ -136,25 +149,31 @@ function DualMedia({ block }: { block: any }) {
   return (
     <div className="relative flex w-full gap-[2px] aspect-[4/3] max-h-[88svh] mb-[2px]">
       {leftUrl && (
-        <figure className="relative m-0 h-full flex-1 overflow-hidden">
+        <figure className="relative m-0 h-full flex-1 overflow-hidden text-off-black">
           <Image
             src={leftUrl}
             alt={t.work.mediaAlt}
             fill
             sizes="(max-width: 767.98px) calc(50vw - 25px), calc(50vw)"
             className="object-cover"
+            onLoad={leftImage.onLoad}
+            onError={leftImage.onError}
           />
+          <ImageLoadIndicator show={leftImage.showIndicator} />
         </figure>
       )}
       {rightUrl && (
-        <figure className="relative m-0 h-full flex-1 overflow-hidden">
+        <figure className="relative m-0 h-full flex-1 overflow-hidden text-off-black">
           <Image
             src={rightUrl}
             alt={t.work.mediaAlt}
             fill
             sizes="(max-width: 767.98px) calc(50vw - 25px), calc(50vw)"
             className="object-cover"
+            onLoad={rightImage.onLoad}
+            onError={rightImage.onError}
           />
+          <ImageLoadIndicator show={rightImage.showIndicator} />
         </figure>
       )}
     </div>

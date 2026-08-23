@@ -1,6 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import ImageLoadIndicator, {
+  useImageLoad,
+} from "@/components/ui/ImageLoadIndicator";
 import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
 import { useLocale } from "@/lib/i18n";
 
@@ -53,6 +56,7 @@ function TeamSubsection({
   showSlide?: boolean;
 }) {
   const { t } = useLocale();
+  const teamPhoto = useImageLoad();
   const bodySpacingClass = id === "03" ? "space-y-0" : "space-y-8";
 
   return (
@@ -111,7 +115,13 @@ function TeamSubsection({
             initialX={TEAM_IMAGE_INITIAL_X}
             initialY={0}
           >
-            <div className="mt-12 w-full overflow-hidden bg-gray-brand/20 md:mt-24">
+            {/*
+              `relative` para que el indicador tenga contra qué posicionarse.
+              La caja ya reservaba su lugar con el `bg-gray-brand/20` y el
+              alto que le da el `width`/`height` de la imagen, así que el
+              anillo cae centrado sobre ese hueco y no mueve nada.
+            */}
+            <div className="relative mt-12 w-full overflow-hidden bg-gray-brand/20 text-off-black md:mt-24">
               <Image
                 src="/projects/team.jpg"
                 alt={t.team.photoAlt}
@@ -121,7 +131,10 @@ function TeamSubsection({
                 // nota sobre `sizes` en `src/lib/mobile-layout.ts`.
                 sizes="(max-width: 767.98px) calc(100vw - 48px), calc(80vw)"
                 className="h-auto w-full"
+                onLoad={teamPhoto.onLoad}
+                onError={teamPhoto.onError}
               />
+              <ImageLoadIndicator show={teamPhoto.showIndicator} />
             </div>
           </RevealOnScroll>
         )}
