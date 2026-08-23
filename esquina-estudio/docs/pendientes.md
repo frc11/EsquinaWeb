@@ -22,7 +22,7 @@ Deuda diferida, con contexto para retomarla. Lo mantiene la capa de planificaci�
 - **[Método]** La Fase 0 de todo sprint verifica que HEAD coincida con el commit sobre el que se auditó (o registra explícitamente el delta), además de que el árbol esté limpio. Origen: en B1 se descubrió tarde que HEAD ya no era `2565d01`; el delta (`a477018`) resultó ser solo documentación, sin `src/`, así que la auditoría sigue siendo base válida.
 - **[Docs]** Cuando la ronda cierre, revisar si las reglas de criterio y la directiva estética de `CLAUDE.md` §8 siguen reflejando cómo se trabajó, y ajustar con lo aprendido.
 - ~~**[B3.4]** **GSAP quedó sin ningún consumidor en el repo** tras el desmontaje del acordeón de Services.~~ **Resuelto en B4c/F3:** desinstalado de `package.json`, del lockfile y de `node_modules` (5,97 MB en 179 archivos). El lockfile pasa de 1372 a 1371 paquetes, cero agregados y cero cambios de versión.
-- **[B3.4]** El intro de `/services` mide exactamente una pantalla menos el header, así que Branding Packs empieza justo en el pliegue y **no asoma**. El mockup `08a` lo muestra asomando, pero el alto del recorte no es el de un viewport, así que no se puede deducir de ahí. Si la verificación visual quiere el asomo, es cambiar el `min-h` del intro por algo tipo `85vh`: una línea.
+- ~~**[B3.4]** El intro de `/services` no asoma; si la verificación visual quiere el asomo, es cambiar el `min-h`.~~ **Cerrado al revés en M3/F6:** la devolución pidió lo contrario —que **no** se asome, porque se estaba asomando en el teléfono—. La medición confirmó que en el banco nunca se asoma (21 combinaciones, el borde del intro cae exacto en el alto del viewport en todas), así que el único mecanismo posible era la barra del navegador: `svh` es el viewport con la barra puesta y al retraerse quedan visibles 60–110 px de más, que superan los 80 de aire del rótulo. El intro pasó a `lvh`. **Queda sin verificar en dispositivo real** (ver la sección de M3).
 - **[B3.4]** Diferencias menores contra el mockup, asumidas y documentadas: (a) las reglas de ítems y las de sección terminan en el **mismo** borde derecho, mientras el mockup deja 51 px de sangría entre ellas; (b) la lista de ítems arranca a la altura del **nombre** del pack en los cuatro, mientras `08b` la baja una línea solo en Consultation; (c) los cortes de línea del título y la bajada de Branding Packs los decide el ancho de columna, así que pueden diferir en una palabra.
 - **[B3.4]** Los apóstrofos del contenido de Services son **rectos** (`we're`, `can't`, `LET'S`), tal como llegaron en el Apéndice A. Los mockups los muestran tipográficos (’). Si las clientas quieren el curvo, es una edición de `src/lib/services-content.ts` y nada más.
 - **[B3.4]** El hover de LATEST PROJECTS también se dispara con el **foco de teclado**, para que quien tabula vea lo mismo que quien apunta. No está en el mockup; si molesta, se saca el par `onFocus`/`onBlur`.
@@ -54,10 +54,12 @@ porque §3 de la instrucción no las cubría.
   `FunGallery.tsx`. Ojo con el efecto secundario: subirla agranda los objetos y
   **estira el alto de la composición**, que es justo lo que §3.3 autorizaba
   («puede ser más alta que la pantalla y scrollear»).
-- **[M1 · Diseño]** **Las cuatro portadas del cierre de Services siguen en una
-  fila** en mobile: a 390 miden 89 × 67 px cada una. §3.2 pedía que se mostraran
-  quietas y que fueran cuatro, y eso se respetó; pasarlas a 2 × 2 sería una
-  decisión nueva. Cada una supera el piso táctil de 44 × 44.
+- ~~**[M1 · Diseño]** Las cuatro portadas del cierre de Services siguen en una
+  fila en mobile; pasarlas a 2 × 2 sería una decisión nueva.~~ **Tomada en
+  M3/F6:** de 1024 para arriba van en **2 × 2** y debajo en **una sola columna**,
+  que es lo que salió de medir —a 390 la cuadrícula de dos daría portadas de
+  184 × 138 px, más chicas que las tarjetas de `/work`, contra 374 × 280,5 en una
+  columna—. Además los dos links pasaron a ir **después** de las portadas.
 - **[M1 · Diseño]** **Los pares de `dualMedia` de la ficha de proyecto siguen
   lado a lado** en mobile: a 390 cada mitad mide 170 px de ancho. Es una
   composición de dos que el contenido declara a propósito, así que no se partió.
@@ -126,13 +128,15 @@ porque §3 de la instrucción no las cubría.
   los dos anchos más chicos. Si la verificación humana quiere la fila también a
   320, la decisión es de tipografía y hay que tomarla.
 - **[M2 · Diseño]** **El logo script no aparece en el footer de mobile.** Con él,
-  la línea del nivel 2 —`© 2024` + el crédito— se va a 335 px contra 272 de caja
-  útil a 320. El punto 7 enumera lo que lleva la fila de mobile y el logo no está
-  en esa lista, así que se ocultó debajo de 1024. En escritorio no cambia nada.
+  la línea de abajo —`© 2024` + el crédito— se va a 335 px contra 272 de caja
+  útil a 320. Se ocultó debajo de 1024 y **sigue oculto después de M3/F2**: la
+  composición nueva le da a esa fila un tercer lugar a la derecha, pero el logo
+  mide 120,5 × 80 px y no entra en ninguno de los cinco anchos sin desbordar. En
+  escritorio no cambia nada: ahí sigue cerrando la fila.
 - **[M2 · Acoplamiento]** **El alto del footer de home viaja como número.** `/`
   entra en una pantalla porque el bloque del hero **resta** el alto del footer:
-  236 px en mobile y 164 en escritorio, escritos en `mobile-layout.ts` y en
-  `page.tsx`. No hay forma de medirlo desde el bloque —son archivos hermanos y el
+  **244 px en mobile desde M3/F2** —eran 236— y 164 en escritorio, escritos
+  en `mobile-layout.ts` y en `page.tsx`. No hay forma de medirlo desde el bloque —son archivos hermanos y el
   layout tiene que salir del servidor—, así que es la misma convención que el
   escritorio arrastra desde B2. **Si el footer cambia, hay que volver a medir**;
   el chequeo es `docH === viewH` en `/` en los cinco anchos y los dos idiomas.
@@ -147,3 +151,44 @@ porque §3 de la instrucción no las cubría.
   Fun Gallery** cargadas (al 2026-08-23 la ruta renderiza la composición y no la
   pantalla de vacío). La ficha de `CLAUDE.md` §5 decía «0 `funGalleryImage`» con
   fecha 2026-08-19 y quedó vieja por contenido, no por código.
+
+## Abiertos al cerrar M3 (2026-08-23)
+
+- **[M3 · Verificación]** **Tres cosas de este sprint no se pueden verificar en el
+  banco y quedan para el dispositivo real.** Las tres son el mismo fenómeno: en un
+  viewport emulado `vh`, `svh`, `lvh` y `dvh` valen todos lo mismo, porque no hay
+  barra de navegador que se retraiga. (a) El scroll sobrante de `/` y de
+  `/contact/success` —el mecanismo se demostró forzando el `min-height` a mano,
+  pero el síntoma tal como se reportó no reproduce—; (b) el asomo de
+  «BRANDING PACKS» en `/services`, que no reproduce en ninguna de las 21
+  combinaciones medidas; (c) el corrimiento de ~40 px del contenido del intro que
+  introduce el paso a `lvh` cuando la barra está puesta. Las tres son de una línea
+  si en la mano se ven distinto.
+- **[M3 · Diseño]** **La cuadrícula de LATEST PROJECTS es grande.** A 1920 cada
+  portada mide 949 × 711,8 px y el bloque entero —título, descripción y las
+  cuatro— mide 1698 px, o sea más de una pantalla y media. Es exactamente lo que
+  pidió el punto 10 («que las portadas ocupen su propio espacio»), pero es un
+  cambio de escala fuerte para esa sección: si en pantalla se siente excesivo, es
+  el `aspect-[4/3]` o el ancho de la columna, una línea en `LatestProjects.tsx`.
+- **[M3 · Diseño]** **La duración de la cortina pasó de 2700 a 4000 ms** (3000 de
+  video + 1000 de deslizamiento). Es lo que pidió la instrucción —la cortina dura
+  lo que dura el video—, pero son 1,3 s más de espera antes de ver el sitio en la
+  primera visita de cada pestaña. Si se quiere recortar, lo que se puede tocar sin
+  romper nada es el deslizamiento de salida (`EXIT_DURATION`), no el hold: acortar
+  el hold corta el video antes de que el logo termine de dibujarse.
+- **[M3 · Contenido]** **`/work/tukumi-takeaway` no tiene ningún bloque de media
+  cargado en Sanity**, así que es la única ficha donde el indicador de carga nuevo
+  no aparece nunca. `matsu` tiene uno y `akasha-blends` tres. No es un defecto de
+  código; se anota porque desconcierta al verificarlo.
+- **[M3 · Método]** El banco de medición de M2 —Chrome headless por el DevTools
+  Protocol— se reutilizó entero y se le sumaron tres técnicas que conviene
+  conservar: **screencast** (`Page.startScreencast`) para probar qué se pintó y
+  cuándo, que es lo que permitió medir que nada del sitio se ve antes de la
+  cortina; **interceptación por el dominio `Fetch`** para demorar un tipo de
+  recurso sin tocar el resto, sin la cual el indicador de carga no se puede
+  observar (estrangular toda la red demora también el bundle y React no llega a
+  hidratar); y **`Emulation.setEmulatedMedia`** para `prefers-reduced-motion`.
+- **[M3 · Asset]** El `.mp4` original quedó en `C:/Users/Valentino/Downloads/` y no
+  se movió ni se borró: el repo solo tiene el derivado procesado
+  (`public/preloader-logo.mp4`, sin audio). Si hace falta rehacerlo, el comando es
+  `ffmpeg -i <origen> -an -c:v copy -movflags +faststart`.

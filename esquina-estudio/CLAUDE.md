@@ -4,7 +4,7 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 
 **Regla de lectura:** este documento separa **ESTADO** (verificado contra el código en HEAD) de **PLAN** (decidido, todavía no ejecutado). No trates el PLAN como código existente, y no «corrijas» el código hacia versiones viejas de este archivo.
 
-Última sincronización: **2026-08-23** (sprint **M2**: las catorce correcciones de mobile y el cierre de la adaptación); antes, 2026-08-22 (sprint **B4d**: el set de banderas dibujado a mano se retira y entran SVG reales vendorizados, en gris por defecto y a color en hover); antes, 2026-08-22 (sprint **B4c**: timing del toggle, limpieza de dependencias y corrección del set de banderas); 2026-08-22 (sprint **M1**, adaptación mobile); 2026-08-22 (microsprint B4b, refinamiento del toggle de idioma); **2026-08-21** (cierre de B4, idioma EN/ES, y con él el cierre de la ronda); antes de eso, 2026-08-20 (B3.4 + B3.4b, rediseño de `/services`) y 2026-08-15 (Bloque 1) sobre la auditoría completa `docs/reportes/2026-08-13-auditoria-completa.md` (HEAD `2565d01`). Las secciones no tocadas por B3.4 ni por B4 siguen reflejando esa auditoría. Antes de ejecutar cualquier sprint: leer `docs/plan-maestro.md` y la última entrada de `docs/bitacora.md`. Ante conflicto entre este archivo y el plan maestro, **manda el plan maestro**.
+Última sincronización: **2026-08-23** (sprint **M3**: el preloader nuevo y las quince correcciones); antes, 2026-08-23 (sprint **M2**: las catorce correcciones de mobile y el cierre de la adaptación); antes, 2026-08-22 (sprint **B4d**: el set de banderas dibujado a mano se retira y entran SVG reales vendorizados, en gris por defecto y a color en hover); antes, 2026-08-22 (sprint **B4c**: timing del toggle, limpieza de dependencias y corrección del set de banderas); 2026-08-22 (sprint **M1**, adaptación mobile); 2026-08-22 (microsprint B4b, refinamiento del toggle de idioma); **2026-08-21** (cierre de B4, idioma EN/ES, y con él el cierre de la ronda); antes de eso, 2026-08-20 (B3.4 + B3.4b, rediseño de `/services`) y 2026-08-15 (Bloque 1) sobre la auditoría completa `docs/reportes/2026-08-13-auditoria-completa.md` (HEAD `2565d01`). Las secciones no tocadas por B3.4 ni por B4 siguen reflejando esa auditoría. Antes de ejecutar cualquier sprint: leer `docs/plan-maestro.md` y la última entrada de `docs/bitacora.md`. Ante conflicto entre este archivo y el plan maestro, **manda el plan maestro**.
 
 ## 1. Proyecto y stack — ESTADO
 
@@ -136,15 +136,20 @@ era `hidden lg:block`.
    y la tercera medía 16 y no 24.
 5. **`/` entra en una pantalla también en mobile.** El bloque del hero resta el
    alto del footer, igual que en escritorio: `HOME_BLOCK_HEIGHT_MOBILE` en
-   `mobile-layout.ts`. El número es **236 px** y está medido en los cinco anchos
-   y los dos idiomas; si el footer cambia, el número cambia.
-6. **La fila de info del footer son dos niveles en mobile**: arriba los dos
-   pares de lugar a la izquierda y las dos redes a la derecha; abajo, `© 2024` y
-   el crédito **uno al lado del otro**. Se arma con **una grilla de dos columnas
+   `mobile-layout.ts`. El número es **244 px** desde M3/F2 —eran 236 en M2— y
+   está medido en los cinco anchos y los dos idiomas; si el footer cambia, el
+   número cambia.
+6. **La fila de info del footer son tres filas en mobile** (reordenada en
+   M3/F2): `BORN IN / ARGENTINA` con **INSTAGRAM a su misma altura y pegado al
+   borde derecho**, `WORKING / WORLDWIDE` con **LINKEDIN** igual, y abajo
+   `© 2024` a la izquierda con el crédito **centrado** —exacto de 360 para
+   arriba: 0,0 px de desvío medidos en 360, 390, 414 y 430 en los dos idiomas;
+   a 320 no entra centrado y la fila cae a `justify-between`—. Cada red es su
+   propia celda, que es lo que la pone a la altura de su par y contra el borde. Se arma con **una grilla de dos columnas
    y `display: contents`** sobre los dos grupos de escritorio, así que el mismo
    árbol da los dos repartos. La tipografía baja a 15 px debajo de 1024 (a 17 la
    línea del nivel 2 pedía 271,65 px contra 272 de caja útil a 320). **El logo
-   script no va en mobile**: con él la línea del nivel 2 se iba a 335 px.
+   script no va en mobile**: con él la línea de abajo se iba a 335 px.
 7. **La franja del prefooter es una fila también en mobile**, con el bloque de
    contacto **alineado abajo** —a la altura de la última línea de la frase— y en
    la escala de cuerpo (17/21, la misma proporción 0,65 que el escritorio usa
@@ -185,7 +190,15 @@ era `hidden lg:block`.
 
 - Cadena: `html > body > RootClientShell > LocaleProvider > PreloaderProvider > CustomCursor + LoadingScreen > (site)/layout: SmoothScrollProvider > RouteTransitionProvider > Navbar + PageTransitionShell( main + Footer )`. Route group único `(site)`; `/studio` y `/api` quedan **fuera** del shell (y también fuera de `LocaleProvider`, por el early-return de `RootClientShell`).
 - La transición de página **no usa `AnimatePresence` ni key**: es una interpolación de opacidad gobernada por un booleano (`isLeaving`) más un overlay off-white. El disparo es un listener de click en fase de captura a nivel documento, con `router.push` diferido 650 ms. `template.tsx` se remonta en cada navegación (ahí mueren los estados de página); Navbar, Footer y providers persisten.
-- Preloader: cortina de 2700 ms **solo la primera visita por pestaña** (`sessionStorage["esquina:preloaderShown"]`). En recarga a mitad de sesión la ventana es **0 ms** y el contenido llega servido a opacidad 0 con fade de 0,5 s. `RevealOnScroll` lee `usePreloader()` → **todo consumidor suyo queda gateado por el preloader de forma transitiva**.
+- **Preloader (rehecho en M3/F1).** Es el **video del logo** que pasaron las clientas: `public/preloader-logo.mp4`, 173,0 KB, 36 cuadros a 12 fps, sin pista de audio y con el `moov` al frente. La cortina dura **3000 ms** —la del video— más el deslizamiento de salida de 1000 que ya existía; eran 2700 en total hasta M2. Sigue corriendo **solo la primera visita por pestaña** (`sessionStorage["esquina:preloaderShown"]`).
+
+  **El mecanismo cambió, y es lo que hay que entender antes de tocarlo.** La cortina se sirve **en el HTML del servidor**, con estilos en línea, así que existe en el primer pintado; hasta M2 se montaba dentro de un `requestAnimationFrame` disparado desde un `useEffect`, o sea después de la hidratación, y por eso la página aparecía antes que ella. La regla de «una vez por pestaña» **no se resuelve en React**: la resuelve un **script bloqueante** en `layout.tsx` que lee `sessionStorage` y `prefers-reduced-motion` antes del primer pintado y marca `data-preloader="skip"` en `<html>`, y una regla de `globals.css` la esconde. Así el primer render del cliente es idéntico al del servidor y la hidratación no puede romperse. Verificado: cero errores de hidratación en las ocho rutas.
+
+  **El negro de la cortina es `#000000` y no el off-black de la marca**, y es una medición: el video trae su propio fondo pintado —no tiene alfa— y `ffprobe` da negro de referencia en el cuadro entero. Con `#0F0F0F` se vería el borde del rectángulo del video contra la cortina.
+
+  **El contenido entra cuando la cortina EMPIEZA a irse**, no cuando terminó. `isPreloaderDone` gobierna la entrada de nueve componentes; con la cortina clara sobre página clara daba igual, pero con la cortina negra ese segundo de deslizamiento habría descubierto la página vacía en off-white. **Failsafe:** la salida la manda un `setTimeout` que no depende del video; verificado bloqueando el `.mp4`, la cortina se levanta igual a los 4132 ms. Con `prefers-reduced-motion` **no hay cortina ni video**: el sitio aparece directo.
+
+  `RevealOnScroll` lee `usePreloader()` → **todo consumidor suyo queda gateado por el preloader de forma transitiva**.
 - **Idioma (B4).** `LocaleProvider` arranca en `"en"` en el servidor **y en el primer render del cliente**, y resuelve el idioma real en un efecto de montaje: preferencia guardada en `localStorage["esquina:locale"]` si la hay, y si no `navigator.language`. En la primera visita de la pestaña ese montaje ocurre **detrás de la cortina del preloader**, así que el cambio a castellano no se ve; en una recarga a mitad de sesión la cortina dura 0 ms y el cambio ocurre a la vista. Las dos cosas son aceptaciones escritas del plan, igual que la metadata y el `<html lang>` servidos en inglés para todos. La detección **no** persiste: solo la elección explícita escribe.
 - **Transición al cambiar de idioma (B4b).** B4b **revirtió** la regla de B4 de que el toggle no disparaba la transición. Cambiar de idioma ahora se ve como cambiar de página: **636,67 ms de acuse de recibo** (el activo se repinta y la barrita viaja **entera**), 650 ms de cortina que sube, el **swap con la cortina arriba**, 650 ms de cortina que baja. Total **1936,67 ms** contra los 1300 de una navegación. **B4c/F2 corrigió el acuse**: duraba 200 ms —la transición de color— mientras la barrita tarda `NAV_INDICATOR_DURATION` (620 ms), así que la cortina arrancaba con la barrita a mitad de camino; ahora `ACK_DELAY` se **deriva** de esa constante y le suma un cuadro, porque el viaje empieza dentro del `requestAnimationFrame` con el que `useIndicator` mide el rótulo ya pintado. El failsafe **se calcula** (`TRANSITION_MS + FAILSAFE_MARGIN_MS`) y se corrió solo a **2336,67 ms**: escribirlo a mano era la trampa, porque la secuencia nueva dura casi los 1900 en que estaba. las dos mitades son las mismas (`PAGE_EXIT_DURATION` + `PAGE_EXIT_EASE`). La cortina la pone `LocaleProvider`, es un `fixed inset-0` off-white a la altura del `<body>` —por eso tapa también el Navbar, que `PageTransitionShell` no cubre— y **el sistema de rutas no se tocó**: solo se consumen tres exportaciones que ya existían. Como nada baja de opacidad, no puede quedar ningún elemento a media opacidad: los dos estados posibles son que la cortina esté en el DOM o que no esté. Con `prefers-reduced-motion` el idioma cambia al instante, sin cortina.
 - Lenis corre **solo** en `/team` y `/work*`. En el resto el scroll es nativo. **Nadie toca `history.scrollRestoration`**: B3.4 eliminó el `"manual"` global que seteaba `/services` (junto con el `ServicesPageClient.tsx` donde vivía), así que queda el default del navegador.
@@ -212,9 +225,10 @@ era `hidden lg:block`.
 
 ## 6. Primitivos compartidos y contratos frágiles — ESTADO
 
-- **Mobile — `src/lib/mobile-layout.ts` y `src/lib/use-media-query.ts` (M1).** Los dos son únicos de su clase y están documentados en §2b: el primero lleva el gutter del cromo, el piso de área táctil y la nota sobre `sizes`; el segundo es **el** hook de media queries, del que ya cuelga `usePrefersReducedMotion`. Cualquier cosa nueva que necesite preguntar por el ancho desde JavaScript se cuelga de ahí; el layout, en cambio, se resuelve con variantes de Tailwind. **M2 le sumó dos medidas al primero**, las dos como clases enteras: `HOME_BLOCK_HEIGHT_MOBILE` (el alto del bloque del hero de `/` en mobile, que resta los 236 px del footer) y `HOME_FOOTER_CLEARANCE` (`pb-[236px] lg:pb-[164px]`, el hueco que ocupa ese footer y que `/contact/success` necesita porque ahí va superpuesto). Los dos números son el alto real del `HomeFooter` en cada rango y **se verifican midiendo**, no se deducen.
+- **Mobile — `src/lib/mobile-layout.ts` y `src/lib/use-media-query.ts` (M1).** Los dos son únicos de su clase y están documentados en §2b: el primero lleva el gutter del cromo, el piso de área táctil y la nota sobre `sizes`; el segundo es **el** hook de media queries, del que ya cuelga `usePrefersReducedMotion`. Cualquier cosa nueva que necesite preguntar por el ancho desde JavaScript se cuelga de ahí; el layout, en cambio, se resuelve con variantes de Tailwind. **M2 le sumó dos medidas al primero**, las dos como clases enteras: `HOME_BLOCK_HEIGHT_MOBILE` (el alto del bloque del hero de `/` en mobile, que resta el alto del footer) y `HOME_FOOTER_CLEARANCE` (el hueco que ocupa ese footer y que `/contact/success` necesita porque ahí va superpuesto). **Desde M3/F2 el número de mobile es 244 y no 236**: cada red pasó a tener su propia fila y el piso de área táctil de 44 px se aplica ahora dos veces donde antes se aplicaba una. Los dos números son el alto real del `HomeFooter` en cada rango y **se verifican midiendo**, no se deducen.
 - **`HoverButton`**: **11** call sites en 5 archivos (Navbar 4, Footer 4, ContactForm 1, ContactSuccess 1, ServicePackSection 1). *(M2 sumó dos: `CONTACT US` del menú de mobile y el vínculo de salida de la pantalla de éxito.)* *(Corregido en B4: este archivo decía 10 en 5 e incluía a Hero, que no lo usa.)* **B4c le sacó tres props huérfanas**: `blend`, que se quedó sin llamador cuando `/fun-gallery` dejó de tener cromo superpuesto en B3.3, y `underlineDraw` / `underlineDrawDelay`, cuyos consumidores —el CTA del Hero y el botón DISCOVER de `ServicesIntro`— desaparecieron en B2 y B3.4. Las props que quedan son `href`, `className`, `external`, `as`, `tone`, `underline`, `tightUnderline`, `balancedPadding` y `onClick`. **No define font-size**: cada consumidor porta el suyo. `FunGallery.tsx` **no** lo importa. Tocarlo es global: no modificarlo desde un sprint de sección. **Lo que no sabe hacer:** subrayado que aparezca en hover — es un booleano fijo, y atarlo a un estado no sirve porque su relleno negro sube en el mismo gesto y taparía la línea. Los dos links de LATEST PROJECTS resuelven eso con una línea propia, local a esa sección; **no es un primitivo paralelo** y no se promueve a uno sin decisión.
 - **`RevealOnScroll`**: **1** consumidor (TeamSection ×4), gateado por preloader. B3.4 se llevó el otro (`ServiceItem`).
+- **Indicador de carga de imágenes — `src/components/ui/ImageLoadIndicator.tsx` (M3/F5). Es el único del repo y no se duplica.** Un hook (`useImageLoad`) y un anillo monocromo de 1,5 px en `currentColor`, sin librerías: el giro lo pone `animate-spin` de Tailwind y `motion-reduce:animate-none` resuelve `prefers-reduced-motion` **en el CSS**, sin preguntarle nada a JavaScript. Lo comparten los tres lugares que lo piden: la grilla de Work, las fichas de proyecto y Team. Dos contratos: **(1)** el indicador **no se muestra hasta pasados 120 ms** —una imagen en caché resuelve en el primer o segundo cuadro y mostrarlo antes solo aporta parpadeo; medido, 0 de 152 cuadros con el anillo visible sobre caché caliente— y **(2)** el estado de «listo» lo pueden dar `onLoad`, `onError` o un tope de 15 s, las tres independientes, así que no hay rama en la que el anillo sobreviva a la imagen. El contenedor tiene que ser `position: relative`.
 - Sistemas de «aparecer» conviven **4**: 2 por scroll (inline de WorkGrid, `y:40` + stagger 0.7; `RevealOnScroll`) + 2 de entrada artesanales (Hero con `staggerChildren`, variants de Contact). El `RevealLine` de `ServicesIntro` desapareció con el desmontaje de B3.4.
 - **Scroll-spy continuo — `ServicesSidebar` (B3.4).** Es el **único** del repo y el único sistema de scroll que no es de un disparo; si otra sección necesita uno, se reusa este, no se escribe un segundo. La regla: **manda la última sección cuyo tope cruzó la línea de lectura** (el borde inferior del header, 128 px); si ninguna la cruzó, gana la primera. Con dos secciones a la vista gana la de arriba, y en el hueco que no pertenece a ninguna —el encabezado BRANDING PACKS— sigue activa la anterior. Tres detalles que **no se pueden tocar sin volver a medir**, porque los tres salieron de medir y no de razonar:
   1. Se observa un **centinela de 1 px** pegado al tope de cada sección (`SpySentinel`), no la sección: una sección alta sigue intersecando mientras su tope cruza y nunca genera evento.
@@ -271,6 +285,36 @@ era `hidden lg:block`.
   descendientes** (M2). Un `fixed inset-0` adentro de un elemento con blur se
   resuelve contra ese elemento y no contra el viewport. Es lo que rompía el menú
   de mobile en siete de las ocho rutas.
+- **`min-height: 100vh` en el `<body>` deja scrollear de más en un teléfono**
+  (M3/F3). `100vh` no es la pantalla que se ve: es la pantalla **con la barra
+  del navegador oculta**, o sea el viewport grande. Con `min-h-screen` —que es
+  `100vh`— el documento quedaba más alto que lo visible aunque su contenido
+  midiera exactamente `100svh`, y eso producía dos síntomas que parecían
+  distintos: `/` se dejaba scrollear de más, y en `/contact/success` la franja
+  sobrante mostraba **el fondo off-white del propio body** debajo del panel
+  oscuro. **Ninguna medición del banco lo detecta**: en un viewport emulado
+  `vh`, `svh`, `lvh` y `dvh` valen todos lo mismo, porque no hay barra que se
+  retraiga. Se demostró forzando a mano el `min-height` que declara `100vh` con
+  la barra oculta (+72 px): las dos rutas pasan de `docH = 844` y `scrollY = 0`
+  a `docH = 916` y `scrollY = 72`.
+- **El corolario: `svh` para lo que tiene que entrar, `lvh` para lo que tiene
+  que cubrir** (M3/F3 y M3/F6). La regla vieja «nada de `100vh`: `100svh`»
+  sigue en pie para todo lo que debe **caber** en la pantalla. Pero una sección
+  cuyo trabajo es **que no se vea nada debajo de ella** necesita lo contrario:
+  el máximo que el viewport puede llegar a medir, o sea `lvh`. Es lo que se
+  aplicó al intro de `/services`. En escritorio las tres unidades valen lo
+  mismo, así que la distinción solo se paga en mobile.
+- **Chrome interpola colores en `oklab`, no en `rgb`** (M3/F4). Al muestrear
+  una transición de color con `getComputedStyle`, los valores intermedios
+  llegan como `oklab(L a b / alpha)` y un parser que espere `rgb(...)` los lee
+  mal —da lecturas incoherentes, no un error—. La `L` de `oklab` es
+  directamente la claridad perceptual y sirve para verificar la curva.
+- **React 19 sí emite `muted` en el HTML del servidor** (M3/F1). Era un defecto
+  conocido de versiones anteriores —el atributo se trataba como propiedad y no
+  llegaba al marcado, así que un `<video autoplay muted>` servido no
+  autorreproducía—. Verificado en el HTML servido de esta versión: salen
+  `autoPlay=""`, `muted=""` y `playsInline=""`. Los nombres van en camelCase y
+  eso no importa: HTML no distingue mayúsculas en los nombres de atributo.
 - **`next/image` no puede servir nada más chico que 640 px si el `sizes` trae un
   `vw` suelto** (M1/F7). Su `deviceSizes` arranca ahí, y `getWidths` filtra el
   `srcset` con `640 × el vw más chico` del `sizes`; como el regex que lo detecta
@@ -315,6 +359,8 @@ era `hidden lg:block`.
 
 Ronda de devoluciones de las clientas (fuente: `Final.pdf`, 2026-08-13). **B1 Fundación** (docs y limpieza) → **B2 Devoluciones visuales** sobre lo existente (home, menú 17/0, footer nuevo global, Team, Work grid 5:4, Contact compacto) → **B3 Rediseños** (Fun Gallery con schema propio + Services con sidebar/spy; arrancó con la sonda de transparencia y cerró con B3.4b) → **B4 Idioma EN/ES** (toggle en header, diccionario, consumo bilingüe de Sanity). **La ronda está cerrada**: los cuatro bloques se ejecutaron. Detalle, decisiones cerradas y estado: `docs/plan-maestro.md`; lo que quedó abierto, en `docs/pendientes.md`.
 
-Después de **M1**, **B4c** y **B4d** se ejecutó **M2 — Correcciones de mobile y cierre** (2026-08-23, cinco fases): las catorce devoluciones de la verificación humana de M1. Diez de mobile —el menú entero, el ícono, el toggle al costado, la cruz, `/` en una pantalla, el prefooter y el footer reordenados, la galería más grande y en grilla, la pantalla de éxito—, dos de escritorio —el footer transparente de `/contact/success` y el header de `/`, que era una **regresión** de M1 y no una decisión— y dos que tocan a los dos —el subrayado del idioma al cargar y la salida de la pantalla de éxito—. Detalle y mediciones en la entrada de `docs/bitacora.md`.
+Después de M2 se ejecutó **M3 — Preloader nuevo y quince correcciones** (2026-08-23, nueve fases): el preloader pasa a ser el video del logo que pasaron las clientas y se arregla de raíz el orden de aparición (§3); los tres footers reordenan mobile; se elimina el scroll sobrante de `/` y de la pantalla de éxito, que resultó ser el `100vh` del `<body>` (§7); el menú de mobile coordina su cambio de tono con el panel y centra sus ítems; entra el indicador de carga de imágenes (§6); `/services` estrena la cuadrícula 2 × 2 del cierre; el selector de países gana búsqueda por alias, sin tildes y en los dos idiomas; y la galería agranda el objeto antes de navegar en touch. Detalle y mediciones en la entrada de `docs/bitacora.md`.
+
+Antes de eso, después de **M1**, **B4c** y **B4d**, se ejecutó **M2 — Correcciones de mobile y cierre** (2026-08-23, cinco fases): las catorce devoluciones de la verificación humana de M1. Diez de mobile —el menú entero, el ícono, el toggle al costado, la cruz, `/` en una pantalla, el prefooter y el footer reordenados, la galería más grande y en grilla, la pantalla de éxito—, dos de escritorio —el footer transparente de `/contact/success` y el header de `/`, que era una **regresión** de M1 y no una decisión— y dos que tocan a los dos —el subrayado del idioma al cargar y la salida de la pantalla de éxito—. Detalle y mediciones en la entrada de `docs/bitacora.md`.
 
 Antes de eso se ejecutó **M1 — Adaptación mobile** (2026-08-22, nueve fases): el sitio entra y se usa en teléfonos (§2b). Lo que sigue pendiente y necesita su propio chat de planificación: `error.tsx` / `not-found.tsx`, los `<main>` anidados y la instalación del harness ECC. Después se ejecutó **B4c** (2026-08-22, cuatro fases): el timing del toggle de idioma, la limpieza de dependencias —GSAP desinstalado, `blend` y las dos props de `underlineDraw` retiradas de `HoverButton`, `--color-gray` borrado— y la corrección del set de banderas, que resultó **no** ser un problema de emojis sino de patrones mal repartidos.
