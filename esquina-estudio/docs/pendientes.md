@@ -89,24 +89,20 @@ porque §3 de la instrucción no las cubría.
 
 ## Abiertos al cerrar B4c (2026-08-22)
 
-- **[B4c · Diseño]** **La revisión país por país del set de banderas.** B4c
-  corrigió la estructura de 44 países y completó las paletas de los 196, pero
-  **el agente no puede juzgar el parecido**: la hoja de contactos con los 196 en
-  los dos estados quedó entregada en el reporte del sprint para que Valentino
-  marque las que sigan mal. Lo que ya se sabe que quedó aproximado, y por qué:
-  - **`diagonal` solo soporta dos colores**, así que las banderas de tres
-    diagonales pierden la del medio (Congo pierde el amarillo, RD del Congo
-    pierde la banda roja).
-  - **`panels` dibuja dos bandas en el batiente**, así que Emiratos y Omán
-    pierden una de sus tres.
-  - **Los emblemas complejos se resuelven con la silueta** (`Seal`, un par de
-    círculos concéntricos): el escudo de España, la rueda de la India y el
-    cedro del Líbano comparten dibujo. Es la regla del set a 15 px de alto, no
-    un descuido.
-  - **Antigua y Barbuda** entró en `tricolor-triangle` por descarte: su
-    triángulo real es invertido y central, no del asta.
-  - **`horizontal-tricolor` reparte las bandas en tercios parejos**, así que
-    Letonia muestra la banda blanca más ancha de lo que es.
+- ~~**[B4c · Diseño]** **La revisión país por país del set de banderas.**~~
+  **Dado de baja en B4d (2026-08-22): el set dibujado a mano se retiró entero.**
+  Las cinco limitaciones que este punto listaba —`diagonal` de dos colores
+  (Congo y RD del Congo), `panels` de dos bandas al batiente (Emiratos y Omán),
+  los emblemas resueltos con silueta (España, India, Líbano), Antigua y Barbuda
+  entrando por descarte, y los tercios parejos de `horizontal-tricolor`
+  (Letonia)— **ya no aplican**: eran propiedades de los 44 patrones
+  geométricos, y ahora cada país tiene su SVG real. Ver `docs/banderas-set.md`.
+
+  Lo que **sí queda del lado humano**, y es otra cosa: revisar la hoja de
+  contactos de B4d confirmando que las 196 se ven correctas, y decidir si el
+  **gris en reposo** cierra dentro del sitio. Es la concesión estética del
+  cambio: antes era line-art (contornos), ahora son manchas de gris con la
+  forma correcta. Si no cierra, la alternativa es color pleno siempre.
 - **[B4c · Método]** **Con la pestaña oculta, Chrome estrangula los `setTimeout`
   a uno por segundo y no corre `requestAnimationFrame`.** Ya estaba anotado; en
   B4c costó dos intentos de banco de medición. La salida es **ceder con
