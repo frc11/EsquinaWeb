@@ -2504,3 +2504,282 @@ en hover.
   **barra** del header está intacta; lo que se desacomodó es la composición de
   la home —el hero sube 124 px, el footer sube 248 y queda una franja muerta de
   248 al pie—. El punto 13 se corrige devolviendo `/` a la composición pre-M1.
+
+### Cierre del sprint
+
+**Qué pasó.** Las catorce devoluciones de la verificación humana de M1, en cinco
+fases. Diez eran de mobile, dos de escritorio y dos afectaban a los dos. Dos de
+ellas resultaron ser **regresiones de M1 y no decisiones**: el header de `/` a
+1920 (punto 13) y el menú de mobile, que se veía roto en siete de las ocho rutas
+(punto 11). Las dos tenían una causa concreta, medida y de una línea.
+
+### Cierre — las catorce correcciones, una por una
+
+Todo lo que sigue está medido sobre `npm run build` + `next start`, con el banco
+de la Fase 0 (Chrome `--headless=new` por DevTools Protocol).
+
+**(1) El menú de mobile, rehecho.** El panel es off-black a pantalla completa y
+lleva **solo la navegación**: los cuatro rótulos en la escala de display
+—40/48, y 48/56 de `sm` para arriba— alineados a la izquierda contra el gutter,
+y `CONTACT US` debajo, a 17 px, separado por escala y por 40 px de aire. Sin
+borde, sin caja, sin sombra: la jerarquía la dan el tamaño y el espacio, que es
+como la construye el resto del sitio. El cromo **no se repite**: el logo, el
+toggle y la cruz son los de la fila del header, que queda por encima del panel y
+pintada del mismo negro. Los 40 px entran ahora que `CONTACT US` salió de la
+lista: el rótulo más ancho de los cuatro es `FUN GALLERY` con **248,98 px** a
+320, contra 272 de caja útil (`CONTACTANOS`, que medía 348,6, era el que en M1
+obligaba a bajar a 34). **Medición: 80 de 80 pantallas correctas** —ocho rutas ×
+cinco anchos × dos idiomas—, verificando panel a pantalla completa, fondo
+off-black en el panel y en la fila, `backdrop-filter: none` en el `<nav>`, el
+logo por encima del panel, los cinco links dentro del viewport y
+`aria-expanded="true"`.
+
+**(2) El toggle `EN / ES`, al costado del ícono y visible siempre.** Salió del
+menú y entró en la fila del header, en un bloque `lg:hidden` que comparte
+implementación con el de escritorio: **dos instancias, un solo componente**, y
+nunca se ven las dos. Conserva todo su comportamiento —activo en color pleno,
+barrita, transición y las áreas tocables de 44 px—. El `gap-3` está medido: el
+`::after` que agranda el código activo se estira 12 px hacia afuera y el toggle
+termina 6 px adentro de su caja, así que quedan 6 px libres contra el ícono. A
+320, que es el peor caso, la fila pide **260,89 px** de los 272 útiles: logo
+146,28 + toggle 78,61 + hueco 12 + ícono 24. Con eso el disparador `measureKey`
+del módulo del indicador quedó sin consumidores y **se borró** (§8.11).
+
+**(3) Las tres rayas, idénticas.** Medidas computadas, no a ojo: las tres miden
+**24 × 2 px** y sus bordes superiores caen en **56, 63 y 70**, o sea separaciones
+de **5 y 5**, las tres en filas de píxeles enteras. Antes eran de 1,5 px —que a
+DPR 1 se reparte entre dos filas de forma distinta según dónde caiga, y por eso
+una se veía más gruesa— y la tercera medía 16 y no 24. La cuenta que hace que
+sean enteras está escrita en el código: la fila de 128 centra un botón de 44 (42),
+el botón centra una caja de 24 (52), la caja centra 3 × 2 + 2 × 5 = 16 px (56).
+
+**(4) `/` entra en una pantalla en mobile.** El bloque del hero resta el alto del
+footer, igual que hace el escritorio desde B2:
+`max-lg:h-[calc(100svh-var(--header-height)-236px)]`. **Medición: `docH === viewH`
+en las 20 combinaciones** —cinco anchos × dos altos (640 y 844) × dos idiomas— y
+el footer midiendo **236,00 px exactos** en las 20. La página sigue sin
+scrollear y el footer se ve sin bajar.
+
+**(5) La galería: objetos más grandes y en grilla.** Debajo de 1024 la
+composición desplegada es una **grilla de dos columnas en teléfono y tres en
+tablet**, con el objeto llenando la celda.
+
+| ancho | objeto | % del ancho del viewport | por fila |
+|---|---|---|---|
+| 320 | 136 px | 42,5 % | 2 |
+| 360 | 156 px | 43,3 % | 2 |
+| 390 | 171 px | 43,8 % | 2 |
+| 414 | 183 px | 44,2 % | 2 |
+| 430 | 191 px | 44,4 % | 2 |
+| 768 | 224 px | 29,2 % | 3 |
+| 1024 | 204,78 px | **20,0 %** | 4 (dispersión) |
+| 1366 | 273,19 px | **20,0 %** | 4 (dispersión) |
+| 1920 | 383,98 px | **20,0 %** | 4 (dispersión) |
+
+Antes, con el criterio de escritorio aplicado a un teléfono, el objeto medía
+entre el 15 y el 21 % del ancho: ahora es **más del doble**. De 1024 para arriba
+no se movió un píxel —el 20,0 % es el criterio de B3.3c, intacto—. **La escena de
+entrada sigue entrando completa**: el borde inferior del cartel «(click to view)»
+cae dentro del viewport en las **16 combinaciones** medidas (nueve anchos × dos
+altos, descontando los tres de escritorio que solo se miden a su alto propio). La
+composición desplegada scrollea, que es lo autorizado.
+
+**(6) El prefooter, en fila y alineado abajo.** La frase a la izquierda y el
+bloque `CONTACT US` / `LET'S BRING YOUR IDEAS TO LIFE` a la derecha, con
+`items-end`: el bloque queda a la altura de la **última** línea de la frase. Y
+baja a la escala de cuerpo (17/21), que no es un número nuevo sino la proporción
+del escritorio —allá la frase va a 40 y el bloque a 26, o sea 0,65; 26 × 0,65 =
+17—. A 26 px los dos se leían con el mismo peso, que era el defecto de fondo.
+**La franja no creció: se acortó** —a 390 en castellano, de 405 a 375 px—.
+Desvío declarado abajo: a 320 y a 360 los dos bloques no entran uno al lado del
+otro y el de contacto baja solo.
+
+**(7) La fila de info del footer, en dos niveles.** Arriba, los dos pares de
+lugar a la izquierda e `INSTAGRAM` / `LINKEDIN` a la derecha; abajo, `© 2024` y
+`POWERED BY develOP` **uno al lado del otro**. Se arma con una grilla de dos
+columnas y `display: contents` sobre los dos grupos de escritorio, así que **el
+mismo árbol da los dos repartos** y el de arriba de 1024 no se toca. La
+tipografía baja a 15 px debajo de 1024, y eso también está medido: a 17 px la
+línea del nivel 2 pide **271,65 px** contra los 272 de caja útil a 320 —entraba
+por 0,35 px, que no es entrar—; a 15 pide 244 y quedan 28 px de aire. El footer
+de home pasó de **488 a 236 px**.
+
+**(8) El footer de la pantalla de éxito, sin franja clara — y esto sí toca
+escritorio.** El footer de `/contact/success` sale del flujo, se ancla al pie del
+contenedor de `PageTransitionShell` y se pinta del mismo off-black del panel: en
+reposo es indistinguible de transparente y la franja clara desaparece. **Medición:
+la ruta pasa de 1244 a 1080 px a 1920 y de 932 a 768 a 1366**, en los dos
+idiomas. Es el único cambio de altura de escritorio del sprint, y es el que el
+propio punto 8 autoriza.
+
+**(9) Y entra en una sola pantalla, también en mobile.** Con el footer
+superpuesto, la ruta mide `100svh` exactos **por construcción**. Lo que había que
+verificar era que el contenido no quedara recortado: **24 de 24 combinaciones**
+—siete anchos × dos altos × dos idiomas— con el bloque entero entre el borde
+inferior del header y el superior del footer. A 320 × 640 en inglés, que es el
+caso más apretado, el contenido mide 270,89 px en 276 disponibles; para llegar
+ahí la bajada baja a 15 px y los dos huecos a 20 px debajo de `md`, y hay una
+válvula: la caja centra con `my-auto` sobre un contenedor que puede desplazarse,
+así que en un viewport todavía más bajo el contenido se corre en vez de perderse.
+
+**(10) La salida.** `BACK TO HOME` / `VOLVER AL INICIO`, clave nueva
+`success.backHome` en el diccionario —y por lo tanto obligatoria en los dos
+idiomas, que es lo que garantiza la interfaz explícita—. Es un link del sitio:
+17 px, subrayado fijo, relleno de hover en tono oscuro. No es un botón con caja,
+porque el sitio no tiene ninguno.
+
+**(11) Por qué el menú se veía bien en `/contact/success` y mal en el resto.**
+**Un `backdrop-filter` convierte al elemento en bloque contenedor de sus
+descendientes `position: fixed`.** El blur vivía en el `<nav>`, así que el
+`fixed inset-0` del panel no se resolvía contra el viewport sino contra la banda
+de 128 px del header: el panel salía de 390 × 128 con los rótulos desbordados
+—`PROYECTOS` en y = −111,75, `CONTACTANOS` en 112,25— y el toggle caído sobre la
+página. `/contact/success` es la **única** ruta cuyo `<nav>` va transparente y por
+lo tanto **sin blur**, y por eso era la única donde el menú se veía entero. La
+unificación se hizo hacia esa: **el blur bajó del `<nav>` a la fila**, que es
+hermana del panel y no su ancestro. La banda pintada es exactamente la misma. Y
+como el panel tapaba también la fila —dos hermanos, `z-index: auto` contra
+`z-[99]`—, la fila pasó a ir por encima, que es lo que permitió que el menú deje
+de repetir el cromo.
+
+**(12) La cruz de cerrar.** Dejó de ser una `X` de texto de 17 px y pasó a ser
+**dos reglas de 30 × 2 px giradas ±45°** sobre el mismo centro que las tres
+rayas, en la misma caja tocable de **44 × 44**. Ocupa unos 21 × 21 px de dibujo
+contra los ~11 × 12 de tinta que tenía la letra. Y vive en la ranura del ícono:
+el mismo botón abre y cierra, así que la cruz aparece donde estaba la
+hamburguesa en vez de en una esquina.
+
+**(13) El header de `/` a 1920.** El diagnóstico completo está en la entrada F0.
+En una línea: M1/F2 pasó el alto del bloque del hero de un `style` en línea a una
+**clase de Tailwind compuesta con una plantilla**, y Tailwind v4 busca los
+nombres de clase como literales, así que esa regla **nunca llegó al CSS**. La
+corrección es escribirla entera. **Medición contra el código pre-M1 recompilado,
+número por número:** bloque **788** px a 1920 (era 540) y **476** a 1366 (era
+384); tope del hero **450** y **294**; tope del footer **916** y **604**; pie del
+footer **1080** y **768**; **franja muerta 0** en los dos. Los seis números son
+los de pre-M1. Y la geometría de la barra del header —caja de la fila, relleno,
+logo, los cinco rótulos, el indicador, el grupo `EN / ES` y sus dos botones— da
+**cero diferencias** contra pre-M1 en las ocho combinaciones medidas (`/` y
+`/work` × 1920 y 1366 × dos idiomas).
+
+**(14) El subrayado del idioma al cargar.** La causa esperada estaba cerca pero
+no era exactamente esa. **El módulo del indicador sincronizaba en un efecto
+pasivo la referencia que usa su `ResizeObserver`**, y React puede diferir ese
+flush al macrotask siguiente: entonces la notificación inicial del observador
+—que llega en el cuadro posterior al montaje— llamaba a un `remeasure` **del
+render anterior**, medía el rótulo que ya había dejado de estar activo y plantaba
+la línea ahí, sin viaje y sin nada que la corrigiera después. El arreglo es de una
+palabra y es de fondo: esa sincronización pasa a `useLayoutEffect`, que corre
+**dentro** del commit, así que la ventana se cierra. Y la segunda mitad del
+pedido —que al cargar la barrita **no viaje**— se resuelve con la puerta
+`animate` que el módulo ya tenía: el toggle solo anima después de una **elección
+explícita** en ese control, porque el viaje es el acuse de recibo de un click y
+al cargar no hubo ninguno.
+
+### El idioma, medido de las dos maneras
+
+- **Los cuatro caminos de arranque, 64 arranques:** primera visita con el
+  navegador en inglés, primera visita con el navegador en castellano,
+  preferencia guardada en castellano y preferencia guardada en inglés, ocho
+  veces cada uno, a **1920 y a 390**. **Antes del arreglo: 4 fallas en 32** —las
+  cuatro en los dos caminos del castellano, con la página ya en castellano
+  (`lang="es"`, `aria-pressed` en `ES`) y la barrita plantada bajo `EN`—.
+  **Después: 0 fallas en 64.** Y en ninguno de los 64 la barrita viajó: aparece
+  directamente en su lugar, que es lo que pedía el punto 14.
+- **El gesto del click sigue intacto**, y esta vez se pudo **cronometrar**, que
+  es algo que B4c y B4d habían dejado explícitamente sin medir porque con la
+  pestaña oculta no corre `requestAnimationFrame`. Al hacer click, la barrita
+  pasa por cuatro posiciones distintas, **se contrae hasta el punto de 5 px**
+  —mínimo medido: 5,00— viaja y se vuelve a abrir a 20 px sobre el idioma nuevo;
+  el diccionario cambia después, a los ~2,6 s, con la cortina arriba. Es
+  exactamente la secuencia de B4b con el timing de B4c/F2.
+
+### Commits
+
+`966991f` (F0) · `ab85791` (F1) · `ade6889` (F2) · `65eeac7` (F3) · `fb557c0`
+(F3b) · `8065261` (F4) · `1147349` (F5) · `c96a0f5` (F5b), más el de este cierre.
+Balance en código: **14 archivos, 991 inserciones contra 224 borrados**.
+
+### Las mediciones de cierre
+
+- **Cero scroll horizontal: 128 de 128.** Ocho rutas × ocho anchos
+  (320/360/390/414/430/768/1366/1920) × dos idiomas. Es el criterio que M1 dejó
+  en cero y sigue en cero, con la matriz ampliada.
+- **No-regresión de escritorio: 28 de 32 altos idénticos** a la vara de la Fase
+  0 (ocho rutas × 1920 y 1366 × dos idiomas). Los **cuatro** que cambian son los
+  de `/contact/success`, −164 px cada uno, que es exactamente lo que el punto 8
+  autoriza. Y la geometría del header da **cero diferencias** contra el código
+  **pre-M1** recompilado.
+- **`/` y `/contact/success` entran sin scroll**: `docH === viewH` en las 20
+  combinaciones de home y en las 24 de la pantalla de éxito, y en esta última el
+  contenido queda entero entre el header y el footer en las 24.
+- **Áreas táctiles: cero por debajo de 44 px** en 48 pantallas con el menú
+  cerrado y en 48 con el menú abierto.
+- **Puertas:** `npm run lint` y `npm run build` en verde antes y después de cada
+  fase, con el servidor bajado y la misma tabla de 15 rutas de B4d.
+
+### Desvíos, dichos de frente
+
+1. **El prefooter en fila no entra a 320 ni a 360, y ahí se apila.** Los dos
+   bloques tienen ancho mínimo propio —la frase, su palabra más larga: 146 px en
+   castellano a 26 px; el bloque de contacto, su corte de línea escrito, que por
+   contrato **no se deja al ancho del navegador** (`CLAUDE.md` §6.4)— y la suma
+   pide 328 px contra los 272 de caja útil a 320. Las salidas eran bajar la frase
+   de la marca a 18 px o partir un corte que es decisión de diseño; las dos
+   parecían peores que apilar en los dos anchos más chicos. Se resolvió con
+   `flex-wrap`, que **no agrega un corte de ancho nuevo**: donde entra va en fila
+   (390, 414, 430) y donde no, el bloque baja solo y queda como estaba. Si la
+   verificación humana quiere la fila también a 320, la decisión es de tipografía
+   y hay que tomarla; queda en pendientes.
+2. **El logo script no aparece en el footer de mobile.** Con él, la línea del
+   nivel 2 —`© 2024` + el crédito— se va a 335 px contra 272 de caja útil a 320.
+   El punto 7 enumera lo que lleva la fila de mobile y el logo no está en esa
+   lista. En escritorio no cambia nada.
+3. **Un commit de más: `M2/F3b`.** Al revisar la entrada de la pantalla de éxito
+   apareció que, con el footer transparente, sus rótulos off-white quedaban sobre
+   la página clara durante los ~150 ms en que el panel oscuro todavía está
+   subiendo —medido: a los 80 ms el borde superior del panel está en 778 y el del
+   footer en 608—. Se corrigió pintando el footer del mismo off-black del panel:
+   en reposo es indistinguible de transparente y la entrada deja de tener el
+   fantasma. Es la misma corrección del punto 8, así que va en su propio commit y
+   no escondida en el de documentación.
+4. **El puerto 3010 estaba tomado** por un proceso ajeno a esta sesión (`node`,
+   arrancado a las 00:26). No se tocó: las mediciones se hicieron en el **3011** y
+   la comparación contra pre-M1 en el **3012**. El 3000 quedó fuera de alcance,
+   como pide la instrucción.
+5. **La extensión de Chrome no estaba disponible**, así que se armó un banco
+   propio sin dependencias (Fase 0). Efecto lateral bueno: en `--headless=new` la
+   página **se pinta de verdad**, así que corren `requestAnimationFrame` y la
+   carga diferida. Eso permitió cronometrar por primera vez el gesto que B4c y
+   B4d habían dejado explícitamente sin medir.
+6. **El worktree pre-M1 quedó registrado y desregistrado limpiamente**, pero su
+   carpeta no se pudo borrar del todo: `git worktree remove --force` falló con
+   *Filename too long* en un archivo de `node_modules`. Vive en el scratchpad de
+   la sesión, fuera del repo, y `git worktree list` ya muestra una sola entrada.
+
+### Lo que no se pudo verificar
+
+- **El teléfono de verdad.** Todo lo de arriba es un navegador headless a DPR 1:
+  el tap, la comodidad de la cruz, cómo se sienten los objetos de la galería en
+  la mano y el comportamiento de `100svh` con la barra del navegador entrando y
+  saliendo **son humanos**.
+- **El fantasma de la entrada de `/contact/success` quedó medido a 390 × 844**;
+  no se recorrieron todos los anchos porque la geometría no depende del ancho.
+- **La galería se midió con el contenido real del dataset** —las clientas ya
+  cargaron las ocho imágenes—, así que los repartos de 2 y 3 por fila están
+  verificados con ocho objetos y no con otras cantidades.
+
+### Verificación humana declarada, con el teléfono en la mano
+
+- **El menú**: que se vea bien en las ocho rutas, que el toggle se vea sin abrir,
+  que el ícono se vea parejo y que la cruz sea cómoda de tocar.
+- **`/` y `/contact/success`**: que entren en una pantalla, sin que la barra del
+  navegador rompa la cuenta.
+- **La galería**: si ahora los objetos se leen bien en la mano y si la grilla al
+  desplegar funciona.
+- **El footer reordenado**, y en particular las dos decisiones declaradas: el
+  prefooter apilado a 320/360 y el logo script ausente en mobile.
+- **En escritorio**: el header de `/` de vuelta en su lugar y el pie oscuro de la
+  pantalla de éxito.
+- **El idioma**: abrir el sitio con el castellano guardado y confirmar que el
+  subrayado está bajo `ES` y que no viaja al entrar.
