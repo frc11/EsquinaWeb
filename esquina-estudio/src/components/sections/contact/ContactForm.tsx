@@ -17,6 +17,8 @@ import {
   businessTypeLabel,
   contactSchema,
   countryLabel,
+  countrySearchTerms,
+  normalizeSearch,
   getCountryOptions,
   localizeContactValues,
   timelineLabel,
@@ -425,6 +427,7 @@ function CustomSelect({
   labelOf,
   placeholder,
   searchable = false,
+  searchTermsOf,
   renderOptionMeta,
   renderValueMeta,
   emptyLabel,
@@ -445,6 +448,15 @@ function CustomSelect({
   labelOf: (option: string) => string;
   placeholder: string;
   searchable?: boolean;
+  /**
+   * Todo aquello por lo que se puede encontrar una opción, **ya normalizado**
+   * (sin tildes ni mayúsculas). Sin esta prop se busca por el rótulo visible,
+   * que es lo que necesitan los tres selects que no son el de países.
+   *
+   * El de países la usa para buscar además por el nombre en el otro idioma y
+   * por los alias de uso corriente; ver `countrySearchTerms` en `lib/contact`.
+   */
+  searchTermsOf?: (option: string) => readonly string[];
   renderOptionMeta?: (option: string) => React.ReactNode;
   renderValueMeta?: (value: string) => React.ReactNode;
   /** Texto de «sin resultados» del buscador. */
@@ -460,15 +472,21 @@ function CustomSelect({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isOpen = openSelectId === id;
   const filteredOptions = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
+    // La consulta se normaliza igual que los términos: sin tildes y en
+    // minúsculas, así que «japon» encuentra `Japón` y «espana`, `España`.
+    const normalized = normalizeSearch(query);
     if (!normalized) return options;
 
-    // Se filtra por lo que se ve, no por el valor canónico: quien escribe
-    // «alemania» espera encontrar Alemania.
-    return options.filter((option) =>
-      labelOf(option).toLowerCase().includes(normalized),
-    );
-  }, [labelOf, options, query]);
+    // Por defecto se filtra por lo que se ve y no por el valor canónico: quien
+    // escribe «alemania» espera encontrar Alemania. El select de países pasa
+    // además el nombre en el otro idioma y sus alias (M3/F7, punto 13-alias).
+    return options.filter((option) => {
+      const terms = searchTermsOf?.(option) ?? [
+        normalizeSearch(labelOf(option)),
+      ];
+      return terms.some((term) => term.includes(normalized));
+    });
+  }, [labelOf, options, query, searchTermsOf]);
 
   // The dropdown is rendered out of flow (absolute overlay), so opening it no
   // longer changes the field height. When it would spill past the bottom of
@@ -994,26 +1012,25 @@ export default function ContactForm({ service = null }: { service?: string | nul
                     searchPlaceholder={copy.placeholders.search}
                     placeholder={copy.placeholders.select}
                     searchable
+                    searchTermsOf={countrySearchTerms}
                     openSelectId={openSelectId}
                     setOpenSelectId={setOpenSelectId}
                     renderOptionMeta={(option) => (
-                      // Gris en reposo, color en el hover de la fila. Antes eran
-                      // dos banderas apiladas cruzándose la opacidad; ahora es un
-                      // solo archivo y un filtro, así que la fila trae la mitad
-                      // de nodos y ninguna petición de más.
+                      // En la lista: gris en reposo y color en el hover de la
+                      // fila **de 1024 para arriba**. Debajo el gris se va del
+                      // todo (`lg:grayscale` adentro del componente), porque en
+                      // touch no hay hover que lo revierta (M3/F7, punto 12b).
                       <CountryFlag
                         country={option}
                         className="group-hover:grayscale-0"
                       />
                     )}
                     renderValueMeta={(option) => (
-                      // Misma regla para el valor elegido, con el disparador del
-                      // campo: hover sobre la superficie, y también foco, para
-                      // que quien navega con teclado vea lo mismo que el mouse.
-                      <CountryFlag
-                        country={option}
-                        className="group-hover/contact-focus:grayscale-0 group-focus-within/contact-focus:grayscale-0"
-                      />
+                      // El valor elegido va **siempre a color**, en cualquier
+                      // ancho (M3/F7, punto 12a). No es una opción más de una
+                      // lista: es el país que la persona ya eligió, y en gris se
+                      // leía como un recuadro oscuro apagado.
+                      <CountryFlag country={option} alwaysColor />
                     )}
                     onChange={(value) =>
                       setValue("country", value, {

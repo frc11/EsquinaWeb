@@ -10,10 +10,26 @@ import type { CountryOption } from "@/lib/contact";
   directamente mal y otro 25 % apenas reconocible, y eso no se arregla dibujando
   mejor —un escudo no entra en 16 px de alto con geometría genérica—.
 
-  **Gris en reposo, color en hover.** Es un filtro CSS sobre un solo archivo, no
-  dos archivos ni dos elementos apilados: `grayscale` de base y `grayscale-0` en
-  el disparador que le pasa el consumidor. La transición es la misma que tenía
-  el set anterior —150 ms— para que el gesto se sienta igual.
+  **Gris en reposo, color en hover — pero solo donde hay hover** (M3/F7,
+  puntos 12a y 12b). Es un filtro CSS sobre un solo archivo, no dos archivos
+  ni dos elementos apilados. Dos cosas cambian respecto de B4d:
+
+  - El gris de base es `lg:grayscale` y ya no `grayscale`. **Debajo de 1024 no
+    hay hover**, así que el gris no tenía contrapartida: la bandera se quedaba
+    apagada para siempre y no había gesto que le devolviera el color. En
+    touch, entonces, van todas a color siempre.
+  - `alwaysColor` saca el gris del todo. Lo usa el **valor elegido**, que tiene
+    que estar a color en cualquier ancho: es el país que la persona eligió, no
+    una opción más de una lista.
+
+  Va como ausencia de la clase y no como un `grayscale-0` encima, y eso importa:
+  `grayscale` y `grayscale-0` son la misma propiedad y la misma especificidad,
+  así que cuál gana lo decidiría el orden en que Tailwind las emite, no el
+  orden en que se escriben. Los `group-hover:grayscale-0` de la lista sí pueden
+  apilarse porque la pseudoclase les suma especificidad.
+
+  La transición es la misma que tenía el set anterior —150 ms— para que el
+  gesto se sienta igual.
 
   **Quién dispara el color lo decide el consumidor**, no este componente: en la
   lista es el `group` de la fila y en el valor elegido es el
@@ -40,13 +56,19 @@ import type { CountryOption } from "@/lib/contact";
 export default function CountryFlag({
   country,
   className = "",
+  alwaysColor = false,
 }: {
   country: string;
   /** Variante que devuelve el color: la escribe quien conoce el `group`. */
   className?: string;
+  /** El valor elegido: a color en todos los anchos y sin depender del hover. */
+  alwaysColor?: boolean;
 }) {
   const code: string | undefined = COUNTRY_FLAG_CODES[country as CountryOption];
   if (!code) return null;
+
+  // Literales enteros: Tailwind v4 busca los nombres de clase como texto.
+  const restingTone = alwaysColor ? "" : "lg:grayscale";
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -57,7 +79,7 @@ export default function CountryFlag({
       height={15}
       loading="lazy"
       decoding="async"
-      className={`h-[15px] w-[24px] shrink-0 object-cover grayscale transition-[filter] duration-150 motion-reduce:transition-none ${className}`}
+      className={`h-[15px] w-[24px] shrink-0 object-cover ${restingTone} transition-[filter] duration-150 motion-reduce:transition-none ${className}`}
     />
   );
 }

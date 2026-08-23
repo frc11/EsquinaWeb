@@ -541,6 +541,118 @@ export function countryLabel(locale: Locale, value: string) {
 }
 
 /**
+ * # Búsqueda de países: normalización, alias y por qué el castellano sale gratis
+ * (M3/F7, punto 13-alias)
+ *
+ * Hasta M2 el buscador comparaba `rótulo.toLowerCase().includes(consulta)`, y eso
+ * fallaba en tres frentes: no encontraba `Japan` escribiendo «japon» —la tilde
+ * cuenta como otro carácter—, no encontraba nada por su abreviatura o su nombre
+ * de uso corriente («UK», «EEUU», «Holanda»), y solo miraba el rótulo del idioma
+ * activo, así que el nombre inglés no servía con el sitio en castellano ni al
+ * revés.
+ *
+ * ## Los tres frentes, y cómo se cubren
+ *
+ * 1. **Tildes y mayúsculas** las resuelve `normalizeSearch`, que descompone en
+ *    NFD y borra los diacríticos combinantes. Vale también para la eñe, que en
+ *    NFD es `n` + tilde: «espana» encuentra `España`. Se aplica a los dos lados
+ *    de la comparación, así que da igual cómo escriba cada uno.
+ *
+ * 2. **El castellano de los 196 países sale del rótulo traducido y no de esta
+ *    tabla.** Es la evaluación que pedía el sprint, y la respuesta es que
+ *    conviene: `COUNTRY_ES` ya tiene los 196 nombres, así que meterlos en el
+ *    corpus de búsqueda cubre **todos** los países sin escribir un solo alias, y
+ *    no puede desincronizarse —si mañana se corrige una traducción, la búsqueda
+ *    la toma sola—. Escribirlos a mano en una tabla de alias sería duplicar 196
+ *    líneas que ya existen, que es exactamente lo que la regla 10 evita.
+ *
+ * 3. **Esta tabla queda entonces solo para lo que NO es ni el nombre inglés ni
+ *    el castellano**: siglas (`UK`, `EEUU`), nombres históricos (`Suazilandia`)
+ *    y formas de uso corriente que no son la traducción oficial (`Holanda`,
+ *    `Inglaterra`). Son pocas y no crecen solas.
+ *
+ * ## Qué se busca contra qué
+ *
+ * El corpus de cada país son **las tres cosas a la vez** —nombre inglés, nombre
+ * castellano y alias— **sin mirar el idioma activo**. Así «germany» funciona con
+ * el sitio en castellano y «alemania» con el sitio en inglés: quien escribe ya
+ * sabe cómo se llama el país en su cabeza, y hacerle adivinar en qué idioma está
+ * el sitio no ayuda a nadie.
+ *
+ * Nada de esto cambia lo que se **muestra**: el rótulo sigue saliendo de
+ * `countryLabel` y el valor guardado sigue siendo el canónico inglés.
+ */
+export function normalizeSearch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Nombres alternativos que **no** son ni el canónico inglés ni el castellano de
+ * `COUNTRY_ES`. Solo hace falta agregar acá lo que ninguno de los dos cubre.
+ *
+ * Varios de los países que enumera la instrucción **no están en esta tabla, y es
+ * correcto**: `Germany`, `Spain`, `Brazil`, `Japan`, `Switzerland`,
+ * `South Korea`, `North Korea` y `Vatican City` ya se encuentran por su nombre
+ * castellano, y `North Macedonia` por subcadena de «Macedonia del Norte».
+ * Repetirlos sería tabla muerta.
+ */
+const COUNTRY_SEARCH_ALIASES: Partial<Record<CountryOption, readonly string[]>> = {
+  "DR Congo": [
+    "republica democratica del congo",
+    "republica democratica",
+    "democratic republic of the congo",
+    "democratic republic",
+    "congo",
+    "rdc",
+    "drc",
+    "zaire",
+  ],
+  "United States": ["usa", "us", "eeuu", "ee uu", "united states of america"],
+  "United Kingdom": [
+    "uk",
+    "inglaterra",
+    "england",
+    "gran bretaña",
+    "great britain",
+    "britain",
+  ],
+  "Cote d'Ivoire": ["ivory coast", "costa de marfil"],
+  Czechia: ["republica checa", "czech republic"],
+  Netherlands: ["holanda", "holland"],
+  Eswatini: ["suazilandia", "swaziland"],
+  "Timor-Leste": ["timor oriental", "east timor"],
+  "Cabo Verde": ["cape verde"],
+  "North Macedonia": ["macedonia"],
+  "Vatican City": ["holy see", "santa sede"],
+  "South Korea": ["korea", "republic of korea"],
+  "North Korea": ["korea", "dprk"],
+};
+
+/**
+ * Todo contra lo que se puede encontrar un país, ya normalizado. Se calcula una
+ * vez por módulo —196 entradas— y no por tecla.
+ */
+const COUNTRY_SEARCH_INDEX: ReadonlyMap<string, readonly string[]> = new Map(
+  COUNTRY_OPTIONS.map((option) => [
+    option,
+    [
+      option,
+      COUNTRY_ES[option],
+      ...(COUNTRY_SEARCH_ALIASES[option] ?? []),
+    ].map(normalizeSearch),
+  ]),
+);
+
+/** Los términos por los que se puede encontrar un país. Ya normalizados. */
+export function countrySearchTerms(option: string): readonly string[] {
+  return COUNTRY_SEARCH_INDEX.get(option) ?? [normalizeSearch(option)];
+}
+
+/**
  * Los rangos de presupuesto **no se traducen**: son cifras y una moneda. Poner
  * el punto de miles a la argentina (`$2.500`) sobre montos en dólares se lee
  * como «2,5», que es peor que dejarlo. Además es lo que protege el piso medido
