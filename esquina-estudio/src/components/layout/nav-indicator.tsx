@@ -16,7 +16,8 @@ import { motion } from "framer-motion";
  *
  * Nació en B2.2 para el menú de escritorio y hasta B4b vivía entero dentro de
  * `Navbar.tsx`. B4b le pidió el mismo gesto a la barrita del toggle `EN / ES`,
- * que **no** vive en el Navbar (también se renderiza dentro del menú de mobile).
+ * que es un componente aparte y se renderiza dos veces —el bloque de escritorio
+ * y el bloque de mobile del header—.
  * `CLAUDE.md` §8.10 prohíbe el sistema paralelo, así que la lógica —medición,
  * redondeo, morfología de la animación y el elemento pintado— se extrajo acá y
  * la consumen los dos. Nadie copia números del otro.
@@ -256,13 +257,6 @@ type UseIndicatorOptions = {
    * también la aplicación tardía de la tipografía. Estable (`useCallback`).
    */
   hosts: () => ReadonlyArray<HTMLElement | null | undefined>;
-  /**
-   * Cuando cambia, se remide **sin** viaje. Es para el caso en que el
-   * contenedor terminó de moverse pero nadie cambió de tamaño: el menú de
-   * mobile entra con un `y` animado, y una medición tomada a mitad de ese
-   * desplazamiento redondea contra un origen que todavía se estaba moviendo.
-   */
-  measureKey?: unknown;
   /** En falso la línea nunca viaja: se planta. Es la puerta de reduced motion. */
   animate?: boolean;
 };
@@ -271,7 +265,7 @@ type UseIndicatorOptions = {
  * El ciclo completo del indicador: mide, recuerda la medición anterior, arma la
  * animación y se vuelve a medir cuando algo de lo que mide cambió.
  *
- * Los cuatro disparadores, y por qué cada uno anima o no:
+ * Los tres disparadores, y por qué cada uno anima o no:
  *
  * - **Identidad de `measureTarget`** (ruta activa, idioma elegido en el toggle):
  *   remide **con** viaje en el cuadro siguiente. El `requestAnimationFrame` no
@@ -283,13 +277,16 @@ type UseIndicatorOptions = {
  *   ruta— y el de la tipografía que se aplica tarde. Sus notificaciones se
  *   entregan **después del layout y antes del pintado**, así que la línea nunca
  *   llega a verse en la posición vieja.
- * - **`measureKey`**: sin viaje, y saltando la primera corrida para no pisar la
- *   animación que acaba de armar el disparador de arriba.
+ *
+ * (Había un cuarto, `measureKey`, que remedía sin viaje cuando el contenedor
+ * terminaba de moverse sin cambiar de tamaño. Su único llamador era el toggle
+ * adentro del menú de mobile, que entraba con un `y` animado; M2/F1 sacó el
+ * toggle del menú y lo puso en la fila del header, que no se mueve, así que el
+ * disparador quedó sin consumidores y se borró.)
  */
 export function useIndicator({
   measureTarget,
   hosts,
-  measureKey,
   animate = true,
 }: UseIndicatorOptions) {
   const previousRef = useRef<IndicatorMeasure | null>(null);
@@ -358,18 +355,6 @@ export function useIndicator({
 
     return () => observer.disconnect();
   }, [hosts]);
-
-  const settledKeyRef = useRef(measureKey);
-
-  useEffect(() => {
-    if (settledKeyRef.current === measureKey) return;
-
-    settledKeyRef.current = measureKey;
-
-    const frame = window.requestAnimationFrame(() => remeasure(false));
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [measureKey, remeasure]);
 
   return animation;
 }

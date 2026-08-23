@@ -13,6 +13,21 @@ import { LOCALES, useLocale, type Locale } from "@/lib/i18n";
 /**
  * Control `EN / ES` del header, a la derecha de `CONTACT US`.
  *
+ * # Dónde vive (revisado en M2/F1)
+ *
+ * Hay **dos instancias y una sola implementación**: el bloque de escritorio del
+ * header (`hidden lg:flex`, a la derecha de `CONTACT US`) y el bloque de mobile
+ * del header (`lg:hidden`, al costado del ícono de menú). Nunca se ven las dos:
+ * cada bloque se apaga con `display: none` en el rango del otro, y la instancia
+ * apagada no pinta indicador porque su caja mide cero y `measureFillBox`
+ * devuelve `null`.
+ *
+ * Hasta M1 la instancia de mobile vivía **adentro** del menú, así que el control
+ * de idioma no existía sin abrirlo. M2/F1 lo sacó a la fila del header: se ve
+ * siempre y, como esa fila no se desplaza al abrir el menú, desapareció con él
+ * el disparador `measureKey` del módulo del indicador, que existía sólo para
+ * remedir cuando el panel terminaba de entrar.
+ *
  * # De dónde salen las medidas
  *
  * De medir `docs/mockups/08a-services-intro.jpg` (export de 1327 px sobre un
@@ -103,15 +118,8 @@ import { LOCALES, useLocale, type Locale } from "@/lib/i18n";
  */
 export default function LocaleToggle({
   tone = "light",
-  measureKey,
 }: {
   tone?: "light" | "dark";
-  /**
-   * Lo pasa el menú de mobile cuando termina de entrar: hasta entonces el
-   * contenedor se está desplazando y la barrita redondearía contra un origen en
-   * movimiento. En el header no hace falta.
-   */
-  measureKey?: unknown;
 }) {
   const { selectedLocale, setLocale, t } = useLocale();
   const reduceMotion = usePrefersReducedMotion();
@@ -147,7 +155,6 @@ export default function LocaleToggle({
   const indicator = useIndicator({
     measureTarget,
     hosts: indicatorHosts,
-    measureKey,
     animate: !reduceMotion,
   });
 
