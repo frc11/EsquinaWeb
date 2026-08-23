@@ -2411,3 +2411,96 @@ en hover.
 
 - **Commits:** `d03e659` (F1) · `29edb00` (F2) · `27d102e` (F3) · `5c5f5e0`
   (F4), más el de este cierre.
+
+## M2 — Correcciones de mobile y cierre (2026-08-23)
+
+### F0 — Terreno, vara de no-regresión y diagnóstico del punto 13
+
+- **Terreno.** Árbol limpio salvo `pngs-galeria/` **sin seguir** en la raíz del
+  repo (`?? pngs-galeria/`, 8 PNG), que ya estaba antes de empezar y no se toca.
+  HEAD `c66c731` (cierre de B4d). `npm run lint` y `npm run build` en **verde**
+  antes de tocar nada: 15 páginas, misma tabla de rutas de B4d.
+
+- **Banco de medición.** La extensión de Chrome no está conectada en esta
+  sesión, así que se armó un banco propio **sin dependencias**: Chrome
+  `--headless=new` manejado por el DevTools Protocol sobre el `WebSocket` nativo
+  de Node 24. Vive fuera del repo, en el scratchpad de la sesión. Resuelve de
+  paso el límite que arrastraban B4c y B4d: en `--headless=new` **sí corren
+  `requestAnimationFrame` y la carga diferida**, porque la página se pinta de
+  verdad. El servidor de medición es `next start` en **3011** —el 3010 ya estaba
+  tomado por un proceso ajeno a esta sesión, que no se tocó— y el 3000 sigue
+  fuera de alcance.
+
+- **Vara de no-regresión: 48 números.** Ocho rutas × {1920, 1366, 390} × {EN,
+  ES}, alto de documento y desborde horizontal. **Cero scroll horizontal en las
+  48.** Los altos de 1920/1366 son los que tienen que quedar idénticos al
+  cerrar, salvo `/contact/success` (punto 8).
+
+  | ruta | 1920 EN | 1920 ES | 1366 EN | 1366 ES | 390 EN | 390 ES |
+  |---|---|---|---|---|---|---|
+  | `/` | 1080 | 1080 | 768 | 768 | 1332 | 1332 |
+  | `/work` | 2155 | 2155 | 1694 | 1694 | 2660 | 2691 |
+  | `/work/tukumi-takeaway` | 2190 | 2190 | 1713 | 1713 | 1859 | 1890 |
+  | `/services` | 7654 | 7716 | 7915 | 8025 | 7401 | 7377 |
+  | `/team` | 4537 | 4499 | 3899 | 3974 | 3751 | 3806 |
+  | `/fun-gallery` | 2228 | 2228 | 1805 | 1805 | 1402 | 1433 |
+  | `/contact` | 1664 | 1664 | 1451 | 1451 | 2730 | 2711 |
+  | `/contact/success` | 1244 | 1244 | 932 | 932 | 1332 | 1332 |
+
+  Dato de método que conviene no olvidar: `scrollHeight` **nunca baja del alto
+  del viewport**, así que un 1080 a 1920 no prueba que el contenido llegue al
+  pie. Es justamente lo que dejó pasar el punto 13.
+
+- **Diagnóstico del punto 13 — qué se movió y cuántos píxeles.** Se recompiló el
+  código **pre-M1** (`3fe5c6a`, el commit de docs anterior a `a50f229`
+  «feat(mobile): navbar, menu y footer») en un worktree aparte y se sirvió en el
+  **3012**, para medir los dos lados con el mismo banco.
+
+  **La barra del header no se movió ni un píxel.** Geometría completa del `nav`
+  a 1920 y a 1366, en los dos idiomas —caja de la fila, relleno, logo, los cinco
+  rótulos, el indicador, el grupo `EN / ES` y sus dos botones—: **idéntica** en
+  las 8 combinaciones. La única diferencia que apareció es el `naturalWidth` del
+  logo, y es ruido de decodificación: el `currentSrc` es **el mismo archivo con
+  la misma query** (`w=256&q=75`) y la caja medida es 146,28 × 48 en los dos.
+
+  **Lo que sí se movió es el bloque del hero de `/`, y con él todo lo que va
+  debajo:**
+
+  | medida en `/` | pre-M1 | HEAD | Δ |
+  |---|---|---|---|
+  | alto del bloque del hero a 1920 | 788 | **540** | **−248** |
+  | tope del texto del hero a 1920 | 450 | **326** | **−124** |
+  | tope del footer a 1920 | 916 | **668** | **−248** |
+  | pie del footer a 1920 | 1080 | **832** | **−248** |
+  | franja muerta bajo el footer a 1920 | 0 | **248** | **+248** |
+  | alto del bloque del hero a 1366 | 476 | **384** | **−92** |
+  | pie del footer a 1366 | 768 | **676** | **−92** |
+  | franja muerta bajo el footer a 1366 | 0 | **92** | **+92** |
+
+  **La causa, y es exactamente la trampa que `CLAUDE.md` §6 tiene escrita.**
+  Pre-M1 el alto del bloque viajaba en un `style` en línea:
+  `height: calc(100vh - var(--header-height) - (40px + 84px + 40px))`. M1/F2 lo
+  pasó a una clase de Tailwind **compuesta con una plantilla**:
+
+  ```js
+  const HOME_FOOTER_HEIGHT = "40px+84px+40px";
+  const HOME_BLOCK_HEIGHT = `lg:h-[calc(100svh-var(--header-height)-(${HOME_FOOTER_HEIGHT}))]`;
+  ```
+
+  Tailwind v4 busca los nombres de clase **como literales en el código**, y ese
+  nombre no existe como literal en ningún lado: se arma en runtime. Verificado en
+  el CSS de producción — están `.h-[calc(100svh-var(--header-height))]` y
+  `.lg:min-h-[50vh]`, que sí se escriben enteras, y **no existe ninguna regla
+  `.lg:h-[calc(...)]`**. La clase viaja en el `class` del elemento y no pinta
+  nada, así que el alto cae a `auto` y manda el `lg:min-h-[50vh]`: 540 px a 1920
+  en vez de 788, 384 a 1366 en vez de 476.
+
+  **No es un cambio deliberado de M1, es una regresión**: el comentario que
+  M1/F2 dejó en `page.tsx` declara que la cuenta «vale de `lg` para arriba» y
+  que «los altos de `/` a 1920 y a 1366 no se mueven». La intención era dejar el
+  escritorio quieto; el literal roto lo impidió. No corresponde PARADA.
+
+- **Nota de nomenclatura.** La devolución dice «el header de `/`». Medido, la
+  **barra** del header está intacta; lo que se desacomodó es la composición de
+  la home —el hero sube 124 px, el footer sube 248 y queda una franja muerta de
+  248 al pie—. El punto 13 se corrige devolviendo `/` a la composición pre-M1.
