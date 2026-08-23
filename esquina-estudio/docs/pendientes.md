@@ -111,3 +111,39 @@ porque §3 de la instrucción no las cubría.
   que se programa sobre el mismo mecanismo. Consecuencia que hay que aceptar:
   **el timing del toggle de idioma no se puede cronometrar** desde el agente;
   se verifica por derivación de las constantes y a ojo, del lado humano.
+
+## Abiertos al cerrar M2 (2026-08-23)
+
+- **[M2 · Diseño]** **El prefooter en fila no entra a 320 ni a 360.** El punto 6
+  pedía la frase a la izquierda y el bloque de contacto a la derecha, alineado
+  abajo. Los dos bloques tienen ancho mínimo propio —la frase, su palabra más
+  larga (146 px en castellano a 26 px); el bloque de contacto, su corte de línea
+  escrito, que por contrato no se deja al ancho del navegador— y la suma pide
+  328 px contra los 272 de caja útil a 320. Se resolvió con `flex-wrap`: **donde
+  entra va en fila (390, 414, 430) y donde no, el bloque baja solo** y queda como
+  estaba. Las alternativas eran bajar la frase de la marca a 18 px o partir un
+  corte de línea que es decisión de diseño; las dos parecían peores que apilar en
+  los dos anchos más chicos. Si la verificación humana quiere la fila también a
+  320, la decisión es de tipografía y hay que tomarla.
+- **[M2 · Diseño]** **El logo script no aparece en el footer de mobile.** Con él,
+  la línea del nivel 2 —`© 2024` + el crédito— se va a 335 px contra 272 de caja
+  útil a 320. El punto 7 enumera lo que lleva la fila de mobile y el logo no está
+  en esa lista, así que se ocultó debajo de 1024. En escritorio no cambia nada.
+- **[M2 · Acoplamiento]** **El alto del footer de home viaja como número.** `/`
+  entra en una pantalla porque el bloque del hero **resta** el alto del footer:
+  236 px en mobile y 164 en escritorio, escritos en `mobile-layout.ts` y en
+  `page.tsx`. No hay forma de medirlo desde el bloque —son archivos hermanos y el
+  layout tiene que salir del servidor—, así que es la misma convención que el
+  escritorio arrastra desde B2. **Si el footer cambia, hay que volver a medir**;
+  el chequeo es `docH === viewH` en `/` en los cinco anchos y los dos idiomas.
+- **[M2 · Método]** **La extensión de Chrome no estaba disponible**, así que las
+  mediciones de este sprint salieron de un banco propio sin dependencias: Chrome
+  `--headless=new` manejado por el DevTools Protocol sobre el `WebSocket` nativo
+  de Node. Resuelve el límite que arrastraban B4c y B4d —con la pestaña oculta no
+  corren `requestAnimationFrame` ni la carga diferida—, porque en headless la
+  página se pinta de verdad. Vive fuera del repo. Vale la pena considerar dejarlo
+  como herramienta del proyecto en el sprint que instale el harness.
+- **[M2 · Contenido]** El dataset de Sanity **ya tiene las ocho imágenes de la
+  Fun Gallery** cargadas (al 2026-08-23 la ruta renderiza la composición y no la
+  pantalla de vacío). La ficha de `CLAUDE.md` §5 decía «0 `funGalleryImage`» con
+  fecha 2026-08-19 y quedó vieja por contenido, no por código.
