@@ -2264,3 +2264,150 @@ problema de las banderas, el agente frenó, y la corregida cambió el orden a
 
 - **Commits:** `ec5f074` (F2) · `a0d1dbd` (F3) · `5342931` (F1) · `386fdfc`
   (F4), más el de este cierre.
+
+## B4d — Banderas reales (2026-08-22)
+
+**Qué pasó:** el set de banderas dibujado a mano se retiró entero y en su lugar
+entraron **SVG reales, vendorizados**, en escala de grises en reposo y a color
+en hover.
+
+- **Por qué, y por qué no era corregible.** B4c había corregido 44 países de
+  patrón y 4 de paleta, y aun así la hoja de contactos mostró que **el enfoque
+  no cerraba**: con 38 patrones geométricos para 196 países, ~15 % quedaba
+  directamente mal —Argelia, Bosnia, Chipre, Granada, Santa Lucía, RD del
+  Congo, Trinidad, Tanzania, Islas Marshall, Seychelles, Emiratos, Omán, Congo,
+  Letonia— y otro ~25 % apenas reconocible: todas las que llevan emblema. El
+  problema era **estructural, no de dibujos puntuales**. Un escudo o un texto no
+  se resuelven a 15 px de alto con geometría genérica, con ninguna técnica, así
+  que corregir las peores habría dejado otras aproximadas. Las banderas se
+  conservan porque las pidieron las clientas; lo que cambia es de dónde salen.
+
+- **El set, y cómo se eligió.** **`flag-icons` 7.5.0** (lipis), carpeta
+  `flags/4x3`, **licencia MIT confirmada leyendo el `LICENSE` del propio
+  paquete**, no la ficha de npm. Ficha completa de procedencia en
+  **`docs/banderas-set.md`**, y el texto de la licencia viaja con las copias en
+  `public/flags/LICENSE.txt`, que es lo que la MIT pide.
+
+  Se evaluó también **`country-flag-icons` 1.6.20** (también MIT, también
+  verificada leyendo su `LICENSE`), que tenía dos ventajas medibles: **903 KB
+  contra 2,4 MB** —su archivo más grande son 5,3 KB contra los 181 KB de
+  Serbia— y viene en **3:2**, más cerca de la caja de 1,6 que el 4:3. **Perdió
+  igual, y por el motivo que justifica el sprint entero**: sus emblemas están
+  simplificados hasta dejar de ser el emblema. Se comparó rasterizando los dos
+  sets lado a lado en 18 casos difíciles: el águila de México es un óvalo con
+  dos manchas, el sol de Argentina un círculo liso sin rayos ni cara, la esfera
+  armilar de Portugal un anillo con un punto, el dragón de Bután una ese blanca.
+  Cambiar aproximaciones propias por aproximaciones ajenas no era el trato.
+
+- **No es una dependencia, y esa es la regla.** `package.json` no se tocó. Se
+  bajó el tarball publicado, se verificó la licencia, se copiaron los 196
+  archivos que la lista usa y ahí terminó la relación con el paquete. Actualizar
+  el set en el futuro es repetir ese procedimiento a mano.
+
+- **El mapeo, y su verificación.** `countryFlagCodes.ts` es un
+  `Record<CountryOption, string>`: **un país sin código no compila**. Lo que el
+  tipo no puede garantizar es que el archivo exista, así que eso se verificó
+  aparte, **leyendo `contact.ts` y `countryFlagCodes.ts` como fuente y no una
+  copia**: los 196 nombres tienen entrada, los 196 códigos resuelven a un
+  archivo existente —**cero faltantes**—, **cero códigos duplicados** y **cero
+  SVG huérfanos** en `public/flags/`. Los once nombres particulares se chequearon
+  uno por uno contra el valor esperado, porque un error ahí no rompe nada: se ve
+  como la bandera de otro país. **11/11**: `DR Congo`→cd y `Congo`→cg (que son
+  los que se confunden), `Cote d'Ivoire`→ci, `Eswatini`→sz, `Czechia`→cz,
+  `Timor-Leste`→tl, `Cabo Verde`→cv, `North Macedonia`→mk, `Palestine`→ps,
+  `Taiwan`→tw, `Vatican City`→va.
+
+- **Peso.** **1 301 743 bytes** (1,24 MiB) en 197 archivos —196 SVG más el
+  `LICENSE.txt`—. El más grande es **`rs.svg` con 181 634 bytes**: el escudo
+  entero de Serbia, con corona y manto. Le siguen `bo.svg` (102 880) y `mx.svg`
+  (84 753). Son los tres desproporcionados del set y se reportan como tales;
+  ninguno se carga salvo que la fila entre en pantalla.
+
+- **El render: un archivo y un filtro.** `CountryFlag.tsx`, 63 líneas.
+  **`grayscale` de base y `grayscale-0` en el disparador**, con los mismos 150 ms
+  que tenía el set anterior. Antes eran **dos banderas apiladas cruzándose la
+  opacidad**; ahora la fila trae la mitad de los nodos. **Quién dispara el color
+  lo decide el consumidor**: en la lista el `group` de la fila, y en el valor
+  elegido el `group/contact-focus` del campo, con hover **y `focus-within`** —eso
+  es una mejora sobre el set viejo, que en el valor elegido iba siempre a color—.
+
+- **El encuadre, que era la decisión de diseño escondida.** La caja mide
+  **24 × 15** (relación 1,6) y el archivo es **4:3**. Las dos salidas honestas
+  eran `contain` —la bandera entera, 20 × 15, con 2 px de aire a cada lado, que
+  en una lista de 196 filas se lee como banderas de anchos distintos— y `cover`
+  —llena la caja, recorta 1,5 px arriba y 1,5 abajo de los 18 a los que escala,
+  el 16,7 % del alto—. Se eligió **`cover`**, y se verificó contra los casos
+  peores —Estados Unidos, Brasil, Nepal, Suiza, Vaticano, Qatar, Kenia, Bután,
+  Sri Lanka, Camboya, Omán, Eritrea— que no se pierde nada que haga a la lectura
+  de la bandera. **En ningún caso se deforma**: no hay un solo estiramiento no
+  proporcional en el set.
+
+- **Carga diferida.** `loading="lazy"` **no es un adorno**: el desplegable monta
+  las 196 filas de una, así que sin diferir abrirlo dispararía 196 descargas.
+  Medido en la build de producción: con las 196 filas montadas y `lazy` puesto,
+  **0 peticiones**; forzando `loading="eager"` sobre esos mismos nodos, **196**.
+  El `width`/`height` va también como atributo para reservar el lugar y que la
+  lista no salte mientras cargan.
+
+- **Fit de Contact, que era el riesgo declarado.** Los cinco números de la
+  instrucción, reproducidos exactos contra la vara de la Fase 0: la caja del
+  SVG **24 × 15**, la fila del selector **354**, el campo **376**, el bloque del
+  formulario **498 px a 1920** y su borde inferior en **682**. De los 196
+  rótulos **ninguno se trunca** (`scrollWidth` contra `clientWidth`, 0 casos), y
+  el más ancho sigue siendo «Saint Vincent and the Grenadines» con **302 px**,
+  el caso que B2.7 dejó documentado y resuelto partiendo el texto en dos líneas.
+
+- **La hoja de contactos.** Cuatro páginas de 1700 × 2404, los 196 países con
+  nombre, archivo y los dos estados lado a lado, en
+  **`C:/EsquinaWeb-capturas-banderas/`** (fuera del repo). Se compuso como en
+  B4c: **sin navegador**, rasterizando los SVG con `sharp` en el mismo encuadre
+  que usa el componente. La ruta temporal se borró antes del commit —con
+  `git add -f` + `git rm -f`, el precedente de B4c, porque `rm` está prohibido—
+  y `git status` quedó limpio.
+
+- **Líneas retiradas: 2 021.** `MonochromeCountryFlag.tsx` (1 707) y
+  `countryFlagColors.ts` (314), previo grep en verde: cero ocurrencias de
+  `MonochromeCountryFlag`, `countryFlagColors` y `COUNTRY_FLAG_COLORS` en
+  `src/`. Balance del sprint en código: **307 inserciones contra 2 039
+  borrados**.
+
+- **No-regresión, dicha con precisión.** **24 de los 32 altos re-medidos después
+  del cambio y los 24 idénticos a la vara**, con cero scroll horizontal: las
+  ocho rutas a **390 EN**, a **390 ES** —que son las que prueban que la
+  verificación de mobile en curso no se vio afectada— y a **1920 EN**. **Los 8
+  de 1920 ES no se re-midieron**: la extensión de Chrome se cayó a mitad de esa
+  tanda y no volvió a conectar. Lo que sí quedó verificado por diff es **el
+  alcance**: todo el código que B4d tocó son seis archivos, y `ContactForm` lo
+  importa **solo `/contact`**, `CountryFlag`/`countryFlagCodes` solo
+  `ContactForm`, y el cambio en `contact.ts` es **únicamente un comentario**. Las
+  otras siete rutas no tienen una línea distinta, y `/contact` a 1920 medía
+  **1664 en los dos idiomas** en la vara y volvió a medir 1664 en inglés.
+
+- **Desvíos y límites, dichos de frente.** **(1)** Los 8 altos de 1920 ES, arriba.
+  **(2)** **El conteo de peticiones al filtrar no se midió**, y el conteo al
+  abrir se midió por el mecanismo (0 con `lazy`, 196 forzando `eager`) y no por
+  cuántas filas entran en el viewport del scroller: con la pestaña **oculta**
+  Chrome no corre el ciclo de render, así que no dispara la carga diferida —el
+  mismo límite que B4c anotó para los temporizadores, ahora del lado de
+  `IntersectionObserver`—. **(3)** Por lo mismo, **el hover no se verificó en
+  vivo**; lo que sí se verificó es que las cuatro reglas existen en el CSS de
+  producción con el selector correcto (`.group-hover\:grayscale-0`,
+  `.group-hover\/contact-focus\:grayscale-0`,
+  `.group-focus-within\/contact-focus\:grayscale-0` y `.grayscale`), que el
+  `filter` computado en reposo es `grayscale(1)` y que la transición es
+  `filter` a `0.15s`. **(4)** Nota de contenido, no de código: `af.svg` trae el
+  tricolor con emblema (anterior a 2021) y `sy.svg` la bandera de tres estrellas
+  de 2025. Es lo que publica el set; queda anotado por si el estudio quiere
+  revisarlo.
+
+- **Verificación humana pendiente.** Revisar la hoja de contactos y confirmar
+  que **las 196 se ven correctas**, que es justamente lo que el set anterior no
+  lograba. Y la única concesión estética del cambio: **que el gris en reposo
+  cierre dentro del sitio** —antes era line-art, contornos; ahora son manchas de
+  gris con la forma correcta—; si no cierra, la alternativa es color pleno
+  siempre. Además: que el paso a color se sienta como antes, que abrir y filtrar
+  el desplegable no salte ni se sienta pesado, y que el formulario siga
+  funcionando.
+
+- **Commits:** `d03e659` (F1) · `29edb00` (F2) · `27d102e` (F3) · `5c5f5e0`
+  (F4), más el de este cierre.
