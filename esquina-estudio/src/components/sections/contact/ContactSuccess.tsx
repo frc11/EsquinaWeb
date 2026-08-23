@@ -112,11 +112,23 @@ export default function ContactSuccess() {
 
           {/*
             La bajada y los dos huecos ceden escala en mobile, y es lo que hace
-            que la pantalla entre entera en un teléfono bajo: entre el header
-            (128) y el footer (236) quedan 276 px útiles a 640 de alto, y con la
-            escala de escritorio el bloque pedía 349.
+            que la pantalla entre entera en un teléfono bajo.
+
+            **Los dos huecos van en `clamp(12px, 2.5svh, 20px)` desde M3/F3**, y
+            el término del medio es el que importa. Con los 20 px fijos de M2 la
+            cuenta a 320 × 640 daba justo: entre el header (128) y el footer
+            (236) quedaban 276 px útiles y el bloque pedía 271. Cuando M3/F2
+            llevó el footer a 244 —cada red pasó a tener su propia fila, con su
+            piso táctil de 44— esos 276 bajaron a 268 y el bloque **se pasó por
+            3 px**, que la sección absorbía scrolleando por dentro.
+
+            A 640 de alto el término medio da 16 px y los dos huecos devuelven
+            los 8 que hacían falta; de 800 para arriba el `clamp` toca el techo y
+            los huecos vuelven a medir 20, así que en los teléfonos de la matriz
+            —844 y 932 de alto— **no cambia nada**. Es el mismo recurso que ya
+            usa `TeamSection` para su ritmo vertical, no un patrón nuevo.
           */}
-          <p className="mx-auto mt-5 max-w-3xl font-body text-[15px] uppercase leading-[1.4] text-off-white/80 md:mt-8 md:text-[17px] md:leading-[1.45]">
+          <p className="mx-auto mt-[clamp(12px,2.5svh,20px)] max-w-3xl font-body text-[15px] uppercase leading-[1.4] text-off-white/80 md:mt-8 md:text-[17px] md:leading-[1.45]">
             {t.success.body}
           </p>
 
@@ -127,7 +139,7 @@ export default function ContactSuccess() {
             no tiene ninguno— y no repite lo que ya hace el menú: está para que
             no haga falta abrirlo.
           */}
-          <div className={`mt-5 md:mt-10 ${TOUCH_LINKS}`}>
+          <div className={`mt-[clamp(12px,2.5svh,20px)] md:mt-10 ${TOUCH_LINKS}`}>
             <HoverButton
               href="/"
               tone="dark"

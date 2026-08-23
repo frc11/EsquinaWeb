@@ -40,7 +40,12 @@ export default function ProjectDetailClient({
 
   return (
     <motion.main
-      className="min-h-screen overflow-visible"
+      // `svh` y no `screen` por lo mismo que el `<body>` (M3/F3): `min-h-screen`
+      // es `100vh`, o sea la pantalla con la barra del navegador oculta, y en un
+      // teléfono deja el documento más alto que lo que se ve. Acá la ficha
+      // siempre supera el viewport, así que el piso no se nota — pero era el
+      // último `100vh` del repo y la regla es no dejar ninguno.
+      className="min-h-svh overflow-visible"
       initial={{ opacity: 0 }}
       animate={
         isPreloaderDone

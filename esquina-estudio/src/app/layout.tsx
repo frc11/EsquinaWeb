@@ -75,7 +75,31 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${manropeFont.variable} antialiased`}>
-      <body className="bg-off-white text-off-black font-body min-h-screen">
+      {/*
+        `min-h-svh` y **no** `min-h-screen`, que es el punto 4 y el 13 de M3.
+
+        `min-h-screen` es `min-height: 100vh`, y en un teléfono `100vh` no es la
+        pantalla que se ve: es la pantalla **con la barra del navegador oculta**,
+        o sea el viewport grande. La visible mientras la barra está puesta es
+        `100svh`, entre 50 y 100 px más baja. Con `100vh` en el `<body>` el
+        documento quedaba más alto que la pantalla aunque su contenido midiera
+        exactamente `100svh`, y eso producía las dos cosas que se reportaron:
+        `/` se dejaba scrollear de más, y en `/contact/success` —donde el panel
+        oscuro mide `100svh` clavados— la franja sobrante mostraba **el fondo
+        off-white del propio body**, que es el blanco que aparecía debajo.
+
+        Demostrado en el banco: no se puede emular la barra del navegador, pero
+        forzando el mismo `min-height` que declara `100vh` con la barra oculta
+        (+72 px) las dos rutas pasan de `docH = 844` y `scrollY = 0` a
+        `docH = 916` y `scrollY = 72`, y la captura de la pantalla de éxito
+        muestra la franja clara al pie. Con `svh` eso no puede pasar **por
+        construcción**: el viewport chico es por definición el más bajo de los
+        tres, así que el `min-height` del body nunca supera lo que se ve.
+
+        Es además la regla que el propio repo ya tenía escrita —«nada de
+        `100vh`: `100svh`»— y este era el último lugar donde quedaba sin aplicar.
+      */}
+      <body className="bg-off-white text-off-black font-body min-h-svh">
         <script dangerouslySetInnerHTML={{ __html: PRELOADER_GATE }} />
         <RootClientShell>{children}</RootClientShell>
       </body>
