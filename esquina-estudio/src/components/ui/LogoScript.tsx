@@ -40,14 +40,21 @@ export default function LogoScript({
       <Image
         src={logoSrc}
         alt="ESQUINA ESTUDIO"
-        className={`${isFooter ? "h-20 w-auto" : "h-12 w-auto"}${isDark && isFooter ? " invert" : ""}`}
+        // El del footer baja a 48 px de alto debajo de 1024 (M4/F3). Es la
+        // altura del logo del header, o sea una medida que ya existe en el
+        // cromo y no una nueva: a 80 px el logo del pie quedaba mas alto que el
+        // de arriba —invirtiendo la jerarquia— y le costaba 32 px al alto del
+        // footer, que en un telefono de 640 se los saca al hero de `/`. De `lg`
+        // para arriba **no cambia nada**: sigue en 80.
+        className={`${isFooter ? "h-12 w-auto lg:h-20" : "h-12 w-auto"}${isDark && isFooter ? " invert" : ""}`}
         priority={!isFooter}
         // Los dos son cajas de alto fijo y ancho automatico, asi que su ancho
         // no cambia con el viewport: medidos, 146,3 px el del header y 120,5 el
-        // del footer. Los 196 px que declaraba el header eran de una version
+        // del footer en escritorio (72,3 en mobile, que es la misma proporcion
+        // al alto de 48). Los 196 px que declaraba el header eran de una version
         // anterior y en un telefono a DPR 2 pedian el corte de 640 en vez del
         // de 384 (M1/F7).
-        sizes={isFooter ? "120px" : "146px"}
+        sizes={isFooter ? "(min-width: 1024px) 120px, 73px" : "146px"}
       />
     </Link>
   );

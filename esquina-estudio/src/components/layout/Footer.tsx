@@ -24,16 +24,74 @@ const SOCIAL_LINKS = [
 const COPYRIGHT = "© 2024";
 
 /**
- * En qué fila de la grilla de mobile cae cada par de lugar **y cada red**. Va
- * como tabla de literales enteros porque Tailwind v4 busca los nombres de clase
- * como texto: `` `row-start-${index + 1}` `` no llegaría nunca al CSS.
+ * Dónde cae cada pieza en la grilla de mobile (M4/F3).
  *
- * Los dos consumidores comparten la tabla y no es casualidad: desde M3/F2 la
- * red de índice *n* tiene que caer en la **misma fila** que el par de lugar de
- * índice *n* —INSTAGRAM a la altura de BORN IN, LINKEDIN a la altura de
- * WORKING—. Si algún día se desacoplan, se desacopla también la alineación.
+ * Van como tablas de literales enteros porque Tailwind v4 busca los nombres de
+ * clase como texto: `` `row-start-${index + 1}` `` no llegaría nunca al CSS.
+ *
+ * # Por qué son dos tablas y no una
+ *
+ * Hasta M3 los lugares y las redes compartían tabla, y era a propósito: la red
+ * de índice *n* caía en la **misma fila** que el par de índice *n*. La columna
+ * derecha tiene ahora **tres** ítems —INSTAGRAM, LINKEDIN y `© 2024`— contra
+ * dos de la izquierda, así que emparejar por fila ya no se puede: **el criterio
+ * pasa a ser que las dos columnas terminen a la misma altura**.
+ *
+ * Se resuelve con la grilla y sin una sola medida nueva: las tres filas de
+ * arriba miden 44 px cada una —el piso de área táctil, que se aplica por fila—,
+ * la columna derecha las llena en orden, y el segundo par de lugar se manda a la
+ * **tercera** fila apoyado en su borde inferior (`self-end`). La segunda fila de
+ * la columna izquierda queda vacía y no importa: lo que tiene que coincidir es
+ * el borde de abajo, no el renglón.
+ *
+ * ```
+ *   fila 1   BORN IN / ARGENTINA          INSTAGRAM
+ *   fila 2   (vacía)                      LINKEDIN
+ *   fila 3   WORKING / WORLDWIDE ┐        © 2024
+ *                                └── los dos apoyados en el mismo borde
+ * ```
  */
-const MOBILE_ROW = ["max-lg:row-start-1", "max-lg:row-start-2"] as const;
+const MOBILE_PLACE_CELL = [
+  "max-lg:col-start-1 max-lg:row-start-1",
+  "max-lg:col-start-1 max-lg:row-start-3 max-lg:self-end",
+] as const;
+
+/** La columna derecha, de arriba abajo. `© 2024` toma la tercera fila aparte. */
+const MOBILE_SOCIAL_CELL = [
+  "max-lg:col-start-2 max-lg:row-start-1",
+  "max-lg:col-start-2 max-lg:row-start-2",
+] as const;
+
+/**
+ * El piso de área táctil, aplicado a mano a `© 2024`.
+ *
+ * `TOUCH_LINKS` alcanza al `<a>` que emite `HoverButton` y el copyright no es un
+ * enlace, así que sin esto su fila mediría 20 px y la columna derecha terminaría
+ * 24 px más arriba que la izquierda. No es un área táctil de verdad —no hay nada
+ * que tocar— sino la **misma unidad de fila** que usan las dos redes: es lo que
+ * hace que los tres ítems de la derecha tengan un solo ritmo.
+ */
+const MOBILE_COPYRIGHT_CELL =
+  "max-lg:col-start-2 max-lg:row-start-3 max-lg:flex max-lg:min-h-[44px] max-lg:items-center max-lg:justify-self-end";
+
+/**
+ * Las dos filas de abajo, cada una a lo ancho del footer.
+ *
+ * El crédito va **solo** y centrado, que es donde estaba (de 360 para arriba; a
+ * 320 la fila caía a `justify-between` porque `© 2024` no entraba al lado, y ese
+ * problema desapareció con el copyright mudado a la columna derecha: ahora
+ * centra exacto en los cinco anchos).
+ *
+ * El logo script cierra la composición **abajo a la derecha**. Va en su propia
+ * fila y no al lado del crédito, y es una medida: a 320 la caja útil es de 272
+ * px y los dos juntos piden 185,03 + 120,5 = 305,53 px sin contar el aire entre
+ * ellos. Es el mismo conflicto que en M2 dejó al logo fuera del footer de
+ * mobile; la salida es la fila propia.
+ */
+const MOBILE_CREDIT_CELL =
+  "max-lg:col-span-2 max-lg:row-start-4 max-lg:mt-4 max-lg:flex max-lg:justify-center";
+const MOBILE_LOGO_CELL =
+  "max-lg:col-span-2 max-lg:row-start-5 max-lg:mt-4 max-lg:flex max-lg:justify-end";
 
 /**
  * Gutter horizontal del chrome: alinea el footer con el Navbar. Sale del módulo
@@ -73,7 +131,7 @@ function SocialLinks({ tone }: { tone: "light" | "dark" }) {
       {SOCIAL_LINKS.map((link, index) => (
         <div
           key={link.label}
-          className={`flex max-lg:col-start-2 max-lg:justify-self-end ${MOBILE_ROW[index]} lg:contents`}
+          className={`flex max-lg:justify-self-end ${MOBILE_SOCIAL_CELL[index]} lg:contents`}
         >
           <HoverButton
             href={link.href}
@@ -146,20 +204,29 @@ function DevelopCredit({
  * script en home) a la derecha. **No cambió en M2**: los dos grupos siguen
  * siendo los mismos nodos y los mismos `gap`.
  *
- * # Mobile (< 1024): dos niveles (M2/F2, punto 7)
+ * # Mobile (< 1024): dos columnas alineadas abajo y dos filas al pie (M4/F3)
  *
  * ```
- *   NACIDO EN            INSTAGRAM
- *   ARGENTINA            LINKEDIN
+ *   NACIDO EN                        INSTAGRAM
+ *   ARGENTINA
+ *                                    LINKEDIN
  *   TRABAJANDO
- *   EN TODO EL MUNDO
- *   © 2024  HECHO POR develOP
+ *   EN TODO EL MUNDO                 © 2024
+ *
+ *              HECHO POR develOP
+ *                                 [logo script]   ← solo el footer claro
  * ```
  *
- * Arriba, los dos pares de lugar a la izquierda y las dos redes a la derecha;
- * debajo, el copyright y el crédito **uno al lado del otro**, a lo ancho. Antes
- * era una sola columna de cinco bloques apilados, que medía 488 px de alto: más
- * de la mitad de un teléfono de 844.
+ * Dos ítems a la izquierda, tres a la derecha pegados al gutter, y **los bordes
+ * inferiores de las dos columnas a la misma altura** —el criterio es ese y no la
+ * cantidad de renglones—. Debajo, el crédito solo y centrado, y en el footer de
+ * home el logo script cerrando abajo a la derecha. Cómo se consigue la
+ * alineación está en `MOBILE_PLACE_CELL`.
+ *
+ * Hasta M3 el copyright compartía la última línea con el crédito y las dos redes
+ * emparejaban fila con los dos pares de lugar. Antes de eso —M1— era una sola
+ * columna de cinco bloques apilados, que medía 488 px de alto: más de la mitad
+ * de un teléfono de 844.
  *
  * **Los pares de lugar van apilados y no uno al lado del otro**, y es una
  * medida: en castellano piden 71,58 + 121,83 px y con INSTAGRAM al costado dan
@@ -216,7 +283,16 @@ function InfoRow({
 
   return (
     <div
-      className={`grid w-full grid-cols-[auto_auto] items-start justify-between gap-x-4 gap-y-4 lg:flex lg:flex-row lg:justify-between lg:gap-x-12 lg:gap-y-0 ${align} ${TOUCH_LINKS} ${INFO_TYPE} ${leadingClass} ${textClass}`}
+      /*
+        `gap-y-0` y no `gap-y-4` desde M4/F3, y no es ahorro por ahorro: las tres
+        filas de arriba miden **44 px** cada una por el piso de área táctil, así
+        que entre dos renglones de texto de 20 px ya quedan 24 px de aire. Los
+        16 px de hueco encima de eso separaban de más y, con dos filas nuevas al
+        pie, engordaban el footer 64 px. El aire que sí hace falta —el que aparta
+        el crédito y el logo del bloque de las dos columnas— lo ponen los `mt-4`
+        de esas dos celdas, que es donde se ve.
+      */
+      className={`grid w-full grid-cols-[auto_auto] items-start justify-between gap-x-4 gap-y-0 lg:flex lg:flex-row lg:justify-between lg:gap-x-12 lg:gap-y-0 ${align} ${TOUCH_LINKS} ${INFO_TYPE} ${leadingClass} ${textClass}`}
     >
       {/*
         El grupo de la izquierda de escritorio. En mobile se declara
@@ -230,7 +306,7 @@ function InfoRow({
           // ser una tabla de dos entradas: el índice no se sale de rango.
           <div
             key={index}
-            className={`flex flex-col max-lg:col-start-1 ${MOBILE_ROW[index]} ${stackGap}`}
+            className={`flex flex-col ${MOBILE_PLACE_CELL[index]} ${stackGap}`}
           >
             <span className="whitespace-nowrap">{first}</span>
             <span className="whitespace-nowrap">{second}</span>
@@ -238,52 +314,43 @@ function InfoRow({
         ))}
 
         {/*
-          El nivel 3: ocupa las dos columnas y va en fila **siempre** en mobile.
-          De `lg` para arriba conserva las dos formas que tenía —en fila con el
-          `gap-x-12` del propio grupo para las rutas internas, apilado para
-          home— así que el escritorio no se mueve.
+          El copyright y el crédito **se separan en mobile** (M4/F3): el
+          copyright baja a la columna derecha como tercer ítem, debajo de
+          LINKEDIN, y el crédito se queda solo en su propia fila, centrado a lo
+          ancho del footer.
 
-          # El crédito va centrado, y desde 360 (M3/F2)
+          Por eso este envoltorio se declara `contents` debajo de 1024: sus dos
+          hijos tienen que ser **celdas propias** de la grilla, cada una con su
+          `col-start` / `row-start`. De `lg` para arriba conserva exactamente las
+          dos formas que tenía —en fila con el `gap-x-12` del propio grupo para
+          las rutas internas, apilado para home—, así que el escritorio no se
+          mueve.
 
-          La fila pedida es `© 2024` a la izquierda y el crédito **centrado en el
-          ancho del footer**. Se arma con una grilla de tres columnas
-          `[1fr auto 1fr]`: las dos laterales miden lo mismo, así que la del
-          medio queda exactamente en el centro. La tercera va vacía en mobile
-          —el logo script no entra, ver `HomeFooter`— y no importa: lo que
-          centra es que las laterales sean iguales, no que las dos tengan
-          contenido.
-
-          El `gap-x-0` de la grilla no es cosmética: con el `gap-x-4` heredado,
-          los dos huecos de 16 px salen del reparto de las columnas laterales y
-          a 360 dejaban 47,49 px por lado, menos que los 51,36 de `© 2024`. La
-          columna crecía y empujaba el crédito 3,87 px a la derecha —medido,
-          3,9—. Sin hueco el reparto vuelve a 63,49 y centra exacto. El aire
-          entre copyright y crédito no lo pone el `gap` sino la columna: quedan
-          12,1 px a 360 en inglés y 15,7 en castellano.
-
-          **Debajo de 360 no se puede, y está medido.** Para que el crédito
-          quede centrado, cada columna lateral tiene que medir
-          `(caja − crédito) / 2`. A 320 la caja útil es 272 y el crédito pide
-          185,03 px en inglés, o sea 43,49 px por lado; pero `© 2024` mide 51,36
-          y no entra en esos 43,49. Forzarlo empujaría el total a 287,75 contra
-          272 de caja: **desborde horizontal**, que es la regla dura del sprint.
-          En castellano el crédito es más corto (177,83) y falta menos —4,28 px
-          contra 7,88— pero tampoco entra.
-
-          Así que debajo de 360 la fila cae a `justify-between`: copyright a la
-          izquierda, crédito a la derecha, 35,6 px de aire entre los dos y cero
-          desborde. De 360 para arriba —360, 390, 414 y 430— centra exacto en
-          los dos idiomas.
+          **Y con eso se fue el corte de 360.** Hasta M3 la última línea llevaba
+          las dos cosas y el crédito solo podía centrarse a partir de 360: a 320
+          cada columna lateral de la grilla `[1fr auto 1fr]` medía
+          (272 − 185,03) / 2 = 43,49 px y `© 2024` pide 51,36, así que la fila
+          caía a `justify-between`. Con el copyright mudado, el crédito es lo
+          único que hay en su fila y **centra exacto en los cinco anchos**.
         */}
         <div
-          className={`flex max-lg:col-span-2 max-lg:row-start-3 max-lg:flex-row max-lg:items-center max-lg:justify-between max-lg:gap-x-4 min-[360px]:max-lg:grid min-[360px]:max-lg:grid-cols-[1fr_auto_1fr] min-[360px]:max-lg:items-center min-[360px]:max-lg:gap-x-0 ${
+          className={`max-lg:contents ${
             inlineCredit
               ? "lg:contents"
-              : `lg:flex-col lg:items-start ${stackGap}`
+              : `lg:flex lg:flex-col lg:items-start ${stackGap}`
           }`}
         >
-          <span className="whitespace-nowrap">{COPYRIGHT}</span>
-          {credit}
+          <span className={`whitespace-nowrap ${MOBILE_COPYRIGHT_CELL}`}>
+            {COPYRIGHT}
+          </span>
+          {/*
+            El envoltorio existe por lo mismo que el de las redes: `HoverButton`
+            **no expone la clase de su `<a>`** —el `className` que recibe va al
+            `<span>` de adentro— y el primitivo no se toca (`CLAUDE.md` §4.2),
+            así que sin un div propio no hay dónde colgar la celda.
+            `lg:contents` lo hace desaparecer arriba de 1024.
+          */}
+          <div className={`${MOBILE_CREDIT_CELL} lg:contents`}>{credit}</div>
         </div>
       </div>
 
@@ -508,7 +575,16 @@ function HomeFooter({ onDark = false }: { onDark?: boolean }) {
 
   return (
     <footer
-      className={`w-full border-none ${GUTTER} py-10 ${
+      /*
+        `py-6` debajo de 1024 y `py-10` de ahí para arriba (M4/F3). El relleno de
+        40 px estaba calibrado para un footer de **tres** filas; con las dos que
+        suman el crédito y el logo, la fila de info pasa de 164 a 256 px y esos
+        80 px de aire propio ya no caben en un teléfono bajo. Con 24 el footer
+        mide 304 px y `/` sigue entrando en una pantalla a 320 × 640 —el bloque
+        del hero se queda con 208 px y la frase pide 187—. **El escritorio no se
+        toca:** de `lg` para arriba sigue en 40.
+      */
+      className={`w-full border-none ${GUTTER} py-6 lg:py-10 ${
         onDark
           ? "absolute inset-x-0 bottom-0 z-[95] bg-off-black"
           : "bg-off-white"
@@ -520,15 +596,14 @@ function HomeFooter({ onDark = false }: { onDark?: boolean }) {
         stackGap="gap-y-0"
         align="lg:items-center"
         /*
-          El logo script cierra la composición ancha del escritorio y **no entra
-          en mobile**: el nivel 2 del footer nuevo pide 205,45 px de crédito más
-          58,2 de copyright, y con el logo al lado —72,3 px al alto de 48— la
-          línea se va a 335 contra 272 de caja útil a 320. El punto 7 enumera lo
-          que lleva la fila de mobile y el logo no está en esa lista. Arriba de
-          1024 no cambia nada.
+          El logo script cierra la composición: en escritorio a la derecha de la
+          fila, en mobile **abajo a la derecha, en su propia fila** (M4/F3).
+          M2 lo había sacado de mobile porque compartía línea con el crédito y
+          los dos juntos pedían 305,53 px contra 272 de caja útil a 320; en fila
+          propia el conflicto no existe y vuelve en los cinco anchos.
         */
         trailing={
-          <div className="hidden flex-shrink-0 lg:block">
+          <div className={`flex-shrink-0 ${MOBILE_LOGO_CELL} lg:block`}>
             <LogoScript
               size="sm"
               tone={onDark ? "dark" : "light"}

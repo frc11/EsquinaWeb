@@ -26,8 +26,9 @@ import { HOME_BLOCK_HEIGHT_MOBILE } from "@/lib/mobile-layout";
  * sustitución no tiene costo.
  *
  * El término de mobile vive aparte, en `HOME_BLOCK_HEIGHT_MOBILE`, porque su
- * footer es otro: desde M2/F2 la fila de info de mobile son **dos niveles** y
- * mide 236 px. Los dos son excluyentes (`lg` contra `max-lg`) y nunca compiten.
+ * footer es otro: desde M4/F3 son **dos columnas alineadas abajo más el crédito
+ * y el logo script en filas propias**, y mide 304 px. Los dos son excluyentes
+ * (`lg` contra `max-lg`) y nunca compiten.
  */
 const HOME_BLOCK_HEIGHT = "lg:h-[calc(100svh-var(--header-height)-164px)]";
 
