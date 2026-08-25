@@ -480,6 +480,29 @@ function StatementBand({ isContactPage }: { isContactPage: boolean }) {
  * El aire propio del asset a la izquierda (24,8 % del ancho) aloja «JOIN OUR
  * CLUB», que se superpone sin tocar la tinta. Solo se renderiza en `/contact`
  * (mockup de esa ruta); el resto de las rutas internas lo omite.
+ *
+ * # La composición de mobile es la misma del footer claro (M4/F4)
+ *
+ * Las dos bandas comparten `InfoRow`, así que el reparto nuevo —dos ítems a la
+ * izquierda, tres a la derecha pegados al gutter y los bordes inferiores de las
+ * dos columnas a la misma altura, con el crédito solo y centrado debajo— entra
+ * acá sin una línea propia. Lo que este footer **no** lleva es el logo script
+ * chico: el logo de esta banda es el gigante de arriba, que gobierna el alto y
+ * no se toca.
+ *
+ * **Verificado que la composición nueva no lo desacomoda** (cinco anchos, dos
+ * idiomas): el asset sigue montándose a ancho completo del viewport —320 × 95,5
+ * px a 320 y 430 × 128,3 a 430—, el borde inferior de la imagen y el borde
+ * superior del bloque de información siguen siendo **el mismo píxel**, y en
+ * `/contact` el bloque de «JOIN OUR CLUB» conserva su lugar en flujo normal
+ * debajo de la imagen. Cero desborde horizontal en las tres rutas medidas.
+ *
+ * **El relleno de abajo baja a 24 px en mobile** y se queda en 40 de `lg` para
+ * arriba. La banda ahora cierra con la línea del crédito, que arrastra 12 px de
+ * su caja táctil de 44: con `pb-10` quedaban 52 px de aire muerto al pie de la
+ * página, contra los 24 con que abre. Con 24 la banda es simétrica —el mismo
+ * ritmo que M4/F3 le dio al footer claro— y la fila de información pasa de 256 a
+ * 240 px, así que de los 28 px que sumó la fila nueva del copyright quedan 12.
  */
 function ScriptBand({ isContactPage }: { isContactPage: boolean }) {
   const { t } = useLocale();
@@ -518,7 +541,7 @@ function ScriptBand({ isContactPage }: { isContactPage: boolean }) {
         </div>
       )}
 
-      <div className={`${GUTTER} pb-10 pt-6`}>
+      <div className={`${GUTTER} pb-6 pt-6 lg:pb-10`}>
         <InfoRow
           tone="dark"
           leadingClass="leading-none"
