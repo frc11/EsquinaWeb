@@ -127,15 +127,16 @@ porque §3 de la instrucción no las cubría.
   corte de línea que es decisión de diseño; las dos parecían peores que apilar en
   los dos anchos más chicos. Si la verificación humana quiere la fila también a
   320, la decisión es de tipografía y hay que tomarla.
-- **[M2 · Diseño]** **El logo script no aparece en el footer de mobile.** Con él,
-  la línea de abajo —`© 2024` + el crédito— se va a 335 px contra 272 de caja
-  útil a 320. Se ocultó debajo de 1024 y **sigue oculto después de M3/F2**: la
-  composición nueva le da a esa fila un tercer lugar a la derecha, pero el logo
-  mide 120,5 × 80 px y no entra en ninguno de los cinco anchos sin desbordar. En
-  escritorio no cambia nada: ahí sigue cerrando la fila.
+- ~~**[M2 · Diseño]** **El logo script no aparece en el footer de mobile.**~~
+  **Cerrado en M4/F3: volvió.** El conflicto era compartir línea con el crédito
+  —los dos juntos piden 305,53 px contra 272 de caja útil a 320—, y la salida fue
+  darle **fila propia** al pie, a la derecha, en los cinco anchos. Baja a 48 px
+  de alto en mobile (la altura del logo del header). En escritorio no cambió
+  nada: ahí sigue cerrando la fila a 120,47 × 80.
 - **[M2 · Acoplamiento]** **El alto del footer de home viaja como número.** `/`
   entra en una pantalla porque el bloque del hero **resta** el alto del footer:
-  **244 px en mobile desde M3/F2** —eran 236— y 164 en escritorio, escritos
+  **304 px en mobile desde M4/F3** —eran 244 en M3 y 236 en M2— y 164 en
+  escritorio, escritos
   en `mobile-layout.ts` y en `page.tsx`. No hay forma de medirlo desde el bloque —son archivos hermanos y el
   layout tiene que salir del servidor—, así que es la misma convención que el
   escritorio arrastra desde B2. **Si el footer cambia, hay que volver a medir**;
@@ -192,3 +193,55 @@ porque §3 de la instrucción no las cubría.
   se movió ni se borró: el repo solo tiene el derivado procesado
   (`public/preloader-logo.mp4`, sin audio). Si hace falta rehacerlo, el comando es
   `ffmpeg -i <origen> -an -c:v copy -movflags +faststart`.
+
+## Abiertos al cerrar M4 (2026-08-24)
+
+- **[M4 · Diseño]** **El footer claro de mobile pasó de 244 a 304 px**, y eso lo
+  paga la pantalla de éxito en los teléfonos de **640 px de alto**. En
+  `/contact/success` el bloque de texto mide 262,89 px (inglés) / 241,89
+  (castellano) y el hueco libre entre el header y el footer bajó de 268 a 208, así
+  que a **320 × 640** el bloque **se desplaza dentro del panel**: 55 px en inglés
+  y 34 en castellano. La ruta sigue midiendo **una pantalla exacta**
+  (`docH === viewH`, verificado en los cinco anchos y los dos idiomas) y el
+  desplazamiento interno es un comportamiento que la sección ya implementa a
+  propósito desde M2/F3; pero el vínculo `BACK TO HOME` queda debajo del pliegue
+  hasta que se desliza. **De 800 de alto para arriba no hay desplazamiento
+  interno**: 0 px en 360 × 800, 390 × 844, 414 × 896 y 430 × 932, en los dos
+  idiomas.
+  La causa es aritmética y no tiene arreglo dentro del alcance de M4: con el logo
+  script de vuelta, el footer no puede bajar de 304 sin sacarle la fila, y el
+  presupuesto de un viewport de 640 es 249. Si en el teléfono molesta, las
+  palancas de una línea son (a) bajar el piso del `clamp` de los dos huecos de
+  `ContactSuccess` —el mismo recurso que M3/F3 usó por lo mismo—, (b) achicar el
+  logo del footer por debajo de 48 px, o (c) esconderlo debajo de 360. **Ninguna
+  se tomó porque las tres son decisiones de diseño.**
+- **[M4 · Diseño]** **La columna izquierda del footer queda con un hueco
+  grande.** El criterio pedido es que las dos columnas terminen a la misma
+  altura, y como la derecha tiene tres ítems y la izquierda dos, el segundo par
+  de lugar baja hasta apoyarse en el borde de abajo: entre `ARGENTINA` y
+  `WORKING` quedan 52 px. Es exactamente lo que pide la alineación de bordes
+  inferiores, pero es el efecto visible de la decisión y conviene mirarlo en el
+  teléfono. Efecto secundario que sí queda bien: cada ítem de la derecha cae
+  **centrado contra el par de la izquierda** —`© 2024` a 0 px del centro de
+  `WORKING / WORLDWIDE`, `INSTAGRAM` a 2 px del de `BORN IN / ARGENTINA`—.
+- **[M4 · Diseño]** **El logo del footer bajó a 48 px de alto en mobile.** Es la
+  altura del logo del header, o sea una medida que ya existía en el cromo, y sale
+  de dos razones: a 80 px el logo del pie quedaba **más alto que el de arriba**,
+  invirtiendo la jerarquía, y le costaba 32 px al alto del footer, que en un
+  teléfono de 640 se los saca al hero de `/`. Si en la mano se ve chico, es una
+  clase en `LogoScript.tsx` — pero subirlo obliga a volver a medir los dos
+  números de `mobile-layout.ts`.
+- **[M4 · Diseño]** **El relleno vertical de los dos footers bajó a 24 px en
+  mobile** (eran 40 en el claro y 40 abajo en la banda oscura). Estaba calibrado
+  para una fila de información de tres renglones; con cinco, esos 80 px de aire
+  propio ya no caben en un teléfono bajo. De `lg` para arriba **no cambió nada**.
+- **[M4 · Verificación]** **Lo que no se puede medir desde el banco** y queda para
+  el teléfono: si el giro del ícono se siente coordinado con el panel (los
+  números —200 ms, retardo 0 al abrir y 300 al cerrar— están verificados en el
+  CSS computado, pero la sensación es humana), y si la composición de los dos
+  footers cierra visualmente con el logo donde quedó.
+- **[M4 · Método]** **El banco de medición de M2/M3 se volvió a construir desde
+  cero**, porque vive fuera del repo: Chrome `--headless=new` manejado por el
+  DevTools Protocol sobre el `WebSocket` nativo de Node, sin dependencias. Es la
+  tercera vez que se reconstruye. Sigue valiendo la pena considerar dejarlo como
+  herramienta del proyecto en el sprint que instale el harness.

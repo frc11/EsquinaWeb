@@ -4,7 +4,7 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 
 **Regla de lectura:** este documento separa **ESTADO** (verificado contra el código en HEAD) de **PLAN** (decidido, todavía no ejecutado). No trates el PLAN como código existente, y no «corrijas» el código hacia versiones viejas de este archivo.
 
-Última sincronización: **2026-08-23** (sprint **M3**: el preloader nuevo y las quince correcciones); antes, 2026-08-23 (sprint **M2**: las catorce correcciones de mobile y el cierre de la adaptación); antes, 2026-08-22 (sprint **B4d**: el set de banderas dibujado a mano se retira y entran SVG reales vendorizados, en gris por defecto y a color en hover); antes, 2026-08-22 (sprint **B4c**: timing del toggle, limpieza de dependencias y corrección del set de banderas); 2026-08-22 (sprint **M1**, adaptación mobile); 2026-08-22 (microsprint B4b, refinamiento del toggle de idioma); **2026-08-21** (cierre de B4, idioma EN/ES, y con él el cierre de la ronda); antes de eso, 2026-08-20 (B3.4 + B3.4b, rediseño de `/services`) y 2026-08-15 (Bloque 1) sobre la auditoría completa `docs/reportes/2026-08-13-auditoria-completa.md` (HEAD `2565d01`). Las secciones no tocadas por B3.4 ni por B4 siguen reflejando esa auditoría. Antes de ejecutar cualquier sprint: leer `docs/plan-maestro.md` y la última entrada de `docs/bitacora.md`. Ante conflicto entre este archivo y el plan maestro, **manda el plan maestro**.
+Última sincronización: **2026-08-24** (sprint **M4**: el ícono único del menú, el estado activo del menú y los dos footers de mobile); antes, 2026-08-23 (sprint **M3**: el preloader nuevo y las quince correcciones); antes, 2026-08-23 (sprint **M2**: las catorce correcciones de mobile y el cierre de la adaptación); antes, 2026-08-22 (sprint **B4d**: el set de banderas dibujado a mano se retira y entran SVG reales vendorizados, en gris por defecto y a color en hover); antes, 2026-08-22 (sprint **B4c**: timing del toggle, limpieza de dependencias y corrección del set de banderas); 2026-08-22 (sprint **M1**, adaptación mobile); 2026-08-22 (microsprint B4b, refinamiento del toggle de idioma); **2026-08-21** (cierre de B4, idioma EN/ES, y con él el cierre de la ronda); antes de eso, 2026-08-20 (B3.4 + B3.4b, rediseño de `/services`) y 2026-08-15 (Bloque 1) sobre la auditoría completa `docs/reportes/2026-08-13-auditoria-completa.md` (HEAD `2565d01`). Las secciones no tocadas por B3.4 ni por B4 siguen reflejando esa auditoría. Antes de ejecutar cualquier sprint: leer `docs/plan-maestro.md` y la última entrada de `docs/bitacora.md`. Ante conflicto entre este archivo y el plan maestro, **manda el plan maestro**.
 
 ## 1. Proyecto y stack — ESTADO
 
@@ -128,28 +128,51 @@ era `hidden lg:block`.
    (bloque de escritorio `hidden lg:flex`, bloque de mobile `lg:hidden`); nunca
    se ven las dos. Con eso el disparador `measureKey` del módulo del indicador
    quedó sin consumidores y se borró.
-4. **Un solo botón abre y cierra**, en la misma ranura de 44 × 44. El ícono son
+4. **Un solo botón abre y cierra, y desde M4/F1 un solo dibujo.** El ícono son
    **tres rayas idénticas** de 24 × 2 px con 5 px de separación —medidas: caen
-   en las filas 56, 63 y 70, las tres enteras— y la cruz son dos reglas de
-   30 × 2 px giradas ±45° sobre el mismo centro. Las tres rayas de M1 eran de
-   1,5 px y caían en medios píxeles distintos, así que una se veía más gruesa;
-   y la tercera medía 16 y no 24.
+   en las filas 56, 63 y 70, las tres enteras—, y al abrirse **esas mismas
+   rayas** se convierten en cruz: la de arriba y la de abajo viajan 7 px hasta
+   el centro de la caja de 24 y giran ±45° hasta cruzarse en (12, 12), y la del
+   medio se desvanece. La cruz mide 18,38 × 18,38 px de caja y el botón sigue
+   siendo de 44 × 44. Hasta M3 había **dos dibujos distintos** —tres rayas de 24
+   cerrado, dos reglas de 30 abierto—, así que el ícono cambiaba de identidad en
+   vez de transformarse. La ventana es la del cromo y no una nueva: 200 ms con
+   retardo 0 al abrir y 300 al cerrar (ver el punto 5 de M3 más abajo), así que
+   el ícono acompaña al panel. Con `prefers-reduced-motion` la transición se
+   apaga entera (`transition-property: none`) y el cambio es inmediato.
 5. **`/` entra en una pantalla también en mobile.** El bloque del hero resta el
    alto del footer, igual que en escritorio: `HOME_BLOCK_HEIGHT_MOBILE` en
-   `mobile-layout.ts`. El número es **244 px** desde M3/F2 —eran 236 en M2— y
-   está medido en los cinco anchos y los dos idiomas; si el footer cambia, el
-   número cambia.
-6. **La fila de info del footer son tres filas en mobile** (reordenada en
-   M3/F2): `BORN IN / ARGENTINA` con **INSTAGRAM a su misma altura y pegado al
-   borde derecho**, `WORKING / WORLDWIDE` con **LINKEDIN** igual, y abajo
-   `© 2024` a la izquierda con el crédito **centrado** —exacto de 360 para
-   arriba: 0,0 px de desvío medidos en 360, 390, 414 y 430 en los dos idiomas;
-   a 320 no entra centrado y la fila cae a `justify-between`—. Cada red es su
-   propia celda, que es lo que la pone a la altura de su par y contra el borde. Se arma con **una grilla de dos columnas
-   y `display: contents`** sobre los dos grupos de escritorio, así que el mismo
-   árbol da los dos repartos. La tipografía baja a 15 px debajo de 1024 (a 17 la
-   línea del nivel 2 pedía 271,65 px contra 272 de caja útil a 320). **El logo
-   script no va en mobile**: con él la línea de abajo se iba a 335 px.
+   `mobile-layout.ts`. El número es **304 px** desde M4/F3 —eran 244 en M3 y 236
+   en M2— y está medido en los cinco anchos y los dos idiomas; si el footer
+   cambia, el número cambia. Lo mismo `HOME_FOOTER_CLEARANCE`, que consume
+   `/contact/success`.
+6. **El footer de mobile son dos columnas alineadas abajo más dos filas al pie**
+   (M4/F3, sobre la reordenación de M3/F2): a la izquierda los dos pares de
+   lugar, a la derecha **INSTAGRAM, LINKEDIN y `© 2024`** pegados al gutter, y
+   **los bordes inferiores de las dos columnas a la misma altura** —el criterio
+   es ese y no la cantidad de renglones—; debajo, el crédito de develOP solo y
+   centrado, y en el footer claro **el logo script cerrando abajo a la
+   derecha**. La alineación sale de la grilla y no de una medida: las tres filas
+   de arriba miden 44 px por el piso de área táctil, la columna derecha las
+   llena en orden y el segundo par de lugar se manda a la tercera fila apoyado
+   en su borde inferior (`self-end`), dejando vacía la segunda de la izquierda.
+   Medido: **delta 0,00 px** y **0,00 px de gutter** en los cinco anchos y los
+   dos idiomas. Se arma con **una grilla de dos columnas y `display: contents`**
+   sobre los grupos de escritorio, así que el mismo árbol da los dos repartos.
+   La tipografía baja a 15 px debajo de 1024. **El logo script volvió a mobile
+   en M4/F3**, en fila propia y a 48 px de alto —la altura del logo del
+   header—: M2 lo había sacado porque compartía línea con el crédito y los dos
+   juntos pedían 305,53 px contra 272 de caja útil a 320. Con el copyright
+   mudado a la columna derecha desapareció también el corte de 360: el crédito
+   centra exacto en los cinco anchos.
+6b. **El menú abierto marca la sección actual** (M4/F2): subrayado **solo** en el
+   ítem de la ruta activa, ninguno en `/` —home no es ítem del menú, se entra
+   por el logo— y por prefijo en las subrutas (`/work/[slug]` marca WORK,
+   `/contact/success` marca CONTACT US). Sale del **mismo cálculo** que la
+   barrita del indicador de escritorio, así que los dos repartos no pueden
+   discrepar. El estado se anuncia con un sufijo `sr-only` dentro de los hijos
+   del `HoverButton` y no con `aria-current`: el primitivo no expone su `<a>` y
+   no se toca (§4.2).
 7. **La franja del prefooter es una fila también en mobile**, con el bloque de
    contacto **alineado abajo** —a la altura de la última línea de la frase— y en
    la escala de cuerpo (17/21, la misma proporción 0,65 que el escritorio usa
@@ -227,7 +250,7 @@ era `hidden lg:block`.
 
 ## 6. Primitivos compartidos y contratos frágiles — ESTADO
 
-- **Mobile — `src/lib/mobile-layout.ts` y `src/lib/use-media-query.ts` (M1).** Los dos son únicos de su clase y están documentados en §2b: el primero lleva el gutter del cromo, el piso de área táctil y la nota sobre `sizes`; el segundo es **el** hook de media queries, del que ya cuelga `usePrefersReducedMotion`. Cualquier cosa nueva que necesite preguntar por el ancho desde JavaScript se cuelga de ahí; el layout, en cambio, se resuelve con variantes de Tailwind. **M2 le sumó dos medidas al primero**, las dos como clases enteras: `HOME_BLOCK_HEIGHT_MOBILE` (el alto del bloque del hero de `/` en mobile, que resta el alto del footer) y `HOME_FOOTER_CLEARANCE` (el hueco que ocupa ese footer y que `/contact/success` necesita porque ahí va superpuesto). **Desde M3/F2 el número de mobile es 244 y no 236**: cada red pasó a tener su propia fila y el piso de área táctil de 44 px se aplica ahora dos veces donde antes se aplicaba una. Los dos números son el alto real del `HomeFooter` en cada rango y **se verifican midiendo**, no se deducen.
+- **Mobile — `src/lib/mobile-layout.ts` y `src/lib/use-media-query.ts` (M1).** Los dos son únicos de su clase y están documentados en §2b: el primero lleva el gutter del cromo, el piso de área táctil y la nota sobre `sizes`; el segundo es **el** hook de media queries, del que ya cuelga `usePrefersReducedMotion`. Cualquier cosa nueva que necesite preguntar por el ancho desde JavaScript se cuelga de ahí; el layout, en cambio, se resuelve con variantes de Tailwind. **M2 le sumó dos medidas al primero**, las dos como clases enteras: `HOME_BLOCK_HEIGHT_MOBILE` (el alto del bloque del hero de `/` en mobile, que resta el alto del footer) y `HOME_FOOTER_CLEARANCE` (el hueco que ocupa ese footer y que `/contact/success` necesita porque ahí va superpuesto). **Desde M4/F3 el número de mobile es 304**: fue 236 en M2, 244 en M3 —cada red pasó a tener su propia fila y el piso táctil de 44 px se aplicó dos veces donde antes una— y ahora 304, porque el copyright se mudó a la columna derecha (el crédito se quedó solo en su fila) y el logo script volvió al pie en fila propia. Los dos números son el alto real del `HomeFooter` en cada rango y **se verifican midiendo**, no se deducen.
 - **`HoverButton`**: **11** call sites en 5 archivos (Navbar 4, Footer 4, ContactForm 1, ContactSuccess 1, ServicePackSection 1). *(M2 sumó dos: `CONTACT US` del menú de mobile y el vínculo de salida de la pantalla de éxito.)* *(Corregido en B4: este archivo decía 10 en 5 e incluía a Hero, que no lo usa.)* **B4c le sacó tres props huérfanas**: `blend`, que se quedó sin llamador cuando `/fun-gallery` dejó de tener cromo superpuesto en B3.3, y `underlineDraw` / `underlineDrawDelay`, cuyos consumidores —el CTA del Hero y el botón DISCOVER de `ServicesIntro`— desaparecieron en B2 y B3.4. Las props que quedan son `href`, `className`, `external`, `as`, `tone`, `underline`, `tightUnderline`, `balancedPadding` y `onClick`. **No define font-size**: cada consumidor porta el suyo. `FunGallery.tsx` **no** lo importa. Tocarlo es global: no modificarlo desde un sprint de sección. **Lo que no sabe hacer:** subrayado que aparezca en hover — es un booleano fijo, y atarlo a un estado no sirve porque su relleno negro sube en el mismo gesto y taparía la línea. Los dos links de LATEST PROJECTS resuelven eso con una línea propia, local a esa sección; **no es un primitivo paralelo** y no se promueve a uno sin decisión.
 - **`RevealOnScroll`**: **1** consumidor (TeamSection ×4), gateado por preloader. B3.4 se llevó el otro (`ServiceItem`).
 - **Indicador de carga de imágenes — `src/components/ui/ImageLoadIndicator.tsx` (M3/F5). Es el único del repo y no se duplica.** Un hook (`useImageLoad`) y un anillo monocromo de 1,5 px en `currentColor`, sin librerías: el giro lo pone `animate-spin` de Tailwind y `motion-reduce:animate-none` resuelve `prefers-reduced-motion` **en el CSS**, sin preguntarle nada a JavaScript. Lo comparten los tres lugares que lo piden: la grilla de Work, las fichas de proyecto y Team. Dos contratos: **(1)** el indicador **no se muestra hasta pasados 120 ms** —una imagen en caché resuelve en el primer o segundo cuadro y mostrarlo antes solo aporta parpadeo; medido, 0 de 152 cuadros con el anillo visible sobre caché caliente— y **(2)** el estado de «listo» lo pueden dar `onLoad`, `onError` o un tope de 15 s, las tres independientes, así que no hay rama en la que el anillo sobreviva a la imagen. El contenedor tiene que ser `position: relative`.
@@ -361,7 +384,19 @@ era `hidden lg:block`.
 
 Ronda de devoluciones de las clientas (fuente: `Final.pdf`, 2026-08-13). **B1 Fundación** (docs y limpieza) → **B2 Devoluciones visuales** sobre lo existente (home, menú 17/0, footer nuevo global, Team, Work grid 5:4, Contact compacto) → **B3 Rediseños** (Fun Gallery con schema propio + Services con sidebar/spy; arrancó con la sonda de transparencia y cerró con B3.4b) → **B4 Idioma EN/ES** (toggle en header, diccionario, consumo bilingüe de Sanity). **La ronda está cerrada**: los cuatro bloques se ejecutaron. Detalle, decisiones cerradas y estado: `docs/plan-maestro.md`; lo que quedó abierto, en `docs/pendientes.md`.
 
-Después de M2 se ejecutó **M3 — Preloader nuevo y quince correcciones** (2026-08-23, nueve fases): el preloader pasa a ser el video del logo que pasaron las clientas y se arregla de raíz el orden de aparición (§3); los tres footers reordenan mobile; se elimina el scroll sobrante de `/` y de la pantalla de éxito, que resultó ser el `100vh` del `<body>` (§7); el menú de mobile coordina su cambio de tono con el panel y centra sus ítems; entra el indicador de carga de imágenes (§6); `/services` estrena la cuadrícula 2 × 2 del cierre; el selector de países gana búsqueda por alias, sin tildes y en los dos idiomas; y la galería agranda el objeto antes de navegar en touch. Detalle y mediciones en la entrada de `docs/bitacora.md`.
+Después de M3 se ejecutó **M4 — Ajustes de footer y menú** (2026-08-24, cuatro
+ajustes en cuatro fases): el ícono del menú pasa a ser **uno solo** —tres rayas
+que giran a cruz, acompañando al panel—; el menú abierto **subraya la sección
+actual** y la anuncia, con `/` sin ningún ítem marcado porque home se entra por
+el logo; y los **dos footers de mobile** toman la composición de dos columnas
+alineadas por el borde inferior con `© 2024` como tercer ítem de la derecha, el
+crédito solo y centrado, y —en el claro— el **logo script de vuelta**, abajo a la
+derecha y en fila propia. El footer claro pasa de 244 a 304 px y el oscuro suma
+12; el escritorio no se movió (32 de 32 altos idénticos) y el scroll horizontal
+sigue en cero en las 80 combinaciones. Detalle y mediciones en la entrada de
+`docs/bitacora.md`.
+
+Antes de eso, después de M2, se ejecutó **M3 — Preloader nuevo y quince correcciones** (2026-08-23, nueve fases): el preloader pasa a ser el video del logo que pasaron las clientas y se arregla de raíz el orden de aparición (§3); los tres footers reordenan mobile; se elimina el scroll sobrante de `/` y de la pantalla de éxito, que resultó ser el `100vh` del `<body>` (§7); el menú de mobile coordina su cambio de tono con el panel y centra sus ítems; entra el indicador de carga de imágenes (§6); `/services` estrena la cuadrícula 2 × 2 del cierre; el selector de países gana búsqueda por alias, sin tildes y en los dos idiomas; y la galería agranda el objeto antes de navegar en touch. Detalle y mediciones en la entrada de `docs/bitacora.md`.
 
 Antes de eso, después de **M1**, **B4c** y **B4d**, se ejecutó **M2 — Correcciones de mobile y cierre** (2026-08-23, cinco fases): las catorce devoluciones de la verificación humana de M1. Diez de mobile —el menú entero, el ícono, el toggle al costado, la cruz, `/` en una pantalla, el prefooter y el footer reordenados, la galería más grande y en grilla, la pantalla de éxito—, dos de escritorio —el footer transparente de `/contact/success` y el header de `/`, que era una **regresión** de M1 y no una decisión— y dos que tocan a los dos —el subrayado del idioma al cargar y la salida de la pantalla de éxito—. Detalle y mediciones en la entrada de `docs/bitacora.md`.
 
