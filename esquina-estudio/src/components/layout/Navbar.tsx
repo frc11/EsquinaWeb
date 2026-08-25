@@ -150,6 +150,30 @@ function isHomePath(pathname: string) {
   return pathname === "/";
 }
 
+/**
+ * El estado activo **anunciado**, no solo dibujado (M4/F2).
+ *
+ * El subrayado es visual y un lector de pantalla no lo ve. Lo natural seria
+ * `aria-current="page"` sobre el `<a>`, pero el `<a>` lo emite `HoverButton` y
+ * no se puede alcanzar desde afuera: el `className` que recibe va al `<span>`
+ * de adentro y el primitivo no se toca (`CLAUDE.md` §4.2). Un sufijo
+ * visualmente oculto viaja **dentro** de los hijos, o sea adentro del ancla, y
+ * se anuncia con el rotulo: «WORK, current page».
+ *
+ * No afecta al dibujo: `sr-only` lo saca del flujo con una caja de 1 px, asi
+ * que el ancho del rotulo —y con el el subrayado, que se estira a la caja— no
+ * se mueve.
+ */
+function CurrentPageHint({ active }: { active: boolean }) {
+  const { t } = useLocale();
+
+  if (!active) {
+    return null;
+  }
+
+  return <span className="sr-only">, {t.nav.currentPage}</span>;
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const { t } = useLocale();
@@ -166,7 +190,20 @@ export default function Navbar() {
   // resto de las rutas claras. La única ruta oscura que queda es
   // `/contact/success`.
   const isDarkRoute = pathname === "/contact/success";
-  const activeDesktopHref: DesktopNavHref | null = isPathActive(
+  /**
+   * La ruta marcada, y **es una sola para los dos repartos** (M4/F2). El
+   * escritorio la pinta con la barrita del indicador y el menu de mobile con el
+   * subrayado del item; que salga del mismo calculo es lo que garantiza que los
+   * dos digan lo mismo en las ocho rutas.
+   *
+   * `isPathActive` cubre las subrutas por prefijo, asi que `/work/matsu` marca
+   * `WORK` y `/contact/success` marca `CONTACT US`. Cualquier subruta futura
+   * entra por el mismo criterio, sin tabla nueva.
+   *
+   * En `/` devuelve `null` **a proposito**: home no es un item del menu —se
+   * entra por el logo—, asi que ahi no va ninguno subrayado.
+   */
+  const activeNavHref: DesktopNavHref | null = isPathActive(
     visualPathname,
     "/contact",
   )
@@ -247,8 +284,8 @@ export default function Navbar() {
    */
   const measureTarget = useCallback((): IndicatorMeasure | null => {
     const desktopNav = desktopNavRef.current;
-    const activeLink = activeDesktopHref
-      ? desktopLinkRefs.current[activeDesktopHref]
+    const activeLink = activeNavHref
+      ? desktopLinkRefs.current[activeNavHref]
       : null;
     const logo = desktopLogoRef.current;
     const baselineLink = desktopLinkRefs.current["/work"];
@@ -279,7 +316,7 @@ export default function Navbar() {
     }
 
     return measureTabIndicator(activeLink, navRect);
-  }, [activeDesktopHref, visualPathname]);
+  }, [activeNavHref, visualPathname]);
 
   /**
    * Lo que se observa para remedir sin que cambie la ruta: los cinco tabs y el
@@ -528,15 +565,27 @@ export default function Navbar() {
                   `CONTACTANOS`, que medía 348,6, era el que obligaba a bajar a
                   34 en M1 y ya no está en la lista.
                 */}
+                {/*
+                  **El subrayado marca la seccion actual, y solo esa** (M4/F2).
+                  Hasta M3 los cinco items lo llevaban puesto —`underline` es
+                  `true` por defecto en `HoverButton`—, asi que el menu abierto
+                  no decia en que pagina estabas: cinco lineas iguales no
+                  distinguen nada. Ahora la linea es el estado.
+
+                  El escritorio **no se toca**: alla el estado lo dice la
+                  barrita del indicador, que se mide aparte y sigue igual.
+                */}
                 <div className="flex flex-col items-center gap-1 text-center">
                   {NAV_LINKS.map((link) => (
                     <HoverButton
                       key={link.href}
                       href={link.href}
                       tone="dark"
+                      underline={activeNavHref === link.href}
                       className="font-display text-[40px] uppercase leading-[48px] sm:text-[48px] sm:leading-[56px]"
                     >
                       {t.nav[link.key]}
+                      <CurrentPageHint active={activeNavHref === link.href} />
                     </HoverButton>
                   ))}
                 </div>
@@ -545,11 +594,14 @@ export default function Navbar() {
                   <HoverButton
                     href={CONTACT_LINK.href}
                     tone="dark"
-                    underline
+                    underline={activeNavHref === CONTACT_LINK.href}
                     tightUnderline
                     className="font-body text-[17px] font-medium uppercase tracking-normal"
                   >
                     {t.nav.contact}
+                    <CurrentPageHint
+                      active={activeNavHref === CONTACT_LINK.href}
+                    />
                   </HoverButton>
                 </div>
               </div>

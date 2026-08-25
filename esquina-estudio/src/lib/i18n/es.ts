@@ -33,6 +33,7 @@ export const ES: Dictionary = {
     openMenu: "Abrir menú",
     closeMenu: "Cerrar menú",
     logoHome: "ESQUINA ESTUDIO, ir al inicio",
+    currentPage: "página actual",
   },
 
   footer: {

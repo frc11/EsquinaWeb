@@ -58,6 +58,15 @@ export interface Dictionary {
     readonly closeMenu: string;
     /** Nombre accesible del logo, que es el link a home. */
     readonly logoHome: string;
+    /**
+     * Sufijo que anuncia el item activo del menu de mobile a un lector de
+     * pantalla (M4/F2). Va como texto escondido y no como `aria-current`
+     * porque `HoverButton` no expone el `<a>` que emite —el `className` que
+     * recibe va al `<span>` de adentro— y el primitivo no se toca
+     * (`CLAUDE.md` §4.2). Un texto visualmente oculto lo anuncia igual y no
+     * depende de que la tecnologia de asistencia soporte el atributo.
+     */
+    readonly currentPage: string;
   };
 
   readonly footer: {

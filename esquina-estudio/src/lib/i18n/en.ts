@@ -21,6 +21,7 @@ export const EN: Dictionary = {
     openMenu: "Open menu",
     closeMenu: "Close menu",
     logoHome: "ESQUINA ESTUDIO home",
+    currentPage: "current page",
   },
 
   footer: {
