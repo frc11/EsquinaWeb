@@ -3154,3 +3154,304 @@ de los ocho del dataset.
 - **La cuadrícula de LATEST PROJECTS**, que es un cambio de escala fuerte.
 - **`/` y `/contact/success` en un teléfono real**, con la barra del navegador
   entrando y saliendo: es lo único que puede confirmar los puntos 4, 13 y 9.
+
+---
+
+## M4 — Ajustes de footer y menú (2026-08-24)
+
+Cuatro ajustes, cuatro fases, un commit cada una, más el de documentación.
+Ejecutado sobre `main`, sin `push`, sin deploy y sin tocar Sanity.
+
+**Puertas:** `lint` 0 y `build` 0 en la línea base y al cierre, con el servidor
+bajado. Tabla de rutas idéntica.
+
+**No-regresión al cierre:**
+
+- **Escritorio: 32 de 32 altos idénticos a la línea base** (ocho rutas × 1920 y
+  1366 × dos idiomas). El footer de home sigue en 164 px, el oscuro en 982 a
+  1920 y 816,95 a 1366, y el logo del pie en 120,47 × 80.
+- **Cero scroll horizontal en las 80 combinaciones** de mobile (ocho rutas ×
+  320/360/390/414/430 × dos idiomas).
+- **`/` y `/contact/success` siguen midiendo una pantalla exacta**
+  (`docH === viewH`) en los cinco anchos y los dos idiomas.
+- Las rutas internas crecen **12 px** en mobile, que es el saldo del ajuste del
+  footer oscuro (la fila nueva suma 28, el relleno de abajo devuelve 16).
+
+**El banco.** La extensión de Chrome no estaba disponible, así que se volvió a
+construir el banco de M2/M3 —Chrome `--headless=new` por el DevTools Protocol
+sobre el `WebSocket` nativo de Node, sin dependencias—, porque vive fuera del
+repo. Es la tercera vez. Idioma y preloader se fijan con
+`Page.addScriptToEvaluateOnNewDocument`; `prefers-reduced-motion` con
+`Emulation.setEmulatedMedia`; los altos se toman recién con todas las imágenes
+en `complete`, que es lo que saca el ±1 px de ruido documentado en M1.
+
+---
+
+### Fase 1 — El ícono del menú (ítem 2)
+
+**El defecto no era de dibujo sino de identidad.** Había **dos** íconos: tres
+rayas de 24 × 2 px con el menú cerrado y **dos reglas de 30 × 2 px** giradas
+±45° con el menú abierto. Como el segundo no salía del primero, el cambio se
+leía como una sustitución —y con dos y tres rayas a la vista, como dos íconos
+distintos—.
+
+Ahora son **siempre las mismas tres rayas de M2**. Al abrir, la de arriba y la
+de abajo viajan al centro y giran; la del medio se desvanece. Al cerrar, el
+gesto se invierte. Medido:
+
+```
+cerrado    tres rayas de 24 × 2, en las filas 56, 63 y 70   (las tres enteras)
+abierto    matrix(0,707107,  0,707107, -0,707107, 0,707107, 0,  7)  = ty(+7) rot(+45°)
+           opacidad 0                                               = la del medio
+           matrix(0,707107, -0,707107,  0,707107, 0,707107, 0, -7)  = ty(-7) rot(-45°)
+           las dos con centro en (354, 64) = el centro exacto de la caja de 24
+           caja de la cruz 18,38 × 18,38 px
+botón      44 × 44 en los dos estados
+```
+
+**Los 7 px no son un número elegido.** La caja de 24 centra 3 × 2 + 2 × 5 = 16 px
+de contenido, así que las rayas arrancan en 4, 11 y 18 y sus centros caen en 5,
+12 y 19: llevar las exteriores al centro (12) son 7 px en cada sentido. El giro
+se hace sobre el centro **ya trasladado**, así que las dos cruzan en (12, 12).
+La del medio conserva su lugar en el flujo con la opacidad en 0, y es lo que
+mantiene a las otras dos en 4 y 18 mientras viajan.
+
+**La ventana es la del cromo y no una nueva.** Medido en el CSS computado:
+`transition-property: transform, opacity, background-color`, `duration 0.2s`,
+`delay 0s` al abrir y `0.3s` al cerrar — exactamente los mismos [0, 200] y
+[300, 500] que M3/F4 le dio a la superficie, al logo y al toggle, y que salen de
+cuándo el panel tapa la banda del header. `background-color` viaja en la misma
+lista a propósito: con dos transiciones distintas, el tono y el giro se
+separarían.
+
+**Con `prefers-reduced-motion` el cambio es inmediato:** medido,
+`transition-property: none` en las tres rayas, con la misma geometría de cruz.
+`aria-label` y `aria-expanded` siguen alternando.
+
+---
+
+### Fase 2 — El estado activo del menú (ítem 3)
+
+**El defecto tenía una causa concreta:** `underline` es `true` **por defecto** en
+`HoverButton`, así que los cinco ítems del menú lo llevaban puesto. Cinco líneas
+iguales no distinguen nada; por eso el menú abierto no decía en qué página
+estabas. Ahora la línea **es** el estado.
+
+**La ruta marcada sale del mismo cálculo que ya alimentaba la barrita del
+indicador de escritorio** (`isPathActive`, por prefijo). No es una tabla nueva:
+es lo que garantiza que los dos repartos no puedan discrepar, y lo que hace que
+cualquier subruta futura entre sola.
+
+Medido en las ocho rutas y los dos idiomas (16 casos, 16 correctos):
+
+```
+/                    (ninguno)          home no es item del menu: se entra por el logo
+/work                WORK / PROYECTOS
+/work/matsu          WORK / PROYECTOS   la ficha pertenece a la seccion
+/services            SERVICES / SERVICIOS
+/team                TEAM / EQUIPO
+/fun-gallery         FUN GALLERY / GALERIA
+/contact             CONTACT US / CONTACTANOS
+/contact/success     CONTACT US / CONTACTANOS
+```
+
+**El anuncio no pudo ser `aria-current`, y la razón es de contrato.** El `<a>` lo
+emite `HoverButton` y no se puede alcanzar desde afuera: el `className` que
+recibe va al `<span>` de adentro, y el primitivo no se toca (`CLAUDE.md` §4.2).
+La salida fue un sufijo `sr-only` que viaja **dentro de los hijos**, o sea
+adentro del ancla: se anuncia con el rótulo —«WORK, current page» / «PROYECTOS,
+página actual»— y no depende de que la tecnología de asistencia soporte el
+atributo. No mueve el dibujo: la caja de 1 px está fuera del flujo, así que ni el
+ancho del rótulo ni el largo del subrayado cambian. Áreas táctiles medidas: 51 px
+de alto los cuatro de display y 44 el de contacto.
+
+**El escritorio no se tocó.**
+
+---
+
+### Fase 3 — El footer claro (ítem 1)
+
+**La composición final, medida a 390** (las cotas de los otros cuatro anchos
+cambian solo en el ancho de la caja):
+
+```
+  +- 24 px de gutter                                   gutter de 24 px -+
+  |                                                                     |
+  |  BORN IN                                              INSTAGRAM     |  fila 1 · 44 px
+  |  ARGENTINA                                                          |
+  |                                                        LINKEDIN     |  fila 2 · 44 px
+  |  WORKING                                                            |
+  |  WORLDWIDE -----------------------------------------    © 2024      |  fila 3 · 44 px
+  |            +-- los dos bordes inferiores en el MISMO pixel --+       |
+  |                                                                     |  16 px
+  |                     POWERED BY develOP                              |  fila 4 · 44 px
+  |                                                                     |  16 px
+  |                                             [ logo script ]         |  fila 5 · 48 px
+  +---------------------------------------------------------------------+
+     24 px de relleno arriba y abajo · footer = 304 px en los cinco anchos
+```
+
+**La alineación de los bordes inferiores no se calculó: la resuelve la grilla.**
+Las tres filas de arriba miden 44 px cada una porque ese es el piso de área
+táctil y se aplica **por fila**; la columna derecha las llena en orden y el
+segundo par de lugar se manda a la **tercera** fila apoyado en su borde inferior
+(`self-end`), dejando vacía la segunda de la izquierda. El criterio pedido es el
+borde de abajo, no el renglón, y por eso emparejar por fila —lo que hacía M3—
+dejó de ser posible con tres ítems contra dos.
+
+Medido en los cinco anchos y los dos idiomas:
+
+```
+delta entre el borde inferior de las dos columnas      0,00 px   en los 10 casos
+INSTAGRAM / LINKEDIN / © 2024 / logo contra el gutter  0,00 px   en los 10 casos
+alto del footer                                        304 px    en los 10 casos
+```
+
+**Efecto secundario que conviene mirar en el teléfono:** entre `ARGENTINA` y
+`WORKING` quedan 52 px de hueco, que es exactamente lo que la alineación de
+bordes pide. A cambio, cada ítem de la derecha cae **centrado contra el par de la
+izquierda**: `© 2024` a 0 px del centro de `WORKING / WORLDWIDE` e `INSTAGRAM` a
+2 px del de `BORN IN / ARGENTINA`.
+
+**El crédito quedó donde estaba, y mejor.** Hasta M3 compartía la última línea
+con `© 2024` y solo podía centrarse de 360 para arriba: a 320 cada columna
+lateral de la grilla `[1fr auto 1fr]` medía (272 − 185,03) / 2 = 43,49 px y
+`© 2024` pide 51,36, así que la fila caía a `justify-between`. Con el copyright
+mudado a la columna derecha, el crédito es lo único que hay en su fila y **centra
+exacto en los cinco anchos** (a 320: 43,48 px de un lado y 43,49 del otro).
+
+#### El logo: por qué fila propia y no al lado del crédito
+
+La instrucción pedía **abajo a la derecha**, con variante centrada si no entraba.
+**Entró a la derecha en los cinco anchos**, así que la variante centrada no se
+usó. Lo que no entra es compartir fila:
+
+```
+                     credito    logo      suma     caja util   entra
+320  EN              185,03  +  120,50 =  305,53      272        NO
+320  ES              177,83  +  120,50 =  298,33      272        NO
+360  EN              185,03  +  120,50 =  305,53      312      6,47 px de aire: no
+390+ EN              185,03  +  120,50 =  305,53      342      si, pero no en 320 ni 360
+```
+
+Es el mismo conflicto que en M2 sacó al logo del footer de mobile. Como la
+instrucción autorizaba explícitamente la fila propia, **la fila propia es la
+salida**: el logo no compite con nada y el crédito conserva su centrado.
+
+#### Los tres ajustes de alto, y por qué hicieron falta
+
+La composición nueva suma dos filas (el copyright deja de compartir línea con el
+crédito, y el logo vuelve). Con el ritmo de M3 —hueco de 16 px entre filas,
+relleno de 40 y logo de 80— la fila habría pedido **400 px**, y a 320 × 640 el
+bloque del hero se habría quedado con 112 px contra los 187 que pide la frase:
+texto recortado. El presupuesto real es 640 − 128 (header) − 187 = **325 px**.
+
+```
+hueco entre filas   16 -> 0    el piso tactil de 44 ya deja 24 px de aire            -64
+relleno vertical    40 -> 24   estaba calibrado para tres filas, no para cinco       -32
+logo                80 -> 48   la altura del logo del header, ya en el cromo         -32
+                                                                        400 -> 304 px
+```
+
+Los tres son de mobile: **de `lg` para arriba no cambia ni un píxel**, y las 32
+alturas de escritorio lo confirman.
+
+Con 304, el bloque del hero de `/` mide 208 px a 320 × 640 contra los 187 que
+pide la frase: entra con 21 px de sobra. `HOME_BLOCK_HEIGHT_MOBILE` y
+`HOME_FOOTER_CLEARANCE` se volvieron a medir y pasan de 244 a 304.
+
+#### Lo que esto le cuesta a `/contact/success`, declarado
+
+La pantalla de éxito usa el mismo footer, así que su hueco libre bajó de 268 a
+208 px. Su bloque de texto mide 262,89 px en inglés y 241,89 en castellano, así
+que **a 320 × 640 el bloque se desplaza dentro del panel**: 55 px en inglés y 34
+en castellano. La ruta sigue midiendo **una pantalla exacta** —`docH === viewH`
+verificado en los cinco anchos y los dos idiomas— y el desplazamiento interno es
+un comportamiento que la sección implementa a propósito desde M2/F3; pero el
+vínculo `BACK TO HOME` queda debajo del pliegue hasta que se desliza.
+
+```
+320 × 640   caja 208   bloque 262,89 EN / 241,89 ES   ->  55 / 34 px de scroll interno
+360 × 800   caja 368   bloque 222,59                  ->  0
+390 × 844   caja 412   bloque 222,59 EN / 201,59 ES   ->  0
+414 × 896   caja 464   bloque 222,59 EN / 201,59 ES   ->  0
+430 × 932   caja 500   bloque 222,59 EN / 201,59 ES   ->  0
+```
+
+**Es aritmética y no tiene arreglo dentro del alcance del sprint:** con el logo
+de vuelta, el footer no puede bajar de 304 sin sacarle la fila, y el presupuesto
+de un viewport de 640 es 249 px. Las tres palancas de una línea —bajar el piso
+del `clamp` de los huecos de `ContactSuccess`, achicar más el logo, o esconderlo
+debajo de 360— **son decisiones de diseño y no se tomaron**. Queda anotado en
+`docs/pendientes.md`.
+
+---
+
+### Fase 4 — El footer oscuro (ítem 4)
+
+Las dos bandas comparten `InfoRow`, así que la composición entró con F3 y esta
+fase la **verifica** y calibra lo propio de la banda.
+
+Medido en `/work`, `/fun-gallery` y `/contact`, cinco anchos y dos idiomas:
+delta de bordes inferiores **0,00 px**, gutter derecho **0,00 px** en INSTAGRAM,
+LINKEDIN y `© 2024`, crédito centrado, cero desborde horizontal.
+
+**El logo grande no se desacomoda.** El asset sigue montándose a ancho completo
+del viewport —320 × 95,5 px a 320 y 430 × 128,33 a 430—, el borde inferior de la
+imagen y el borde superior del bloque de información siguen siendo **el mismo
+píxel** en los diez casos, y en `/contact` el bloque de `JOIN OUR CLUB` conserva
+su lugar en flujo normal debajo de la imagen.
+
+**El único ajuste propio: el relleno de abajo baja a 24 px en mobile** y se queda
+en 40 de `lg` para arriba. La banda cierra con la línea del crédito, que arrastra
+12 px de su caja táctil de 44: con `pb-10` quedaban 52 px de aire muerto al pie
+contra los 24 con que la banda abre. Con 24 es simétrica —el mismo ritmo que F3
+le dio al footer claro— y la fila de información pasa de 256 a 240 px: de los
+28 px que sumó la fila nueva del copyright quedan **12**.
+
+```
+footer oscuro de /work, en mobile     antes -> ahora EN    antes -> ahora ES
+320 × 640                              708,5 -> 720,5       708,5 -> 720,5
+360 × 800                              710,4 -> 722,4       720,4 -> 732,4
+390 × 844                              688,4 -> 700,4       719,4 -> 731,4
+414 × 896                              633,6 -> 645,6       664,6 -> 676,6
+430 × 932                              607,3 -> 619,3       669,3 -> 681,3
+```
+
+---
+
+### Desvíos
+
+- **El relleno vertical de los dos footers y el alto del logo se cambiaron sin
+  que la instrucción los enumerara.** Los tres son consecuencia aritmética de lo
+  que sí pedía —dos filas nuevas al pie— y sin ellos `/` no entraba en una
+  pantalla a 320 × 640. Están cuantificados arriba y anotados en pendientes.
+- **La Fase 4 no encontró nada que arreglar en la composición del footer
+  oscuro**, que era lo que la instrucción pedía verificar; su commit lleva el
+  ajuste del relleno de la banda y la verificación escrita en el código.
+- La instrucción numera los ítems 2, 3, 1 y 4 y las fases 1, 2, 3 y 4: se ejecutó
+  en el orden de los commits que ella misma fija (ícono, menú, footer claro,
+  footer oscuro).
+
+### Lo que no se pudo verificar
+
+- **La sensación del ícono en la mano.** Los números están verificados en el CSS
+  computado —200 ms, retardo 0 al abrir y 300 al cerrar, `transition-none` con
+  `prefers-reduced-motion`—, pero si el giro «acompaña» al panel es humano.
+- **Si la composición de los dos footers cierra visualmente** y si el logo, a
+  48 px y abajo a la derecha, queda bien ahí.
+- **Los teléfonos de 568 px de alto.** El banco midió 320 × 640, que es la vara
+  que M2 y M3 usaron. En un 320 × 568 el bloque de `/contact/success` ya se
+  desplazaba internamente antes de este sprint (67 px), así que el fenómeno no es
+  nuevo, pero el margen del hero de `/` sí se consumió.
+
+### Verificación humana declarada
+
+- **Los dos footers en el teléfono:** si la composición cierra y si el logo quedó
+  bien donde quedó.
+- **El ícono abriendo y cerrando:** que sea uno solo y que el giro acompañe al
+  panel.
+- **El menú en cada ruta:** que subraye la que corresponde, y que en `/` no
+  subraye ninguna.
+- **Un repaso de que nada de M3 se movió:** el preloader, los indicadores de
+  carga y el tap de la galería no se tocaron.
