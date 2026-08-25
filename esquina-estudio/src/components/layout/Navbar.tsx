@@ -99,6 +99,42 @@ const CHROME_TONE_OPENING = "transition-colors duration-200 delay-0";
 /** Al cerrar: espera a que el panel suelte la banda y recien ahi aclara. */
 const CHROME_TONE_CLOSING = "transition-colors duration-200 delay-[300ms]";
 
+/**
+ * # El icono acompana al panel, no se adelanta (M4/F1)
+ *
+ * Las tres rayas son **siempre las mismas tres rayas**: al abrir, la de arriba y
+ * la de abajo viajan al centro y giran hasta cruzarse, y la del medio se
+ * desvanece. Antes habia dos dibujos distintos —tres rayas de 24 px cuando el
+ * menu estaba cerrado y dos de 30 px cuando estaba abierto—, asi que el icono
+ * **cambiaba de identidad** en vez de transformarse: eso es lo que se leia como
+ * dos iconos.
+ *
+ * La ventana es la del cromo y no una nueva: **200 ms**, con el mismo retardo
+ * (`chromeToneDelayClass`: 0 al abrir, 300 al cerrar). Asi el giro cae dentro de
+ * la misma franja en la que el panel tapa la banda del header —entre los 180 y
+ * los 320 ms del recorrido de 500— y el icono no llega ni antes ni despues que
+ * el color. Ver `CHROME_TONE_OUT_DELAY_MS` para de donde salen los numeros.
+ *
+ * `background-color` viaja en la misma lista que `transform` y `opacity` porque
+ * las rayas tambien cambian de tono con el cromo: si fueran dos transiciones
+ * distintas, el color y el giro se separarian.
+ *
+ * Con `prefers-reduced-motion` la transicion se apaga entera y el cambio es
+ * **inmediato**: el icono pasa a cruz sin girar, que es lo que pide el punto.
+ */
+const ICON_MOTION =
+  "transition-[transform,opacity,background-color] duration-200 motion-reduce:transition-none motion-reduce:delay-0";
+
+/**
+ * Cuanto viaja cada raya exterior hasta el centro de la caja de 24.
+ *
+ * La caja centra 3 x 2 + 2 x 5 = 16 px de contenido, asi que las rayas arrancan
+ * en 4, 11 y 18 y sus centros caen en 5, 12 y 19. Llevar la de arriba y la de
+ * abajo al centro (12) son **7 px** en cada sentido, y el giro de 45 grados se
+ * hace sobre el centro ya trasladado: las dos cruzan exactamente en (12, 12).
+ */
+const ICON_ARM_SHIFT = "7px";
+
 type DesktopNavHref =
   | "/work"
   | "/services"
@@ -394,10 +430,9 @@ export default function Navbar() {
           <LocaleToggle tone={navTone} toneDelayClass={chromeToneDelayClass} />
 
           {/*
-            Un solo botón para abrir y cerrar. La cruz vive en la misma ranura
-            que las rayas —misma caja tocable de 44 × 44, mismo centro— así que
-            el ícono se cambia en el lugar y no hay una cruz chiquita perdida en
-            una esquina (M2/F1, punto 12).
+            Un solo botón para abrir y cerrar, y desde M4/F1 **un solo dibujo**:
+            la cruz no reemplaza a las rayas, sale de ellas. Misma caja tocable
+            de 44 × 44 y mismo centro (M2/F1, punto 12).
 
             El margen negativo de 20 px compensa el ancho que le sobra a la caja
             tocable a la derecha del dibujo: el borde derecho del ícono queda
@@ -423,29 +458,36 @@ export default function Navbar() {
               y las otras no— y por eso una se veía más gruesa que las demás. Y
               el largo: las tres miden 24, no dos de 24 y una de 16.
             */}
-            <span className="relative flex h-6 w-6 flex-col items-start justify-center gap-[5px]">
-              {menuOpen ? (
-                <>
-                  <span
-                    className={`absolute left-1/2 top-1/2 h-[2px] w-[30px] -translate-x-1/2 -translate-y-1/2 rotate-45 ${chromeToneClass} ${iconLineClass}`}
-                  />
-                  <span
-                    className={`absolute left-1/2 top-1/2 h-[2px] w-[30px] -translate-x-1/2 -translate-y-1/2 -rotate-45 ${chromeToneClass} ${iconLineClass}`}
-                  />
-                </>
-              ) : (
-                <>
-                  <span
-                    className={`block h-[2px] w-6 ${chromeToneClass} ${iconLineClass}`}
-                  />
-                  <span
-                    className={`block h-[2px] w-6 ${chromeToneClass} ${iconLineClass}`}
-                  />
-                  <span
-                    className={`block h-[2px] w-6 ${chromeToneClass} ${iconLineClass}`}
-                  />
-                </>
-              )}
+            <span
+              aria-hidden
+              className="flex h-6 w-6 flex-col items-start justify-center gap-[5px]"
+            >
+              {/*
+                La raya del medio sigue ocupando su lugar con la opacidad en 0:
+                es lo que mantiene a las otras dos en 4 y 18 mientras viajan, y
+                por eso el desplazamiento es una constante y no una medida que
+                dependa del estado.
+              */}
+              <span
+                className={`block h-[2px] w-6 origin-center ${ICON_MOTION} ${chromeToneDelayClass} ${iconLineClass}`}
+                style={
+                  menuOpen
+                    ? { transform: `translateY(${ICON_ARM_SHIFT}) rotate(45deg)` }
+                    : { transform: "none" }
+                }
+              />
+              <span
+                className={`block h-[2px] w-6 ${ICON_MOTION} ${chromeToneDelayClass} ${iconLineClass}`}
+                style={{ opacity: menuOpen ? 0 : 1 }}
+              />
+              <span
+                className={`block h-[2px] w-6 origin-center ${ICON_MOTION} ${chromeToneDelayClass} ${iconLineClass}`}
+                style={
+                  menuOpen
+                    ? { transform: `translateY(-${ICON_ARM_SHIFT}) rotate(-45deg)` }
+                    : { transform: "none" }
+                }
+              />
             </span>
           </button>
         </div>
