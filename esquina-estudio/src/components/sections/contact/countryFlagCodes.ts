@@ -6,7 +6,7 @@ import type { CountryOption } from "@/lib/contact";
   El código es el **nombre del archivo** que vive en `public/flags/`: la entrada
   `"DR Congo": "cd"` se sirve como `/flags/cd.svg`. El set está **vendorizado**
   —no hay librería de banderas, ni la va a haber— y su fuente, su versión y su
-  licencia están en `docs/banderas-set.md`.
+  licencia están en `docs/archivo/banderas-set.md`.
 
   El tipo es un **mapeo sobre `CountryOption`**, el mismo idioma que usan las
   tablas de rótulos de `contact.ts`: agregar un país a `COUNTRY_OPTIONS` sin

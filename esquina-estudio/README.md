@@ -26,7 +26,7 @@ npm run lint
 
 ## Estructura
 
-`src/app` (rutas; grupo único `(site)`; `/studio` y `/api` fuera del shell) · `src/components` · `src/lib` (cliente Sanity, queries, datos de Contact, fallbacks locales) · `src/sanity` (config + schemas) · `src/types` · `docs/` (plan maestro, pendientes, bitácora, reportes, instrucciones).
+`src/app` (rutas; grupo único `(site)`; `/studio` y `/api` fuera del shell) · `src/components` · `src/lib` (cliente Sanity, queries, datos de Contact, fallbacks locales) · `src/sanity` (config + schemas) · `src/types` · `docs/` (plan maestro, pendientes, bitácora, `reportes/`; el material histórico de la ronda —mockups, instrucciones y demás— está en `docs/archivo/`, con su propio `README.md`).
 
 ## CMS
 

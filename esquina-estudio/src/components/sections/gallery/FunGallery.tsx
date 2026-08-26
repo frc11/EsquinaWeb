@@ -58,11 +58,11 @@ import { FunGalleryImage } from "@/types/fun-gallery-image";
 
 /**
  * Tope de ancho de la composición: la caja medida en
- * `docs/mockups/15-fun-gallery-hover.jpg`, 1664 px con 128 px de margen a cada
- * lado de un viewport de 1920. Es el techo, no la medida de todos los días: con
- * el tamaño derivado del ancho (ver TAMAÑO) la composición pide 1539 px a 1920 y
- * solo llega al tope a partir de 2078 px de pantalla, que es donde el bloque
- * deja de crecer para que los objetos no se vuelvan gigantes.
+ * `docs/archivo/mockups/15-fun-gallery-hover.jpg`, 1664 px con 128 px de
+ * margen a cada lado de un viewport de 1920. Es el techo, no la medida de todos
+ * los días: con el tamaño derivado del ancho (ver TAMAÑO) la composición pide
+ * 1539 px a 1920 y solo llega al tope a partir de 2078 px de pantalla, que es
+ * donde el bloque deja de crecer para que los objetos no se vuelvan gigantes.
  */
 const COMPOSITION_MAX_WIDTH = 1664;
 

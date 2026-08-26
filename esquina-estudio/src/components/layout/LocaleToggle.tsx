@@ -30,8 +30,8 @@ import { LOCALES, useLocale, type Locale } from "@/lib/i18n";
  *
  * # De dónde salen las medidas
  *
- * De medir `docs/mockups/08a-services-intro.jpg` (export de 1327 px sobre un
- * diseño de 1920, factor 0,691), no de elegirlas:
+ * De medir `docs/archivo/mockups/08a-services-intro.jpg` (export de 1327 px
+ * sobre un diseño de 1920, factor 0,691), no de elegirlas:
  *
  * - El bloque `EN / ES` mide **55 px** y su borde derecho cae en **1849**, o sea
  *   donde termina hoy el texto de `CONTACT US`: 6 px adentro del gutter de 64.

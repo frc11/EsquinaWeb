@@ -16,7 +16,7 @@ Formato de entrada:
 
 ## 2026-08-15 · B1 Fundación · Sincronización de documentación y limpieza
 
-- **Qué se hizo:** [F1] borrados `InfoCard.tsx`, `SanityImage.tsx`, `types/service.ts` y `/api/seed-sanity` (346 líneas); los `devserver*.log` ya estaban destrackeados e ignorados desde `a477018`. [F2] creados `docs/plan-maestro.md`, `docs/pendientes.md`, `docs/bitacora.md`; `README.md` reemplazado (era el boilerplate intacto de `create-next-app`); 2 comentarios stale de Contact corregidos; `docs/reportes/` y `docs/instrucciones/` ya estaban trackeados. [F3] `CLAUDE.md` reescrito completo (ESTADO/PLAN).
+- **Qué se hizo:** [F1] borrados `InfoCard.tsx`, `SanityImage.tsx`, `types/service.ts` y `/api/seed-sanity` (346 líneas); los `devserver*.log` ya estaban destrackeados e ignorados desde `a477018`. [F2] creados `docs/plan-maestro.md`, `docs/pendientes.md`, `docs/bitacora.md`; `README.md` reemplazado (era el boilerplate intacto de `create-next-app`); 2 comentarios stale de Contact corregidos; `docs/reportes/` y `docs/archivo/instrucciones/` ya estaban trackeados. [F3] `CLAUDE.md` reescrito completo (ESTADO/PLAN).
 - **Decisiones tomadas en ejecución:** tres, todas mecánicas, ninguna de producto. (1) La instrucción ubicaba `InfoCard.tsx` en `src/components/ui/`; el archivo real —único en el repo, cero consumidores, el mismo que cita la auditoría (`text-body` en :19, `esquina™` en :30)— vive en `src/components/sections/work/`. Se borró el real. (2) El destrackeo de los devserver logs y su regla de ignore ya estaban hechos en `a477018` (commit posterior al `2565d01` sobre el que se auditó); no se apendeó el bloque al `.gitignore` porque habría duplicado la regla `devserver*.log` ya presente en la línea 51. (3) El build de F1 falló por un artefacto stale del dev server (`.next/dev/types/validator.ts`, incluido en el typecheck por `tsconfig.json:30`) que aún importaba la ruta borrada; se le quitó ese bloque. Es caché regenerable, no versionada — en un checkout limpio el error no existe.
 - **Mediciones / salidas de puertas:** línea base — lint: exit 0, sin errores ni warnings; build: exit 0 con los 2 warnings conocidos (NFT de Turbopack originado en `seed-sanity`, deprecación de `@sanity/image-url`). Final — lint: exit 0; build: exit 0 y **el warning NFT desapareció** al borrarse el seeder; solo persiste la deprecación de `@sanity/image-url`. Cero errores nuevos. Greps de consumidores (F1): `InfoCard` → solo dentro de su propio archivo; `@/components/ui/SanityImage` y `<SanityImage` → 0 (los tipos `SanityImageLike`/`SanityImageAsset` de `types/project.ts` quedan, los usa FunGallery); `@/types/service` → 0; `seed-sanity` → 0 en `src/`. Verificación extra: `SANITY_API_WRITE_TOKEN` en `src/` → 0 apariciones.
 - **Pendientes que deja:** el borrado del seeder rige en producción recién con el próximo deploy (ver `docs/pendientes.md`). Observación para la capa de planificación: `esquina-estudio/AGENTS.md` existe, está versionado y sigue vigente (regla autogenerada de Next: leer `node_modules/next/dist/docs/` antes de escribir código, por breaking changes de la 16), pero el CLAUDE.md nuevo no lo menciona ni lo integra.
@@ -43,11 +43,11 @@ Formato de entrada:
 
 ## 2026-08-18 · B2.1b · Ajuste de composición del footer contra el mockup
 
-- **Qué se hizo:** cuatro ajustes de composición en `Footer.tsx`, medidos contra `docs/mockups/04-footer-anotado.jpg` y `docs/mockups/12-contact-anotado.jpg` (el 04 no renderiza el copy de `JOIN OUR CLUB`; el 12 sí, y fue la referencia real para esa pieza). **(1)** `CONTACT US` / `LET'S BRING YOUR IDEAS TO LIFE`: 17→26 px, `line-height` 31 px (antes 20). **(2)** Franja: sin cambio estructural — a 26 px el bloque derecho ya arranca a 2 px del tope de la frase (dentro de tolerancia), no hizo falta nudge. **(3)** `JOIN OUR CLUB`: 17→26 px; `BECOME PART OF A` / `CREATIVE COMMUNITY`: 17→22 px (un escalón por debajo, tal como se ve en el mockup 12); posición movida de `top-10` a `top-[46%]` del contenedor de la banda, con `mt-3` entre el link y el párrafo (antes `mt-[8px]`). **(4)** Fila de info de la banda oscura: `© 2024` y `POWERED BY develOP` dejan de apilarse (pasan a columnas propias, mismo nivel que `BORN IN`/`WORKING`); `INSTAGRAM`/`LINKEDIN` pasan de `flex-col` a `flex-row` con `gap-x-5`. El fix de (4) se implementó como dos props nuevas de `InfoRow` (`inlineCredit`, `inlineSocial`, default `false`), activadas solo en el call site de la banda oscura — `HomeFooter` no pasa esas props y queda con el mismo output de antes (verificado: 164 px de alto, captura idéntica).
-- **Decisiones tomadas en ejecución** (mediciones, no bifurcaciones de producto): **(1)** Los 24–25 px de partida de la instrucción eran una hipótesis; la medición real contra el mockup (análisis de píxeles con `System.Drawing`, comparando la altura de mayúsculas de `CONTACT US`/`JOIN OUR CLUB` contra la de la frase de 40 px, cuya altura de mayúscula mide 21 px en el 04) dio una proporción de 14/21 ≈ 0,667 → 26,7 px. Se redondeó a 26 px. **(2)** `docs/mockups/04-footer-anotado.jpg` (la referencia principal declarada) no contiene el texto `JOIN OUR CLUB` en absoluto — la anotación en esa zona («confirmar cómo necesitan que les pasemos el logo grande») es sobre el asset del logo, no sobre este bloque. Se usó `12-contact-anotado.jpg` como referencia real (muestra el mismo footer con el copy completo), midiendo `JOIN OUR CLUB` (28 px) y `BECOME PART OF A` (25 px) con su propia escala de calibración (`LET'S BRING YOUR IDEAS TO LIFE` a 40/48 pt en esa misma imagen). Para no introducir una tercera talla en el footer, `JOIN OUR CLUB` se fijó en 26 px (igual que `CONTACT US`) en vez de 28; es una nivelación deliberada, no una medición literal. **(3)** La posición `top-[46%]` es una aproximación: el contenedor relativo mezcla la altura de la imagen del logo con la de la fila de info de abajo, mientras que el 49 % medido en el mockup es sobre el alto de banda hasta el borde superior de la fila de info. La diferencia es submarginal (banda de tolerancia, no medible en píxeles enteros sin el activo real a resolución de producción) — se verificó visualmente contra ambos mockups y el texto queda cómodo dentro del 24,8 % de aire propio del asset, sin tocar tinta a ninguna altura. **(4)** El gap horizontal entre `INSTAGRAM`/`LINKEDIN` (`gap-x-5`, 20 px) sale de medir el hueco entre los dos subrayados en el 04 (16 px de imagen ≈ 21 px de diseño); el gap del cluster izquierdo se dejó en el `gap-x-12` (48 px) ya existente para `BORN IN`/`WORKING`, sin remedirlo, porque no era parte de los cuatro ajustes pedidos y el patrón ya está en uso en Home.
+- **Qué se hizo:** cuatro ajustes de composición en `Footer.tsx`, medidos contra `docs/archivo/mockups/04-footer-anotado.jpg` y `docs/archivo/mockups/12-contact-anotado.jpg` (el 04 no renderiza el copy de `JOIN OUR CLUB`; el 12 sí, y fue la referencia real para esa pieza). **(1)** `CONTACT US` / `LET'S BRING YOUR IDEAS TO LIFE`: 17→26 px, `line-height` 31 px (antes 20). **(2)** Franja: sin cambio estructural — a 26 px el bloque derecho ya arranca a 2 px del tope de la frase (dentro de tolerancia), no hizo falta nudge. **(3)** `JOIN OUR CLUB`: 17→26 px; `BECOME PART OF A` / `CREATIVE COMMUNITY`: 17→22 px (un escalón por debajo, tal como se ve en el mockup 12); posición movida de `top-10` a `top-[46%]` del contenedor de la banda, con `mt-3` entre el link y el párrafo (antes `mt-[8px]`). **(4)** Fila de info de la banda oscura: `© 2024` y `POWERED BY develOP` dejan de apilarse (pasan a columnas propias, mismo nivel que `BORN IN`/`WORKING`); `INSTAGRAM`/`LINKEDIN` pasan de `flex-col` a `flex-row` con `gap-x-5`. El fix de (4) se implementó como dos props nuevas de `InfoRow` (`inlineCredit`, `inlineSocial`, default `false`), activadas solo en el call site de la banda oscura — `HomeFooter` no pasa esas props y queda con el mismo output de antes (verificado: 164 px de alto, captura idéntica).
+- **Decisiones tomadas en ejecución** (mediciones, no bifurcaciones de producto): **(1)** Los 24–25 px de partida de la instrucción eran una hipótesis; la medición real contra el mockup (análisis de píxeles con `System.Drawing`, comparando la altura de mayúsculas de `CONTACT US`/`JOIN OUR CLUB` contra la de la frase de 40 px, cuya altura de mayúscula mide 21 px en el 04) dio una proporción de 14/21 ≈ 0,667 → 26,7 px. Se redondeó a 26 px. **(2)** `docs/archivo/mockups/04-footer-anotado.jpg` (la referencia principal declarada) no contiene el texto `JOIN OUR CLUB` en absoluto — la anotación en esa zona («confirmar cómo necesitan que les pasemos el logo grande») es sobre el asset del logo, no sobre este bloque. Se usó `12-contact-anotado.jpg` como referencia real (muestra el mismo footer con el copy completo), midiendo `JOIN OUR CLUB` (28 px) y `BECOME PART OF A` (25 px) con su propia escala de calibración (`LET'S BRING YOUR IDEAS TO LIFE` a 40/48 pt en esa misma imagen). Para no introducir una tercera talla en el footer, `JOIN OUR CLUB` se fijó en 26 px (igual que `CONTACT US`) en vez de 28; es una nivelación deliberada, no una medición literal. **(3)** La posición `top-[46%]` es una aproximación: el contenedor relativo mezcla la altura de la imagen del logo con la de la fila de info de abajo, mientras que el 49 % medido en el mockup es sobre el alto de banda hasta el borde superior de la fila de info. La diferencia es submarginal (banda de tolerancia, no medible en píxeles enteros sin el activo real a resolución de producción) — se verificó visualmente contra ambos mockups y el texto queda cómodo dentro del 24,8 % de aire propio del asset, sin tocar tinta a ninguna altura. **(4)** El gap horizontal entre `INSTAGRAM`/`LINKEDIN` (`gap-x-5`, 20 px) sale de medir el hueco entre los dos subrayados en el 04 (16 px de imagen ≈ 21 px de diseño); el gap del cluster izquierdo se dejó en el `gap-x-12` (48 px) ya existente para `BORN IN`/`WORKING`, sin remedirlo, porque no era parte de los cuatro ajustes pedidos y el patrón ya está en uso en Home.
 - **Mediciones para el reporte** (`next dev`, viewport 1920, DPR 1, `getComputedStyle` + `Range.getBoundingClientRect()` sobre nodos de texto): frase 40 px / 48 px; `CONTACT US` y `JOIN OUR CLUB` 26 px / 31 px; fila de info sin cambio, 17 px / 17 px (`leading-none`). Delta vertical entre la primera línea de la frase y la de `CONTACT US`: **2 px** (tolerancia ±2 px, cumple). Alto del footer en `/work`: **981,67 px** (antes 989,67 — la baja es consecuencia esperada de (4): al dejar de apilar, la columna de copyright/crédito y la de redes dejan de ser la más alta de la fila de info, que ahora la marca `BORN IN`/`WORKING` sin cambios). Alto en `/`: **164 px**, sin cambios. Sin scroll horizontal a 1920 (verificado real, `scrollWidth === clientWidth`). A 1512 y 1024 **no se pudo verificar**: la herramienta de resize de ventana no tomó efecto en esta sesión (mismo límite que dejó registrado B2.1 — ventana maximizada); dado que ningún ajuste de este sprint toca anchos, gutters ni breakpoints (solo `font-size`, `line-height` y una posición porcentual dentro de un contenedor ya existente), el riesgo de overflow nuevo a esos anchos es bajo, pero queda sin confirmar por herramienta.
-- **Pendientes que deja:** el 26 px de `JOIN OUR CLUB` es una nivelación con `CONTACT US`, no la medición literal del mockup 12 (28 px) — si Valentino prefiere fidelidad estricta a esa imagen en vez de coherencia entre los dos bloques, es un ajuste de un solo valor. La verificación a 1512/1024 sigue pendiente de herramienta (ver arriba). `docs/mockups/04-footer-anotado.jpg` debería, a criterio de la capa de planificación, incluir el copy de `JOIN OUR CLUB` en una futura repaginación del PDF — hoy dos mockups de la misma pieza muestran información complementaria y no redundante.
-- **Verificación humana pendiente (declarada, no la da por cumplida el agente):** comparar el footer renderizado contra `docs/mockups/04-footer-anotado.jpg` — escala relativa de los tres bloques de texto, altura de arranque de la franja, aire de la banda, fila de info en una sola línea; y contra `docs/mockups/12-contact-anotado.jpg` para `JOIN OUR CLUB` en particular. Repaso de que `/`, `/fun-gallery` y `/contact/success` no cambiaron (verificado por el agente vía captura y `getBoundingClientRect`, pero la palabra final es humana).
+- **Pendientes que deja:** el 26 px de `JOIN OUR CLUB` es una nivelación con `CONTACT US`, no la medición literal del mockup 12 (28 px) — si Valentino prefiere fidelidad estricta a esa imagen en vez de coherencia entre los dos bloques, es un ajuste de un solo valor. La verificación a 1512/1024 sigue pendiente de herramienta (ver arriba). `docs/archivo/mockups/04-footer-anotado.jpg` debería, a criterio de la capa de planificación, incluir el copy de `JOIN OUR CLUB` en una futura repaginación del PDF — hoy dos mockups de la misma pieza muestran información complementaria y no redundante.
+- **Verificación humana pendiente (declarada, no la da por cumplida el agente):** comparar el footer renderizado contra `docs/archivo/mockups/04-footer-anotado.jpg` — escala relativa de los tres bloques de texto, altura de arranque de la franja, aire de la banda, fila de info en una sola línea; y contra `docs/archivo/mockups/12-contact-anotado.jpg` para `JOIN OUR CLUB` en particular. Repaso de que `/`, `/fun-gallery` y `/contact/success` no cambiaron (verificado por el agente vía captura y `getBoundingClientRect`, pero la palabra final es humana).
 - **Commits:** el de este cierre.
 
 ## 2026-08-18 · B2.1c · Swap de CTA del footer por ruta
@@ -981,7 +981,7 @@ Formato de entrada:
 
   La restauración de `scrollRestoration` se resolvió por la vía más segura de las dos que ofrecía la instrucción: **nadie lo toca más**. Verificado con build + start, iframe same-origin y navegación blanda entrando y saliendo de Services tres veces: `body.style.overflow` y `paddingRight` vacíos en las siete rutas, `scrollRestoration` en `"auto"`, y un `wheel` cancelable despachado en `/services` **no** queda `defaultPrevented` (solo `/team` y `/work*` lo cancelan, que es Lenis y es previo). Los altos no se movieron: `/` 1080, `/work` 2154, `/work/matsu` 2663, `/contact` 1664, `/team` 4257, `/fun-gallery` 2228, `/contact/success` 1244.
 
-- **Los mockups eran medibles, y eso cambió el sprint.** Los cinco JPG de `docs/mockups/08*` son exportes de un diseño de **1920 escalados a 1327** (factor 0,691). Se calibró midiendo alturas de mayúscula con `sharp`: con ese factor el gutter da **exactamente 64 px** —el mismo `lg:px-16` del Navbar y del Footer—, la nav da 17 px y la escala cierra en **17 / 20 / 24 / 30 / 40**. La frase del intro está *dibujada* a 30 px pero anotada a 40 pt; mandó la instrucción y va a 40/48/0. Las reglas horizontales se leyeron directo del bitmap: sección de 64 a 1636, ítems de 389 a 1563. La implementación cae **dentro de 3 px** de esos números a 1920.
+- **Los mockups eran medibles, y eso cambió el sprint.** Los cinco JPG de `docs/archivo/mockups/08*` son exportes de un diseño de **1920 escalados a 1327** (factor 0,691). Se calibró midiendo alturas de mayúscula con `sharp`: con ese factor el gutter da **exactamente 64 px** —el mismo `lg:px-16` del Navbar y del Footer—, la nav da 17 px y la escala cierra en **17 / 20 / 24 / 30 / 40**. La frase del intro está *dibujada* a 30 px pero anotada a 40 pt; mandó la instrucción y va a 40/48/0. Las reglas horizontales se leyeron directo del bitmap: sección de 64 a 1636, ítems de 389 a 1563. La implementación cae **dentro de 3 px** de esos números a 1920.
 
   Un detalle contraintuitivo que se respetó: en el mockup la **regla larga de sección es más tenue** que las de los ítems (0,39 contra 0,84 de tinta por píxel). Es al revés de lo habitual y está anotado en el código para que nadie lo «corrija».
 
@@ -1299,7 +1299,7 @@ fases, ocho commits: `49c080c` · `ba37779` · `28fddd8` · `d02b26d` · `4f2e88
   direcciones, y «vacía» cubre el `null` de GROQ, la clave ausente y los
   espacios. Con las **doce casillas ES del dataset vacías**, el sitio en
   castellano muestra los cuatro proyectos completos: **cero huecos**. Las
-  traducciones propuestas quedaron en `docs/sanity-piezas-es.md`; **no se escribió
+  traducciones propuestas quedaron en `docs/archivo/sanity-piezas-es.md`; **no se escribió
   en Sanity**.
 
 - **Altos en castellano** (1920×1080): `/` 1080 · `/work` 2154 · `/services`
@@ -1622,7 +1622,7 @@ cierre.
 Ronda de mobile, sprint único. El sitio se construyó desktop-first y la
 adaptación se difirió toda la ronda anterior; este sprint la resuelve. Nueve
 fases, un commit por fase. Las decisiones de diseño vienen cerradas en la
-instrucción (`docs/instrucciones/`, §3) y este agente las aplica, no las
+instrucción (`docs/archivo/instrucciones/`, §3) y este agente las aplica, no las
 reinventa.
 
 ### F0 — Auditoría de desbordes (línea base)
@@ -2285,7 +2285,7 @@ en hover.
 - **El set, y cómo se eligió.** **`flag-icons` 7.5.0** (lipis), carpeta
   `flags/4x3`, **licencia MIT confirmada leyendo el `LICENSE` del propio
   paquete**, no la ficha de npm. Ficha completa de procedencia en
-  **`docs/banderas-set.md`**, y el texto de la licencia viaja con las copias en
+  **`docs/archivo/banderas-set.md`**, y el texto de la licencia viaja con las copias en
   `public/flags/LICENSE.txt`, que es lo que la MIT pide.
 
   Se evaluó también **`country-flag-icons` 1.6.20** (también MIT, también
@@ -3676,7 +3676,7 @@ casillas ES de una línea **ya están cargadas** (`ALIMENTOS Y BEBIDAS`,
 `RESTAURANTES`, `TECNOLOGÍA`, verificado renderizando). Por eso los bloques de
 texto a traducir son **cinco** y no los siete que decía la instrucción.
 
-Las traducciones propuestas quedaron en `docs/sanity-piezas-es.md`, con el
+Las traducciones propuestas quedaron en `docs/archivo/sanity-piezas-es.md`, con el
 criterio de B4. Dos hallazgos de contenido anotados ahí: el segundo bloque de
 akasha está **vacío** y el segundo de matsu es **idéntico al primero**, palabra
 por palabra.
@@ -3870,7 +3870,7 @@ del sprint, verificar antes de borrar—:
 | `public/logo-favicon.png` | 1,9 KB | **sí** — `layout.tsx:29,33,34` |
 | `public/og-image.jpg` | 51 KB | **sí** — `layout.tsx:43` |
 | `public/flags/*.svg` (196) | 1,3 MB | **sí, los 196** — `CountryFlag.tsx:76` por interpolación; cruce contra `countryFlagCodes.ts`: 196 códigos ↔ 196 archivos, **cero huérfanos y cero rotos** |
-| `public/flags/LICENSE.txt` | — | **sí** — licencia del set vendorizado; la exige `docs/banderas-set.md` |
+| `public/flags/LICENSE.txt` | — | **sí** — licencia del set vendorizado; la exige `docs/archivo/banderas-set.md` |
 | `public/projects/team.jpg` | 254 KB | **sí** — `TeamSection.tsx:126` |
 | `public/projects/akasha-producto-2.jpg` | 289 KB | **sí** — `local-projects.ts:22`, `:154` |
 | `public/projects/akasha-producto.png` | 2,2 MB | **sí** — `local-projects.ts:141`, `:153` |
@@ -3967,3 +3967,62 @@ solo archivo (`.gitignore`) y la del proyecto doce, todos de configuración o
 contrato (`AGENTS.md`, `CLAUDE.md`, `README.md`, los cuatro configs, los dos de
 `npm`, los dos `.gitignore`, `netlify.toml`). Ni descargas, ni temporales, ni
 copias.
+
+### Fase 2 — El archivo de la documentación
+
+**24 archivos movidos con `git mv`, cero borrados.** `docs/archivo/` recibe los
+20 mockups (las 15 páginas de `Final.pdf` más los cinco tramos de `/services`),
+la carpeta `instrucciones/`, `banderas-set.md` y `sanity-piezas-es.md`. `git`
+detectó los 24 como renombres puros: ni un byte cambió de contenido.
+
+**Se quedaron fuera del archivo, y el motivo importa:** `CLAUDE.md` es el
+contrato que se lee antes de tocar nada; `plan-maestro.md`, `pendientes.md` y
+`bitacora.md` son el registro **vivo** —este sprint escribe en dos de los tres
+mientras corre—; y `docs/reportes/` es la base de hechos, con la auditoría del 13
+de agosto y el postmortem de la ronda.
+
+**El postmortem entró al repositorio.** `docs/reportes/2026-08-15-postmortem-ronda.md`
+estaba sin trackear desde M6 y la instrucción de este sprint lo nombra entre los
+documentos que se quedan fuera del archivo, o sea que lo cuenta como parte de la
+base de hechos. Un archivo que la instrucción trata como del repositorio y que
+`git` no conoce se pierde en el primer clon: se versionó.
+
+**`docs/archivo/README.md`** dice qué hay ahí, de qué ronda es —mayo a agosto de
+2026, Bloques 1–4 y M1–M7—, que es material histórico y no de consulta corriente,
+y qué **no** está ahí con el motivo de cada caso.
+
+#### Las referencias: 20 punteros actualizados en 10 archivos
+
+Esta es la parte que no se puede saltear. **Un puntero a un archivo movido es el
+mismo problema documental que el Bloque 1 vino a arreglar**, así que se
+persiguieron todos:
+
+| Dónde | Qué apuntaba |
+| --- | --- |
+| `CLAUDE.md` | `sanity-piezas-es.md` (§sobre el consumo bilingüe) y `banderas-set.md` (§sobre el selector de país) |
+| `README.md` | la línea de estructura de `docs/`, reescrita para nombrar `docs/archivo/` |
+| `docs/bitacora.md` | 11 líneas con rutas de mockups, en entradas de B2, B3.4 y M6 |
+| `docs/pendientes.md` | `banderas-set.md` y `sanity-piezas-es.md` |
+| `docs/plan-maestro.md` | `sanity-piezas-es.md`, dos veces |
+| `docs/reportes/2026-08-15-postmortem-ronda.md` | `docs/mockups/` |
+| `src/components/sections/services/services-layout.ts` | `docs/mockups/08*.jpg` — de donde salen las constantes de `/services` |
+| `src/components/sections/gallery/FunGallery.tsx` | `15-fun-gallery-hover.jpg` — el tope de ancho de la composición |
+| `src/components/layout/LocaleToggle.tsx` | `08a-services-intro.jpg` — de donde salen las medidas del toggle |
+| `src/components/sections/contact/CountryFlag.tsx` y `countryFlagCodes.ts` | `banderas-set.md`, uno cada uno |
+
+**Los cinco cambios de `src/` son solo comentarios**: ni una línea de código
+ejecutable se tocó, y se reacomodó el salto de línea de los cuatro párrafos
+afectados para que no quedaran renglones de 89 caracteres en archivos que envuelven
+a 80.
+
+**Cinco menciones se dejaron a propósito sin tocar.**
+`docs/reportes/2026-08-13-auditoria-completa.md` sigue diciendo
+`docs/instrucciones/` en las líneas 10, 62, 174, 387 y 564. No son punteros: son
+**transcripciones literales de `git status` y de `ls`** de aquel día —de hecho
+tres de ellas dicen que la carpeta estaba *sin trackear*—, y reescribirlas
+falsearía el registro para arreglar un enlace. La traducción vive en la tabla de
+`docs/archivo/README.md`, que además explica por qué esas cinco están así.
+
+Verificación: grep de las cuatro rutas viejas sobre todo el proyecto → **solo esas
+cinco líneas**. Y las diez rutas nuevas que quedaron citadas resuelven todas a un
+archivo que existe.

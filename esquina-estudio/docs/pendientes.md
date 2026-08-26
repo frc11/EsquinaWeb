@@ -100,7 +100,7 @@ porque §3 de la instrucción no las cubría.
   los emblemas resueltos con silueta (España, India, Líbano), Antigua y Barbuda
   entrando por descarte, y los tercios parejos de `horizontal-tricolor`
   (Letonia)— **ya no aplican**: eran propiedades de los 44 patrones
-  geométricos, y ahora cada país tiene su SVG real. Ver `docs/banderas-set.md`.
+  geométricos, y ahora cada país tiene su SVG real. Ver `docs/archivo/banderas-set.md`.
 
   Lo que **sí queda del lado humano**, y es otra cosa: revisar la hoja de
   contactos de B4d confirmando que las 196 se ven correctas, y decidir si el
@@ -295,7 +295,7 @@ abierto de verdad está acá.
 - **[Contenido]** **El cuerpo de los proyectos en castellano.** El campo
   `contentEs` existe desde M6/F3 y está vacío en los tres proyectos. Las
   traducciones propuestas de los cinco bloques están escritas en
-  `docs/sanity-piezas-es.md`, listas para cargar a mano. **El sitio funciona sin
+  `docs/archivo/sanity-piezas-es.md`, listas para cargar a mano. **El sitio funciona sin
   ellas**: sale el inglés, con las imágenes en su lugar.
 - **[Contenido]** **Dos bloques del dataset que conviene mirar.** `akasha-blends`
   tiene un **segundo bloque de texto vacío** —no se ve, pero ocupa el espacio

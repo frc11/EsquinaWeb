@@ -49,7 +49,7 @@ Fuente de verdad del mapa de bloques de la ronda. Lo mantiene la capa de planifi
 - **Sprints aprox.:** 3 → **se hizo en uno**, faseado en ocho commits (`49c080c` … `4857687` + docs).
 - **Qué quedó, contra lo planeado:** todo el alcance, más tres cosas que el plan no había anticipado y salieron del propio trabajo: (a) el formulario guarda **valores canónicos** y traduce solo el rótulo, que es lo que hace que cambiar de idioma a mitad de formulario no vacíe la selección ni rompa las banderas; (b) el esquema de zod pasó a llevar **claves** en vez de frases, para que los errores en pantalla sigan al idioma sin revalidar; (c) el `LocaleToggle` se sumó también al menú de mobile, porque si no quedaba inalcanzable debajo de `md`.
 - **Lo que NO se hizo, y es correcto:** ninguna palanca de fit. La matriz en castellano dio **idéntica** a la inglesa en los siete anchos, limpia y con los dos mensajes de validación, así que no había nada que ajustar.
-- **Insumo externo que quedó abierto:** las casillas ES de los proyectos de Sanity. **Al 2026-08-26 las ocho de una línea están cargadas** (los tres `Title (ES)` van vacíos a propósito, porque son marcas) y queda el cuerpo, cuyo campo `contentEs` entró en M6/F3 con las traducciones propuestas ya escritas en `docs/sanity-piezas-es.md`. El sitio funciona sin ellas: hay fallback cruzado.
+- **Insumo externo que quedó abierto:** las casillas ES de los proyectos de Sanity. **Al 2026-08-26 las ocho de una línea están cargadas** (los tres `Title (ES)` van vacíos a propósito, porque son marcas) y queda el cuerpo, cuyo campo `contentEs` entró en M6/F3 con las traducciones propuestas ya escritas en `docs/archivo/sanity-piezas-es.md`. El sitio funciona sin ellas: hay fallback cruzado.
 - **Depende de:** B2 y B3 (ambos cerrados).
 
 ## Fuera de esta ronda
@@ -121,7 +121,7 @@ de escribir en el dataset y que B1 eliminó. La regla es de seguridad y no de
 estilo: una ruta pública con permiso de escritura es una ruta pública con permiso
 de escritura, por más que nadie la enlace. Corolario vigente: **el agente no
 escribe en el dataset**; lo que haya que cargar se redacta como propuesta en
-`docs/sanity-piezas-es.md` y lo carga una persona desde el Studio.
+`docs/archivo/sanity-piezas-es.md` y lo carga una persona desde el Studio.
 
 ## Qué mirar primero en el próximo chat de planificación
 

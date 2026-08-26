@@ -3,10 +3,10 @@ import { CHROME_GUTTER } from "@/lib/mobile-layout";
 /**
  * Medidas compartidas del rediseño de `/services` (B3.4).
  *
- * Salen de medir los cinco mockups (`docs/mockups/08*.jpg`), que son exportes de
- * un diseño de **1920 escalados a 1327** (factor 0,691). Con ese factor el gutter
- * del diseño da exactamente 64 px —el mismo `lg:px-16` del Navbar y del Footer—
- * y la escala tipográfica cierra en 17 / 20 / 24 / 30 / 40.
+ * Salen de medir los cinco mockups (`docs/archivo/mockups/08*.jpg`), que son
+ * exportes de un diseño de **1920 escalados a 1327** (factor 0,691). Con ese
+ * factor el gutter del diseño da exactamente 64 px —el mismo `lg:px-16` del
+ * Navbar y del Footer— y la escala tipográfica cierra en 17 / 20 / 24 / 30 / 40.
  *
  * Viven acá y no dentro de un componente porque **el sidebar y el contenido
  * tienen que coincidir**: el sidebar se apoya sobre la banda que el contenido le

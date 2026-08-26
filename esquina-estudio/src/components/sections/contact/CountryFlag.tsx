@@ -5,10 +5,11 @@ import type { CountryOption } from "@/lib/contact";
   LA BANDERA DEL SELECTOR DE PAÍSES
   ─────────────────────────────────
   Sirve el SVG real que vive en `public/flags/` (set vendorizado; fuente,
-  versión y licencia en `docs/banderas-set.md`). Reemplaza al set dibujado a
-  mano que B4d retiró: con 38 patrones geométricos para 196 países había un 15 %
-  directamente mal y otro 25 % apenas reconocible, y eso no se arregla dibujando
-  mejor —un escudo no entra en 16 px de alto con geometría genérica—.
+  versión y licencia en `docs/archivo/banderas-set.md`). Reemplaza al set
+  dibujado a mano que B4d retiró: con 38 patrones geométricos para 196 países
+  había un 15 % directamente mal y otro 25 % apenas reconocible, y eso no se
+  arregla dibujando mejor —un escudo no entra en 16 px de alto con geometría
+  genérica—.
 
   **Gris en reposo, color en hover — pero solo donde hay hover** (M3/F7,
   puntos 12a y 12b). Es un filtro CSS sobre un solo archivo, no dos archivos
