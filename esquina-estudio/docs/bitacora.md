@@ -3807,3 +3807,91 @@ resulta mayor de lo que sugieren los números de M4.
    sprint y no es del código.)
 4. Un repaso general de que nada se movió.
 5. Mirar los 60 px del footer descritos arriba y decidir de qué lado se corrigen.
+
+---
+
+## M7 — Limpieza y archivado del repo (2026-08-26)
+
+Sprint de orden, no de producto. Dos criterios distintos y la diferencia entre
+ellos es lo que gobierna todo: **se borra** lo que no tiene consumidores; **se
+archiva, no se borra**, la documentación, porque es el registro del método y la
+fuente de verdad de la ronda ante las clientas. Nada de esto lo sirve Next ni lo
+ve un visitante.
+
+### Fase 0 — Inventario previo
+
+**Línea base.** `npm run lint` limpio y `npm run build` verde antes de tocar
+nada. La tabla de rutas queda como referencia de la Fase 3:
+
+```
+┌ ○ /                         ├ ƒ /contact          ○ /fun-gallery   1m 1y
+├ ○ /_not-found               ├ ○ /contact/success  ○ /services      1m 1y
+├ ƒ /api/contact              ├ ƒ /studio/[[...tool]]  ○ /team
+└ ● /work/[slug]  1m 1y       └ ○ /work  1m 1y
+  ├ /work/tukumi-takeaway · /work/matsu · /work/akasha-blends
+```
+
+**Los 32 altos de línea base** (ocho rutas × dos idiomas × 1920 y 390), medidos
+con el banco de Chrome `--headless=new` sobre el DevTools Protocol —van cinco
+reconstrucciones— con el servidor de producción en 3010, esperando a que todas
+las imágenes estén `complete` antes de medir:
+
+| Ruta | 1920 EN | 1920 ES | 390 EN | 390 ES |
+| --- | --- | --- | --- | --- |
+| `/` | 1080 | 1080 | 844 | 844 |
+| `/work` | 1644 | 1644 | 2013 | 2044 |
+| `/work/akasha-blends` | 4488 | 4527 | 2292 | 2379 |
+| `/services` | 8920 | 8982 | 7981 | 7957 |
+| `/team` | 4537 | 4499 | 3504 | 3559 |
+| `/fun-gallery` | 2228 | 2228 | 1680 | 1711 |
+| `/contact` | 1664 | 1664 | 2513 | 2494 |
+| `/contact/success` | 1080 | 1080 | 844 | 844 |
+
+En las 32 corridas: **cero imágenes rotas** (`naturalWidth === 0` sobre las que
+están `complete`), y el `lang` del documento acompaña al idioma sembrado, así que
+el toggle se está midiendo de verdad y no dos veces el inglés.
+
+### El inventario: 331 archivos versionados
+
+| Familia | Archivos | Peso |
+| --- | --- | --- |
+| Código de aplicación (`src/`) | 74 | 660 KB |
+| Assets servidos (`public/` + `logos/` + `tipografia/`) | 218 | 15,1 MB |
+| Documentación (`docs/`) | 27 | 2,0 MB |
+| Configuración y raíz del proyecto | 12 | 787 KB |
+
+**`public/`, archivo por archivo, con consumidores sí/no** —lo que manda la regla
+del sprint, verificar antes de borrar—:
+
+| Archivo | Peso | Consumidor |
+| --- | --- | --- |
+| `public/preloader-logo.mp4` | 173 KB | **sí** — `LoadingScreen.tsx:217` |
+| `public/preloader-poster.png` | 101 B | **sí** — `LoadingScreen.tsx:216` |
+| `public/logo-favicon.png` | 1,9 KB | **sí** — `layout.tsx:29,33,34` |
+| `public/og-image.jpg` | 51 KB | **sí** — `layout.tsx:43` |
+| `public/flags/*.svg` (196) | 1,3 MB | **sí, los 196** — `CountryFlag.tsx:76` por interpolación; cruce contra `countryFlagCodes.ts`: 196 códigos ↔ 196 archivos, **cero huérfanos y cero rotos** |
+| `public/flags/LICENSE.txt` | — | **sí** — licencia del set vendorizado; la exige `docs/banderas-set.md` |
+| `public/projects/team.jpg` | 254 KB | **sí** — `TeamSection.tsx:126` |
+| `public/projects/akasha-producto-2.jpg` | 289 KB | **sí** — `local-projects.ts:22`, `:154` |
+| `public/projects/akasha-producto.png` | 2,2 MB | **sí** — `local-projects.ts:141`, `:153` |
+| `public/projects/brook-logo-texto.png` | 1,7 MB | **sí** — `local-projects.ts:39`, `:156` |
+| `public/projects/brooks-logo.png` | 3,6 MB | **sí** — `local-projects.ts:56`, `:155` |
+| `public/projects/matsu-compu.png` | 1,3 MB | **sí** — `local-projects.ts:73`, `:158` |
+| `public/projects/matsu.png` | 478 KB | **sí** — `local-projects.ts:90`, `:157` |
+| `public/projects/romar.jpg` | 710 KB | **sí** — `local-projects.ts:107`, `:159` |
+| `public/projects/tukumi.jpg` | 916 KB | **sí** — `local-projects.ts:124`, `:160` |
+| `public/projects/akasha.png` | 72 KB | **no** — cero referencias |
+
+**Fuera de `public/`, mismo criterio:** los seis PNG de `logos/` y el TTF de
+`tipografia/` se verificaron uno por uno. Cinco logos entran por **import
+estático** (`Footer.tsx:11,12` y `LogoScript.tsx:3,4,5`) y el TTF por
+`next/font/local` (`layout.tsx:8`): todos con consumidor. El único sin
+consumidores es `logos/logo-favicon.png`, que es la copia fuente de
+`public/logo-favicon.png`.
+
+**Símbolos y archivos de `src/` sin consumidores: cero.** Se barrió dos veces —
+por archivo (¿alguien lo importa?) y por símbolo exportado (¿alguien lo usa fuera
+de su archivo?)— sobre los 74 archivos. Confirma lo que ya había medido M6/F4 y
+deja la Fase 1.3 sin material.
+
+**PARADA que no hizo falta:** el build de base pasó.
