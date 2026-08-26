@@ -1,0 +1,12 @@
+# .gitignore de la raíz del repositorio.
+#
+# El proyecto de Next vive en `esquina-estudio/` y tiene el suyo, que es el que
+# cubre `node_modules`, `.next`, los `.env` y los assets originales. Este cubre
+# lo que queda **por fuera** de esa carpeta: un patrón escrito allá no puede
+# alcanzar a un hermano de la raíz.
+
+# Los ocho PNG originales de la Fun Gallery, sin trackear desde hace muchos
+# sprints. Ya están cargados en Sanity, así que el repositorio no los necesita:
+# esto es la carpeta de trabajo de Valentino. **No se borran del disco** — son
+# los originales.
+/pngs-galeria/
