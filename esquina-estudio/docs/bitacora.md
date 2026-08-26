@@ -3895,3 +3895,75 @@ de su archivo?)— sobre los 74 archivos. Confirma lo que ya había medido M6/F4
 deja la Fase 1.3 sin material.
 
 **PARADA que no hizo falta:** el build de base pasó.
+
+### Fase 1 — Lo que no tiene consumidores: no quedaba nada
+
+**El resultado de la fase es cero borrados, y no por prudencia: por medición.**
+M6/F4 ya había hecho esta pasada, y lo que M7 manda buscar o no existe o está
+sostenido por un consumidor real. Punto por punto:
+
+**1. `public/projects/` — nueve de diez archivos tienen consumidor.**
+`team.jpg` lo sirve `TeamSection.tsx:126` —la foto del equipo que la instrucción
+anticipaba— y los otros ocho los referencia `src/lib/local-projects.ts`, dos veces
+cada uno: como `coverImage` de un proyecto de `LOCAL_WORK_PROJECTS` y como entrada
+de `LOCAL_PROJECT_IMAGE_MATCHERS`.
+
+**El fallback está vivo y es alcanzable en producción.** No es andamiaje de
+desarrollo: `src/lib/sanity.ts:8` deja `client` en `null` si
+`NEXT_PUBLIC_SANITY_PROJECT_ID` falta o no valida, y los tres caminos de
+`work/page.tsx` (`:19`, `:26`, `:31`) y los cinco de `work/[slug]/page.tsx`
+(`:17`, `:25`, `:30`, `:80`, `:95`, `:123`) caen a `LOCAL_WORK_PROJECTS` en ese
+caso, además de ante un array vacío o una excepción de red. El propio `README.md`
+lo declara: «sin ella el sitio cae a los datos locales de fallback».
+
+Así que la disyuntiva que planteaba la instrucción —o se borra el fallback junto
+con las imágenes, o se conservan ambos— **se resolvió por conservar ambos**, que
+es una de las dos salidas que la instrucción autoriza. Borrar las imágenes dejando
+el fallback apuntando al vacío está prohibido; borrar el fallback cambia el
+comportamiento del sitio cuando Sanity no responde, y la regla 4 dice que el sitio
+no puede cambiar. **Son 11,3 MB que se quedan a propósito**, y conviene que quede
+escrito por qué, porque a ojo parecen basura y no lo son.
+
+Lo que sí hay que anotar, porque es una observación nueva y no una acción:
+**el contenido del fallback quedó viejo**. Sus ocho slugs (`akasha-blends`,
+`brook`, `brooks`, `matsu`, `matsu-identity`, `romar`, `tukumi`,
+`akasha-packaging`) ya no son los del dataset, que publica `tukumi-takeaway`,
+`matsu` y `akasha-blends`. Si el fallback se activara hoy, el sitio mostraría un
+portfolio de hace dos rondas. **Eso es una decisión de contenido, no de limpieza**,
+y va a `docs/pendientes.md`.
+
+**2. `public/projects/akasha.png` (72 KB) — sin consumidores, y no se borra.**
+Cero referencias, confirmado. Pero M6/F4 ya lo había encontrado y ya había
+decidido no borrarlo, por escrito: es una imagen de las clientas, no andamiaje, y
+la decisión es de contenido. **Revertir una decisión documentada de la ronda
+anterior sin que un humano la revise es peor que dejar 72 KB**, y la regla del
+sprint —ante la duda, no borrar y reportar— apunta al mismo lado. Sigue en
+`docs/pendientes.md`.
+
+**3. `logos/logo-favicon.png` (1,9 KB) — sin consumidores, duplicado exacto, y
+tampoco se borra.** El barrido de duplicados por `md5` sobre los 331 archivos
+versionados encontró **un solo par**, y es este: `logos/logo-favicon.png` es byte
+por byte `public/logo-favicon.png`. Nadie lo importa —los otros cinco logos de la
+carpeta sí, por import estático—. Pero `logos/` es la carpeta de los logos
+entregados por las clientas y `public/` es la copia servida: sacar el original del
+juego para quedarse con la copia deja la carpeta de originales incompleta.
+Misma decisión de contenido, mismo pendiente.
+
+**4. Carpetas de referencias de diseño: `design-refs/` está vacía y no está en el
+repositorio.** Sus cuatro subcarpetas (`contact`, `header`, `work`,
+`work-single`) contienen **solo un `desktop.ini` cada una** —27 KB de metadatos de
+carpeta de Windows—; las imágenes de referencia ya no están. `git ls-files` no
+devuelve nada de ahí y los `desktop.ini` están ignorados, así que **la carpeta no
+ensucia el repositorio: ensucia el disco**. Y no se puede borrar con este método:
+prohíbe `rm` y `git rm` no alcanza a lo que nunca estuvo en el índice. Se suma a
+la lista de pendientes que ya agrupa los `devserver*.log` y `.next/dev/`.
+
+**5. Código sin consumidores: cero.** Dos barridos sobre los 74 archivos de
+`src/` —por archivo importado y por símbolo exportado— dieron vacío. No hay nada
+dudoso que listar porque no hay nada.
+
+**6. Archivos sueltos en la raíz: ninguno.** La raíz del repositorio versiona un
+solo archivo (`.gitignore`) y la del proyecto doce, todos de configuración o
+contrato (`AGENTS.md`, `CLAUDE.md`, `README.md`, los cuatro configs, los dos de
+`npm`, los dos `.gitignore`, `netlify.toml`). Ni descargas, ni temporales, ni
+copias.

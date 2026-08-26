@@ -363,11 +363,30 @@ abierto de verdad está acá.
   estuvo en el índice y este método prohíbe `rm`. Son: `devserver.log`,
   `devserver.err.log` y `devserver-3010.log` (de sesiones del 18 y el 21 de
   agosto), `tsconfig.tsbuildinfo`, `next-env.d.ts` y el subárbol `.next/dev/`, que
-  es de un `next dev` viejo. Se borran a mano cuando alguien pase.
+  es de un `next dev` viejo. **M7 le suma `design-refs/`**, que quedó vacía: sus
+  cuatro subcarpetas (`contact`, `header`, `work`, `work-single`) solo contienen
+  un `desktop.ini` cada una —27 KB de metadatos de Windows— y las imágenes de
+  referencia ya no están. Nada de esto está versionado. Se borran a mano cuando
+  alguien pase.
 - **[Repo]** **`public/projects/akasha.png` no tiene consumidores.** M6/F4 lo
   encontró y **no lo borró**: es una imagen de las clientas, no andamiaje. Lo
   mismo `logos/logo-favicon.png`, que nadie importa y que es la copia fuente de
-  `public/logo-favicon.png`. Decisión de contenido.
+  `public/logo-favicon.png`. **M7 lo revisó y sostuvo la decisión**, y midió algo
+  que faltaba: `logos/logo-favicon.png` es **byte por byte** idéntico a
+  `public/logo-favicon.png` —único par duplicado en los 331 archivos
+  versionados—, así que borrarlo no perdería contenido; lo que perdería es la
+  carpeta de originales completa. Decisión de contenido, de las clientas.
+- **[Repo]** **El fallback local de Work muestra el portfolio de hace dos
+  rondas.** `LOCAL_WORK_PROJECTS` (`src/lib/local-projects.ts`) tiene ocho
+  proyectos —`akasha-blends`, `brook`, `brooks`, `matsu`, `matsu-identity`,
+  `romar`, `tukumi`, `akasha-packaging`— y el dataset publica tres:
+  `tukumi-takeaway`, `matsu` y `akasha-blends`. El fallback se activa de verdad
+  en producción (si `NEXT_PUBLIC_SANITY_PROJECT_ID` falta, si el dataset vuelve
+  vacío o si la red falla), así que en ese caso el sitio mostraría contenido
+  viejo con nombres que ya no van. **M7 no lo tocó**: sus ocho imágenes son los
+  11,3 MB de `public/projects/` y actualizarlo es una decisión de contenido, no
+  de limpieza. Las salidas posibles son dos: refrescar los ocho proyectos contra
+  el dataset, o reducir el fallback a un estado vacío digno.
 - **[Auditoría 1.c]** **`NEXT_PUBLIC_SITE_URL` no está definida** →
   `metadataBase` cae al placeholder `your-site-name.netlify.app`. Fix chico:
   definirla en Netlify y en `.env.local`.
