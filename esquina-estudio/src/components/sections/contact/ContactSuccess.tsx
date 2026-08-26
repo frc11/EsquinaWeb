@@ -100,11 +100,29 @@ export default function ContactSuccess() {
           sigue midiendo exactamente una pantalla.
         */}
         <div className="mx-auto my-auto w-full max-w-4xl">
-          {/* El piso del `clamp` baja de 40 a 26 px: a 320 la caja util es de 272
-              y el titulo va en dos lineas fijas. El termino que manda de 800 px
-              para arriba sigue siendo `5vw` con el mismo techo de 64, asi que
-              de 1024 en adelante no cambia nada. */}
-          <h1 className="font-display text-[clamp(26px,5vw,64px)] uppercase leading-[1.05] text-off-white">
+          {/*
+              # El piso del titulo escala con la pantalla debajo de 800 (M6/F2)
+
+              El `clamp` de ancho no cambia: de 520 px de ancho para arriba
+              manda `5vw` con el techo de 64, así que **el escritorio no se
+              mueve ni un píxel** —el piso solo puede ganar donde `5vw` es
+              menor que el, o sea por debajo de 520 de ancho—. Lo que cambia es
+              el piso, que hasta M5 era 26 fijos.
+
+              M2/F3 lo había bajado de 40 a 26 «para que el título vaya en dos
+              líneas fijas a 320». **No alcanzaba, y quedó escrito como si sí:**
+              medido a 320, la caja útil es de 272 px y `YOUR INQUIRY WAS SENT`
+              pide 297,63 a 26 px, así que la primera línea se partía y el h1
+              medía 81,89 (tres líneas) en vez de 54,59. Entra en dos recién a
+              **23 px o menos** en inglés y a 24 en castellano.
+
+              `min(26px, 3.25svh)` es el mismo 26 escrito como proporción de una
+              pantalla de 800: `26 / 8 = 3,25`. De 800 de alto para arriba el
+              `min` devuelve 26 clavados —o sea **nada cambia**, que es la regla
+              del sprint— y debajo baja con la pantalla: 20,8 px a 640. Ahi la
+              primera línea mide 238,11 y el título vuelve a sus dos líneas.
+          */}
+          <h1 className="font-display text-[clamp(min(26px,3.25svh),5vw,64px)] uppercase leading-[1.05] text-off-white">
             {t.success.title[0]}
             <br />
             {t.success.title[1]}
@@ -127,8 +145,32 @@ export default function ContactSuccess() {
             los huecos vuelven a medir 20, así que en los teléfonos de la matriz
             —844 y 932 de alto— **no cambia nada**. Es el mismo recurso que ya
             usa `TeamSection` para su ritmo vertical, no un patrón nuevo.
+
+            # El cuerpo escala con la pantalla debajo de 800 (M6/F2)
+
+            M4/F3 devolvió el logo script al footer claro y ese footer pasó de
+            244 a **304 px**, así que la caja útil de esta pantalla a 640 de alto
+            bajó de 268 a **208**. El bloque pedía 262,89 (inglés) y 241,89
+            (castellano) y se desplazaba dentro del panel: 55 px y 34 px. La
+            ruta seguía midiendo una pantalla exacta, pero `BACK TO HOME`
+            quedaba debajo del pliegue hasta que se deslizaba.
+
+            La decisión del sprint fue **comprimir el texto**, no achicar el logo
+            del footer ni esconderlo. Y se comprime **escalando la composición,
+            no re-afinándola**: `15 / 8 = 1,875`, igual que el `3,25` del título,
+            así que los dos términos son el mismo valor de hoy escrito como
+            proporción de una pantalla de 800 y la relación entre título y
+            bajada se conserva exacta (1,733). De 800 para arriba el techo
+            devuelve los 15 px de siempre; a 640 da 12.
+
+            El piso de 12 px es de legibilidad: por debajo de 640 de alto la
+            escala deja de bajar. Y `md:text-[17px]` sigue mandando de 768 de
+            ancho para arriba, así que el escritorio no se entera.
+
+            Cuenta a 320 × 640, en píxeles: título 43,68 + hueco 16 + bajada
+            67,19 + hueco 16 + salida 44 = **186,87 contra 208 de caja útil**.
           */}
-          <p className="mx-auto mt-[clamp(12px,2.5svh,20px)] max-w-3xl font-body text-[15px] uppercase leading-[1.4] text-off-white/80 md:mt-8 md:text-[17px] md:leading-[1.45]">
+          <p className="mx-auto mt-[clamp(12px,2.5svh,20px)] max-w-3xl font-body text-[clamp(12px,1.875svh,15px)] uppercase leading-[1.4] text-off-white/80 md:mt-8 md:text-[17px] md:leading-[1.45]">
             {t.success.body}
           </p>
 
