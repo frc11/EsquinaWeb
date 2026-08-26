@@ -56,18 +56,22 @@ export const SPLIT_GRID =
   "grid grid-cols-1 lg:grid-cols-[minmax(270px,18%)_minmax(0,1fr)] gap-x-[3%] lg:pr-[4.5%]";
 
 /**
- * Grilla del cierre (LATEST PROJECTS): rótulo a la izquierda, párrafo a la
- * derecha. **Dos columnas y no tres desde M3/F6**: los dos links dejaron de
- * compartir fila con el texto y pasaron a ir **después de la cuadrícula**
- * (punto 10), así que la tercera columna de `2xl` —la que los alojaba— se
- * quedó sin contenido y se retira.
+ * Grilla del cierre (LATEST PROJECTS): rótulo, párrafo y links.
  *
- * La misma grilla la reusa el bloque de links de abajo, que se coloca en la
- * columna 2 para quedar alineado con el párrafo: así el cierre conserva las
- * dos verticales que tiene toda la página.
+ * **La tercera columna de `2xl` vuelve en M8**, que revierte el reparto de
+ * M3/F6: los dos links comparten otra vez la fila del encabezado, a la derecha
+ * del rótulo y del párrafo, que es lo que muestra el mockup `08e`. M3/F6 los
+ * había mandado debajo de las portadas y la había retirado por quedar vacía.
+ *
+ * Los links **no se pueden achicar** —van a 24 px fijos y el más largo mide unos
+ * 430 px con la flecha—, así que las tres columnas solo entran de unos 1600 px
+ * de viewport para arriba. Por debajo de `2xl` los links bajan a una segunda
+ * fila dentro de la columna del párrafo, en vez de espicharlo a un renglón por
+ * palabra. Siguen **arriba de las portadas** en los dos casos: lo que cambia es
+ * si comparten renglón con el párrafo o si van debajo de él.
  */
 export const LATEST_GRID =
-  "grid grid-cols-1 lg:grid-cols-[minmax(270px,18%)_minmax(0,1fr)] gap-x-[3%]";
+  "grid grid-cols-1 lg:grid-cols-[minmax(270px,18%)_minmax(0,1fr)] 2xl:grid-cols-[minmax(270px,18%)_minmax(0,1fr)_auto] gap-x-[3%]";
 
 /**
  * Igual que `SPLIT_GRID` pero con **dos filas explícitas**: la primera es solo
