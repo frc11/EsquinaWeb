@@ -62,6 +62,40 @@
  * atributo, el aviso sale y nombra `data-preloader`; con el `<style>`, no sale
  * ninguno y el nodo sobrevive a la hidratación intacto.
  *
+ * ## Por qué `/studio` queda afuera (M6/F1)
+ *
+ * La compuerta la **pone** este script, que vive en el layout raíz y corre en
+ * todas las rutas, y la **levanta** `LoadingScreen`. Pero `RootClientShell`
+ * hace un early-return en `/studio` —esa ruta es la interfaz de Sanity y no
+ * lleva nada del cromo del sitio—, así que ahí `LoadingScreen` no se monta
+ * nunca y **nadie levanta la compuerta**: en la primera visita de la pestaña
+ * `html` y `body` quedan en `#000000` **para siempre**.
+ *
+ * Medido antes del arreglo, sobre el build de producción, en pestaña limpia:
+ * `/studio` da `rgb(0, 0, 0)` en los dos elementos al cargar **y a los 5,5 s**,
+ * con el nodo de la compuerta todavía en `<head>`; `/`, en la misma corrida,
+ * pasa a `rgb(243, 243, 243)` cuando la cortina se va. Hoy pasa desapercibido
+ * porque el tema del Studio es oscuro y lo tapa, pero es la herramienta que usan
+ * las clientas: con un tema claro quedaría inutilizable.
+ *
+ * El arreglo es **excluir `/studio` del mecanismo entero**, no levantar la
+ * compuerta más tarde: en esa ruta no hay cortina que cubrir, así que tampoco
+ * hay lienzo que pintar. El script sale antes de tocar nada y `sessionStorage`
+ * queda intacto — entrar al Studio no consume la primera visita de la pestaña.
+ *
+ * ## El test de ruta se escribe una sola vez
+ *
+ * Son **dos** los que tienen que coincidir: este script, que corre antes de que
+ * React exista y solo puede mirar `location.pathname`, y `RootClientShell`, que
+ * mira el `pathname` del router. Si uno excluyera `/studio` y el otro no,
+ * volvería exactamente el defecto de arriba.
+ *
+ * Así que no hay dos tests: hay **una** expresión regular, `STUDIO_PATH_RE`.
+ * `isStudioPath` la usa desde TypeScript y el script la interpola como fuente
+ * —el `toString()` de un literal de regex es JavaScript válido—, así que los dos
+ * consumidores evalúan el mismo patrón, byte por byte. Es la regla §8.10 de
+ * `CLAUDE.md` aplicada al caso: no se duplica el sistema, se reusa.
+ *
  * ## Precedencia
  *
  * El `<style>` se agrega al final de `<head>`, o sea **después** de la hoja de
@@ -70,6 +104,32 @@
  * utility de Tailwind (`bg-off-white`), que es una clase y le ganaría por
  * especificidad a un selector de elemento.
  */
+
+/**
+ * El criterio de ruta del Studio, escrito **una sola vez** (M6/F1).
+ *
+ * `/studio` y todo lo que cuelgue de él —el catch-all `[[...tool]]` sirve
+ * `/studio/structure/...`, `/studio/vision`, etc.—; `/studios` **no**, que es
+ * para lo que está el grupo con la barra o el fin de cadena.
+ *
+ * Va como regex y no como par de comparaciones porque tiene que servir en los
+ * dos lados: `isStudioPath` la evalúa desde TypeScript y `PRELOADER_GATE_SCRIPT`
+ * la interpola como **fuente** dentro del script bloqueante, que corre antes de
+ * que exista React. Un literal de regex es lo único que se puede escribir una
+ * vez y usar de las dos maneras sin copiar la lógica.
+ */
+export const STUDIO_PATH_RE = /^\/studio(?:\/|$)/;
+
+/**
+ * ¿Esta ruta es el Studio de Sanity?
+ *
+ * Lo consume `RootClientShell` para su early-return —el Studio no lleva ni el
+ * cromo del sitio, ni el cursor propio, ni la cortina— y por eso mismo el
+ * preloader tiene que quedar afuera acá también. Ver el bloque de arriba.
+ */
+export function isStudioPath(pathname: string): boolean {
+  return STUDIO_PATH_RE.test(pathname);
+}
 
 /** Identidad del nodo. Es lo único que los dos archivos tienen que compartir. */
 export const PRELOADER_GATE_ID = "preloader-gate";
@@ -81,12 +141,17 @@ export const PRELOADER_GATE_ID = "preloader-gate";
  * lo ejecuta mientras parsea el documento: después de `<head>` —por eso
  * `document.head` existe— y antes de leer el nodo de la cortina.
  *
+ * **Lo primero que hace es salir si la ruta es el Studio** (M6/F1): ahí no se
+ * monta `LoadingScreen`, así que una compuerta puesta no se levantaría nunca.
+ * Sale antes de leer `sessionStorage`, así que entrar al Studio tampoco consume
+ * la primera visita de la pestaña.
+ *
  * Todo va dentro de `try`: si `sessionStorage` tira (navegación privada,
  * almacenamiento bloqueado) no se inyecta nada y la cortina se muestra. Es el
  * lado seguro del error, porque la cortina **siempre** se levanta por
  * temporizador (ver el failsafe de `LoadingScreen`).
  */
-export const PRELOADER_GATE_SCRIPT = `(function(){try{var s=false;try{s=window.sessionStorage.getItem("esquina:preloaderShown")==="1"}catch(e){}if(!s&&window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){s=true}var g=document.createElement("style");g.id="${PRELOADER_GATE_ID}";g.textContent=s?"[data-preloader-curtain]{display:none!important}":"html,body{background-color:#000000!important}";document.head.appendChild(g)}catch(e){}})();`;
+export const PRELOADER_GATE_SCRIPT = `(function(){try{if(${STUDIO_PATH_RE}.test(location.pathname))return;var s=false;try{s=window.sessionStorage.getItem("esquina:preloaderShown")==="1"}catch(e){}if(!s&&window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){s=true}var g=document.createElement("style");g.id="${PRELOADER_GATE_ID}";g.textContent=s?"[data-preloader-curtain]{display:none!important}":"html,body{background-color:#000000!important}";document.head.appendChild(g)}catch(e){}})();`;
 
 /**
  * Levanta la compuerta: devuelve el lienzo al off-white del sitio.

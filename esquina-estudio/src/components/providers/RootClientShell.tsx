@@ -6,6 +6,7 @@ import PreloaderProvider from "@/components/providers/PreloaderProvider";
 import CustomCursor from "@/components/ui/CustomCursor";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { LocaleProvider } from "@/lib/i18n";
+import { isStudioPath } from "@/lib/preloader-gate";
 
 export default function RootClientShell({
   children,
@@ -13,7 +14,16 @@ export default function RootClientShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isStudio = pathname === "/studio" || pathname.startsWith("/studio/");
+  /*
+    El test de ruta **no se escribe acá**: viene de `preloader-gate.ts`, que es
+    el otro lado que tiene que coincidir. Ese módulo emite el script bloqueante
+    de la compuerta, y el script usa el mismo patrón para saltearse `/studio`.
+    Si los dos criterios se separaran, volvería el defecto de M6/F1: la
+    compuerta puesta por el script y `LoadingScreen` sin montar para
+    levantarla, o sea el lienzo negro para siempre. Una sola expresión, dos
+    consumidores (`CLAUDE.md` §8.10).
+  */
+  const isStudio = isStudioPath(pathname);
 
   useEffect(() => {
     if (isStudio) {
