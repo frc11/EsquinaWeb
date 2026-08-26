@@ -66,7 +66,7 @@ export const ES: Dictionary = {
     foundedBy: [
       "Fundado por ",
       "Virginia y Victoria",
-      " —también conocidas como Vireli y Toli—, el estudio nace de una sociedad creativa de toda la vida. Somos amigas desde los cuatro años y después estudiamos juntas Diseño Multimedial en Tucumán, Argentina.",
+      " (también conocidas como Vireli y Toli), el estudio nace de una sociedad creativa de toda la vida. Somos amigas desde los cuatro años y después estudiamos juntas Diseño Multimedial en Tucumán, Argentina.",
     ],
     bio: "Con los años desarrollamos una mirada compartida y un entendimiento profundo de la identidad visual, y del valor real que hoy tiene para marcas de cualquier tamaño. Nos inspiran la moda, la gastronomía y el diseño en todas sus formas: observamos todo el tiempo y traducimos lo que vemos en experiencias de marca pensadas y con intención.",
     approach: `Nuestra visión combina estética, concepto y bases atemporales. Somos muy
