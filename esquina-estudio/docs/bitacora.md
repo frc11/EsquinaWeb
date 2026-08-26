@@ -4026,3 +4026,103 @@ falsearía el registro para arreglar un enlace. La traducción vive en la tabla 
 Verificación: grep de las cuatro rutas viejas sobre todo el proyecto → **solo esas
 cinco líneas**. Y las diez rutas nuevas que quedaron citadas resuelven todas a un
 archivo que existe.
+
+### Fase 3 — Puertas y verificación
+
+**Las dos puertas, con el servidor bajado: `npm run lint` sin una sola salida y
+`npm run build` verde.** La tabla de rutas sale **idéntica** a la de la Fase 0:
+las mismas once entradas, los mismos tres proyectos SSG (`tukumi-takeaway`,
+`matsu`, `akasha-blends`) y los mismos `1m`/`1y` de revalidación. El único ruido
+del build sigue siendo el aviso de `@sanity/image-url` deprecado, que sale del
+paquete y está declarado como conocido en `CLAUDE.md` §7b.
+
+**Los 32 altos: cero diferencias.** Se remidieron las ocho rutas en los dos
+idiomas a 1920 y a 390 con el mismo banco y el mismo servidor de producción en
+3010, y las 32 lecturas coinciden **al píxel** con la línea base. No es una
+sorpresa —el sprint no tocó una línea ejecutable— pero es la prueba de que no la
+tocó.
+
+**Ninguna imagen rota, verificado por dos caminos distintos** —que es el riesgo
+principal de un sprint que mueve archivos—:
+
+1. **Por DOM, en las 32 corridas del banco:** 204 imágenes cargadas, cero con
+   `naturalWidth === 0` estando `complete`.
+2. **Por red, recorriendo la página entera:** se abrieron `/work`,
+   `/work/akasha-blends`, `/team`, `/fun-gallery`, `/services` y `/contact`, se
+   las barrió de arriba abajo de a 600 px —sin eso la carga diferida no pide lo
+   que está fuera de cuadro— y se leyó el **código HTTP de cada pedido de tipo
+   imagen**: **49 pedidos, 49 en 200**. Este camino ve lo que el otro no: un
+   `background-image` de CSS y un pedido que falla antes de llegar al DOM.
+3. De yapa, porque era barato: se pidieron por HTTP **los 211 archivos de
+   `public/`**, uno por uno. **211 en 200**, ni un 404. Incluye los 196 SVG de
+   banderas, que el recorrido no alcanza porque solo se piden al abrir el
+   desplegable.
+
+#### El peso del repositorio, antes y después
+
+| | Antes (`02bfb5a`) | Después (`HEAD`) |
+| --- | --- | --- |
+| Archivos versionados | 331 | 333 |
+| Contenido versionado | 18,18 MB | 18,21 MB |
+
+**El repositorio pesa 29 KB más, y está bien que así sea.** Este sprint no borró:
+archivó. Los 29 KB son `docs/archivo/README.md` y el postmortem de la ronda, que
+estaba sin trackear y ahora está en el repositorio. Los 24 archivos movidos no
+suman ni restan un byte —`git` los registró como renombres puros—.
+
+Lo que sí cambió es **dónde está el peso**, que era el objetivo:
+
+| Familia | Antes | Después |
+| --- | --- | --- |
+| Assets servidos (`public/`, `logos/`, `tipografia/`) | 218 arch · 14,46 MB | igual |
+| Código (`src/`) | 74 arch · 0,51 MB | igual |
+| Configuración y raíz | 12 arch · 0,75 MB | igual |
+| `docs/` de consulta corriente | **27 arch · 2,46 MB** | **5 arch · 0,77 MB** |
+| `docs/archivo/` (histórico) | — | **24 arch · 1,72 MB** |
+
+**`docs/` pasó de 27 archivos a 5.** Quien abra la carpeta hoy ve el plan
+maestro, los pendientes, la bitácora, `reportes/` y `archivo/`: el registro vivo
+adelante y la historia en un solo lugar, con su propio `README.md` que explica de
+qué ronda es.
+
+**Sobre el disco, para que no confunda:** `esquina-estudio/` sigue pesando 158 MB
+sin contar `.git`, y `.git` pesa 162 MB. Nada de eso lo mueve este sprint: son
+`node_modules/`, `.next/` y los originales de assets que las clientas entregaron
+—`Asset_ Imágenes`, `Asset_ Logo`, `Asset_ Tipografía`, `Assets_Footer`—, todos
+ignorados por git a propósito. El repositorio son 18,21 MB.
+
+---
+
+### Lo que este sprint decidió no hacer, y por qué
+
+Tres cosas quedaron sin tocar **por decisión, no por olvido**. Las tres están en
+`docs/pendientes.md` con su motivo:
+
+1. **Los 11,3 MB de `public/projects/`.** Son el fallback vivo de Work. Ver la
+   Fase 1: borrarlos rompe el fallback, borrar el fallback cambia el
+   comportamiento del sitio, y la regla 4 dice que el sitio no cambia.
+2. **`public/projects/akasha.png` y `logos/logo-favicon.png`.** Sin consumidores,
+   pero son contenido de las clientas y M6/F4 ya lo había decidido por escrito.
+   Son 74 KB entre los dos.
+3. **`design-refs/`, vacía y no versionada.** No se puede borrar con las reglas
+   de este método.
+
+Y una observación que no es de limpieza sino de contenido, anotada en pendientes
+porque alguien la va a necesitar: **el fallback local muestra el portfolio de hace
+dos rondas** —ocho proyectos con slugs que el dataset ya no publica—.
+
+---
+
+### Verificación humana pendiente
+
+1. **Recorrer el sitio y confirmar que no falta ninguna imagen.** Es el riesgo
+   principal del sprint. El agente lo verificó por tres caminos (DOM, red y los
+   211 archivos de `public/` por HTTP) y los tres dieron limpio, pero **el ojo es
+   humano**: `/work`, una ficha de proyecto, `/team`, `/fun-gallery`, `/services`
+   y el desplegable de países de `/contact`, que es el único lugar donde se piden
+   las banderas.
+2. **Abrir `docs/` y confirmar que la estructura nueva se entiende** — cinco
+   entradas arriba y la historia en `archivo/`, con su `README.md`.
+3. **Decidir los dos archivos de contenido** que quedan sin consumidores:
+   `public/projects/akasha.png` y `logos/logo-favicon.png`. Es una decisión de las
+   clientas, no técnica.

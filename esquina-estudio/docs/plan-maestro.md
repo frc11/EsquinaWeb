@@ -1,8 +1,8 @@
 # Plan maestro — Esquina Estudio
 
-Fuente de verdad del mapa de bloques de la ronda. Lo mantiene la capa de planificación; el agente de ejecución **no lo edita** salvo instrucción explícita (B4/F8 lo pidió para cerrar la ronda; M6/F5 lo pidió para archivarla).
+Fuente de verdad del mapa de bloques de la ronda. Lo mantiene la capa de planificación; el agente de ejecución **no lo edita** salvo instrucción explícita (B4/F8 lo pidió para cerrar la ronda; M6/F5 lo pidió para archivarla; M7 sumó su fila a la tabla de sprints y corrigió los punteros de `docs/` que el archivado movió).
 
-**Estado al 2026-08-26: la ronda está cerrada y archivada.** Los cuatro bloques (B1–B4) se ejecutaron entre el 15 y el 21 de agosto, y después vinieron **seis sprints de corrección y cierre (M1–M6)**, del 22 al 26. El detalle de cada uno está en `docs/bitacora.md`; el resumen, al pie de este archivo.
+**Estado al 2026-08-26: la ronda está cerrada y archivada.** Los cuatro bloques (B1–B4) se ejecutaron entre el 15 y el 21 de agosto, y después vinieron **siete sprints de corrección y cierre (M1–M7)**, del 22 al 26. El detalle de cada uno está en `docs/bitacora.md`; el resumen, al pie de este archivo.
 
 ## Ronda en curso: devoluciones de las clientas
 
@@ -62,9 +62,9 @@ Los cuatro bloques quedaron ejecutados y el sitio funcionó completo en inglés 
 en castellano. Lo que quedó abierto no era alcance sin hacer: era **deuda
 decidida**, y vive en `docs/pendientes.md`.
 
-## Los seis sprints de cierre — M1 a M6 (22 al 26 de agosto)
+## Los siete sprints de cierre — M1 a M7 (22 al 26 de agosto)
 
-Después de cerrar los bloques vinieron seis sprints que no abrieron alcance
+Después de cerrar los bloques vinieron siete sprints que no abrieron alcance
 nuevo: adaptaron, corrigieron lo que la verificación humana devolvió y
 archivaron.
 
@@ -76,6 +76,7 @@ archivaron.
 | **M4** | 24-08 | **Footer y menú.** Un solo ícono de menú, subrayado de la sección actual y los dos footers de mobile en dos columnas, con el logo script de vuelta. |
 | **M5** | 25-08 | **La compuerta del preloader deja de escribir sobre `<html>`.** El aviso de hidratación era solo de desarrollo, pero el arreglo es de raíz y no de silenciado. |
 | **M6** | 26-08 | **Cierre de la ronda.** El lienzo negro de `/studio`, la pantalla de éxito en teléfonos de 640, `contentEs`, la limpieza del repo y **el archivo del conocimiento técnico**. |
+| **M7** | 26-08 | **Limpieza y archivado del repo.** Sin cambios de producto: los 32 altos quedaron idénticos. La documentación histórica —20 mockups, las instrucciones, `banderas-set.md` y `sanity-piezas-es.md`— se **archivó en `docs/archivo/`**, no se borró, con sus 20 punteros actualizados. **Borrar no hubo nada que borrar**: lo que no tiene consumidores en este repo ya no existe. |
 
 ## Decisiones de arquitectura durables
 
