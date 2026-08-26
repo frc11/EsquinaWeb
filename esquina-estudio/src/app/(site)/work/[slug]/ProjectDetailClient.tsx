@@ -9,7 +9,7 @@ import {
   useFunGalleryReturnOnMount,
 } from "@/lib/fun-gallery-return";
 import { useLocale } from "@/lib/i18n";
-import { projectText } from "@/lib/project-text";
+import { projectContent, projectText } from "@/lib/project-text";
 import { Project } from "@/types/project";
 import ProjectContentRenderer from "@/components/ui/ProjectContentRenderer";
 
@@ -94,7 +94,14 @@ export default function ProjectDetailClient({
           }
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
-          <ProjectContentRenderer content={project.content || []} />
+          {/*
+              El cuerpo bilingüe: los párrafos salen de `contentEs` cuando el
+              sitio está en castellano y **las imágenes siguen saliendo de
+              `content`, en su lugar original**. La regla de emparejamiento y el
+              fallback viven en `project-text.ts`, al lado del de los otros tres
+              campos: es el mismo sistema, no uno paralelo (M6/F3).
+          */}
+          <ProjectContentRenderer content={projectContent(project, locale)} />
 
           {/* ── Bottom Navigation (inside the content column) ──
               Living inside this column instead of as a sibling of the flex row

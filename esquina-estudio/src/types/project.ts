@@ -50,4 +50,11 @@ export interface Project {
   titleEs?: string | null;
   categoryEs?: string | null;
   servicesEs?: string | null;
+  /**
+   * El cuerpo del proyecto en castellano: **solo párrafos**, sin bloques de
+   * media. Las imágenes salen siempre de `content`, que es donde vive la
+   * composición. El emparejamiento por posición y el fallback están en
+   * `src/lib/project-text.ts` (M6/F3).
+   */
+  contentEs?: ProjectContentBlock[] | null;
 }

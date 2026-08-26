@@ -11,7 +11,7 @@ export const ALL_PROJECTS_QUERY = `
 export const PROJECT_BY_SLUG_QUERY = `
   *[_type == "project" && slug.current == $slug][0] {
     _id, title, slug, projectNumber, category, services, year,
-    coverImage, content,
+    coverImage, content, contentEs,
     titleEs, categoryEs, servicesEs
   }
 `;
