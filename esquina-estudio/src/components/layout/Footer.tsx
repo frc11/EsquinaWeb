@@ -24,36 +24,32 @@ const SOCIAL_LINKS = [
 const COPYRIGHT = "© 2024";
 
 /**
- * Dónde cae cada pieza en la grilla de mobile (M4/F3).
+ * Dónde cae cada pieza en la grilla de mobile.
  *
  * Van como tablas de literales enteros porque Tailwind v4 busca los nombres de
  * clase como texto: `` `row-start-${index + 1}` `` no llegaría nunca al CSS.
  *
- * # Por qué son dos tablas y no una
+ * # El reparto
  *
- * Hasta M3 los lugares y las redes compartían tabla, y era a propósito: la red
- * de índice *n* caía en la **misma fila** que el par de índice *n*. La columna
- * derecha tiene ahora **tres** ítems —INSTAGRAM, LINKEDIN y `© 2024`— contra
- * dos de la izquierda, así que emparejar por fila ya no se puede: **el criterio
- * pasa a ser que las dos columnas terminen a la misma altura**.
- *
- * Se resuelve con la grilla y sin una sola medida nueva: las tres filas de
- * arriba miden 44 px cada una —el piso de área táctil, que se aplica por fila—,
- * la columna derecha las llena en orden, y el segundo par de lugar se manda a la
- * **tercera** fila apoyado en su borde inferior (`self-end`). La segunda fila de
- * la columna izquierda queda vacía y no importa: lo que tiene que coincidir es
- * el borde de abajo, no el renglón.
+ * Tres filas de dos columnas, más una cuarta a lo ancho para el logo:
  *
  * ```
  *   fila 1   BORN IN / ARGENTINA          INSTAGRAM
- *   fila 2   (vacía)                      LINKEDIN
- *   fila 3   WORKING / WORLDWIDE ┐        © 2024
- *                                └── los dos apoyados en el mismo borde
+ *   fila 2   WORKING / WORLDWIDE          LINKEDIN
+ *   fila 3   POWERED BY develOP           © 2024
+ *   fila 4        [logo script, centrado]        ← solo el footer claro
  * ```
+ *
+ * **Las dos columnas terminan a la misma altura sin una sola regla de
+ * alineación.** Cada fila se dimensiona por su ítem más alto, y en las tres es
+ * el de la derecha: 44 px de piso de área táctil contra los 40 que miden dos
+ * renglones a `leading-[20px]`. El `self-end` que hacía falta cuando la
+ * izquierda tenía dos ítems y la derecha tres ya no existe: ahora son tres
+ * contra tres.
  */
 const MOBILE_PLACE_CELL = [
   "max-lg:col-start-1 max-lg:row-start-1",
-  "max-lg:col-start-1 max-lg:row-start-3 max-lg:self-end",
+  "max-lg:col-start-1 max-lg:row-start-2",
 ] as const;
 
 /** La columna derecha, de arriba abajo. `© 2024` toma la tercera fila aparte. */
@@ -66,32 +62,38 @@ const MOBILE_SOCIAL_CELL = [
  * El piso de área táctil, aplicado a mano a `© 2024`.
  *
  * `TOUCH_LINKS` alcanza al `<a>` que emite `HoverButton` y el copyright no es un
- * enlace, así que sin esto su fila mediría 20 px y la columna derecha terminaría
- * 24 px más arriba que la izquierda. No es un área táctil de verdad —no hay nada
- * que tocar— sino la **misma unidad de fila** que usan las dos redes: es lo que
- * hace que los tres ítems de la derecha tengan un solo ritmo.
+ * enlace, así que sin esto su fila mediría 20 px y quedaría descolgado del
+ * crédito, que comparte la fila 3 y sí arrastra sus 44 por ser enlace. No es un
+ * área táctil de verdad —no hay nada que tocar— sino la **misma unidad de fila**
+ * que usan los otros dos ítems de la columna: es lo que le da a la derecha un
+ * solo ritmo.
  */
 const MOBILE_COPYRIGHT_CELL =
   "max-lg:col-start-2 max-lg:row-start-3 max-lg:flex max-lg:min-h-[44px] max-lg:items-center max-lg:justify-self-end";
 
 /**
- * Las dos filas de abajo, cada una a lo ancho del footer.
+ * El crédito cierra la columna izquierda; el logo cierra el footer.
  *
- * El crédito va **solo** y centrado, que es donde estaba (de 360 para arriba; a
- * 320 la fila caía a `justify-between` porque `© 2024` no entraba al lado, y ese
- * problema desapareció con el copyright mudado a la columna derecha: ahora
- * centra exacto en los cinco anchos).
+ * **El crédito dejó de ser una fila propia centrada** y bajó a la columna
+ * izquierda, fila 3, apoyado en el gutter igual que los dos pares de lugar. Es
+ * el elemento más ancho del footer —185,03 px a 15 px de tipografía— así que es
+ * el que decide si la fila 3 entra: 185,03 + 16 de `gap-x-4` + 51,36 de
+ * `© 2024` = 252,39 contra los 272 de caja útil a 320. Entra por 19,6 px, y es
+ * el margen más chico de la composición: **si ese texto cambia, hay que volver a
+ * medir a 320.**
  *
- * El logo script cierra la composición **abajo a la derecha**. Va en su propia
- * fila y no al lado del crédito, y es una medida: a 320 la caja útil es de 272
- * px y los dos juntos piden 185,03 + 120,5 = 305,53 px sin contar el aire entre
- * ellos. Es el mismo conflicto que en M2 dejó al logo fuera del footer de
- * mobile; la salida es la fila propia.
+ * El logo script se queda en su propia fila, a lo ancho y **centrado**. Centrado
+ * y no a la derecha porque a la derecha quedaba como un tercer eje suelto: la
+ * grilla ya tiene el eje del gutter izquierdo y el del derecho, y el logo
+ * alineado a uno de ellos se leía como una cuarta entrada de esa columna en vez
+ * de como el remate del footer. En fila propia y no al lado del crédito porque
+ * los dos juntos piden 185,03 + 120,5 = 305,53 px sin contar el aire, contra 272
+ * de caja útil a 320.
  */
 const MOBILE_CREDIT_CELL =
-  "max-lg:col-span-2 max-lg:row-start-4 max-lg:mt-4 max-lg:flex max-lg:justify-center";
+  "max-lg:col-start-1 max-lg:row-start-3 max-lg:flex max-lg:justify-self-start";
 const MOBILE_LOGO_CELL =
-  "max-lg:col-span-2 max-lg:row-start-5 max-lg:mt-4 max-lg:flex max-lg:justify-end";
+  "max-lg:col-span-2 max-lg:row-start-4 max-lg:mt-4 max-lg:flex max-lg:justify-center";
 
 /**
  * Gutter horizontal del chrome: alinea el footer con el Navbar. Sale del módulo
@@ -102,12 +104,11 @@ const GUTTER = CHROME_GUTTER;
 /**
  * Sistema tipográfico de la información del footer: 17 px, interletrado 0.
  *
- * **Baja a 15 px debajo de 1024 (M2/F2, punto 7)**, y sale de medir: la línea
- * nueva del nivel 2 —`© 2024` y el crédito uno al lado del otro— pide 205,45 px
- * de crédito más 58,2 de copyright a 17 px, o sea 271,65 contra los 272 de caja
- * útil a 320. Entraba por 0,35 px, que no es entrar. A 15 px la misma línea pide
- * 244, y quedan 28 px de aire. De `lg` para arriba **no cambia nada**: la fila
- * de escritorio sigue en 17.
+ * **Baja a 15 px debajo de 1024 (M2/F2, punto 7)**, y sale de medir: a 17 px el
+ * crédito pide 205,45 px y el copyright 58,2, o sea 263,65 más el hueco contra
+ * los 272 de caja útil a 320. A 15 px la misma fila pide 252,39 y quedan 19,6 px
+ * de aire. De `lg` para arriba **no cambia nada**: la fila de escritorio sigue
+ * en 17.
  */
 const INFO_TYPE =
   "font-body font-[550] text-[15px] uppercase tracking-normal lg:text-[17px]";
@@ -151,9 +152,9 @@ function SocialLinks({ tone }: { tone: "light" | "dark" }) {
 /**
  * Crédito de develOP. **La escala la hereda del contenedor** —`INFO_TYPE`, o sea
  * 15 px debajo de 1024 y 17 de ahí para arriba—: no fija tamaño propio. El logo
- * de 22 px sí es fijo, y es lo que hace que la línea del nivel 2 mida 205,45 px
- * a 17 px de tipografía (ver `INFO_TYPE`). La variante corta («BY») se fue con
- * el footer fijo de `/fun-gallery` en B3.3.
+ * de 22 px sí es fijo, y es lo que hace que la línea mida 205,45 px a 17 px de
+ * tipografía y 185,03 a 15 (ver `INFO_TYPE` y `MOBILE_CREDIT_CELL`). La variante
+ * corta («BY») se fue con el footer fijo de `/fun-gallery` en B3.3.
  */
 function DevelopCredit({
   logoClassName,
@@ -201,32 +202,32 @@ function DevelopCredit({
  * # Escritorio (≥ 1024): una fila, dos grupos
  *
  * Procedencia, alcance, copyright y crédito a la izquierda; redes (y el logo
- * script en home) a la derecha. **No cambió en M2**: los dos grupos siguen
+ * script en home) a la derecha. **No cambió desde B2**: los dos grupos siguen
  * siendo los mismos nodos y los mismos `gap`.
  *
- * # Mobile (< 1024): dos columnas alineadas abajo y dos filas al pie (M4/F3)
+ * # Mobile (< 1024): tres filas de dos columnas y el logo al pie
  *
  * ```
  *   NACIDO EN                        INSTAGRAM
  *   ARGENTINA
- *                                    LINKEDIN
- *   TRABAJANDO
- *   EN TODO EL MUNDO                 © 2024
  *
- *              HECHO POR develOP
- *                                 [logo script]   ← solo el footer claro
+ *   TRABAJANDO                       LINKEDIN
+ *   EN TODO EL MUNDO
+ *
+ *   HECHO POR develOP                © 2024
+ *
+ *              [logo script]         ← solo el footer claro
  * ```
  *
- * Dos ítems a la izquierda, tres a la derecha pegados al gutter, y **los bordes
- * inferiores de las dos columnas a la misma altura** —el criterio es ese y no la
- * cantidad de renglones—. Debajo, el crédito solo y centrado, y en el footer de
- * home el logo script cerrando abajo a la derecha. Cómo se consigue la
- * alineación está en `MOBILE_PLACE_CELL`.
+ * La izquierda apoya en el gutter izquierdo y la derecha en el derecho, tres
+ * ítems cada una, y el logo cierra centrado a lo ancho. Cómo se consigue que las
+ * dos columnas terminen parejas está en `MOBILE_PLACE_CELL`.
  *
- * Hasta M3 el copyright compartía la última línea con el crédito y las dos redes
- * emparejaban fila con los dos pares de lugar. Antes de eso —M1— era una sola
- * columna de cinco bloques apilados, que medía 488 px de alto: más de la mitad
- * de un teléfono de 844.
+ * Antes de esto el crédito iba solo y centrado en una fila propia y el logo
+ * abajo a la derecha: eran **tres ejes** en cuatro filas —el par de columnas, el
+ * crédito al centro, el logo a la derecha— y el logo se leía como un elemento
+ * suelto. Antes de eso —M1— era una sola columna de cinco bloques apilados, que
+ * medía 488 px de alto: más de la mitad de un teléfono de 844.
  *
  * **Los pares de lugar van apilados y no uno al lado del otro**, y es una
  * medida: en castellano piden 71,58 + 121,83 px y con INSTAGRAM al costado dan
@@ -257,9 +258,9 @@ function InfoRow({
   stackGap: string;
   /**
    * Alineación de la fila **de `lg` para arriba**, que es donde la fila existe:
-   * debajo de 1024 manda la grilla de dos niveles. Llega como clase entera
-   * (`lg:items-center`) y no como sufijo porque Tailwind v4 busca los nombres de
-   * clase como literales en el código.
+   * debajo de 1024 manda la grilla. Llega como clase entera (`lg:items-center`)
+   * y no como sufijo porque Tailwind v4 busca los nombres de clase como
+   * literales en el código.
    */
   align: string;
   trailing?: React.ReactNode;
@@ -284,13 +285,16 @@ function InfoRow({
   return (
     <div
       /*
-        `gap-y-0` y no `gap-y-4` desde M4/F3, y no es ahorro por ahorro: las tres
-        filas de arriba miden **44 px** cada una por el piso de área táctil, así
-        que entre dos renglones de texto de 20 px ya quedan 24 px de aire. Los
-        16 px de hueco encima de eso separaban de más y, con dos filas nuevas al
-        pie, engordaban el footer 64 px. El aire que sí hace falta —el que aparta
-        el crédito y el logo del bloque de las dos columnas— lo ponen los `mt-4`
-        de esas dos celdas, que es donde se ve.
+        `gap-y-0` y no `gap-y-4`, y no es ahorro por ahorro: las tres filas miden
+        **44 px** cada una por el piso de área táctil, así que entre dos
+        renglones de texto de 20 px ya quedan 24 px de aire. Los 16 px de hueco
+        encima de eso separaban de más y engordaban el footer. El aire que sí
+        hace falta —el que aparta el logo del bloque de las tres filas— lo pone
+        el `mt-4` de esa celda, que es donde se ve.
+
+        Si los dos pares de lugar se leen apretados (quedan a 4 px uno del otro:
+        40 px de texto dentro de filas de 44), acá es donde se toca: `gap-y-3`
+        con el `lg:gap-y-0` de al lado protegiendo el escritorio.
       */
       className={`grid w-full grid-cols-[auto_auto] items-start justify-between gap-x-4 gap-y-0 lg:flex lg:flex-row lg:justify-between lg:gap-x-12 lg:gap-y-0 ${align} ${TOUCH_LINKS} ${INFO_TYPE} ${leadingClass} ${textClass}`}
     >
@@ -302,8 +306,8 @@ function InfoRow({
       <div className="contents lg:flex lg:flex-row lg:items-start lg:gap-x-12">
         {t.footer.places.map(([first, second], index) => (
           // `key` por índice: el texto cambia con el idioma y los pares son
-          // siempre dos, garantizado por el tipo. Y por eso `PLACE_ROW` puede
-          // ser una tabla de dos entradas: el índice no se sale de rango.
+          // siempre dos, garantizado por el tipo. Y por eso `MOBILE_PLACE_CELL`
+          // puede ser una tabla de dos entradas: el índice no se sale de rango.
           <div
             key={index}
             className={`flex flex-col ${MOBILE_PLACE_CELL[index]} ${stackGap}`}
@@ -314,10 +318,10 @@ function InfoRow({
         ))}
 
         {/*
-          El copyright y el crédito **se separan en mobile** (M4/F3): el
-          copyright baja a la columna derecha como tercer ítem, debajo de
-          LINKEDIN, y el crédito se queda solo en su propia fila, centrado a lo
-          ancho del footer.
+          El copyright y el crédito **se separan en mobile**: el copyright cierra
+          la columna derecha, debajo de LINKEDIN, y el crédito cierra la
+          izquierda, debajo del segundo par de lugar. Los dos comparten la fila
+          3, cada uno apoyado en su gutter.
 
           Por eso este envoltorio se declara `contents` debajo de 1024: sus dos
           hijos tienen que ser **celdas propias** de la grilla, cada una con su
@@ -325,13 +329,6 @@ function InfoRow({
           dos formas que tenía —en fila con el `gap-x-12` del propio grupo para
           las rutas internas, apilado para home—, así que el escritorio no se
           mueve.
-
-          **Y con eso se fue el corte de 360.** Hasta M3 la última línea llevaba
-          las dos cosas y el crédito solo podía centrarse a partir de 360: a 320
-          cada columna lateral de la grilla `[1fr auto 1fr]` medía
-          (272 − 185,03) / 2 = 43,49 px y `© 2024` pide 51,36, así que la fila
-          caía a `justify-between`. Con el copyright mudado, el crédito es lo
-          único que hay en su fila y **centra exacto en los cinco anchos**.
         */}
         <div
           className={`max-lg:contents ${
@@ -361,13 +358,13 @@ function InfoRow({
         redes apiladas adentro. Eso las dejaba a la deriva en dos sentidos, los
         dos medidos a 390: quedaban alineadas a la izquierda de su columna
         —INSTAGRAM terminaba en 336,1 contra los 366 del gutter, 29,9 px cortos—
-        y LINKEDIN caía en 692, doce píxeles por encima de WORKING en vez de a su
-        misma altura.
+        y LINKEDIN caía doce píxeles por encima de WORKING en vez de a su misma
+        altura.
 
         Ahora el grupo se declara `contents` en mobile y **cada red es su propia
-        celda**: columna 2, fila 1 y fila 2, con `justify-self-end`. Así cada una
-        se pega al borde derecho de la caja útil y cada una comparte fila con su
-        par de lugar, que es la composición que pidió Valentino.
+        celda**: columna 2, filas 1 y 2, con `justify-self-end`. Así cada una se
+        pega al borde derecho de la caja útil y cada una comparte fila con su par
+        de lugar.
 
         De `lg` para arriba el grupo vuelve a ser una fila flex y **no cambia
         nada**: los envoltorios de las redes se declaran `contents` allá arriba,
@@ -481,16 +478,15 @@ function StatementBand({ isContactPage }: { isContactPage: boolean }) {
  * CLUB», que se superpone sin tocar la tinta. Solo se renderiza en `/contact`
  * (mockup de esa ruta); el resto de las rutas internas lo omite.
  *
- * # La composición de mobile es la misma del footer claro (M4/F4)
+ * # La composición de mobile es la misma del footer claro
  *
- * Las dos bandas comparten `InfoRow`, así que el reparto nuevo —dos ítems a la
- * izquierda, tres a la derecha pegados al gutter y los bordes inferiores de las
- * dos columnas a la misma altura, con el crédito solo y centrado debajo— entra
- * acá sin una línea propia. Lo que este footer **no** lleva es el logo script
- * chico: el logo de esta banda es el gigante de arriba, que gobierna el alto y
- * no se toca.
+ * Las dos bandas comparten `InfoRow`, así que el reparto —tres ítems por
+ * columna, cada una apoyada en su gutter— entra acá sin una línea propia. Lo que
+ * esta banda **no** lleva es la cuarta fila: el logo script chico no se
+ * renderiza acá, porque el logo de esta banda es el gigante de arriba, que
+ * gobierna el alto y no se toca.
  *
- * **Verificado que la composición nueva no lo desacomoda** (cinco anchos, dos
+ * **Verificado que la composición no lo desacomoda** (cinco anchos, dos
  * idiomas): el asset sigue montándose a ancho completo del viewport —320 × 95,5
  * px a 320 y 430 × 128,3 a 430—, el borde inferior de la imagen y el borde
  * superior del bloque de información siguen siendo **el mismo píxel**, y en
@@ -498,11 +494,9 @@ function StatementBand({ isContactPage }: { isContactPage: boolean }) {
  * debajo de la imagen. Cero desborde horizontal en las tres rutas medidas.
  *
  * **El relleno de abajo baja a 24 px en mobile** y se queda en 40 de `lg` para
- * arriba. La banda ahora cierra con la línea del crédito, que arrastra 12 px de
- * su caja táctil de 44: con `pb-10` quedaban 52 px de aire muerto al pie de la
- * página, contra los 24 con que abre. Con 24 la banda es simétrica —el mismo
- * ritmo que M4/F3 le dio al footer claro— y la fila de información pasa de 256 a
- * 240 px, así que de los 28 px que sumó la fila nueva del copyright quedan 12.
+ * arriba. La banda cierra con la fila del crédito y el copyright, que arrastran
+ * 12 px de su caja táctil de 44: con `pb-10` quedaban 52 px de aire muerto al
+ * pie de la página, contra los 24 con que abre. Con 24 la banda es simétrica.
  */
 function ScriptBand({ isContactPage }: { isContactPage: boolean }) {
   const { t } = useLocale();
@@ -558,10 +552,15 @@ function ScriptBand({ isContactPage }: { isContactPage: boolean }) {
 /**
  * Footer de las rutas internas: franja clara + banda oscura. La llamada a
  * contacto alterna por ruta entre las dos bandas (`isContactPage`).
+ *
+ * El `mt-auto` es el mismo criterio que en `HomeFooter`: con
+ * `PageTransitionShell` declarando `min-h-svh` en columna, el footer se apoya en
+ * el pie de la pantalla cuando el contenido no llega a llenarla. En las rutas
+ * internas largas el margen calcula 0 y no cambia nada; existe para las cortas.
  */
 function SiteFooter({ isContactPage }: { isContactPage: boolean }) {
   return (
-    <footer className="w-full border-none bg-off-white">
+    <footer className="mt-auto w-full border-none bg-off-white">
       <StatementBand isContactPage={isContactPage} />
       <ScriptBand isContactPage={isContactPage} />
     </footer>
@@ -570,7 +569,7 @@ function SiteFooter({ isContactPage }: { isContactPage: boolean }) {
 
 /**
  * Footer de home: una sola franja clara. El hero ya trae la frase, así que acá
- * solo va la fila de info, con el logo script como último elemento a la derecha.
+ * solo va la fila de info, con el logo script cerrando abajo.
  *
  * # La variante sobre fondo oscuro (M2/F3, puntos 8 y 9)
  *
@@ -599,18 +598,25 @@ function HomeFooter({ onDark = false }: { onDark?: boolean }) {
   return (
     <footer
       /*
-        `py-6` debajo de 1024 y `py-10` de ahí para arriba (M4/F3). El relleno de
-        40 px estaba calibrado para un footer de **tres** filas; con las dos que
-        suman el crédito y el logo, la fila de info pasa de 164 a 256 px y esos
-        80 px de aire propio ya no caben en un teléfono bajo. Con 24 el footer
-        mide 304 px y `/` sigue entrando en una pantalla a 320 × 640 —el bloque
-        del hero se queda con 208 px y la frase pide 187—. **El escritorio no se
-        toca:** de `lg` para arriba sigue en 40.
+        `py-6` debajo de 1024 y `py-10` de ahí para arriba. El relleno de 40 px
+        estaba calibrado para un footer de tres filas; con la cuarta que suma el
+        logo, la fila de info creció y esos 80 px de aire propio ya no caben en
+        un teléfono bajo.
+
+        **El `mt-auto` es lo que apoya el footer en el pie de la pantalla**, y va
+        de la mano del `min-h-svh` en columna de `PageTransitionShell`. Sin él el
+        footer quedaba anclado arriba y el sobrante se acumulaba debajo, pintado
+        del mismo off-white: medido en `/` a 425 × 747, el footer cerraba en 671
+        y el body en 747, o sea **76 px de body vacío** que se leían como aire del
+        footer. Bajarle el relleno al footer movía ese hueco en vez de sacarlo.
+
+        Con `onDark` **no se aplica**: en `/contact/success` el footer es
+        `absolute` y el margen no tendría contra qué empujar.
       */
       className={`w-full border-none ${GUTTER} py-6 lg:py-10 ${
         onDark
           ? "absolute inset-x-0 bottom-0 z-[95] bg-off-black"
-          : "bg-off-white"
+          : "mt-auto bg-off-white"
       }`}
     >
       <InfoRow
@@ -620,10 +626,11 @@ function HomeFooter({ onDark = false }: { onDark?: boolean }) {
         align="lg:items-center"
         /*
           El logo script cierra la composición: en escritorio a la derecha de la
-          fila, en mobile **abajo a la derecha, en su propia fila** (M4/F3).
+          fila, en mobile **centrado y en su propia fila** al pie del footer.
           M2 lo había sacado de mobile porque compartía línea con el crédito y
           los dos juntos pedían 305,53 px contra 272 de caja útil a 320; en fila
-          propia el conflicto no existe y vuelve en los cinco anchos.
+          propia el conflicto no existe y vuelve en los cinco anchos. Por qué
+          centrado y no a la derecha está en `MOBILE_LOGO_CELL`.
         */
         trailing={
           <div className={`flex-shrink-0 ${MOBILE_LOGO_CELL} lg:block`}>
