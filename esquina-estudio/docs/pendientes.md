@@ -321,6 +321,23 @@ abierto de verdad está acá.
   con la misma vara y las mismas diez pasadas. Cerrarlo del todo pediría que el
   negro viniera en el HTML servido, lo que reabre el problema de hidratación que
   M5 resolvió. Está medido y acotado; se anota para que no se redescubra.
+- **[Composición]** **El alto del footer de mobile ya no es 304: mide 244**, y
+  `mobile-layout.ts` sigue diciendo 304 en sus dos constantes. El último commit
+  antes de M6 (`70e7c33`, «ajustes manuales de composicion», hecho a mano)
+  reestructuró el `HomeFooter`: el crédito dejó de tener fila propia y bajó a la
+  columna izquierda, así que se fue una fila de 44 px más su hueco de 16.
+  **No rompe nada** —en `/` el `mt-auto` del footer absorbe la diferencia y el
+  borde inferior coincide exacto con `docH` y `viewH` en los ocho viewports
+  probados, o sea cero franja muerta— pero deja **60 px de aire de más** entre el
+  bloque del hero y el footer, y en `/contact/success` deja `BACK TO HOME` a
+  70,58 px del footer a 320 × 640 en vez de unos 10.
+  **La decisión es de composición y es humana:** o el footer vuelve a 304, o las
+  dos constantes pasan a 244 (lo que agranda el hero 60 px en los cinco anchos y
+  sube el bloque de la pantalla de éxito). M6 lo midió y **no lo tocó**, porque es
+  un footer que Valentino acaba de ajustar a mano. El comentario de
+  `mobile-layout.ts` ya advertía que «si el footer cambia, este número cambia»:
+  el chequeo es medir
+  `document.querySelector("footer").getBoundingClientRect().height`.
 - **[Seguridad]** **`SANITY_API_WRITE_TOKEN` está vencido.** Una lectura de
   prueba con ese token devuelve `401 SIO-401-ANF, "Session not found"`. No rompe
   nada —el sitio lee sin token, con `useCdn: true`— pero significa que

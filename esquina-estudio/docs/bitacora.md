@@ -3455,3 +3455,355 @@ footer oscuro de /work, en mobile     antes -> ahora EN    antes -> ahora ES
   subraye ninguna.
 - **Un repaso de que nada de M3 se movió:** el preloader, los indicadores de
   carga y el tap de la galería no se tocaron.
+
+## M6 — Cierre de la ronda (2026-08-26)
+
+**El último sprint de la ronda.** Cinco fases, un commit cada una, más el de
+bitácora. Ejecutado sobre `main`, sin `push`, sin deploy y **sin escribir una
+sola vez en Sanity** (sí se leyó el dataset publicado, para saber qué traducir).
+
+Cierra cinco cosas: un defecto real del Studio, un problema de composición en
+teléfonos chicos, la traducción del cuerpo de los proyectos, la limpieza del
+repo y —la más importante para el futuro— el archivado del conocimiento técnico
+que hasta hoy vivía solo en reportes de sprint y en conversaciones.
+
+**Puertas:** `lint` 0 y `build` 0 en la línea base y al cierre, con el servidor
+bajado. Tabla de rutas idéntica en las cinco corridas.
+
+**No-regresión al cierre:**
+
+- **48 de 48 altos idénticos a la línea base de la Fase 0** — ocho rutas × 1920,
+  1366 y 390 × dos idiomas. Cero cambiados.
+- **Cero scroll horizontal en 112 combinaciones** (ocho rutas × siete viewports ×
+  dos idiomas, incluyendo los cinco anchos de teléfono).
+- **`/` y `/contact/success` siguen midiendo una pantalla exacta**
+  (`docH === viewH`) en todas las combinaciones medidas.
+- **Cero avisos de hidratación** y cero avisos de consola que no sean el de
+  `@sanity/image-url`, que sale del paquete y no del repo.
+- La cortina sigue apareciendo desde el primer cuadro pintado, sigue corriendo
+  una sola vez por pestaña y su failsafe sigue en pie.
+
+**El banco.** La extensión de Chrome no se usó: se volvió a construir el banco de
+M2/M3/M4 —Chrome `--headless=new` por el DevTools Protocol sobre el `WebSocket`
+nativo de Node, sin dependencias—. Es la **cuarta** vez que se reconstruye desde
+cero, y por eso este sprint lo dejó archivado en `CLAUDE.md` §7b y anotado como
+candidato a herramienta del proyecto.
+
+---
+
+### Fase 1 — El lienzo negro de `/studio`
+
+**El defecto, reproducido antes de tocar nada.** El script bloqueante de la
+compuerta vive en el layout raíz, así que corría en **todas** las rutas y ponía
+la compuerta también en `/studio`. Pero `RootClientShell` hace early-return ahí
+—esa ruta es la interfaz de Sanity y no lleva nada del cromo del sitio—, así que
+`LoadingScreen` no se monta y **nadie levantaba la compuerta**.
+
+Medido sobre el build de producción, en pestaña limpia:
+
+```
+                    al cargar            a los 5,5 s
+/studio   html/body  rgb(0, 0, 0)        rgb(0, 0, 0)      ← nunca se levanta
+          #preloader-gate presente, con html,body{background-color:#000000!important}
+/         html/body  rgb(0, 0, 0)        rgb(243, 243, 243)  ← correcto
+```
+
+Pasaba desapercibido porque el tema del Studio es oscuro y lo tapa. Pero es la
+herramienta que usan las clientas, y con un tema claro quedaría inutilizable.
+
+**El arreglo excluye `/studio` del mecanismo entero** en vez de levantar la
+compuerta más tarde: en esa ruta no hay cortina que cubrir, así que tampoco hay
+lienzo que pintar. El script sale **antes de leer `sessionStorage`**, así que
+entrar al Studio **no consume la primera visita de la pestaña**.
+
+**El test de ruta se escribe una sola vez, y era el punto delicado.** Son dos los
+que tienen que coincidir: el script, que corre antes de que exista React y solo
+puede mirar `location.pathname`, y `RootClientShell`, que mira el del router. Si
+se separaran, volvería el mismo defecto. La salida es **una** expresión regular,
+`STUDIO_PATH_RE`, en `preloader-gate.ts`:
+
+```js
+export const STUDIO_PATH_RE = /^\/studio(?:\/|$)/;
+
+export function isStudioPath(pathname: string) { return STUDIO_PATH_RE.test(pathname); }
+
+// y en el script, interpolada como FUENTE — el toString() de un literal de
+// regex es JavaScript válido:
+`(function(){try{if(${STUDIO_PATH_RE}.test(location.pathname))return; …`
+```
+
+Los dos consumidores evalúan el mismo patrón byte por byte. Verificado en el HTML
+servido: sale `if(/^\/studio(?:\/|$)/.test(location.pathname))return;`.
+
+**Verificación después del arreglo:**
+
+- `/studio` y `/studio/vision` en pestaña limpia: `rgb(243, 243, 243)` en `html`
+  y en `body`, sin nodo de compuerta, y el Studio monta y rinde su interfaz.
+- **Las ocho rutas del sitio, en pestaña limpia, sin un solo cambio:** compuerta
+  «on», lienzo negro y cortina visible al cargar; compuerta levantada y lienzo
+  off-white a los 5,5 s; y en la segunda visita de la misma pestaña, compuerta
+  «skip» con la cortina fuera del DOM.
+- **Cruzado:** entrar primero a `/studio` deja `sessionStorage` intacto, así que
+  la visita siguiente a `/` en esa misma pestaña muestra el preloader entero.
+- `/studios` no matchea: el grupo `(?:\/|$)` pide barra o fin de cadena.
+
+---
+
+### Fase 2 — `/contact/success` en teléfonos de 640 px
+
+**El defecto se reprodujo exacto**, con los números que había dejado M4: a
+320 × 640 el bloque medía 262,89 px (inglés) y 241,89 (castellano) contra una
+caja útil de 208, así que sobraban **55 y 34 px** y `BACK TO HOME` quedaba debajo
+del pliegue hasta que se deslizaba.
+
+**Lo que apareció al medir, y que cambió el arreglo.** El problema mayor no era
+la bajada: era **el título**. M2/F3 había bajado el piso del `clamp` de 40 a 26
+px «para que el título vaya en dos líneas fijas a 320», y quedó escrito como si
+hubiera funcionado. No funcionó:
+
+```
+a 320, caja útil de 272 px
+  YOUR INQUIRY WAS SENT   →  297,63 px a 26 px de tipografía   ← no entra
+  ¡TU CONSULTA SE ENVIÓ   →  293,19 px                          ← no entra
+entra en dos líneas recién a 23 px (inglés) y 24 (castellano)
+resultado: el h1 medía 81,89 px (TRES líneas) y no los 54,59 de dos
+```
+
+Con el título en 26 no hay tamaño de bajada que alcance: quedarían 50,11 px para
+un párrafo que a 11 px ya pide 61,56.
+
+**El arreglo escala la composición, no la re-afina.** Los dos términos nuevos son
+el valor de hoy escrito como proporción de una pantalla de 800:
+
+```
+título:  clamp(26px,5vw,64px)  →  clamp(min(26px,3.25svh),5vw,64px)     26 / 8 = 3,25
+bajada:  text-[15px]           →  text-[clamp(12px,1.875svh,15px)]      15 / 8 = 1,875
+```
+
+Así la relación entre título y bajada se conserva **exacta** (1,733) y no hay
+números inventados.
+
+**Por qué no puede cambiar nada de 800 para arriba, por construcción.** El `min`
+del título devuelve 26 clavados en cuanto `3.25svh ≥ 26`, o sea de 800 de alto en
+adelante; el techo del `clamp` de la bajada devuelve 15 desde 685,7. Y el
+escritorio no puede moverse **ni en pantallas bajas**: el piso del título solo
+gana donde `5vw` es menor que él, o sea **por debajo de 520 px de ancho**, y la
+bajada la pisa `md:text-[17px]` de 768 para arriba.
+
+**Cuenta a 320 × 640:** título 43,66 + hueco 16 + bajada 67,19 + hueco 16 +
+salida 44 = **186,84 contra 208 de caja útil**.
+
+**Medido, 16 viewports × 2 idiomas = 32 combinaciones:**
+
+```
+vp          bloque antes → después    sobra antes → después
+320x640 en   262,89 →  186,84            55 → 0
+360x640 en   214,59 →  186,84             7 → 0
+390x640 en   214,59 →  170,05             7 → 0
+320x640 es   241,89 →  186,84            34 → 0
+360x640 es   214,59 →  170,05             7 → 0
+320x800 en   270,89 →  270,89 (idéntico)  0 → 0
+390x844 en   222,59 →  222,59 (idéntico)  0 → 0
+430x932 es   201,59 →  201,59 (idéntico)  0 → 0
+1366x768 —   288,16 →  288,16 (idéntico)  0 → 0
+1920x1080 —  288,16 →  288,16 (idéntico)  0 → 0
+```
+
+**Sobra 0 px en las 32.** Los diez viewports de 800 de alto para arriba que ya
+estaban medidos dan el bloque **idéntico al centésimo**. `BACK TO HOME` cae en
+281,42..325,42 a 320 × 640, dentro del pliegue y por encima de la franja del
+footer. El título volvió a sus dos líneas (43,66 px). `docH === viewH` en las 32.
+
+Se cubrieron además **320 × 667 y 320 × 700**, que son alturas de teléfono reales
+en la banda intermedia: sobra 0 en las dos.
+
+---
+
+### Fase 3 — El cuerpo de los proyectos en español
+
+**Por qué no se duplica el campo.** `content` es un array de bloques mezclados
+—párrafos conviviendo con `mediaItem` y `dualMedia` en un orden dado— y ese orden
+**es** la composición de la ficha. Un `contentEs` que copiara su forma obligaría
+a las clientas a volver a subir todas las imágenes, y cualquier cambio futuro de
+una foto quedaría desincronizado entre idiomas sin que nada fallara.
+
+**La forma:** `contentEs` es **solo texto** (un array de `block`, sin
+`mediaItem` ni `dualMedia`). Al renderizar en castellano los párrafos salen de
+ahí y **las imágenes siguen saliendo de `content`, en su lugar original**. Una
+sola composición, una sola copia de cada imagen.
+
+**La regla de correspondencia: por posición entre los bloques de texto.**
+
+```
+  content:    [ texto A ] [ imagen ] [ imagen ] [ texto B ]
+                   │                                 │
+  contentEs:  [ texto A' ]                      [ texto B' ]
+```
+
+Las otras dos formas se descartaron, y quedó escrito por qué: **por `_key`** es
+imposible —Sanity los genera al azar (`33815fed9836`) y no los muestra en la
+interfaz, una clienta no puede copiarlos—, y **por índice en el array completo**
+obligaría a dejar párrafos vacíos de relleno donde hay imágenes.
+
+**Si no coinciden en cantidad:** menos en castellano ⇒ los que faltan salen en
+inglés, uno por uno, en su lugar exacto, nunca un hueco; más ⇒ los que sobran no
+se muestran —no tienen dónde caer sin mover una imagen— y **no en silencio**: el
+schema emite un aviso en el Studio diciendo cuántos son. Un párrafo castellano en
+blanco cuenta como ausente y cae al inglés.
+
+**Dónde vive.** En `src/lib/project-text.ts`, al lado del fallback cruzado de los
+otros tres campos: es el mismo sistema, no uno paralelo (§8.10). En el Studio los
+dos campos van juntos en un `fieldset`, como los pares EN/ES de B3.2, y el rótulo
+y la descripción dicen explícitamente que ahí va solo el texto.
+
+Dos detalles: el `_key` que viaja es **el del inglés** —así el nodo de React es el
+mismo antes y después de cambiar de idioma y la unicidad de claves la garantiza
+`content`— y en inglés se devuelve `content` **por identidad**, sin copiar ni
+recorrer nada.
+
+**Verificación.** 17 aserciones sobre el módulo real, en diez escenarios: inglés
+intacto y sin copiar; castellano ausente / `null` / `[]`; traducción completa
+—con los objetos de imagen **idénticos por referencia**—; traducción parcial;
+párrafo en blanco; párrafos de más; un bloque de imagen colado en `contentEs`; el
+caso de akasha con un bloque inglés vacío; `content` ausente; y bloques
+castellanos mal formados. **17 OK, 0 fallas.** Y sobre el sitio corriendo, las
+tres fichas en los dos idiomas: con el campo vacío la composición es idéntica
+—mismos párrafos, mismas imágenes, mismo orden—.
+
+**Dos correcciones de estado del dataset**, que estaba vencido en las dos cifras:
+hay **tres** proyectos y no cuatro (Valentino borró `matsutrabajo`) y las **ocho**
+casillas ES de una línea **ya están cargadas** (`ALIMENTOS Y BEBIDAS`,
+`RESTAURANTES`, `TECNOLOGÍA`, verificado renderizando). Por eso los bloques de
+texto a traducir son **cinco** y no los siete que decía la instrucción.
+
+Las traducciones propuestas quedaron en `docs/sanity-piezas-es.md`, con el
+criterio de B4. Dos hallazgos de contenido anotados ahí: el segundo bloque de
+akasha está **vacío** y el segundo de matsu es **idéntico al primero**, palabra
+por palabra.
+
+---
+
+### Fase 4 — Limpieza del repo
+
+Cinco ítems, con grep o medición **antes** de borrar y `build` al final.
+
+1. **`pngs-galeria/` → ignorada, no borrada.** Va en un `.gitignore` **nuevo en la
+   raíz del repositorio**, no en el del proyecto: el de `esquina-estudio/` no
+   puede alcanzar a un hermano de la raíz. Verificado con `git check-ignore`, y
+   los ocho PNG siguen en el disco.
+2. **El `.mp4` en la raíz del proyecto: no existe.** El único fuera de
+   `node_modules` y `.next` es `public/preloader-logo.mp4`.
+3. **Rutas temporales: ninguna.** La tabla de rutas del build tiene solo las
+   reales. Los bancos de medición de M2 a M4 siempre vivieron fuera del repo.
+4. **Scratchpad, capturas y worktrees: nada.** `git worktree list` tiene una sola
+   entrada.
+5. **Símbolos y archivos sin consumidores.** Se recorrieron los nombres
+   exportados de los 71 archivos de `src/`: **cero huérfanos**. Se borraron los
+   **cinco SVG de `create-next-app`** (cero referencias) y **`tailwind.config.ts`**,
+   que estaba inerte —Tailwind v4 no lee un config de JavaScript salvo que el CSS
+   lo pida con `@config`, y no lo pide—. **No se dedujo, se midió:** se construyó
+   con el archivo y sin él y el CSS de producción sale **idéntico byte por byte**
+   (md5 `f6efce75…`, 51 993 bytes, mismo nombre de chunk).
+
+**Lo que se encontró y NO se borró, con el motivo:** `src/app/favicon.ico` (cero
+referencias, pero Next lo sirve por convención de archivo), `public/projects/akasha.png`
+y `logos/logo-favicon.png` (sin consumidores, pero son contenido de las clientas,
+no andamiaje), y los archivos de trabajo ya ignorados —los tres `devserver*.log`,
+`tsconfig.tsbuildinfo`, `next-env.d.ts` y el subárbol `.next/dev/`—, que **no se
+pueden borrar con las reglas de este método**: prohíbe `rm` y `git rm` no alcanza
+a un archivo que nunca estuvo en el índice.
+
+---
+
+### Fase 5 — El archivo del conocimiento
+
+**`CLAUDE.md` §7 se reorganizó en vez de sumarle una novena lista.** Tres de las
+ocho trampas ya estaban ahí, en forma más rica que el resumen de una línea, y
+dejar las dos versiones habría sido exactamente lo que §8.10 prohíbe. Ahora §7 es
+el archivo, en cuatro familias, con las lecciones de junio que no entran en las
+ocho conservadas en §7.5.
+
+**Una de las ocho se volvió a verificar sobre la hoja de producción de este
+repo**, en vez de darla por buena: el orden de emisión de las media queries.
+
+```
+offset   px      qué es
+  8271   1024    breakpoint con nombre  lg:      ← el bloque base
+ 36803    880    arbitraria  min-[880px]:
+ 39804   1600    arbitraria  min-[1600px]:       ← última arbitraria
+ 40932    640    breakpoint con nombre  sm:
+ 45310   1024    breakpoint con nombre  lg:      ← los de nombre van DESPUÉS
+```
+
+Con la misma especificidad gana el de más abajo, así que **`lg:` le gana a
+`min-[1600px]:`**. Los `max-[879.98px]`, `max-[1279.98px]`, `max-[1359.98px]` y
+`max-[1599.98px]` que hay en el repo son la otra mitad del par: los rangos
+mutuamente excluyentes que lo resuelven.
+
+**`CLAUDE.md` §7b es nueva:** los límites del entorno de ejecución. Existe por
+tres razones — evitar prometer verificaciones imposibles, evitar descartar un
+reporte humano porque el banco no lo reproduce, y decir cómo medir sin
+equivocarse.
+
+**`docs/plan-maestro.md`** queda con la ronda registrada como cerrada y
+archivada, la tabla de los seis sprints de cierre (M1–M6) y las **cuatro
+decisiones de arquitectura durables**.
+
+**`docs/pendientes.md`** dio de baja lo resuelto y ganó una sección de cierre que
+**consolida lo que sigue vivo** en vez de dejarlo repartido en seis secciones
+históricas.
+
+---
+
+### Lo que apareció al verificar y no estaba en el alcance
+
+**El alto del footer de mobile ya no es 304: mide 244.** El último commit antes
+de este sprint (`70e7c33`, «ajustes manuales de composicion», hecho a mano)
+reestructuró el `HomeFooter` de mobile: el crédito dejó de tener fila propia y
+bajó a la columna izquierda, así que se fue una fila de 44 px más su hueco de 16.
+`mobile-layout.ts` sigue diciendo **304** en sus dos constantes, y su propio
+comentario advierte que «si el footer cambia, este número cambia».
+
+Medido, en los cinco anchos y los dos idiomas:
+
+```
+footer real           244 px   (escritorio 164, sin cambios)
+HOME_BLOCK_HEIGHT_MOBILE resta  304
+HOME_FOOTER_CLEARANCE    reserva 304
+```
+
+**No rompe nada, y por eso no se tocó.** En `/` el `mt-auto` del footer absorbe la
+diferencia: el borde inferior del footer coincide exacto con `docH` y con `viewH`
+en los ocho viewports probados, o sea **cero franja muerta**; lo que hay son 60 px
+de aire de más entre el bloque del hero y el footer. En `/contact/success` la
+reserva de más deja `BACK TO HOME` a **70,58 px** del borde del footer a 320 × 640
+en vez de unos 10.
+
+**Es anterior a este sprint** —la línea base de la Fase 0 ya medía 244— y
+corregirlo es una decisión de composición sobre un footer que Valentino acaba de
+ajustar a mano: o el footer debía seguir en 304, o la constante debe pasar a 244.
+Las dos mueven cosas a la vista. Queda anotado en `docs/pendientes.md` y **no se
+tocó**.
+
+Efecto sobre la Fase 2, que conviene dejar claro: **el arreglo sigue siendo
+necesario y correcto**. La caja útil de la pantalla de éxito la fija el relleno de
+304, no el footer real, así que el desbordamiento de 55 px que se midió y se
+corrigió era genuino; lo único que cambia es que la holgura contra el footer
+resulta mayor de lo que sugieren los números de M4.
+
+---
+
+### Verificación humana pendiente
+
+1. Entrar a `/studio` en una pestaña nueva y confirmar que carga bien y que el
+   lienzo ya no queda negro.
+2. `/contact/success` en un teléfono chico de verdad: que `BACK TO HOME` se vea
+   sin deslizar, y que el texto más chico se lea bien.
+3. Cargar en el Studio una traducción de prueba en `contentEs` y ver el proyecto
+   en español: que los párrafos cambien y **las imágenes queden donde estaban**.
+   (El agente no pudo ver el formulario del Studio renderizado: el origen
+   `127.0.0.1:3010` no está registrado en el proyecto de Sanity y la interfaz
+   muestra la pantalla «Connect this studio to your project». Es anterior al
+   sprint y no es del código.)
+4. Un repaso general de que nada se movió.
+5. Mirar los 60 px del footer descritos arriba y decidir de qué lado se corrigen.
