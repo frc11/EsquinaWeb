@@ -25,42 +25,22 @@ body[data-custom-cursor="true"] * {
 }
 
 /*
-  Cortina de entrada: el escape sin parpadeo (M3/F1, punto 1).
+  Cortina de entrada: el escape sin parpadeo (M3/F1, punto 1; rehecho en M5).
 
-  El atributo lo pone el script bloqueante de `layout.tsx` mientras el navegador
-  parsea el documento, o sea ANTES del primer pintado y antes de que React
-  hidrate. Cuando la cortina no corresponde —ya se vio en esta pestaña, o el
-  visitante pidió menos movimiento— esta regla la esconde desde el cuadro cero.
+  Las dos reglas que había acá —esconder la cortina cuando no corresponde, y
+  pintar el lienzo de negro mientras va a correr— **ya no viven en esta hoja**.
+  Colgaban de un `data-preloader` que el script bloqueante escribía sobre
+  `<html>`, y ese atributo rompía la hidratación en desarrollo: el HTML servido
+  no lo trae, el script lo agrega antes de que React hidrate, y React avisa por
+  los atributos que encuentra y no rindió.
 
-  Tiene que ser CSS y no React: el HTML del servidor trae la cortina SIEMPRE, y
-  esa es justamente la condición para que la hidratación no se rompa. Lo que
-  varía entre visitas se resuelve fuera del árbol de React.
+  Ahora el mismo script inyecta un `<style>` propio en `<head>` con la regla que
+  corresponda, así que no hay nada escrito sobre `<html>` y no hay nada que
+  comparar. El mecanismo entero, con la medición que lo justifica, está en
+  `src/lib/preloader-gate.ts`. La condición de fondo no cambió: tiene que ser
+  CSS y no React, porque el HTML del servidor trae la cortina SIEMPRE y eso es
+  justamente lo que mantiene la hidratación sana.
 */
-html[data-preloader="skip"] [data-preloader-curtain] {
-  display: none !important;
-}
-
-/*
-  Y el lienzo va negro mientras la cortina esté por correr.
-
-  No es redundante con la cortina: el nodo de la cortina es lo segundo que hay
-  dentro de `<body>`, pero el navegador puede pintar **antes** de haberlo
-  parseado, y lo que pinta entonces es el `bg-off-white` del body. Medido en un
-  arranque lento del build final: primer pintado a los 2198 ms con la pantalla
-  en blanco y la cortina recién a los 2337, o sea ~140 ms de destello claro
-  antes del negro. Con esta regla la pantalla está negra desde el primer cuadro,
-  haya llegado el nodo o no.
-
-  El negro es el del video (`#000000`, medido), no el off-black de la marca, por
-  la misma razón que la cortina: si no coinciden se ve el borde.
-
-  Lo saca `LoadingScreen` cuando la cortina **empieza** a irse, así que el
-  off-white vuelve detrás de ella y no después.
-*/
-html[data-preloader="on"],
-html[data-preloader="on"] body {
-  background-color: #000000 !important;
-}
 
 html {
   background-color: var(--color-off-white);

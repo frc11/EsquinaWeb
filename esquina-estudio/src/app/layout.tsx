@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import RootClientShell from "@/components/providers/RootClientShell";
+import { PRELOADER_GATE_SCRIPT } from "@/lib/preloader-gate";
 import "./globals.css";
 
 const manropeFont = localFont({
@@ -48,42 +49,6 @@ export const metadata: Metadata = {
   },
 };
 
-/**
- * Script bloqueante de la cortina de entrada (M3/F1, punto 1).
- *
- * Va **primero dentro de `<body>` y sin `async`/`defer`**, así que el navegador
- * lo ejecuta mientras parsea el documento: antes de leer el nodo de la cortina y
- * mucho antes del primer pintado. Es lo único que puede resolver la regla de
- * «una vez por pestaña» sin que participe de la hidratación.
- *
- * Marca `data-preloader` en `<html>` con uno de dos valores, y de ahí cuelgan las
- * dos reglas de `globals.css`:
- *
- * - **`"skip"`** — la cortina no corresponde (ya se vio en esta pestaña, o el
- *   visitante pidió menos movimiento). La regla la esconde con `display: none`.
- * - **`"on"`** — la cortina va a correr, y entonces **el lienzo se pinta de
- *   negro**. Esto último no es redundante con la cortina, y es un defecto que
- *   apareció midiendo el build final: el nodo de la cortina es lo segundo que
- *   hay dentro de `<body>`, pero el navegador puede pintar **antes** de haberlo
- *   parseado, y lo que pinta entonces es el `bg-off-white` del body. Medido en
- *   un arranque lento: primer pintado a los 2198 ms con la pantalla en blanco
- *   —`elementFromPoint` daba `BODY` en los cinco puntos, o sea sin contenido
- *   ninguno— y la cortina recién a los 2337. Eran ~140 ms de destello claro
- *   antes del negro. Pintando el lienzo desde el script, la pantalla está negra
- *   desde el primer cuadro haya o no llegado el nodo.
- *
- * React ni se entera de ninguno de los dos —su primer render es idéntico al del
- * servidor, con cortina— y el `useEffect` de `LoadingScreen` desmonta la cortina
- * después, sobre algo que el usuario ya no estaba viendo. Es `LoadingScreen`
- * también quien **saca** el atributo cuando la cortina empieza a irse, así que
- * el off-white vuelve detrás de ella y no después.
- *
- * Todo va dentro de `try`: si `sessionStorage` tira (navegación privada,
- * almacenamiento bloqueado) no se marca nada y la cortina se muestra. Es el lado
- * seguro del error, porque la cortina siempre se levanta por temporizador.
- */
-const PRELOADER_GATE = `(function(){try{var s=false;try{s=window.sessionStorage.getItem("esquina:preloaderShown")==="1"}catch(e){}if(!s&&window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){s=true}document.documentElement.setAttribute("data-preloader",s?"skip":"on")}catch(e){}})();`;
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -116,7 +81,14 @@ export default function RootLayout({
         `100vh`: `100svh`»— y este era el último lugar donde quedaba sin aplicar.
       */}
       <body className="bg-off-white text-off-black font-body min-h-svh">
-        <script dangerouslySetInnerHTML={{ __html: PRELOADER_GATE }} />
+        {/*
+          La compuerta de la cortina de entrada. El script y el porqué de su
+          forma —un `<style>` propio en `<head>` y **nada** escrito sobre
+          `<html>`, que es lo que rompía la hidratación en desarrollo— viven en
+          `src/lib/preloader-gate.ts`, que es la única fuente: `LoadingScreen`
+          levanta la compuerta desde el mismo módulo.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: PRELOADER_GATE_SCRIPT }} />
         <RootClientShell>{children}</RootClientShell>
       </body>
     </html>

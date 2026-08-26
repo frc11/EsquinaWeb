@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
+import { clearPreloaderGate } from "@/lib/preloader-gate";
 
 const SESSION_KEY = "esquina:preloaderShown";
 
@@ -37,12 +38,13 @@ const SESSION_KEY = "esquina:preloaderShown";
  * 1. El servidor y el **primer render del cliente** son idénticos y siempre
  *    traen la cortina. No hay nada que React pueda desacordar.
  * 2. El script bloqueante de `layout.tsx` lee `sessionStorage` y
- *    `prefers-reduced-motion` **antes de que el navegador pinte**, y marca
- *    `data-preloader` en `<html>` con `"skip"` o con `"on"`. Con `"skip"` la
- *    regla de `globals.css` esconde la cortina con `display: none`; con `"on"`
- *    pinta el lienzo de negro, que es lo que cubre los milisegundos entre el
- *    primer pintado y la llegada del nodo de la cortina (ver
- *    `clearCurtainPaint`). Es CSS, no React: no participa de la hidratación.
+ *    `prefers-reduced-motion` **antes de que el navegador pinte**, e inyecta un
+ *    `<style>` propio en `<head>`: con «skip» esconde la cortina con
+ *    `display: none`; con «on» pinta el lienzo de negro, que es lo que cubre los
+ *    milisegundos entre el primer pintado y la llegada del nodo de la cortina.
+ *    Es CSS, no React: no participa de la hidratación. **Y desde M5 no escribe
+ *    nada sobre `<html>`**, que es lo que sí participaba — ver
+ *    `src/lib/preloader-gate.ts`.
  * 3. Ya hidratado, el `useEffect` de acá lee lo mismo y desmonta la cortina de
  *    verdad. El usuario nunca la vio, porque el paso 2 la tapó desde el cuadro
  *    cero.
@@ -87,22 +89,6 @@ const EASE_EXIT: [number, number, number, number] = [0.76, 0, 0.24, 1];
  */
 const CURTAIN_BLACK = "#000000";
 
-/**
- * Devuelve el lienzo al off-white del sitio.
- *
- * El script bloqueante de `layout.tsx` deja `data-preloader="on"` y una regla de
- * `globals.css` pinta `html` y `body` de negro con eso puesto: es lo que evita el
- * destello claro de los ~140 ms que puede haber entre el primer pintado y la
- * llegada del nodo de la cortina. Sacarlo es lo que restituye el fondo, y hay
- * que hacerlo **cuando la cortina empieza a irse**, no cuando terminó: si no, lo
- * que el deslizamiento descubre es negro.
- *
- * Es idempotente y no falla si el atributo no está.
- */
-function clearCurtainPaint() {
-  document.documentElement.removeAttribute("data-preloader");
-}
-
 export default function LoadingScreen() {
   const { markPreloaderDone } = usePreloader();
 
@@ -118,7 +104,7 @@ export default function LoadingScreen() {
    * igual; esto solo adelanta.
    */
   const handleVideoError = useCallback(() => {
-    clearCurtainPaint();
+    clearPreloaderGate();
     setIsExiting(true);
     markPreloaderDone();
   }, [markPreloaderDone]);
@@ -168,7 +154,7 @@ export default function LoadingScreen() {
       mitad, lo de atrás ya está opaco.
     */
     const exitTimer = window.setTimeout(() => {
-      clearCurtainPaint();
+      clearPreloaderGate();
       setIsExiting(true);
       markPreloaderDone();
     }, VIDEO_DURATION_MS);
@@ -184,7 +170,7 @@ export default function LoadingScreen() {
       window.clearTimeout(hideTimer);
       // Si el efecto se limpia sin haber llegado a la salida —una navegación
       // temprana, un desmontaje— el lienzo no puede quedarse negro.
-      clearCurtainPaint();
+      clearPreloaderGate();
     };
   }, [markPreloaderDone]);
 
