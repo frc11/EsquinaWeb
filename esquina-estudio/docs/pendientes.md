@@ -2,13 +2,15 @@
 
 Deuda diferida, con contexto para retomarla. Lo mantiene la capa de planificación (B4/F8 lo actualizó, para cerrar la ronda). Formato: **[origen]** descripción — cuándo se retoma.
 
-**Estado al 2026-08-21: la ronda está cerrada.** Lo de abajo es todo lo que queda, y nada de eso bloquea el deploy.
+**Estado al 2026-08-26: la ronda está cerrada y archivada (M6).** Lo de abajo es todo lo que queda, y nada de eso bloquea el deploy.
+
+**Si venís a planificar el próximo sprint, empezá por la última sección**, «Abiertos al cerrar M6»: ahí está consolidado lo que sigue vivo. El resto del archivo es historia por sprint, con lo resuelto tachado.
 
 - **[Clientas]** Formato de entrega del logo grande del footer (lo preguntan en Final.pdf pág. 4). Responderles; es insumo del sprint de footer (B2).
 - **[Clientas]** Gif/video de Team: contenido pendiente de ellas; el placeholder `VIDEO O GIF` queda hasta que llegue. No bloquea código.
 - **[PDF]** La frase nueva difiere en puntuación entre el hero (pág. 2: «NOISE,») y el footer (págs. 4/8/12: «STAND OUT.»). Definir una sola contra mockup en el sprint B2-home/footer.
 - ~~**[Auditoría 6.4]** Tokens de font-size del `@theme` huérfanos, `--cursor-*` y `--footer-height` sin consumidores.~~ **Cerrado en B4c:** al ir a borrarlos se verificó que **ya no existen en `globals.css`** —se habían ido en algún sprint anterior sin que nadie sincronizara la ficha—. Lo único que quedaba era `--color-gray`, duplicado de `--color-gray-brand`, y B4c lo borró. `--color-beige` **se queda**: es decisión de paleta, no limpieza.
-- ~~**[Planificación]** Forma exacta de la variante ES del Portable Text de `project`.~~ **Resuelto: no hay variante.** El `content` no se traduce; quedó confirmado en B4.
+- ~~**[Planificación]** Forma exacta de la variante ES del Portable Text de `project`.~~ **Resuelto en M6/F3, y al revés de como lo había cerrado B4.** B4 anotó «no hay variante: el `content` no se traduce», que era la consecuencia de no haber encontrado una forma que no duplicara los bloques de media. M6/F3 la encontró: **`contentEs`, de solo texto**, con las imágenes tomadas de `content` y emparejamiento por posición entre los bloques de texto. Ver `src/lib/project-text.ts`.
 - **[Auditoría 1.c]** `NEXT_PUBLIC_SITE_URL` no está definida → `metadataBase` cae al placeholder `your-site-name.netlify.app`. Fix chico: definirla en Netlify y `.env.local`. Colar en B2 o resolver a mano.
 - ~~**[Auditoría]** Corroborar las mediciones (tipografía / Contact) contra un build de producción antes del cierre de la ronda.~~ **Resuelto:** desde B3.4 todo se mide sobre `npm run build` + `npm run start`, y B4 volvió a levantar la matriz completa de Contact así, en los dos idiomas.
 - **[Auditoría 2.c/5]** `<main>` anidados en /team, /work, /work/[slug] y /fun-gallery (Contact y, desde B3.4, /services lo evitan y lo documentan). Semántica/a11y. Fuera de ronda.
@@ -32,8 +34,8 @@ Deuda diferida, con contexto para retomarla. Lo mantiene la capa de planificaci�
 - ~~**[B4 · Dependencias]** **GSAP sigue instalado y sin un solo consumidor.**~~ **Resuelto en B4c/F3** (ver arriba).
 - ~~**[B4 · Dependencias]** La prop **`blend` de `HoverButton` quedó huérfana**.~~ **Resuelta en B4c/F3**, y en el camino aparecieron dos más con el mismo problema: **`underlineDraw` y `underlineDrawDelay`**, cuyos consumidores —el CTA del Hero y el botón DISCOVER de `ServicesIntro`— habían desaparecido en B2 y B3.4. Las tres se fueron, junto con la rama de render del subrayado que se dibujaba solo. Los 9 call sites en 4 archivos siguen intactos.
 - **[B4 · Diseño]** **Contraste del gris.** `gray-brand` (#939393) sobre off-white da **2,77:1** medido, por debajo del 4,5:1 de AA para texto normal y del 3:1 para texto grande; sobre off-black da 6,24:1 y sí pasa. Afecta a los detalles de Services, las pills sin marcar, los placeholders del formulario, los links secundarios de la ficha y el toggle EN/ES. Es atenuación deliberada, no un descuido: la decisión es de diseño y conviene tomarla una vez para todo el sitio.
-- **[B4 · Contenido]** **Las doce casillas ES de los cuatro proyectos de Sanity están vacías.** El sitio en castellano muestra los proyectos en inglés por el fallback cruzado, así que no hay hueco ni error. Las traducciones propuestas están listas en `docs/sanity-piezas-es.md` para cargarlas a mano en el Studio.
-- **[B4 · Contenido]** Dos cosas del dataset que decidieron mirar las clientas, anotadas en el mismo archivo: el tipeo **`FOOD & SEVERAGES`** por `FOOD & BEVERAGES`, y el proyecto **`matsutrabajo`**, que duplica a `matsu` y es candidato del cierre de `/services` (las cuatro portadas más recientes).
+- ~~**[B4 · Contenido]** **Las doce casillas ES de los cuatro proyectos de Sanity están vacías.**~~ **Al 2026-08-26 las ocho de una línea que quedaban están cargadas** (`Category` y `Services` de los tres proyectos; los tres `Title (ES)` van vacíos a propósito, porque son marcas). Lo que sigue abierto es el **cuerpo**, cuyo campo `contentEs` entró en M6/F3 — ver la sección de cierre.
+- **[B4 · Contenido]** Dos cosas del dataset que decidieron mirar las clientas: el tipeo **`FOOD & SEVERAGES`** por `FOOD & BEVERAGES` —sigue abierto— y el proyecto **`matsutrabajo`**, ~~que duplica a `matsu`~~ **que Valentino borró del dataset** (verificado el 2026-08-26: quedan tres `project` publicados).
 - **[B4 · Traducción]** **Dos decisiones de tono que conviene que Valentino confirme o cambie**, porque son de marca y no de código: (a) **`FUN GALLERY` → `GALERÍA`** en el menú —lo lúdico del nombre lo sostiene el título de la pantalla, «¡Divertite explorando nuestros proyectos!»— y (b) **`WORK` → `PROYECTOS`**. Las dos son una línea en `src/lib/i18n/es.ts`.
 - **[B4 · Fit]** El questionnaire **no entra sin scroll con los dos mensajes de validación a 720 px de alto** en los anchos ≥ 1600 (pide 740). Es el piso que dejó B2.7 y **falla igual en los dos idiomas**: no es una regresión del castellano. Solo se retoma si aparece un caso real de 1920×720.
 - ~~**[B4 · Mobile]** El menú de mobile no está diseñado.~~ **Resuelto en M1/F1:** los links bajan a 34/40 —a 48 px `CONTACTANOS` medía 350,7 y no entraba en 320—, la hamburguesa y el botón de cierre pasan a cajas de 44 × 44 y el toggle de idioma toma su área táctil con un `::after` que no toca la caja que mide la barrita.
@@ -196,7 +198,7 @@ porque §3 de la instrucción no las cubría.
 
 ## Abiertos al cerrar M4 (2026-08-24)
 
-- **[M4 · Diseño]** **El footer claro de mobile pasó de 244 a 304 px**, y eso lo
+- ~~**[M4 · Diseño]** **El footer claro de mobile pasó de 244 a 304 px**, y eso lo
   paga la pantalla de éxito en los teléfonos de **640 px de alto**. En
   `/contact/success` el bloque de texto mide 262,89 px (inglés) / 241,89
   (castellano) y el hueco libre entre el header y el footer bajó de 268 a 208, así
@@ -210,11 +212,19 @@ porque §3 de la instrucción no las cubría.
   idiomas.
   La causa es aritmética y no tiene arreglo dentro del alcance de M4: con el logo
   script de vuelta, el footer no puede bajar de 304 sin sacarle la fila, y el
-  presupuesto de un viewport de 640 es 249. Si en el teléfono molesta, las
-  palancas de una línea son (a) bajar el piso del `clamp` de los dos huecos de
-  `ContactSuccess` —el mismo recurso que M3/F3 usó por lo mismo—, (b) achicar el
-  logo del footer por debajo de 48 px, o (c) esconderlo debajo de 360. **Ninguna
-  se tomó porque las tres son decisiones de diseño.**
+  presupuesto de un viewport de 640 es 249.~~
+
+  **Resuelto en M6/F2, y por una cuarta palanca que este registro no había
+  visto.** Las tres anotadas eran (a) achicar los huecos, (b) achicar el logo del
+  footer o (c) esconderlo; la decisión del sprint fue **comprimir el texto**. Y al
+  medirlo apareció que el problema mayor no era la bajada sino **el título**: a
+  320 la caja útil es de 272 px y `YOUR INQUIRY WAS SENT` pide 297,63 a 26 px, así
+  que el h1 medía 81,89 (**tres** líneas) y no los 54,59 que este repo creía desde
+  M2. El piso del título y el tamaño de la bajada pasaron a escalar con la altura
+  de la pantalla por debajo de 800 —`min(26px,3.25svh)` y
+  `clamp(12px,1.875svh,15px)`, o sea el valor de hoy escrito como proporción de
+  una pantalla de 800—. Sobra **0 px en las 32 combinaciones** medidas y de 800 de
+  alto para arriba el bloque sale **idéntico** al de antes, al centésimo.
 - **[M4 · Diseño]** **La columna izquierda del footer queda con un hueco
   grande.** El criterio pedido es que las dos columnas terminen a la misma
   altura, y como la derecha tiene tres ítems y la izquierda dos, el segundo par
@@ -245,3 +255,155 @@ porque §3 de la instrucción no las cubría.
   DevTools Protocol sobre el `WebSocket` nativo de Node, sin dependencias. Es la
   tercera vez que se reconstruye. Sigue valiendo la pena considerar dejarlo como
   herramienta del proyecto en el sprint que instale el harness.
+
+## Abiertos al cerrar M6 y la ronda (2026-08-26)
+
+**Esta es la lista viva.** Todo lo anterior es historia por sprint; lo que sigue
+abierto de verdad está acá.
+
+### Decisiones de diseño y de marca — son humanas, no técnicas
+
+- **[Diseño]** **El contraste del gris de identidad.** `gray-brand` (#939393)
+  sobre off-white da **2,77:1** medido, por debajo del 4,5:1 de AA para texto
+  normal y del 3:1 para texto grande; sobre off-black da 6,24:1 y sí pasa. Lo
+  usan los detalles de Services, las pills sin marcar, los placeholders del
+  formulario, los links secundarios de la ficha y el toggle EN/ES. Es atenuación
+  deliberada, no un descuido: **conviene tomar la decisión una vez para todo el
+  sitio** en vez de parchearla componente por componente.
+- **[Diseño]** **El gris de las banderas en tricolores de luminosidad parecida.**
+  Desde B4d las banderas son SVG reales y van en escala de grises en reposo, a
+  color en hover. La concesión conocida es que **dos franjas de colores distintos
+  pero de luminosidad parecida quedan indistinguibles en gris**, y eso afecta
+  sobre todo a los tricolores. La alternativa es color pleno siempre. Es un filtro
+  CSS: la decisión es estética, no de implementación.
+- **[Marca]** **`FUN GALLERY` → `GALERÍA`** en el menú en castellano, y
+  **`WORK` → `PROYECTOS`**. Las dos son una línea en `src/lib/i18n/es.ts`. Lo
+  lúdico del nombre lo sostiene igual el título de la pantalla
+  («¡Divertite explorando nuestros proyectos!»).
+- **[Diseño]** **El tamaño de la cuadrícula 2 × 2 de LATEST PROJECTS.** A 1920
+  cada portada mide 949 × 711,8 px y el bloque entero mide 1698, o sea más de una
+  pantalla y media. Es exactamente lo que se pidió («que las portadas ocupen su
+  propio espacio»), pero es un cambio de escala fuerte: si en pantalla se siente
+  excesivo, es el `aspect-[4/3]` o el ancho de la columna, una línea en
+  `LatestProjects.tsx`.
+
+### Contenido del dataset — lo deciden las clientas
+
+- **[Contenido]** **El tipeo `FOOD & SEVERAGES`.** Estaba en `matsutrabajo`, que
+  ya no está, pero **conviene revisar que no haya quedado en otro lado**: es un
+  error por `FOOD & BEVERAGES` y se corrige desde el Studio.
+- **[Contenido]** **El cuerpo de los proyectos en castellano.** El campo
+  `contentEs` existe desde M6/F3 y está vacío en los tres proyectos. Las
+  traducciones propuestas de los cinco bloques están escritas en
+  `docs/sanity-piezas-es.md`, listas para cargar a mano. **El sitio funciona sin
+  ellas**: sale el inglés, con las imágenes en su lugar.
+- **[Contenido]** **Dos bloques del dataset que conviene mirar.** `akasha-blends`
+  tiene un **segundo bloque de texto vacío** —no se ve, pero ocupa el espacio
+  entre bloques— y `matsu` tiene un **segundo bloque idéntico al primero**,
+  palabra por palabra. Los dos parecen accidentes de carga. Borrarlos o
+  reemplazarlos es decisión de contenido, y conviene tomarla **antes** de cargar
+  la traducción, porque el emparejamiento es por posición.
+- **[Contenido]** **Gif/video de Team:** sigue pendiente de las clientas. El
+  placeholder `VIDEO O GIF` queda hasta que llegue. No bloquea código.
+- ~~**[Contenido]** El proyecto duplicado `matsutrabajo`.~~ **Dado de baja:
+  Valentino lo borró del dataset.** Verificado el 2026-08-26: quedan tres
+  `project` publicados.
+- ~~**[Contenido]** Las doce casillas ES de los proyectos están vacías.~~ **Ocho
+  de las nueve que quedaban ya están cargadas** (`Category` y `Services` de los
+  tres proyectos). Los tres `Title (ES)` van vacíos **a propósito**: los nombres
+  de los proyectos son marcas y el fallback cruzado ya muestra el inglés.
+
+### Técnico
+
+- **[Arranque]** **El cuadro off-white antes del negro, 1 de cada 10 arranques a
+  12 kB/s.** Es una carrera entre el primer pintado y el script bloqueante de la
+  compuerta, y **no es una regresión**: con el mecanismo anterior pasaba 2 de 10,
+  con la misma vara y las mismas diez pasadas. Cerrarlo del todo pediría que el
+  negro viniera en el HTML servido, lo que reabre el problema de hidratación que
+  M5 resolvió. Está medido y acotado; se anota para que no se redescubra.
+- **[Seguridad]** **`SANITY_API_WRITE_TOKEN` está vencido.** Una lectura de
+  prueba con ese token devuelve `401 SIO-401-ANF, "Session not found"`. No rompe
+  nada —el sitio lee sin token, con `useCdn: true`— pero significa que
+  **cualquier tooling de escritura local fallaría**, y que hay un secreto muerto
+  en `.env.local`. Conviene rotarlo o borrarlo.
+- **[Studio]** **El Studio no se puede abrir desde `127.0.0.1:3010`:** ese origen
+  no está registrado en el proyecto de Sanity y la interfaz muestra la pantalla
+  «Connect this studio to your project» con un `CorsOriginError` en consola. **No
+  es del código** —pasaba igual antes de tocar nada— pero tiene una consecuencia
+  práctica: **el agente no puede ver renderizado el formulario del Studio**, así
+  que rótulos, `fieldsets` y avisos de validación se verifican del lado humano.
+- **[Fit]** **A 320 × 568 la pantalla de éxito sigue sin entrar.** Es el iPhone SE
+  de primera generación: la caja útil es de 136 px. M6/F2 bajó el sobrante de
+  126,89 a **42 px**, pero no lo eliminó. El piso declarado del sprint era 640, y
+  bajar de ahí pide una decisión distinta (esconder el logo del footer, o un
+  layout propio).
+- **[Fit]** **El questionnaire no entra sin scroll con los dos mensajes de
+  validación a 720 px de alto** en los anchos ≥ 1600 (pide 740). Falla igual en
+  los dos idiomas: no es del castellano. Solo se retoma si aparece un caso real.
+- **[Repo]** **Archivos de trabajo que no se pueden borrar con las reglas
+  vigentes.** Quedan dentro de `esquina-estudio/`, **ya ignorados por git**, así
+  que no ensucian el repositorio; pero `git rm` no alcanza a un archivo que nunca
+  estuvo en el índice y este método prohíbe `rm`. Son: `devserver.log`,
+  `devserver.err.log` y `devserver-3010.log` (de sesiones del 18 y el 21 de
+  agosto), `tsconfig.tsbuildinfo`, `next-env.d.ts` y el subárbol `.next/dev/`, que
+  es de un `next dev` viejo. Se borran a mano cuando alguien pase.
+- **[Repo]** **`public/projects/akasha.png` no tiene consumidores.** M6/F4 lo
+  encontró y **no lo borró**: es una imagen de las clientas, no andamiaje. Lo
+  mismo `logos/logo-favicon.png`, que nadie importa y que es la copia fuente de
+  `public/logo-favicon.png`. Decisión de contenido.
+- **[Auditoría 1.c]** **`NEXT_PUBLIC_SITE_URL` no está definida** →
+  `metadataBase` cae al placeholder `your-site-name.netlify.app`. Fix chico:
+  definirla en Netlify y en `.env.local`.
+- **[Auditoría 2.c/5]** **`<main>` anidados** en `/team`, `/work`, `/work/[slug]`
+  y `/fun-gallery`. Semántica y accesibilidad. Fuera de ronda.
+- **[Auditoría 1.a]** **No existen `error.tsx` ni `not-found.tsx`.** Fuera de
+  ronda.
+- **[Deploy]** El borrado de `/api/seed-sanity` (B1) y todo lo de M1–M6 rigen en
+  producción **recién con el próximo deploy**. Nada de la ronda está desplegado.
+- **[Repo]** 12 branches locales mergeadas a `main`. Borrado opcional manual.
+
+### Método
+
+- **[Método]** **Dejar el banco de medición como herramienta del proyecto.** Es
+  Chrome `--headless=new` manejado por el DevTools Protocol sobre el `WebSocket`
+  nativo de Node, sin dependencias, unas 150 líneas. Vive fuera del repo y **va
+  cuatro veces reconstruido desde cero** (M2, M3, M4, M6). Cada reconstrucción
+  cuesta lo mismo y el resultado es el mismo. Candidato natural del sprint que
+  instale el harness ECC. Lo que sabe hacer está archivado en `CLAUDE.md` §7b.
+- **[Método]** **Instalar el harness ECC.** Hoy las puertas son `lint` + `build`
+  nativos. Fuera de ronda.
+- ~~**[Docs]** Cuando la ronda cierre, revisar si las reglas de criterio y la
+  directiva estética de `CLAUDE.md` §8 siguen reflejando cómo se trabajó.~~
+  **Hecho a medias, y a propósito.** M6/F5 archivó lo que faltaba —las ocho
+  trampas técnicas verificadas y los límites del entorno de ejecución, en §7 y
+  §7b, que hasta entonces vivían solo en reportes de sprint—. La revisión de las
+  **reglas de criterio y de la directiva estética de §8** no se tocó: son
+  decisiones de método y de gusto, o sea de la capa de planificación, no del
+  agente de ejecución. **Queda abierta.**
+- **[Método]** La Fase 0 de todo sprint verifica que HEAD coincida con el commit
+  sobre el que se auditó (o registra el delta), además de que el árbol esté
+  limpio.
+- **[Método]** Los types stale de `.next/dev/types/` rompen el typecheck cuando un
+  sprint borra o renombra rutas con un `next dev` corriendo. Se **regenera** el
+  artefacto —bajar el dev server y volver a correr el build—, nunca se edita a
+  mano.
+
+### Lo que no se puede verificar desde el agente y queda para el teléfono
+
+Consolidado de M1, M3 y M4, más lo de M6. El detalle de **por qué** cada cosa es
+inverificable está en `CLAUDE.md` §7b.
+
+- Que el tap despliegue la galería y que el flotado se vea bien; que el menú
+  hamburguesa se sienta bien al abrirse y cerrarse; que el formulario se complete
+  y se envíe entero, selects incluidos; y que al enfocar un input la pantalla
+  **no** haga zoom.
+- Las tres cosas de M3 que dependen de la barra del navegador: el scroll sobrante
+  de `/` y de la pantalla de éxito, el asomo de «BRANDING PACKS» en `/services` y
+  el corrimiento de ~40 px que introduce el paso a `lvh`. **Ningún banco las
+  reproduce** (§7, punto 4).
+- Si el giro del ícono del menú se siente coordinado con el panel, y si la
+  composición de los dos footers cierra visualmente con el logo donde quedó.
+- **De M6:** que `/studio` cargue bien en una pestaña nueva; que `BACK TO HOME`
+  se vea sin deslizar en un teléfono chico de verdad; y que una traducción de
+  prueba cargada en `contentEs` cambie los párrafos **dejando las imágenes donde
+  estaban**.

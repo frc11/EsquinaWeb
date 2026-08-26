@@ -4,7 +4,7 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 
 **Regla de lectura:** este documento separa **ESTADO** (verificado contra el código en HEAD) de **PLAN** (decidido, todavía no ejecutado). No trates el PLAN como código existente, y no «corrijas» el código hacia versiones viejas de este archivo.
 
-Última sincronización: **2026-08-24** (sprint **M4**: el ícono único del menú, el estado activo del menú y los dos footers de mobile); antes, 2026-08-23 (sprint **M3**: el preloader nuevo y las quince correcciones); antes, 2026-08-23 (sprint **M2**: las catorce correcciones de mobile y el cierre de la adaptación); antes, 2026-08-22 (sprint **B4d**: el set de banderas dibujado a mano se retira y entran SVG reales vendorizados, en gris por defecto y a color en hover); antes, 2026-08-22 (sprint **B4c**: timing del toggle, limpieza de dependencias y corrección del set de banderas); 2026-08-22 (sprint **M1**, adaptación mobile); 2026-08-22 (microsprint B4b, refinamiento del toggle de idioma); **2026-08-21** (cierre de B4, idioma EN/ES, y con él el cierre de la ronda); antes de eso, 2026-08-20 (B3.4 + B3.4b, rediseño de `/services`) y 2026-08-15 (Bloque 1) sobre la auditoría completa `docs/reportes/2026-08-13-auditoria-completa.md` (HEAD `2565d01`). Las secciones no tocadas por B3.4 ni por B4 siguen reflejando esa auditoría. Antes de ejecutar cualquier sprint: leer `docs/plan-maestro.md` y la última entrada de `docs/bitacora.md`. Ante conflicto entre este archivo y el plan maestro, **manda el plan maestro**.
+Última sincronización: **2026-08-26** (sprint **M6**, cierre de la ronda: el lienzo negro de `/studio`, la pantalla de éxito en teléfonos de 640, el campo `contentEs`, la limpieza del repo y **el archivo de trampas técnicas y límites del entorno de §7 y §7b**); antes, 2026-08-25 (sprint **M5**: la compuerta del preloader deja de escribir sobre `<html>`); antes, 2026-08-24 (sprint **M4**: el ícono único del menú, el estado activo del menú y los dos footers de mobile); antes, 2026-08-23 (sprint **M3**: el preloader nuevo y las quince correcciones); antes, 2026-08-23 (sprint **M2**: las catorce correcciones de mobile y el cierre de la adaptación); antes, 2026-08-22 (sprint **B4d**: el set de banderas dibujado a mano se retira y entran SVG reales vendorizados, en gris por defecto y a color en hover); antes, 2026-08-22 (sprint **B4c**: timing del toggle, limpieza de dependencias y corrección del set de banderas); 2026-08-22 (sprint **M1**, adaptación mobile); 2026-08-22 (microsprint B4b, refinamiento del toggle de idioma); **2026-08-21** (cierre de B4, idioma EN/ES, y con él el cierre de la ronda); antes de eso, 2026-08-20 (B3.4 + B3.4b, rediseño de `/services`) y 2026-08-15 (Bloque 1) sobre la auditoría completa `docs/reportes/2026-08-13-auditoria-completa.md` (HEAD `2565d01`). Las secciones no tocadas por B3.4 ni por B4 siguen reflejando esa auditoría. Antes de ejecutar cualquier sprint: leer `docs/plan-maestro.md` y la última entrada de `docs/bitacora.md`. Ante conflicto entre este archivo y el plan maestro, **manda el plan maestro**.
 
 ## 1. Proyecto y stack — ESTADO
 
@@ -23,7 +23,7 @@ Guía operativa para agentes que trabajan sobre este repositorio.
 - **`globals.css` tiene hoy 11 tokens y nada más** (verificado en B4c): cuatro colores en `:root` más `--header-height`, y cuatro colores más las dos familias tipográficas en el `@theme`. `--footer-height`, `--cursor-size(-hover)` y los 5 tokens de font-size que este archivo arrastraba de la auditoría **ya no existen en el código**: desaparecieron en algún sprint anterior y nadie sincronizó la ficha. El patrón vigente sigue siendo el valor arbitrario por componente (`text-[13px]`, `text-[40px]`, …).
 - B4c borró **`--color-gray`**, duplicado exacto de `--color-gray-brand` y con una sola ocurrencia en el repo: su propia declaración. **`--color-beige` se queda**: es un color declarado de la identidad y sacarlo sería decisión de paleta, no limpieza.
 - Todas las reglas de `globals.css` (salvo el `@theme`) están **fuera de `@layer`**: le ganan a cualquier utility. Para sobreescribir desde un componente: `!important` del lado layered, scopeado. Precedente correcto: `SCOPED_SELECTION` en `ContactForm.tsx:43-44`.
-- Cursor custom: punto fijo de 16 px (`h-4 w-4`, `mix-blend-difference`), activado por `body[data-custom-cursor]`; excluido de `/studio` por early-return de `RootClientShell`.
+- Cursor custom: punto fijo de 16 px (`h-4 w-4`, `mix-blend-difference`), activado por `body[data-custom-cursor]`; excluido de `/studio` por early-return de `RootClientShell`. **Desde M6/F1 ese early-return usa `isStudioPath()` de `src/lib/preloader-gate.ts`** y no un test escrito a mano: el mismo patrón lo necesita el script bloqueante de la compuerta, y son dos lugares que tienen que coincidir (§6).
 
 ## 2b. Mobile — ESTADO (M1, 2026-08-22; corregido por M2, 2026-08-23)
 
@@ -223,6 +223,8 @@ era `hidden lg:block`.
 
   **El contenido entra cuando la cortina EMPIEZA a irse**, no cuando terminó. `isPreloaderDone` gobierna la entrada de nueve componentes; con la cortina clara sobre página clara daba igual, pero con la cortina negra ese segundo de deslizamiento habría descubierto la página vacía en off-white. **Failsafe:** la salida la manda un `setTimeout` que no depende del video; verificado bloqueando el `.mp4`, la cortina se levanta igual a los 4132 ms. Con `prefers-reduced-motion` **no hay cortina ni video**: el sitio aparece directo.
 
+  **`/studio` queda afuera del mecanismo entero desde M6/F1, y hay que saber por qué.** El script bloqueante vive en el layout raíz, o sea que corría en **todas** las rutas y ponía la compuerta también en `/studio`; pero `RootClientShell` hace early-return ahí, así que `LoadingScreen` no se monta y **nadie levantaba la compuerta**: en la primera visita de la pestaña `html` y `body` quedaban en `#000000` **indefinidamente**. Medido antes del arreglo: `rgb(0, 0, 0)` al cargar y a los 5,5 s, con el nodo todavía en `<head>`. Pasaba desapercibido porque el tema del Studio es oscuro. Ahora el script sale antes de tocar nada —y antes de leer `sessionStorage`, así que **entrar al Studio no consume la primera visita de la pestaña**—. El test de ruta es **uno solo**, `STUDIO_PATH_RE` en `preloader-gate.ts`, y lo comparten el script (interpolado como fuente) y `RootClientShell` (vía `isStudioPath`).
+
   `RevealOnScroll` lee `usePreloader()` → **todo consumidor suyo queda gateado por el preloader de forma transitiva**.
 - **Idioma (B4).** `LocaleProvider` arranca en `"en"` en el servidor **y en el primer render del cliente**, y resuelve el idioma real en un efecto de montaje: preferencia guardada en `localStorage["esquina:locale"]` si la hay, y si no `navigator.language`. En la primera visita de la pestaña ese montaje ocurre **detrás de la cortina del preloader**, así que el cambio a castellano no se ve; en una recarga a mitad de sesión la cortina dura 0 ms y el cambio ocurre a la vista. Las dos cosas son aceptaciones escritas del plan, igual que la metadata y el `<html lang>` servidos en inglés para todos. La detección **no** persiste: solo la elección explícita escribe.
 - **Transición al cambiar de idioma (B4b).** B4b **revirtió** la regla de B4 de que el toggle no disparaba la transición. Cambiar de idioma ahora se ve como cambiar de página: **636,67 ms de acuse de recibo** (el activo se repinta y la barrita viaja **entera**), 650 ms de cortina que sube, el **swap con la cortina arriba**, 650 ms de cortina que baja. Total **1936,67 ms** contra los 1300 de una navegación. **B4c/F2 corrigió el acuse**: duraba 200 ms —la transición de color— mientras la barrita tarda `NAV_INDICATOR_DURATION` (620 ms), así que la cortina arrancaba con la barrita a mitad de camino; ahora `ACK_DELAY` se **deriva** de esa constante y le suma un cuadro, porque el viaje empieza dentro del `requestAnimationFrame` con el que `useIndicator` mide el rótulo ya pintado. El failsafe **se calcula** (`TRANSITION_MS + FAILSAFE_MARGIN_MS`) y se corrió solo a **2336,67 ms**: escribirlo a mano era la trampa, porque la secuencia nueva dura casi los 1900 en que estaba. las dos mitades son las mismas (`PAGE_EXIT_DURATION` + `PAGE_EXIT_EASE`). La cortina la pone `LocaleProvider`, es un `fixed inset-0` off-white a la altura del `<body>` —por eso tapa también el Navbar, que `PageTransitionShell` no cubre— y **el sistema de rutas no se tocó**: solo se consumen tres exportaciones que ya existían. Como nada baja de opacidad, no puede quedar ningún elemento a media opacidad: los dos estados posibles son que la cortina esté en el DOM o que no esté. Con `prefers-reduced-motion` el idioma cambia al instante, sin cortina.
@@ -242,11 +244,13 @@ era `hidden lg:block`.
 
 ## 5. Sanity — ESTADO y PLAN
 
-**ESTADO:** dos schemas, `project` y `funGalleryImage` (`src/sanity/schemas/`), registrados a mano en `src/sanity/sanity.config.ts` (imports `:4-5`, `types` `:15`; sin auto-discovery, sin barrel). En `project` solo `title` y `slug` son requeridos y **ninguna imagen tiene campo `alt`**; en `funGalleryImage` son requeridos `image` y `title`, y el alt vive en un campo hermano (`altText`), no dentro de la imagen. `funGalleryImage.linkedProject` es el **primer `reference` del repo**, y su desreferencia en la query el primer `->` documento-a-documento. Sin groups; `project` sí usa **tres `fieldsets`**, uno por par EN/ES (`nameGroup`, `categoryGroup`, `servicesGroup`). Desk por defecto. Cliente de lectura **sin token**, `useCdn: true`, dataset `production` **hardcodeado**. Tipos TS **escritos a mano** en `src/types/` (sin typegen; ya divergen del schema: `alt` fantasma). `urlFor` es un wrapper con stub de fallback; el stub expone `width`/`height`/`quality`/`format`/`url` (B3.2 le sumó `format()` para el pedido de la galería), **no** `fit()`. Queries en `src/lib/sanity.queries.ts`; caché **solo per-fetch**. Desde B3.4 son cuatro: la del grid, la de la ficha, la de la galería y `LATEST_PROJECTS_QUERY` (las 4 portadas del cierre de `/services`, por `_createdAt` descendente con `_id` de desempate y filtro `defined(coverImage.asset)`). **`order` y `_createdAt` no son lo mismo:** `order` es el orden editorial de `/work`, `_createdAt` es cuándo se cargó el documento. Dataset al 2026-08-23: 4 `project` publicados y **8 `funGalleryImage`** (las clientas ya cargaron las imágenes de la galería; hasta el 2026-08-19 eran 0 y la ruta mostraba la pantalla de vacío). Los fallbacks locales (`local-projects.ts`: 8, `mock-data.ts`: 8) tienen slugs inconsistentes entre sí y con el dataset: **no** usarlos como proxy del contenido real.
+**ESTADO:** dos schemas, `project` y `funGalleryImage` (`src/sanity/schemas/`), registrados a mano en `src/sanity/sanity.config.ts` (imports `:4-5`, `types` `:15`; sin auto-discovery, sin barrel). En `project` solo `title` y `slug` son requeridos y **ninguna imagen tiene campo `alt`**; en `funGalleryImage` son requeridos `image` y `title`, y el alt vive en un campo hermano (`altText`), no dentro de la imagen. `funGalleryImage.linkedProject` es el **primer `reference` del repo**, y su desreferencia en la query el primer `->` documento-a-documento. Sin groups; `project` sí usa **cuatro `fieldsets`** (M6/F3 sumó el cuarto): tres por par EN/ES de una línea (`nameGroup`, `categoryGroup`, `servicesGroup`) y `contentGroup`, que junta el cuerpo inglés con su casilla de texto castellano. Desk por defecto. Cliente de lectura **sin token**, `useCdn: true`, dataset `production` **hardcodeado**. Tipos TS **escritos a mano** en `src/types/` (sin typegen; ya divergen del schema: `alt` fantasma). `urlFor` es un wrapper con stub de fallback; el stub expone `width`/`height`/`quality`/`format`/`url` (B3.2 le sumó `format()` para el pedido de la galería), **no** `fit()`. Queries en `src/lib/sanity.queries.ts`; caché **solo per-fetch**. Desde B3.4 son cuatro: la del grid, la de la ficha, la de la galería y `LATEST_PROJECTS_QUERY` (las 4 portadas del cierre de `/services`, por `_createdAt` descendente con `_id` de desempate y filtro `defined(coverImage.asset)`). **`order` y `_createdAt` no son lo mismo:** `order` es el orden editorial de `/work`, `_createdAt` es cuándo se cargó el documento. Dataset al **2026-08-26**: **3** `project` publicados —Valentino borró `matsutrabajo`— y **8 `funGalleryImage`** (las clientas ya cargaron las imágenes de la galería; hasta el 2026-08-19 eran 0 y la ruta mostraba la pantalla de vacío). Los fallbacks locales (`local-projects.ts`: 8, `mock-data.ts`: 8) tienen slugs inconsistentes entre sí y con el dataset: **no** usarlos como proxy del contenido real.
 
-**B4 cerró el consumo bilingüe:** las tres casillas ES (`titleEs`, `categoryEs`, `servicesEs`) las traen las cuatro queries —`LATEST_PROJECTS_QUERY` sumó `titleEs` en B4— y las renderiza `src/lib/project-text.ts` con **fallback cruzado**: si la casilla del idioma activo está vacía se muestra la otra, en las dos direcciones, y «vacía» incluye `null`, la clave ausente y los espacios. Nunca un hueco. Al 2026-08-21 las **doce** casillas ES del dataset están vacías, así que el sitio en castellano muestra los proyectos en inglés; las traducciones propuestas para cargarlas a mano están en `docs/sanity-piezas-es.md` (el agente **no escribe en Sanity**).
+**B4 cerró el consumo bilingüe:** las tres casillas ES (`titleEs`, `categoryEs`, `servicesEs`) las traen las cuatro queries —`LATEST_PROJECTS_QUERY` sumó `titleEs` en B4— y las renderiza `src/lib/project-text.ts` con **fallback cruzado**: si la casilla del idioma activo está vacía se muestra la otra, en las dos direcciones, y «vacía» incluye `null`, la clave ausente y los espacios. Nunca un hueco. Al **2026-08-26** las **ocho** casillas ES de una línea de los tres proyectos —`Category` y `Services`— **ya están cargadas** (verificado renderizando: `ALIMENTOS Y BEBIDAS`, `RESTAURANTES`, `TECNOLOGÍA`); los tres `Title (ES)` siguen vacíos **a propósito**, porque los nombres de los proyectos son marcas. Las traducciones propuestas están en `docs/sanity-piezas-es.md` (el agente **no escribe en Sanity**).
 
-**PLAN / decisiones que siguen en pie:** el `content` de `project` **no** se traduce (duplicar el Portable Text duplicaría también los bloques de media), y `funGalleryImage` no tiene casilla ES: sus títulos se muestran como están. **La regla vieja «Fun Gallery no tiene schema propio / no crear schemas nuevos» queda derogada:** los schemas se crean cuando el plan maestro lo indica. Sigue vigente: Sanity simple para editoras no técnicas — labels en inglés con ejemplo entre paréntesis, agrupación clara, nada técnico expuesto.
+**M6/F3 cerró el cuerpo bilingüe, que era lo único que faltaba.** `project` tiene un campo nuevo, **`contentEs`, de solo texto** (un array de `block`, sin `mediaItem` ni `dualMedia`). Al renderizar en castellano **los párrafos salen de `contentEs` y las imágenes siguen saliendo de `content`, en su lugar original**: no se duplica el Portable Text, así que no hay una segunda copia de ninguna foto que pueda desincronizarse. El emparejamiento es **por posición entre los bloques de texto** —el 1.º con el 1.º, los de imagen no cuentan—, faltan párrafos ⇒ sale el inglés en su lugar exacto, y sobran ⇒ los de más no se muestran y el schema **avisa en el Studio**. La regla completa, con las dos alternativas descartadas y por qué, está en `src/lib/project-text.ts` (`projectContent`). La query de la ficha trae `contentEs`; las otras tres no lo necesitan.
+
+**PLAN / decisiones que siguen en pie:** `funGalleryImage` no tiene casilla ES: sus títulos se muestran como están. **La regla vieja «Fun Gallery no tiene schema propio / no crear schemas nuevos» queda derogada:** los schemas se crean cuando el plan maestro lo indica. Sigue vigente: Sanity simple para editoras no técnicas — labels en inglés con ejemplo entre paréntesis, agrupación clara, nada técnico expuesto.
 
 ## 6. Primitivos compartidos y contratos frágiles — ESTADO
 
@@ -284,69 +288,287 @@ era `hidden lg:block`.
 - **Indicador del cromo — `src/components/layout/nav-indicator.tsx` (B2.2, extraído en B4b). Es el único sistema de indicador del repo y no se duplica.** Vivía dentro de `Navbar.tsx` hasta que B4b le pidió el mismo gesto a la barrita del toggle, que no vive en el Navbar. Comparten medición (`measureFillBox`: la caja del **fill del hover**, no el texto), redondeo, morfología del viaje (se contrae al punto de 5 px, viaja, se vuelve a abrir; 0,62 s), el elemento pintado y los disparadores de remedición. Cuatro cosas que no se tocan sin volver a medir: **(1)** los bordes se redondean **en coordenadas de viewport** y recién después se descuenta el origen del contenedor —lo que tiene que caer en un píxel entero es la línea pintada; para el menú da lo mismo porque su contenedor arranca en (0,0), para el toggle es la única forma de que la línea sea nítida porque el suyo arranca en 42,25—; **(2)** el ancho sale de la resta de los dos bordes ya redondeados; **(3)** el `ResizeObserver` que remide cuando cambia el rótulo **se suscribe una sola vez** y llega a la medición vigente por referencia: `observe()` entrega una notificación inicial y los `ResizeObserver` corren **después** de los `requestAnimationFrame`, así que un observador que se resuscribiera pisaría la animación recién armada con una medición sin viaje; **(4) esa referencia se sincroniza en un `useLayoutEffect`, no en un `useEffect`** — es la causa raíz del punto 14 de M2. Un efecto pasivo puede diferirse al macrotask siguiente, y entonces la notificación inicial del observador llama a un `remeasure` **del render anterior**: mide el rótulo que ya dejó de estar activo y planta la línea ahí, sin viaje y sin nada que la corrija después. Es lo que dejaba el subrayado bajo `EN` con la página ya en castellano (**4 fallas en 32 arranques** medidas antes del arreglo, **0 en 64** después). Los efectos de layout corren dentro del commit, así que la ventana se cierra. **`measureKey` ya no existe**: su único llamador era el toggle adentro del menú de mobile, que M2 sacó a la fila del header. Cualquier consumidor nuevo se cuelga de este módulo; no se escribe un segundo.
 - **`LocaleToggle` (B4, revisado en B4b y en M2).** El control `EN / ES` del header. **Desde M2 hay dos instancias y una sola implementación** —el bloque de escritorio y el bloque de mobile de la fila, `hidden lg:flex` contra `lg:hidden`—, y ya **no** vive adentro del menú: se ve siempre, sin abrir nada. La instancia apagada no pinta indicador porque su caja mide cero y `measureFillBox` devuelve `null`. Y **la barrita solo viaja después de una elección explícita en ese control**: al cargar la página el idioma se resuelve en el montaje, no en un click, así que la línea se planta directamente en su lugar (punto 14 de M2). La puerta es la misma `animate` que ya usaba `prefers-reduced-motion`. Comparte geometría con el menú en vez de copiarle números: mismo relleno vertical de 6 px que `balancedPadding`, y la fila del header alineada **arriba** (`items-start`) para que la caja del toggle termine en el mismo borde inferior que la de los tabs. El `<button>` cumple el contrato de `measureFillBox` —él es el elemento posicionado, el rótulo cuelga de un `<span>` sin posición—, así que su barrita **es** el indicador del menú y no una copia; los 0,25 px de desfase entre las dos líneas que había en B4 desaparecieron (las dos en `top 80` a 1920). El **idioma activo va en el color pleno del cromo** (off-black, off-white en rutas oscuras) y el inactivo en `gray-brand`; el separador `/` no cambia. El toggle pinta y mide contra `selectedLocale` —lo elegido— y no contra `locale` —lo renderizado—: esa distancia es lo que hace que responda en el click, antes de que empiece la cortina. Siguen siendo `<button>` y no `<a>`, así que el listener de captura de `RouteTransitionProvider` no se entera; la transición que sí ocurre la gobierna `LocaleProvider` (§3), no el router: el árbol no se remonta y la ruta no cambia.
 - **Los tres repartos de la Fun Gallery — `FunGallery.tsx` (M2/F3).** La misma composición se muestra de tres formas: grilla de dos columnas debajo de 768, de tres hasta 1024 y la dispersión del motor de 1024 para arriba. **Los tres se calculan al renderizar y viajan como variables CSS** en el `style` de cada objeto; el que manda lo decide el `@media` y no el cliente, así que el layout sale correcto del servidor y no hay parpadeo al hidratar (§2b prohíbe decidir layout con el hook de media queries). Las clases que consumen esas variables son literales enteros —`lg:left-[var(--d-x)]`, `md:[--pile-x:var(--b-px)]`— porque Tailwind v4 no genera nada que no esté escrito. **El viaje del montón no es CSS sino una animación de Framer**, y por eso pasa por una variable intermedia: cada capa declara `--pile-x` / `--pile-y` apuntando al juego de su rango y la animación va **hacia `var(--pile-x)`**; Framer resuelve variables CSS en sus destinos leyendo el valor ya computado del elemento (`DOMKeyframesResolver.readKeyframes`). Lo único que **no** puede salir de una variable es el retraso del despliegue, que es un número de JavaScript: ese sí se elige con `useIsBelowDesktop()`, y se puede porque es un tiempo de animación y no una medida, y porque recién importa cuando la persona toca.
+- **Texto bilingüe de `project` — `src/lib/project-text.ts`. Es el único sistema y no se duplica.** Dos funciones, un mismo criterio: `projectText` resuelve los **campos de una línea** con fallback cruzado (si la casilla del idioma activo está vacía se muestra la otra, en las dos direcciones; «vacía» incluye `null`, la clave ausente y los espacios), y `projectContent` —M6/F3— resuelve el **cuerpo**, que es otro problema: no es elegir entre dos casillas sino **mezclar el texto de una con las imágenes de la otra**. Tres contratos que fallan en silencio si se rompen: **(1)** el emparejamiento es por **posición entre los bloques de texto** de `content`, así que agregar o sacar un párrafo en inglés **corre todas las traducciones de ahí para abajo**; **(2)** el `_key` que viaja en el bloque mezclado es **el del inglés**, que es lo que garantiza la unicidad de claves del array resultante y lo que evita que el párrafo se remonte al cambiar de idioma; **(3)** en inglés se devuelve `content` **por identidad**, sin copiar — si alguien lo cambia por un `map()` incondicional, cada render de la ficha crea un array nuevo. Cualquier campo bilingüe nuevo se cuelga de este módulo.
+- **Criterio de ruta del Studio — `STUDIO_PATH_RE` / `isStudioPath()` en `src/lib/preloader-gate.ts` (M6/F1).** Una sola expresión regular con **dos consumidores que tienen que coincidir o vuelve el lienzo negro** (§3): `RootClientShell` la evalúa desde TypeScript, y `PRELOADER_GATE_SCRIPT` la **interpola como fuente** —el `toString()` de un literal de regex es JavaScript válido— dentro del script bloqueante, que corre antes de que exista React y solo puede mirar `location.pathname`. Si alguna vez hace falta excluir otra ruta del preloader, se agrega **acá**, no en el componente.
 - Contratos frágiles conocidos (romperlos falla en silencio):
   - `TITLE_LINE_COUNT` (Hero) **no existe en el código**: este archivo lo arrastraba de la auditoría y se verificó en B4 que ya no está (cero ocurrencias en `src/`). El conteo lo garantiza ahora el tipo: `getHeroLines(locale)` devuelve `ThreeLines`, o sea exactamente tres líneas, en compilación y en los dos idiomas. (El `TITLE_1_LINE_COUNT` de Services desapareció con B3.4, igual que el centinela `"Applications may include:"`, el `id="services-list"` y los dos `h-[200vh]` duplicados.)
   - `?service=` une `quoteService` de `src/lib/services-content.ts` con `ContactForm` (`resolveWorkTypeFromService`). Hoy son `CONSULTATION` y `BRANDING`; Add-ons manda `null` y el formulario abre sin nada marcado. **`quoteService` no se traduce**: es identidad. El match exacto se prueba contra los rótulos de **los dos idiomas** y después caen los trozos por keyword, con `brand` y `marca` al final porque están adentro de casi todos los demás. Devuelve siempre el valor **canónico**.
   - Los `id` de las secciones de Services (`intro`, `consultation`, `essentials`, `universe`, `addons`) son a la vez ancla del sidebar, objetivo del spy y destino de los `href="#…"`. **No se traducen** (viven en `SERVICES_NAV_IDS`). El destino del gatillo es otro: `branding-packs`, que **no** es sección del menú.
   - Tailwind v4 busca los nombres de clase como **literales** en el código: una clase compuesta en runtime (con `replace`, con plantillas) no llega nunca al CSS. Por eso `services-layout.ts` repite las clases enteras en vez de derivarlas.
 
-## 7. Lecciones verificadas (junio 2026 — siguen válidas)
+## 7. Trampas técnicas verificadas — el archivo de la ronda
 
-- `transform-gpu` puede dejar una capa de compositor stale (hairline anti-aliased persistente). Se resolvió quitándolo del span externo de `HoverButton` y empujando el idle fill a 110%.
-- Los artefactos sub-pixel de transforms de centrado **dependen del DPR**: lo visible a DPR1/100% puede ser invisible en Retina. El umbral cosmético se decide con eso en mano.
-- `template.tsx` debe ser **solo opacidad** (sin transform ni overflow) o mata los `position: sticky` de las páginas (fix coordinado `b634521`).
-- `sticky` exige ancestros sin `overflow: hidden/clip`. El viejo `ServicesIntro` recorría los ancestros forzándoles `overflow: visible` por eso; **B3.4 lo eliminó y el sidebar sticky funciona sin ninguna de esas muletas**, así que la cadena real (`template` → `PageTransitionShell` → `main`) ya estaba limpia. No reintroducir el paseo por ancestros.
-- En esta etapa, el fix de una línea (`md:top-48`, opacidad idle) suele ganarle a la solución arquitectónica.
-- **Una clase de Tailwind compuesta con una plantilla no existe** (M1 → M2).
-  `` `lg:h-[calc(...-(${HOME_FOOTER_HEIGHT}))]` `` viaja en el atributo `class`
-  y **no pinta nada**: Tailwind v4 busca los nombres de clase como literales en
-  el código y ese nombre no está escrito en ningún lado. El costo real, medido:
-  el bloque del hero de `/` cayó de 788 a 540 px a 1920 y quedó una franja
-  muerta de 248 px al pie durante todo M1, sin que ninguna de las 48 mediciones
-  de altura lo detectara. **`scrollHeight` nunca baja del alto del viewport**,
-  así que un documento de 1080 a 1920 no prueba que el contenido llegue al pie:
-  para eso hay que medir el borde inferior del último elemento.
-- **`backdrop-filter` crea bloque contenedor para los `position: fixed`
-  descendientes** (M2). Un `fixed inset-0` adentro de un elemento con blur se
-  resuelve contra ese elemento y no contra el viewport. Es lo que rompía el menú
-  de mobile en siete de las ocho rutas.
-- **`min-height: 100vh` en el `<body>` deja scrollear de más en un teléfono**
-  (M3/F3). `100vh` no es la pantalla que se ve: es la pantalla **con la barra
-  del navegador oculta**, o sea el viewport grande. Con `min-h-screen` —que es
-  `100vh`— el documento quedaba más alto que lo visible aunque su contenido
-  midiera exactamente `100svh`, y eso producía dos síntomas que parecían
-  distintos: `/` se dejaba scrollear de más, y en `/contact/success` la franja
-  sobrante mostraba **el fondo off-white del propio body** debajo del panel
-  oscuro. **Ninguna medición del banco lo detecta**: en un viewport emulado
-  `vh`, `svh`, `lvh` y `dvh` valen todos lo mismo, porque no hay barra que se
-  retraiga. Se demostró forzando a mano el `min-height` que declara `100vh` con
-  la barra oculta (+72 px): las dos rutas pasan de `docH = 844` y `scrollY = 0`
-  a `docH = 916` y `scrollY = 72`.
-- **El corolario: `svh` para lo que tiene que entrar, `lvh` para lo que tiene
-  que cubrir** (M3/F3 y M3/F6). La regla vieja «nada de `100vh`: `100svh`»
-  sigue en pie para todo lo que debe **caber** en la pantalla. Pero una sección
-  cuyo trabajo es **que no se vea nada debajo de ella** necesita lo contrario:
-  el máximo que el viewport puede llegar a medir, o sea `lvh`. Es lo que se
-  aplicó al intro de `/services`. En escritorio las tres unidades valen lo
-  mismo, así que la distinción solo se paga en mobile.
-- **Chrome interpola colores en `oklab`, no en `rgb`** (M3/F4). Al muestrear
-  una transición de color con `getComputedStyle`, los valores intermedios
-  llegan como `oklab(L a b / alpha)` y un parser que espere `rgb(...)` los lee
-  mal —da lecturas incoherentes, no un error—. La `L` de `oklab` es
-  directamente la claridad perceptual y sirve para verificar la curva.
-- **React 19 sí emite `muted` en el HTML del servidor** (M3/F1). Era un defecto
-  conocido de versiones anteriores —el atributo se trataba como propiedad y no
-  llegaba al marcado, así que un `<video autoplay muted>` servido no
-  autorreproducía—. Verificado en el HTML servido de esta versión: salen
-  `autoPlay=""`, `muted=""` y `playsInline=""`. Los nombres van en camelCase y
-  eso no importa: HTML no distingue mayúsculas en los nombres de atributo.
+Las ocho de abajo **pasaron de verdad en este repo**, cada una costó tiempo, y
+varias no fallan de forma ruidosa: el build sale verde, ningún test se rompe y el
+síntoma aparece a ojo, o ni siquiera. Están escritas para leerse **sin
+contexto**: qué pasa, por qué, cómo se nota, cómo se resuelve y dónde está el
+precedente en el código.
+
+Si vas a tocar layout, observadores, eventos de scroll o unidades de viewport,
+leé esta sección **antes**, no después.
+
+### 7.1 · Tailwind v4
+
+**1. Las variantes arbitrarias se emiten ANTES que los breakpoints con nombre,
+así que `lg:` le gana a `min-[1600px]:` sobre la misma propiedad.**
+
+Las dos reglas tienen la **misma especificidad** y las dos matchean a 1920 px, así
+que decide el orden en la hoja: gana la última. Y Tailwind v4 emite primero el
+bloque de variantes arbitrarias y después el de los breakpoints con nombre.
+Resultado: escribís `min-[1600px]:text-[52px]` al lado de `lg:text-[40px]`,
+a 1920 esperás 52 y sale **40**.
+
+Medido sobre la hoja de producción de este repo (`.next/static/chunks/*.css`):
+la última `@media (min-width:1600px)` arranca en el byte 39 804 y las de nombre
+siguen después —`sm:` en 40 932, `md:` en 41 112, `lg:` en 45 310—. No es una
+creencia: se puede volver a comprobar buscando los offsets.
+
+**Cómo se nota:** la clase está en el atributo `class` y el navegador la muestra
+tachada en la cascada. Nada falla; simplemente manda la otra.
+
+**Cómo se resuelve:** con **rangos mutuamente excluyentes**, no con orden. O sea,
+si un tramo lo gobierna una variante arbitraria, al otro se le pone su tope
+también arbitrario. Es de donde salen los `max-[879.98px]`, `max-[1279.98px]`,
+`max-[1359.98px]` y `max-[1599.98px]` que hay en `ServicesSidebar`,
+`ServicePackSection` y `Footer`: no son manías, son la mitad que hace que el par
+no se pise. **Apareció tres veces** en la ronda.
+
+**2. Tailwind v4 solo reconoce clases LITERALES: una clase compuesta con una
+plantilla no existe.**
+
+Tailwind busca los nombres de clase como **texto** en el código fuente. Una clase
+armada en runtime —con template literal, con `replace`, con concatenación— viaja
+igual en el atributo `class` del HTML, pero **no hay ninguna regla de CSS detrás**
+y no pinta nada.
+
+**Lo que costó, medido:** `` `lg:h-[calc(...-(${HOME_FOOTER_HEIGHT}))]` `` dejó el
+bloque del hero de `/` en 540 px en vez de 788 a 1920, o sea **248 px de franja
+muerta al pie** durante todo M1, sin que ninguna de las 48 mediciones de altura
+lo detectara. Y ahí hay una segunda trampa: **`scrollHeight` nunca baja del alto
+del viewport**, así que un documento de 1080 px a 1920 no prueba que el contenido
+llegue al pie. Para eso hay que medir el **borde inferior del último elemento**.
+
+**Cómo se resuelve:** las clases se escriben enteras y se exportan como
+literales. Precedentes: `src/lib/mobile-layout.ts` y
+`src/components/sections/services/services-layout.ts`, que llevan sus medidas
+como constantes de clase completa justamente por esto.
+
+### 7.2 · Layout y unidades de viewport
+
+**3. `backdrop-filter` convierte al elemento en bloque contenedor de sus
+descendientes `position: fixed`.**
+
+Un `fixed inset-0` adentro de un elemento con `backdrop-blur` **no se resuelve
+contra el viewport**: se resuelve contra ese elemento. Es lo que hacía que el
+menú de mobile se renderizara dentro de la banda de 128 px del header, en siete
+de las ocho rutas.
+
+**Cómo se resuelve:** el blur baja al hijo que lo necesita en vez de vivir en el
+contenedor. Precedente y explicación: `src/components/layout/Navbar.tsx`, donde
+está escrito por qué el `backdrop-blur` vive en la fila y no en el `<header>`.
+
+**4. `100vh` en un teléfono es la pantalla con la barra del navegador OCULTA.**
+
+`100vh` es el viewport **grande**, no el que se ve. La pantalla visible mientras
+la barra está puesta es `100svh`, entre 50 y 110 px más baja. Con `min-h-screen`
+—que es `100vh`— en el `<body>`, el documento queda más alto que lo visible
+aunque su contenido mida exactamente `100svh`.
+
+**Produjo tres síntomas que parecían tres problemas distintos:** `/` se dejaba
+scrollear de más; en `/contact/success` la franja sobrante mostraba el
+`bg-off-white` del propio `body` debajo del panel oscuro (la «franja blanca»); y
+en `/services` se asomaba una sección que no tenía que asomarse.
+
+**La regla, en una línea: `svh` para lo que tiene que ENTRAR, `lvh` para lo que
+tiene que CUBRIR.** Una sección cuyo trabajo es que no se vea nada debajo de ella
+necesita el máximo que el viewport puede llegar a medir, o sea `lvh`; es lo que
+se aplicó al intro de `/services`. En escritorio las cuatro unidades valen lo
+mismo, así que la distinción solo se paga en mobile.
+
+**Y lo más importante para el que venga: NINGÚN BANCO DE MEDICIÓN LO REPRODUCE.**
+En un viewport emulado `vh`, `svh`, `lvh` y `dvh` valen **todos lo mismo**,
+porque no hay barra que se retraiga. Se demostró forzando a mano el `min-height`
+que declara `100vh` con la barra oculta (+72 px): las dos rutas pasan de
+`docH = 844` / `scrollY = 0` a `docH = 916` / `scrollY = 72`. Si un reporte de
+teléfono habla de scroll sobrante o de una franja de color asomándose y el banco
+no muestra nada, **sospechá de esto antes que de cualquier otra cosa**.
+
+### 7.3 · Observadores, efectos y eventos
+
+**5. `ResizeObserver` entrega una notificación INICIAL al suscribirse**, una por
+elemento observado, y llega **después** de los `requestAnimationFrame` del mismo
+cuadro.
+
+Consecuencia: si el observador se vuelve a suscribir cada vez que cambia el
+callback que usa, esa notificación inicial cae justo en el cuadro en que se acaba
+de armar una animación **y la pisa** con una medición sin animar.
+
+**Cómo se resuelve:** suscribirse **una sola vez** y llegar al callback vigente
+por referencia (`useRef`). Precedente completo, con el porqué:
+`src/components/layout/nav-indicator.tsx`.
+
+**6. Un efecto pasivo puede diferirse: sincronizar ahí la referencia de un
+observador hace que mida el render ANTERIOR.**
+
+React puede diferir el flush de un `useEffect` al macrotask siguiente. Si la
+referencia que lee el observador se actualiza ahí, la notificación inicial —que
+llega en el cuadro de después del montaje— llama a la versión **vieja** del
+callback: mide lo que ya dejó de estar activo.
+
+**Lo que costó, medido:** el subrayado del menú quedaba bajo `EN` con la página
+ya en castellano al abrir el sitio con el idioma guardado. **4 fallas en 32
+arranques** — o sea, intermitente, que es lo peor.
+
+**Cómo se resuelve:** `useLayoutEffect`, que corre **dentro** del commit y cierra
+la ventana. Mismo archivo, `nav-indicator.tsx`, donde está anotado como la causa
+del punto 14 de M2.
+
+**7. Chrome manda `cancelable: true` SOLO en el primer `wheel` de una
+secuencia.**
+
+Si ese primero no se cancela, todos los que siguen llegan con
+`cancelable: false` y `preventDefault()` **no hace nada**. Acumular delta en modo
+pasivo para decidir después es perder el derecho a cancelar antes de usarlo.
+
+**Cómo se nota:** la página **vibra y se traba** mientras el scroll nativo le
+pelea cuadro a cuadro a la animación.
+
+**Cómo se resuelve:** listener **no pasivo desde el montaje**, que cancela desde
+el primer evento mientras el gatillo está armado. Precedente:
+`src/components/sections/services/IntroScrollTrigger.tsx`. Ahí está además la
+otra mitad del problema: los `deltaY` **no son comparables entre navegadores**
+—Chrome manda píxeles (`deltaMode 0`) y Firefox manda líneas (`deltaMode 1`)—,
+así que cualquier umbral hay que normalizarlo (`LINE_PX = 100/3`).
+
+### 7.4 · Locks de scroll — el riesgo más alto del repo
+
+**8. Un `overflow: hidden` huérfano en `body` deja el sitio entero sin scroll, y
+el build sale verde igual.**
+
+Es el mecanismo de mayor alcance y el único con una falla **catastrófica y
+silenciosa**: ningún tipo, ningún lint y ningún build lo detectan, porque no hay
+nada mal escrito. Simplemente el estilo sobrevivió a quien lo puso.
+
+**Las tres liberaciones son obligatorias, no recomendadas.** Todo lock necesita:
+
+1. **liberación al terminar**, por cualquier vía por la que termine;
+2. **liberación en el desmontaje** (el cleanup del efecto), para que una
+   navegación a mitad de camino se lo lleve puesto;
+3. **failsafe por tiempo**, con margen sobre la duración, que libere pase lo que
+   pase.
+
+Y la liberación tiene que ser **una sola función idempotente**, no tres caminos
+distintos. Precedentes en el repo, los tres con las tres salvaguardas escritas:
+`IntroScrollTrigger.tsx` (`release()`), `LoadingScreen.tsx` (el temporizador que
+levanta la cortina **no depende del video**) y `LocaleProvider.tsx` (el failsafe
+se **calcula** a partir de la duración, no se escribe a mano).
+
+**Corolario de diseño, y por qué acá el lock son listeners y no `overflow`:** si
+el lock se hace con listeners, lo peor que puede pasar cuando algo falla es una
+animación cortada. Con `overflow: hidden` en `body`, lo peor que puede pasar es
+el sitio inutilizable. Ante la duda, listeners.
+
+### 7.5 · Las demás lecciones verificadas (junio 2026 — siguen válidas)
+
+- `transform-gpu` puede dejar una capa de compositor stale (hairline
+  anti-aliased persistente). Se resolvió quitándolo del span externo de
+  `HoverButton` y empujando el idle fill a 110%.
+- Los artefactos sub-pixel de transforms de centrado **dependen del DPR**: lo
+  visible a DPR1/100% puede ser invisible en Retina. El umbral cosmético se
+  decide con eso en mano.
+- `template.tsx` debe ser **solo opacidad** (sin transform ni overflow) o mata
+  los `position: sticky` de las páginas (fix coordinado `b634521`).
+- `sticky` exige ancestros sin `overflow: hidden/clip`. El viejo `ServicesIntro`
+  recorría los ancestros forzándoles `overflow: visible` por eso; **B3.4 lo
+  eliminó y el sidebar sticky funciona sin ninguna de esas muletas**, así que la
+  cadena real (`template` → `PageTransitionShell` → `main`) ya estaba limpia. No
+  reintroducir el paseo por ancestros.
+- En esta etapa, el fix de una línea (`md:top-48`, opacidad idle) suele ganarle a
+  la solución arquitectónica.
+- **React 19 sí emite `muted` en el HTML del servidor.** Era un defecto conocido
+  de versiones anteriores —el atributo se trataba como propiedad y no llegaba al
+  marcado, así que un `<video autoplay muted>` servido no autorreproducía—.
+  Verificado en el HTML servido de esta versión: salen `autoPlay=""`, `muted=""`
+  y `playsInline=""`. Los nombres van en camelCase y eso no importa: HTML no
+  distingue mayúsculas en los nombres de atributo.
 - **`next/image` no puede servir nada más chico que 640 px si el `sizes` trae un
-  `vw` suelto** (M1/F7). Su `deviceSizes` arranca ahí, y `getWidths` filtra el
-  `srcset` con `640 × el vw más chico` del `sizes`; como el regex que lo detecta
-  pide que el número venga precedido por un espacio, un `vw` escrito dentro de un
+  `vw` suelto.** Su `deviceSizes` arranca ahí, y `getWidths` filtra el `srcset`
+  con `640 × el vw más chico` del `sizes`; como el regex que lo detecta pide que
+  el número venga precedido por un espacio, un `vw` escrito dentro de un
   `calc()` no lo dispara y vuelven los cortes de 96, 128, 256 y 384. Es lo que
   bajó el peso servido a 390 px un **39,6 %** sin tocar `next.config.ts`. La nota
   con la cita del código está en `src/lib/mobile-layout.ts`.
+
+## 7b. Límites del entorno de ejecución — qué puede y qué no puede verificar el agente
+
+Escrito en M6/F5 porque hasta ahora vivía solo en reportes de sprint. Conocerlo
+evita dos errores caros: **prometer una verificación imposible** y **descartar un
+reporte humano porque el banco no lo reproduce**.
+
+### Lo que el agente NO puede hacer
+
+- **Observar animaciones con la pestaña oculta.** Chrome no corre
+  `requestAnimationFrame` y estrangula los temporizadores a uno por segundo (a
+  uno por minuto si la pestaña lleva rato tapada). Ninguna animación se puede
+  cronometrar así y las capturas salen parciales.
+  **La salida existe y está probada: el banco de Chrome `--headless=new` manejado
+  por el DevTools Protocol sobre el `WebSocket` nativo de Node, construido en M2
+  y reusado en M3, M4 y M6.** En headless la página se pinta de verdad, así que
+  `rAF` corre, la carga diferida ocurre y las animaciones se pueden observar con
+  `Page.startScreencast`. **Usarlo.** Vive fuera del repo y hay que reconstruirlo
+  cada vez (van cuatro); sin dependencias, unas 150 líneas.
+  Si hace falta ceder el hilo **sin** el banco, `MessageChannel` no se
+  estrangula: `postMessage` sobre un canal propio da un tick de macrotarea real y
+  además deja terminar la hidratación de React, que se programa sobre el mismo
+  mecanismo.
+- **Simular gestos táctiles.** Tap, arrastre, pinch: no. Todo lo que dependa del
+  dedo —que el tap despliegue la galería, que el menú se sienta bien al abrirse,
+  que enfocar un input no haga zoom— se declara **pendiente de verificación
+  humana**, por escrito, en el reporte del sprint.
+- **Reproducir la barra del navegador de un teléfono.** Ver el punto 4 de §7: en
+  un viewport emulado `vh`, `svh`, `lvh` y `dvh` valen todos lo mismo.
+
+### Cómo medir sin equivocarse
+
+- **`getBoundingClientRect` mide LAYOUT, no píxeles pintados.** Devuelve la caja
+  que el motor calculó; no dice si algo se ve, ni de qué color, ni si una
+  animación llegó a su destino. Para «qué se pintó y cuándo» hace falta el
+  screencast del banco.
+- **Esperar a que las imágenes estén `complete` antes de medir.** El banco tiene
+  ±1 px de ruido en el alto del documento cuando una imagen decide un alto
+  fraccionario (el logo grande del footer mide 571,672 px sin decodificar y 572
+  decodificado). Se resuelve forzando `loading="eager"` y esperando a que
+  **todas** las imágenes estén `complete`. Sin eso, dos corridas del mismo código
+  difieren.
+- **Chrome interpola colores en `oklab`, no en `rgb`.** Al muestrear una
+  transición de color con `getComputedStyle`, los valores intermedios llegan como
+  `oklab(L a b / alpha)`. Un parser que espere `rgb(...)` los lee mal y da
+  lecturas incoherentes, **no un error**. La `L` de `oklab` es directamente la
+  claridad perceptual y sirve para verificar la curva.
+- **`scrollHeight` nunca baja del alto del viewport.** Ver el punto 2 de §7: para
+  probar que el contenido llega al pie hay que medir el borde inferior del último
+  elemento.
+
+### Reglas del entorno de la máquina
+
+- **Prohibido matar procesos por nombre.** El puerto 3000 lo ocupa un proyecto
+  ajeno. Se levanta el server propio en otro puerto (3010 por convención) y se lo
+  baja **por PID**, nunca por nombre de imagen.
+- **No se levanta `next dev` para medir.** Todo se mide sobre `npm run build` +
+  `npm run start`, que es lo que ve el visitante.
+
+### Qué avisos son reales y cuáles no
+
+- **El aviso de mismatch de hidratación existe SOLO en la build de desarrollo de
+  React.** El texto vive únicamente en `react-dom-client.development.js` y no
+  aparece ni una vez en producción. Sigue valiendo la pena arreglarlo —es ruido
+  permanente en la consola de quien trabaja— pero **no es un defecto de
+  producción**, y silenciarlo con `suppressHydrationWarning` sobre `<html>`
+  también ciega a React ante un desacuerdo real en `lang` o en `class`. El
+  precedente y el arreglo de raíz están en `src/lib/preloader-gate.ts`.
+- **El aviso de `@sanity/image-url` deprecado** sale del paquete, no del código
+  del repo: aparece en el build y en la consola de las rutas que arman URLs de
+  imagen. Es ruido conocido, no una regresión.
 
 ## 8. Reglas innegociables
 
@@ -383,6 +605,30 @@ era `hidden lg:block`.
 ## 10. Plan de la ronda — resumen
 
 Ronda de devoluciones de las clientas (fuente: `Final.pdf`, 2026-08-13). **B1 Fundación** (docs y limpieza) → **B2 Devoluciones visuales** sobre lo existente (home, menú 17/0, footer nuevo global, Team, Work grid 5:4, Contact compacto) → **B3 Rediseños** (Fun Gallery con schema propio + Services con sidebar/spy; arrancó con la sonda de transparencia y cerró con B3.4b) → **B4 Idioma EN/ES** (toggle en header, diccionario, consumo bilingüe de Sanity). **La ronda está cerrada**: los cuatro bloques se ejecutaron. Detalle, decisiones cerradas y estado: `docs/plan-maestro.md`; lo que quedó abierto, en `docs/pendientes.md`.
+
+**El último sprint de la ronda es M6 — Cierre de la ronda** (2026-08-26, cinco
+fases): se arregla el **lienzo negro de `/studio`**, un defecto real que dejaba
+`html` y `body` en `#000000` indefinidamente en la primera visita de la pestaña
+—el script de la compuerta la ponía y `LoadingScreen`, que no se monta en esa
+ruta, nunca la levantaba— y que pasaba desapercibido solo porque el tema del
+Studio es oscuro; **`BACK TO HOME` vuelve a entrar en los teléfonos de 640 px de
+alto**, comprimiendo el bloque de texto de la pantalla de éxito con dos términos
+en `svh` que dejan intacto todo lo que mide 800 o más; entra **`contentEs`**, el
+cuerpo de los proyectos en castellano, de solo texto y con las imágenes tomadas
+del campo inglés (§5); se limpia el repo —`pngs-galeria/` ignorada sin borrarla
+del disco, los cinco SVG de `create-next-app` y el `tailwind.config.ts`, que se
+midió inerte—; y, lo más importante para el futuro, **se archiva el conocimiento
+técnico de la ronda en §7 y §7b**, que hasta entonces vivía solo en reportes de
+sprint y en conversaciones. Detalle y mediciones en la entrada de
+`docs/bitacora.md`.
+
+Antes de M6, después de M4, se ejecutó **M5** (2026-08-25, una fase): la
+compuerta del preloader **deja de escribir sobre `<html>`** y pasa a inyectar un
+`<style>` propio en `<head>`. El aviso de mismatch de hidratación que producía
+era **solo de desarrollo** —el texto no existe en la build de producción de
+React— pero era ruido permanente en la consola de quien trabaja, y la salida
+documentada para taparlo habría cegado a React ante un desacuerdo real en `lang`
+o en `class`. Detalle en `src/lib/preloader-gate.ts` y en la bitácora.
 
 Después de M3 se ejecutó **M4 — Ajustes de footer y menú** (2026-08-24, cuatro
 ajustes en cuatro fases): el ícono del menú pasa a ser **uno solo** —tres rayas
