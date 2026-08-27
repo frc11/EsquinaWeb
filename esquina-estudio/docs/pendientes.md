@@ -2,9 +2,14 @@
 
 Deuda diferida, con contexto para retomarla. Lo mantiene la capa de planificación (B4/F8 lo actualizó, para cerrar la ronda). Formato: **[origen]** descripción — cuándo se retoma.
 
-**Estado al 2026-08-26: la ronda está cerrada y archivada (M6).** Lo de abajo es todo lo que queda, y nada de eso bloquea el deploy.
+**Estado al 2026-08-27: la ronda está cerrada y archivada (M6);** después
+siguieron M7 (limpieza), M8 (`/services`) y M9 (formulario + Fun Gallery).
 
-**Si venís a planificar el próximo sprint, empezá por la última sección**, «Abiertos al cerrar M6»: ahí está consolidado lo que sigue vivo. El resto del archivo es historia por sprint, con lo resuelto tachado.
+**Hay un bloqueante de producción, y no es de código:** el formulario de contacto
+no le llega a las clientas hasta que la cuenta de Resend tenga un dominio propio
+verificado. Está en la última sección, «Abiertos al cerrar M9».
+
+**Si venís a planificar el próximo sprint, empezá por la última sección**, «Abiertos al cerrar M9»: ahí está consolidado lo que sigue vivo. El resto del archivo es historia por sprint, con lo resuelto tachado.
 
 - **[Clientas]** Formato de entrega del logo grande del footer (lo preguntan en Final.pdf pág. 4). Responderles; es insumo del sprint de footer (B2).
 - **[Clientas]** Gif/video de Team: contenido pendiente de ellas; el placeholder `VIDEO O GIF` queda hasta que llegue. No bloquea código.
@@ -443,3 +448,66 @@ inverificable está en `CLAUDE.md` §7b.
   se vea sin deslizar en un teléfono chico de verdad; y que una traducción de
   prueba cargada en `contentEs` cambie los párrafos **dejando las imágenes donde
   estaban**.
+
+
+## Abiertos al cerrar M9 (2026-08-27)
+
+**Esta es la lista viva.** Lo de «Abiertos al cerrar M6» sigue valiendo entero;
+esto se le suma.
+
+### Bloqueante de producción — es configuración de la cuenta, no código
+
+- **[Deploy · URGENTE]** **El formulario no le llega a `esquina.est@gmail.com`
+  hasta que Resend tenga un dominio propio verificado.** Reproducido contra la
+  API real el 2026-08-27: con el remitente en el dominio de prueba
+  (`onboarding@resend.dev`), Resend responde **`403 validation_error` — «You can
+  only send testing emails to your own email address (valenolme@gmail.com)»** a
+  cualquier otro destinatario, y la ruta devuelve 500. Al mismo destino de antes,
+  la misma llamada devuelve 200. **No hay arreglo posible desde el código**, y no
+  se inventó ninguno. Los pasos, en orden:
+  1. En [resend.com/domains](https://resend.com/domains), agregar el dominio del
+     estudio y cargar en el DNS los registros que pida (SPF, DKIM y el de
+     retorno). Esperar a que el panel lo marque **Verified**.
+  2. Poner `CONTACT_FROM_EMAIL` —en Netlify y en `.env.local`— en una dirección
+     **de ese dominio** (por ejemplo `ESQUINA ESTUDIO <hola@…>`).
+  3. Dejar `CONTACT_TO_EMAIL` en `esquina.est@gmail.com` (o no definirla: es el
+     valor por defecto).
+  4. Comprobar: enviar el formulario y ver el mail en la casilla. Si falla, el
+     motivo exacto está ahora en el log del servidor, con el prefijo
+     `[contact]`.
+  **Puente mientras tanto:** definir `CONTACT_TO_EMAIL=valenolme@gmail.com` en
+  Netlify hace que el formulario funcione hoy mismo, y las consultas llegan a
+  una casilla que sí se lee. No hay que tocar ni una línea de código para eso, y
+  se revierte cambiando la variable.
+- **[Deploy]** **La corrección del formulario no está publicada.** M9 se cerró
+  sin `git push` a pedido de Valentino, porque cada push va a producción. Hasta
+  que se despliegue, producción sigue con el destinatario hardcodeado y sin el
+  registro del error.
+
+### Contenido y decisiones
+
+- **[Contenido]** **Un cambio de puntuación en el bio de Team llegó fuera de
+  sprint.** El commit `046e601` («commit», 2026-08-26) cambia el guion largo del
+  `foundedBy` castellano por paréntesis: «—también conocidas como Vireli y
+  Toli—» → «(también conocidas como Vireli y Toli)». No lo hizo ningún sprint y
+  **ya está en `main`**; M9 no lo tocó. Si fue a propósito, no hay nada que
+  hacer; si no, se revierte con una línea en `src/lib/i18n/es.ts`. **El inglés
+  conserva el guion**, así que hoy los dos idiomas puntúan distinto.
+- **[Diseño]** **El número del Studio es una prioridad, no una posición**
+  (cerrado en M9/F2, se anota porque es lo que hay que explicarle a las
+  clientas). Los objetos con número van primero, de menor a mayor; los que no
+  tienen número van después, por fecha de carga. Un objeto con el número 7 y
+  tres objetos cargados sale **último**, no en la séptima celda. Los números
+  repetidos y los saltos no dejan huecos.
+- **[Diseño]** **Las filas de la galería son de cuatro en escritorio** y el resto
+  de la última fila queda centrado (4 + 4 + 1 con nueve objetos). En mobile se
+  conservó el reparto de siempre —dos por fila en teléfono, tres en tablet— y se
+  le agregó el mismo centrado. Si el reparto de escritorio tuviera que cambiar,
+  es una constante: `GRID_COLUMNS` en `FunGallery.tsx`.
+
+### Lo que queda para la verificación humana de M9
+
+- **Enviar el formulario desde el sitio y confirmar que el mail llega.** Es la
+  única prueba que cierra el punto anterior.
+- **Abrir la galería y confirmar el orden contra los números del Studio**, y que
+  no haya huecos. El banco lo verifica en el DOM; la lectura es humana.

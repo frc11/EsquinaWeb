@@ -4126,3 +4126,249 @@ dos rondas** —ocho proyectos con slugs que el dataset ya no publica—.
 3. **Decidir los dos archivos de contenido** que quedan sin consumidores:
    `public/projects/akasha.png` y `logos/logo-favicon.png`. Es una decisión de las
    clientas, no técnica.
+
+---
+
+## M9 — Formulario en producción y orden de Fun Gallery (2026-08-27)
+
+Dos problemas independientes y una fase de documentación. El primero era
+**urgente y estaba en producción**: el formulario de contacto devolvía 500 a las
+clientas. El segundo, la Fun Gallery, mostraba huecos y un orden que no era el de
+los números cargados en el Studio.
+
+**Nota sobre M8.** Entre M7 y M9 se ejecutó **M8 — Latest Projects vuelve a su
+composición de escritorio** (`e2f16b1`, 2026-08-26), que no dejó entrada en esta
+bitácora. Su registro completo —diagnóstico por rango, mediciones y
+no-regresión— está en el mensaje de ese commit. M9/F3 sincronizó `CLAUDE.md` §10
+con lo que M8 cambió.
+
+### Fase 1 — El 500 del formulario
+
+**Qué cambió.** Un solo commit toca la ruta de contacto en la ronda reciente:
+`ff34d7b` («commit mail configurado», 2026-08-27), y cambia **una línea**:
+
+```
+-const CONTACT_TO_EMAIL = "valenolme@gmail.com";
++const CONTACT_TO_EMAIL = "esquina.est@gmail.com";
+```
+
+La dirección estaba **hardcodeada**. El remitente, en cambio, ya venía del
+entorno: `CONTACT_FROM_EMAIL`, definida en `.env.local`, **en el dominio de
+prueba `resend.dev`**.
+
+**Qué responde Resend.** Reproducido contra la API real desde local, con la
+clave del entorno y sin imprimirla:
+
+| destinatario | HTTP | respuesta |
+| --- | --- | --- |
+| `esquina.est@gmail.com` | **403** | `validation_error` — «You can only send testing emails to your own email address (valenolme@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain.» |
+| `valenolme@gmail.com` | **200** | id de mensaje |
+
+`GET /domains` devuelve `401 restricted_api_key` («This API key is restricted to
+only send emails»): la clave es de solo envío, lo cual es correcto y **no** es la
+causa.
+
+**El diagnóstico, con las palabras que corresponden: es un problema de
+configuración de la cuenta, no de código.** La hipótesis principal de la
+instrucción queda **confirmada**. Mientras el remitente esté en el dominio de
+prueba y la cuenta no tenga un dominio propio verificado, Resend solo acepta como
+destinatario la dirección de la dueña de la cuenta. **No se inventó ningún rodeo
+en el código.** Los pasos que tiene que hacer Valentino están en
+`docs/pendientes.md`, sección «Abiertos al cerrar M9».
+
+**Lo que sí es de código y entró igual:**
+
+- **`CONTACT_TO_EMAIL` sale del entorno**, con `esquina.est@gmail.com` por
+  defecto. Cambiar el destino ya no pide commit ni deploy — y es también la
+  palanca para apuntar a una casilla que la cuenta acepte mientras el dominio no
+  esté verificado. Documentada en el README, con la advertencia del dominio de
+  prueba.
+- **El error del proveedor queda escrito del lado del servidor**: etapa, `from`,
+  `to`, y el `name` / `message` / `statusCode` que devolvió Resend. **No se
+  loguea nada del formulario** —ni el nombre, ni el mail de quien escribe, ni el
+  presupuesto— ni la clave. Antes solo quedaba un `console.error` crudo.
+- La falta de `RESEND_API_KEY` también se loguea, y **deja de responder
+  `Missing RESEND_API_KEY` al cliente**: la pantalla no filtra infraestructura.
+- El mensaje al usuario sigue siendo genérico en los tres caminos de error.
+
+**Verificación**, con `build` + `start` en 3010:
+
+```
+POST válido, CONTACT_TO_EMAIL=valenolme@gmail.com   -> 200, mail entregado
+POST válido, CONTACT_TO_EMAIL=esquina.est@gmail.com -> 500, y en el log:
+  [contact] resend_rechazo_el_envio | from=… to=… |
+  {"name":"validation_error","message":"You can only send testing emails…",
+   "statusCode":403}
+POST inválido                                        -> 400 (zod intacto)
+```
+
+Y el recorrido completo en el navegador, en castellano: enviar el formulario
+vacío deja **«Escribí un mail válido»** y no navega; con el formulario completo
+—nombre, mail, pill de Branding, Startup, Diseño, Argentina, Cuanto antes,
+$2.500–$4.000, Instagram— **redirige a `/contact/success`**, que sale en
+castellano («¡Tu consulta se envió con éxito!»). Sin líneas `[contact]` en el
+log, que es lo esperado en el camino feliz.
+
+### Fase 2 — Fun Gallery: orden y distribución
+
+**De dónde sale el orden.** De `FUN_GALLERY_IMAGES_QUERY`, que ya ordenaba
+`order(order asc, _createdAt asc, _id asc)` — y eso **ya era lo pedido**.
+Comprobado contra la API que GROQ ordena primero los números y deja el resto
+—`null` incluido— después: `[{o:3},{o:null},{o:1}] | order(o asc)` devuelve
+1, 3, null. La query **no se tocó**; solo se documentó lo comprobado.
+
+**Por qué el orden no se veía y por qué había huecos.** Las dos cosas salían de
+la misma línea del motor de composición:
+
+```
+const columns = Math.ceil(Math.sqrt(count * GRID_CELL_DENSITY));   // 1,15
+const rows    = Math.ceil(count / columns);
+const cells   = shuffle(Array.from({length: columns * rows}, (_, i) => i), random);
+…
+const cell = cells[index] ?? index;
+```
+
+Con nueve objetos eso da **4 columnas × 3 filas = doce celdas para nueve
+objetos**, y el sorteo repartía los nueve entre las doce dejando **tres vacías en
+cualquier lado**. Con ocho el síntoma no existía —4 × 2 = ocho celdas justas—, y
+por eso apareció recién al cargar la novena. Y como la celda era un sorteo, el
+objeto que se veía en cada lugar no tenía ninguna relación con su número.
+
+**La hipótesis de la instrucción queda desmentida.** La celda **no** se derivaba
+del valor de `order`: `order` ni siquiera viaja en la proyección de la query, así
+que el componente nunca lo conoció. El número nunca fue una posición; el problema
+era que la posición era un sorteo.
+
+Medido sobre el dataset real, con las funciones reales del archivo antes y
+después del cambio (mismo seed, mismos nueve ids):
+
+| | orden en pantalla, de arriba a abajo y de izquierda a derecha | aspecto |
+| --- | --- | --- |
+| antes de M9 | **7, 4, 9, 5, 3, 1, 6, 2, 8** | 0,7420 |
+| después de M9 | **1, 2, 3, 4, 5, 6, 7, 8, 9** | 0,7220 |
+
+**Lo que cambia.** `GRID_COLUMNS = 4` fijo y la celda es el índice: orden de
+lectura, sin sorteo. `shuffle` se fue del archivo —era su único consumidor— y con
+él `GRID_CELL_DENSITY`. La última fila se centra con `getLastRowOffset`, que la
+corre media celda por cada lugar que sobra: **cero celdas vacías en ningún
+caso**. En mobile se conserva el reparto de siempre —dos por fila en teléfono,
+tres en tablet— y se le suma el mismo centrado; para poder centrar media celda,
+la grilla del DOM se declara con el doble de columnas (4 y 6) y cada objeto ocupa
+dos, así que el reparto visible no cambia. La columna de arranque viaja como
+variable CSS (`--a-col` / `--b-col`) para que la elija el `@media` y no el
+cliente, igual que el resto de las medidas de esta pantalla. Y
+`buildGridLayout` calcula el viaje del montón contra la celda **ya corrida**: si
+no, el despliegue del último objeto apuntaría a donde ya no está.
+
+**La tabla del orden resultante**, dataset real al 2026-08-27:
+
+| Studio (`order`) | `_createdAt` | título | posición final |
+| --- | --- | --- | --- |
+| 1 | 2026-08-20T00:01:03Z | akasha | fila 1, columna 1 |
+| 2 | 2026-08-20T15:32:58Z | Tukumi | fila 1, columna 2 |
+| 3 | 2026-08-20T15:33:26Z | Ejemplo | fila 1, columna 3 |
+| 4 | 2026-08-20T15:33:49Z | Brickhouse | fila 1, columna 4 |
+| 5 | 2026-08-20T15:34:49Z | Brooks | fila 2, columna 1 |
+| 6 | 2026-08-20T15:35:11Z | Matsu | fila 2, columna 2 |
+| 7 | 2026-08-20T15:35:28Z | Algo | fila 2, columna 3 |
+| 8 | 2026-08-20T15:35:55Z | Napoliia | fila 2, columna 4 |
+| 9 | 2026-08-27T15:50:42Z | Hola | fila 3, **centrado** |
+
+Las nueve tienen número, así que el desempate por fecha y el tramo de los «sin
+número» no se ejercitan con este dataset; sí quedaron probados contra la API
+(ver arriba).
+
+Servido desde `build` + `start`, las posiciones de escritorio que salen del DOM:
+fila 1 en `x` = 1,8 / 23,7 / 55,5 / 77,3 %; fila 2 en 0,0 / 27,9 / 53,5 / 74,7 %;
+fila 3, el objeto 9 solo, con su centro en **51,4 %**. En teléfono, `--a-col` da
+`[1,3] [1,3] [1,3] [1,3] [2]` —cuatro filas de dos y la última centrada— y en
+tablet `[1,3,5] × 3`, tres filas llenas.
+
+**Las cinco distribuciones**, ejercitando las funciones reales del archivo:
+
+| objetos | escritorio | teléfono (2 col) | tablet (3 col) | huecos |
+| --- | --- | --- | --- | --- |
+| 8 | 4 + 4 | 4 filas de 2 | 3 + 3 + **2 centradas** | 0 |
+| 9 | 4 + 4 + **1 centrado** | 4 filas de 2 + **1 centrado** | 3 + 3 + 3 | 0 |
+| 10 | 4 + 4 + **2 centradas** | 5 filas de 2 | 3 + 3 + 3 + **1 centrado** | 0 |
+| 11 | 4 + 4 + **3 centradas** | 5 filas de 2 + **1 centrado** | 3 + 3 + 3 + **2 centradas** | 0 |
+| 12 | 4 + 4 + 4 | 6 filas de 2 | 3 + 3 + 3 + 3 | 0 |
+
+En los cinco casos el orden de lectura sobre la composición terminada coincide
+con el orden del dato, y las filas anteriores a la última están llenas.
+
+**Lo que no se tocó, y se verificó en pantalla:** la escena de entrada —montón y
+`(clic para ver)`— sigue entrando completa en la primera pantalla a 1920 × 1080;
+la animación de despliegue, el flotado, el hover de escritorio y el tap de mobile
+quedaron intactos.
+
+### Fase 3 — Documentación
+
+- **`CLAUDE.md` §10**: la línea de M3 decía que `/services` estrenaba la
+  cuadrícula 2 × 2 del cierre, sin decir que **M8 la revirtió en escritorio**.
+  Corregido, y §10 suma las entradas de M8 y M9. La línea de «Última
+  sincronización» pasa a 2026-08-27.
+- **`CLAUDE.md` §5**: el dataset de la galería pasó de 8 a **9**
+  `funGalleryImage`, las nueve con `order` del 1 al 9.
+- **README**: `CONTACT_TO_EMAIL` documentada, junto con la advertencia del
+  dominio de prueba de Resend y los pasos para verificar uno propio.
+- **`docs/pendientes.md`**: sección «Abiertos al cerrar M9», con el bloqueante de
+  producción arriba de todo.
+- **El cambio en `src/lib/i18n/es.ts` no estaba sin commitear**: llegó en
+  `046e601` («commit», 2026-08-26) y **ya está en `main`**. Cambia el guion largo
+  del `foundedBy` castellano por paréntesis. No lo hizo ningún sprint y M9 no lo
+  tocó; queda anotado en pendientes para que Valentino decida. **El inglés
+  conserva el guion**, así que hoy los dos idiomas puntúan distinto.
+
+### Puertas y no-regresión
+
+`npm run lint` y `npm run build` verdes con el servidor bajado, y **la misma
+tabla de rutas** que antes del sprint (once entradas, `/api/contact` dinámica,
+`/fun-gallery`, `/services` y `/work` con `revalidate 1m`, las cuatro fichas
+prerenderizadas).
+
+**Cero scroll horizontal en 80 combinaciones**: ocho rutas × 320, 360, 390, 414 y
+430 × dos idiomas. Y cero en las 48 de la tabla de altos.
+
+**Los 48 altos** (ocho rutas × 1920, 1366 y 390 × dos idiomas), con el servidor
+de producción en 3010:
+
+| Ruta | 1920 EN | 1920 ES | 1366 EN | 1366 ES | 390 EN | 390 ES |
+| --- | --- | --- | --- | --- | --- | --- |
+| `/` | 1080 | 1080 | 768 | 768 | 844 | 844 |
+| `/work` | 2154 | 2154 | 1694 | 1694 | 2413 | 2444 |
+| `/work/akasha-blends` | 4487 | 4526 | 3577 | 3577 | 2292 | 2349 |
+| `/services` | 7653 | 7715 | 7914 | 8024 | 8267 | 8243 |
+| `/team` | 4257 | 4220 | 3724 | 3799 | 3440 | 3494 |
+| `/fun-gallery` | 2540 | 2540 | 2027 | 2027 | 1851 | 1882 |
+| `/contact` | 1664 | 1664 | 1451 | 1451 | 2513 | 2494 |
+| `/contact/success` | 1080 | 1080 | 768 | 768 | 844 | 844 |
+
+**Sobre la comparación con el sprint anterior, con honestidad.** No se levantó
+una tabla de altos de línea base con el código previo: el `git checkout` de un
+archivo a una revisión anterior no estaba disponible en este entorno. La
+comparación se sostiene por otro lado, y es verificable en el diff: **entre el
+código que renderiza páginas, M9 toca un solo archivo**, `FunGallery.tsx`. El
+cambio en `sanity.queries.ts` son **diez líneas de comentario** y ninguna de
+código; `route.ts` es la ruta de API, que no renderiza ninguna página; el resto
+es documentación. Las otras siete rutas **no pueden haberse movido**. Y para
+`/fun-gallery`, que es la ruta del sprint, sí hay medición antes/después sobre el
+mismo dataset: el aspecto de la composición pasa de 0,7420 a 0,7220, lo que a
+1920 acorta la página unos **49 px** — la consecuencia esperada de que la última
+fila ya no arrastre celdas vacías.
+
+La tabla de altos de M7 **no sirve de línea base**: es anterior a la novena
+imagen de la galería y a los cambios de dataset posteriores.
+
+### Verificación humana pendiente
+
+1. **Enviar el formulario y confirmar que el mail llega a
+   `esquina.est@gmail.com`.** Hoy **no va a llegar** hasta que la cuenta de
+   Resend tenga un dominio propio verificado, o hasta que `CONTACT_TO_EMAIL`
+   apunte a la dirección dueña de la cuenta. Los pasos están en
+   `docs/pendientes.md`.
+2. **Abrir la galería y confirmar que el orden es el de los números del Studio y
+   que no hay huecos.** El banco lo verifica en el DOM; la lectura es humana.
+3. **Publicar**, porque el formulario está roto en producción. M9 se cerró **sin
+   `git push`**: la decisión de cuándo publicar es de Valentino.
+4. **Decidir el cambio de puntuación del bio de Team** que llegó en `046e601`.
