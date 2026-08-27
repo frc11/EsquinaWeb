@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { contactSchema } from "@/lib/contact";
 
-const CONTACT_TO_EMAIL = "valenolme@gmail.com";
+const CONTACT_TO_EMAIL = "esquina.est@gmail.com";
 const CONTACT_FROM_EMAIL =
   process.env.CONTACT_FROM_EMAIL || "ESQUINA ESTUDIO <onboarding@resend.dev>";
 
