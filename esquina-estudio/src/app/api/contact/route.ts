@@ -2,9 +2,66 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { contactSchema } from "@/lib/contact";
 
-const CONTACT_TO_EMAIL = "esquina.est@gmail.com";
+/*
+  EL DESTINATARIO ES CONFIGURACION, NO CODIGO
+  ───────────────────────────────────────────
+  `CONTACT_TO_EMAIL` decide a que casilla llega el cuestionario. Estuvo
+  hardcodeada y cambiarla exigia un commit y un deploy; ahora se cambia desde
+  el panel del hosting. El valor por defecto es la casilla del estudio, asi
+  que si la variable falta el formulario sigue apuntando a donde corresponde.
+
+  Ojo con Resend: mientras no haya un **dominio propio verificado**, la cuenta
+  solo acepta como destinatario la direccion de la duena de la cuenta y
+  responde 403 con cualquier otra. Eso no se arregla desde aca — se arregla
+  verificando el dominio en resend.com/domains y poniendo el `from` en ese
+  dominio. Hasta entonces, `CONTACT_TO_EMAIL` es la palanca para apuntar a una
+  casilla que la cuenta si acepte, sin tocar el codigo. Ver el README.
+*/
+const DEFAULT_CONTACT_TO_EMAIL = "esquina.est@gmail.com";
+const CONTACT_TO_EMAIL =
+  process.env.CONTACT_TO_EMAIL?.trim() || DEFAULT_CONTACT_TO_EMAIL;
 const CONTACT_FROM_EMAIL =
-  process.env.CONTACT_FROM_EMAIL || "ESQUINA ESTUDIO <onboarding@resend.dev>";
+  process.env.CONTACT_FROM_EMAIL?.trim() ||
+  "ESQUINA ESTUDIO <onboarding@resend.dev>";
+
+/*
+  EL ERROR DEL PROVEEDOR TIENE QUE QUEDAR ESCRITO
+  ──────────────────────────────────────────────
+  La pantalla le dice a la clienta un mensaje generico —no filtramos
+  infraestructura a la vista—, pero del lado del servidor queda el codigo y el
+  motivo exactos que devolvio Resend. Sin esto, un 500 es indistinguible de
+  otro y hay que reproducirlo a mano para saber que paso.
+
+  Se registran **el remitente y el destinatario** (son configuracion, y son
+  justo lo que Resend rechaza) y **nada del formulario**: ni el nombre, ni el
+  mail de quien escribe, ni el presupuesto. La clave de API nunca se toca.
+*/
+type ProviderErrorShape = {
+  name?: unknown;
+  message?: unknown;
+  statusCode?: unknown;
+};
+
+function logProviderError(stage: string, error: unknown) {
+  const shape = (error ?? {}) as ProviderErrorShape;
+  const detail =
+    error instanceof Error
+      ? { name: error.name, message: error.message }
+      : {
+          name: typeof shape.name === "string" ? shape.name : "unknown_error",
+          message:
+            typeof shape.message === "string"
+              ? shape.message
+              : "Sin mensaje del proveedor",
+          statusCode:
+            typeof shape.statusCode === "number" ? shape.statusCode : undefined,
+        };
+
+  console.error(
+    `[contact] ${stage} | from=${CONTACT_FROM_EMAIL} to=${CONTACT_TO_EMAIL} |`,
+    JSON.stringify(detail),
+  );
+}
 
 function formatValue(value: unknown) {
   if (Array.isArray(value)) {
@@ -41,9 +98,13 @@ function row(label: string, value: unknown) {
 }
 
 export async function POST(request: Request) {
-  if (!process.env.RESEND_API_KEY) {
+  if (!process.env.RESEND_API_KEY?.trim()) {
+    console.error(
+      "[contact] falta_config | RESEND_API_KEY no esta definida en el entorno",
+    );
+
     return NextResponse.json(
-      { error: "Missing RESEND_API_KEY" },
+      { error: "Could not send email" },
       { status: 500 },
     );
   }
@@ -90,7 +151,8 @@ export async function POST(request: Request) {
     });
 
     if (result.error) {
-      console.error("Resend contact error:", result.error);
+      logProviderError("resend_rechazo_el_envio", result.error);
+
       return NextResponse.json(
         { error: "Could not send email" },
         { status: 500 },
@@ -99,10 +161,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Contact API error:", error);
+    logProviderError("error_inesperado_de_la_ruta", error);
 
     return NextResponse.json(
-      { error: "Unexpected contact form error" },
+      { error: "Could not send email" },
       { status: 500 },
     );
   }

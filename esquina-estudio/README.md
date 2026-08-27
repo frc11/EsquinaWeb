@@ -19,7 +19,10 @@ npm run lint
 ## Variables de entorno (`.env.local`; no hay plantilla versionada)
 
 - `NEXT_PUBLIC_SANITY_PROJECT_ID` — requerida; sin ella el sitio cae a los datos locales de fallback.
-- `RESEND_API_KEY` y `CONTACT_FROM_EMAIL` — formulario de contacto (`/api/contact`).
+- `RESEND_API_KEY` y `CONTACT_FROM_EMAIL` — formulario de contacto (`/api/contact`). `CONTACT_FROM_EMAIL` es el remitente; si falta cae a `ESQUINA ESTUDIO <onboarding@resend.dev>`, el dominio de prueba de Resend.
+- `CONTACT_TO_EMAIL` — casilla a la que llega el cuestionario de contacto. Si falta, `esquina.est@gmail.com`. Se cambia desde el panel del hosting: no hace falta tocar el código ni desplegar.
+
+  > **Resend, dominio de prueba.** Mientras el remitente sea `@resend.dev` y la cuenta no tenga un dominio propio verificado, Resend **solo acepta como destinatario la dirección de la dueña de la cuenta** y responde `403 validation_error` con cualquier otra — el formulario devuelve 500 y la clienta ve «No pudimos enviar tu mail». Para que el correo llegue a `esquina.est@gmail.com` hay que verificar un dominio propio en [resend.com/domains](https://resend.com/domains) y poner `CONTACT_FROM_EMAIL` en una dirección de ese dominio. Hasta entonces, `CONTACT_TO_EMAIL` sirve de puente: apuntándola a la dirección dueña de la cuenta, el formulario funciona.
 - `NEXT_PUBLIC_SITE_URL` — base de metadata/OG; si falta, cae a un placeholder (ver `docs/pendientes.md`).
 - `NEXT_PUBLIC_SANITY_DATASET` — presente históricamente pero **ignorada por el código**: el dataset está fijado a `production`.
 - `SANITY_API_WRITE_TOKEN` — sin consumidores en el código; se conserva en el entorno para tooling manual futuro.
