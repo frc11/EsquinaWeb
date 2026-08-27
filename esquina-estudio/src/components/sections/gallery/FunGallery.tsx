@@ -133,7 +133,33 @@ const TITLE_SCALE =
 const SECTION_PAD_TOP = "clamp(32px, 6.5svh, 72px)";
 const TITLE_GAP = "clamp(24px, 3.7svh, 40px)";
 
-const GRID_CELL_DENSITY = 1.15;
+/*
+  CUATRO COLUMNAS, Y LA ÚLTIMA FILA CENTRADA (M9/F2)
+  ──────────────────────────────────────────────────
+  Hasta M8 las columnas salían de `ceil(sqrt(n × 1,15))` y las celdas se
+  sorteaban: con nueve objetos la grilla pedía 4 × 3 = **doce** celdas y el
+  sorteo repartía nueve por ahí adentro, así que quedaban tres huecos sueltos
+  entre medio y el objeto de la celda sorteada no tenía nada que ver con el
+  número puesto en el Studio. Con ocho el síntoma no se veía —4 × 2 = ocho
+  celdas justas—, y por eso apareció recién al cargar la novena.
+
+  Ahora las filas son de cuatro fijas, los objetos entran en ORDEN DE LECTURA
+  —celda `i` para el ítem `i`, que ya viene ordenado por la query— y el resto
+  de la última fila se **centra** corriendo su columna media celda por cada
+  lugar que sobra. No hay celdas vacías: la última fila se centra, no se
+  rellena.
+*/
+const GRID_COLUMNS = 4;
+
+/**
+ * Corrimiento de la última fila, en celdas. Con 9 objetos sobra 1 y la fila se
+ * corre 1,5 celdas —queda centrada—; con 12 no sobra nada y vale 0.
+ */
+function getLastRowOffset(count: number, columns: number) {
+  const remainder = count % columns;
+
+  return remainder === 0 ? 0 : (columns - remainder) / 2;
+}
 
 /** Alto de celda / ancho de celda. Medido en el mockup: 404 px sobre 416 px. */
 const ROW_PITCH = 0.97;
@@ -475,20 +501,6 @@ function randomBetween(random: () => number, min: number, max: number) {
   return min + random() * (max - min);
 }
 
-function shuffle<T>(items: T[], random: () => number) {
-  const shuffled = [...items];
-
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(random() * (index + 1));
-    [shuffled[index], shuffled[swapIndex]] = [
-      shuffled[swapIndex],
-      shuffled[index],
-    ];
-  }
-
-  return shuffled;
-}
-
 /**
  * La galería ya no deriva sus imágenes de los proyectos: cada `funGalleryImage`
  * es un ítem, en el orden que devuelve la query. Se descarta el que no logre
@@ -606,19 +618,19 @@ function buildComposition(
     density,
   );
   const random = createRandom(randomSeed);
-  const columns = Math.ceil(Math.sqrt(count * GRID_CELL_DENSITY));
+  const columns = GRID_COLUMNS;
   const rows = Math.ceil(count / columns);
+  const lastRow = rows - 1;
+  const lastRowOffset = getLastRowOffset(count, columns);
   const cellWidth = 1 / columns;
   const cellHeight = cellWidth * ROW_PITCH;
-  const cells = shuffle(
-    Array.from({ length: columns * rows }).map((_, index) => index),
-    random,
-  );
 
   const scattered = items.map((item, index) => {
-    const cell = cells[index] ?? index;
-    const column = cell % columns;
-    const row = Math.floor(cell / columns);
+    // Orden de lectura, sin sorteo: la celda es el índice, y el índice ya viene
+    // ordenado por prioridad desde la query (ver `FUN_GALLERY_IMAGES_QUERY`).
+    const row = Math.floor(index / columns);
+    const column =
+      (index % columns) + (row === lastRow ? lastRowOffset : 0);
     const size = randomBetween(random, minItemWidth, maxItemWidth);
     const centerX =
       (column + randomBetween(random, CELL_PLACE_MIN, CELL_PLACE_MAX)) *
@@ -726,8 +738,14 @@ type GridLayout = {
   aspect: number;
   /** Alto del cartel, como porcentaje del alto de la composición. */
   captionTop: string;
-  /** Viaje del montón por objeto, en porcentaje del lado del objeto. */
-  pile: { x: string; y: string }[];
+  /**
+   * Por objeto: el viaje del montón —en porcentaje del lado del objeto— y la
+   * columna donde arranca su celda. `colStart` está en **medias celdas**: la
+   * grilla del DOM se declara con el doble de columnas y cada objeto ocupa
+   * dos, que es lo que deja centrar una última fila impar sin celdas vacías
+   * (con dos columnas y un objeto suelto, el corrimiento es media celda).
+   */
+  pile: { x: string; y: string; colStart: number }[];
 };
 
 /**
@@ -749,13 +767,19 @@ function buildGridLayout(
 ): GridLayout {
   const cell = 1 / columns;
   const rows = Math.max(1, Math.ceil(items.length / columns));
+  const lastRow = rows - 1;
+  const lastRowOffset = getLastRowOffset(items.length, columns);
   const aspect = rows * cell;
   const pileCenterY = cell / 2;
   const radiusScale = cell / Math.max(maxItemSize, Number.EPSILON);
 
   const pile = items.map((item, index) => {
-    const column = index % columns;
     const row = Math.floor(index / columns);
+    // Mismo criterio que en escritorio: la última fila se corre para quedar
+    // centrada, y el viaje del montón sale contra la celda ya corrida — si no,
+    // el despliegue del último objeto apuntaría a donde ya no está.
+    const offset = row === lastRow ? lastRowOffset : 0;
+    const column = (index % columns) + offset;
     const centerX = (column + 0.5) * cell;
     const centerY = (row + 0.5) * cell;
     const radius = item.pileRadius * radiusScale;
@@ -765,6 +789,9 @@ function buildGridLayout(
     return {
       x: `${((pileX - centerX) / cell) * 100}%`,
       y: `${((pileY - centerY) / cell) * 100}%`,
+      // `grid-column-start` es 1-based y va en medias celdas: dos sub-columnas
+      // por objeto más el corrimiento de la fila.
+      colStart: Math.round(column * 2) + 1,
     };
   });
 
@@ -869,8 +896,8 @@ function GalleryCard({
   index: number;
   aspect: number;
   /** Viaje del montón en la grilla de dos columnas y en la de tres (M2/F3). */
-  mobilePile: { x: string; y: string };
-  tabletPile: { x: string; y: string };
+  mobilePile: { x: string; y: string; colStart: number };
+  tabletPile: { x: string; y: string; colStart: number };
   /**
    * Turno en el despliegue. En escritorio lo decide el orden de lectura sobre
    * la dispersión (`deployOrder`); en la grilla de mobile el orden de lectura
@@ -1025,8 +1052,15 @@ function GalleryCard({
         motor de dispersión. Las tres medidas de escritorio viajan como
         variables y las consumen clases literales acotadas a `lg:`, así que el
         reparto de arriba de 1024 no cambia ni un píxel.
+
+        La celda ocupa **dos sub-columnas**: la grilla del DOM se declara con el
+        doble de columnas de las que se ven (4 en teléfono, 6 en tablet) para
+        que la última fila se pueda centrar aunque el corrimiento sea de media
+        celda —el caso de un objeto suelto en una grilla de dos—. El reparto
+        visible no cambia: dos por fila en teléfono y tres en tablet, como
+        antes.
       */
-      className={`relative aspect-square w-full lg:absolute lg:left-[var(--d-x)] lg:top-[var(--d-y)] lg:w-[var(--d-w)] ${
+      className={`relative aspect-square w-full [grid-column-end:span_2] [grid-column-start:var(--a-col)] md:[grid-column-start:var(--b-col)] lg:absolute lg:left-[var(--d-x)] lg:top-[var(--d-y)] lg:w-[var(--d-w)] ${
         interactive ? "cursor-pointer" : ""
       }`}
       style={{
@@ -1038,8 +1072,10 @@ function GalleryCard({
           "--d-w": `${item.size * 100}%`,
           "--a-px": mobilePile.x,
           "--a-py": mobilePile.y,
+          "--a-col": mobilePile.colStart,
           "--b-px": tabletPile.x,
           "--b-py": tabletPile.y,
+          "--b-col": tabletPile.colStart,
           "--c-px": `${item.pileOffsetX}%`,
           "--c-py": `${item.pileOffsetY}%`,
         } as React.CSSProperties),
@@ -1283,9 +1319,14 @@ export default function FunGallery({
         para arriba vuelve a ser el bloque de siempre, con su tope de ancho y su
         relación de aspecto. Las dos medidas de escritorio van como variables
         para que las clases sigan siendo literales.
+
+        Las columnas del DOM son el doble de las que se ven —cada objeto ocupa
+        dos— y eso es lo único que cambió en M9: es lo que permite centrar la
+        última fila cuando sobra un número impar de objetos. Ver la clase del
+        objeto.
       */}
       <div
-        className="relative mx-auto grid w-full grid-cols-2 md:grid-cols-3 lg:block lg:aspect-[var(--d-aspect)] lg:max-w-[var(--d-max-width)]"
+        className="relative mx-auto grid w-full grid-cols-4 md:grid-cols-6 lg:block lg:aspect-[var(--d-aspect)] lg:max-w-[var(--d-max-width)]"
         style={
           {
             marginTop: TITLE_GAP,

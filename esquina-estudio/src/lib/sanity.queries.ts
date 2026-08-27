@@ -23,6 +23,16 @@ export const PROJECT_BY_SLUG_QUERY = `
 // `_createdAt`, así gana la que se cargó primero; `_id` queda como último
 // recurso porque `_createdAt` tampoco es único por definición (dos documentos
 // creados en el mismo milisegundo comparten marca).
+//
+// EL NÚMERO ES UNA PRIORIDAD, NO UNA POSICIÓN (M9/F2). Esta secuencia es la que
+// la galería recorre celda por celda, en orden de lectura: tener el 7 con tres
+// objetos cargados significa «último», no «séptima celda». Los saltos y los
+// repetidos no dejan huecos porque las celdas no se derivan del número.
+//
+// Y los que NO tienen número van al final: `order asc` de GROQ ordena primero
+// los números y deja el resto —`null` incluido— después, así que la segunda
+// clave, `_createdAt asc`, es la que ordena entre ellos. Comprobado contra la
+// API: `[{o:3},{o:null},{o:1}] | order(o asc)` devuelve 1, 3, null.
 export const FUN_GALLERY_IMAGES_QUERY = `
   *[_type == "funGalleryImage" && defined(image.asset)] | order(order asc, _createdAt asc, _id asc) {
     _id,
