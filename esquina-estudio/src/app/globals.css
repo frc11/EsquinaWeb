@@ -46,7 +46,7 @@ body[data-custom-cursor="true"] * {
   El tamaño del logo de la cortina (M11).
 
   El pedido de las clientas llega expresado como **ancho del logo sobre ancho
-  del viewport**: 27 % debajo de 1024 y 37 % de ahí para arriba. Eso no es un
+  del viewport**: 37 % debajo de 1024 y 27 % de ahí para arriba. Eso no es un
   factor de escala que se pueda aplicar al video, porque el logo no ocupa el
   cuadro entero: hay que pasar de «cuánto tiene que medir el logo» a «cuánto
   tiene que medir el video».
@@ -92,8 +92,8 @@ body[data-custom-cursor="true"] * {
   /* Propiedad medida del asset: 1119 px de logo / 1920 px de video. */
   --preloader-logo-ratio: 0.58281;
 
-  /* El pedido: mobile (< 1024). 46,33vw de video × 0,58281 = 27,00vw de logo. */
-  --preloader-logo-share: 27vw;
+  /* El pedido: mobile (< 1024). 63,49vw de video × 0,58281 = 37,00vw de logo. */
+  --preloader-logo-share: 37vw;
 
   --preloader-video-width: calc(
     var(--preloader-logo-share) / var(--preloader-logo-ratio)
@@ -102,8 +102,8 @@ body[data-custom-cursor="true"] * {
 
 @media (min-width: 1024px) {
   :root {
-    /* Escritorio. 63,49vw de video × 0,58281 = 37,00vw de logo. */
-    --preloader-logo-share: 37vw;
+    /* Escritorio. 46,33vw de video × 0,58281 = 27,00vw de logo. */
+    --preloader-logo-share: 27vw;
   }
 }
 

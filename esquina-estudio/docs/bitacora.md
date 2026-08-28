@@ -4650,3 +4650,110 @@ imagen de la galería y a los cambios de dataset posteriores.
      pero el commit de este sprint todavía no se publicó.
 
 - **Commits:** el de este sprint.
+
+## 2026-08-28 · M12 · Las proporciones del logo del preloader, al revés
+
+- **Qué se hizo:** M11 aplicó los objetivos **cruzados**. Los correctos son
+  **37 % del ancho del viewport debajo de 1024** y **27 % de ahí para arriba**.
+  Como M11 dejó el tamaño parametrizado, el arreglo fue **intercambiar los dos
+  valores de `--preloader-logo-share`** en `globals.css` —27vw ↔ 37vw, con su
+  media query de 1024 intacta—. **Ningún cambio de estructura ni de mecanismo:**
+  no se tocó `--preloader-logo-ratio` (la constante medida del asset), ni la
+  división que da `--preloader-video-width`, ni el `aspect-ratio`, ni el
+  centrado, ni el video. La parametrización de M11 se pagó sola.
+
+  Además de los dos números se corrigió **la prosa que nombra qué porcentaje va
+  a qué rango**: el encabezado del bloque de `globals.css`, el de la constante
+  `VIDEO_WIDTH` en `LoadingScreen.tsx`, los dos comentarios de derivación
+  (46,33vw y 63,49vw cambiaron de rango) y el texto del respaldo del `var()`,
+  que decía «el valor de mobile —el más chico—» y ahora el más chico es el de
+  escritorio. **El respaldo en sí no cambió de valor** (`46.33vw`): sigue siendo
+  el menor de los dos, que es lo que lo hacía seguro. Diff de código: 2 archivos,
+  +13 / −12.
+
+- **Decisiones tomadas en ejecución:** ninguna. El único juicio fue **no** mover
+  el valor del respaldo del `var()`, porque su razón de ser —ser el más chico de
+  los dos por si la hoja no estuviera aplicada— la sigue cumpliendo tal cual
+  está; cambiarlo habría sido tocar algo que la instrucción no pide.
+
+- **Mediciones / salidas de puertas:** mismo banco de M11 —Chrome
+  `--headless=new` por DevTools Protocol sobre `npm run build` +
+  `npm run start -- -p 3010`—, midiendo **píxeles pintados** del último cuadro
+  del video, no layout. Rangos del banco invertidos para este sprint.
+
+  **Ancho del logo como % del ancho del viewport (M11 → M12):** 320 × 568 →
+  26,56 → **36,88 %** · 390 × 844 → 26,92 → **36,92 %** · 430 × 932 → 26,98 →
+  **36,74 %** · 768 × 1024 → 26,95 → **36,98 %** · 1366 × 768 → 36,90 →
+  **26,94 %** · 1920 × 1080 → 36,93 → **26,93 %** · 1920 × 937 → 36,93 →
+  **26,93 %**. **Los siete caen en su rango nuevo** (35–40 en mobile, 25–30 en
+  escritorio). **1920 × 1080 y 1920 × 937 vuelven a dar el mismo número**
+  (26,93 %): la independencia del alto de la ventana que ganó M11 se conserva.
+
+  **El corte de 1024, en los dos lados:** 1024 × 900 → **26,95 %** (escritorio)
+  y 1023 × 900 → **36,85 %** (mobile). El intercambio se ve también en el ancho
+  del elemento: a 1024 el video mide 474,39 px y a 1023 mide 649,45 px, que son
+  exactamente los dos valores de M11 dados vuelta (650,08 y 473,92).
+
+  **Encuadre y centrado:** el logo **entra completo en los nueve viewports** y
+  su caja no toca ningún borde; el más chico es 320 (118 × 41 px) y el más
+  grande 768 (284 × 99 px), porque desde M12 el logo grande es el de mobile. El
+  elemento del video queda centrado a **0,01 px** en los dos ejes.
+
+  **Sin borde ni cambio de tono:** banda de 13 px a caballo de los cuatro bordes
+  de la caja del video en 320, 390, 1366 y 1920 — **188 656 píxeles, luma máxima
+  0** en todos, con el fondo del video y el de la cortina los dos en
+  `rgb(0, 0, 0)`.
+
+  **Las cinco garantías, re-verificadas.** (1) *Lienzo negro desde el primer
+  cuadro pintado*, a 40 y a 12 kB/s: el primer cuadro da luma 18 en las esquinas
+  —el off-white daría 243— y sigue negro hasta que arranca la salida; a 12 kB/s
+  la traza es 2,93 s: 0 · 3,02: 0 · 3,10: 0 · 3,18: 0 · 3,25: 2 · 3,27: 55 ·
+  3,28: 172 · 3,30: 243. La corrida de 40 kB/s tardó 12,3 s en llegar a la
+  salida —hidratación lenta bajo estrangulamiento— y **el lienzo se mantuvo
+  negro los 12,3 s** (peor luma 18). (2) *Una vez por pestaña*: primera visita
+  con cortina (`display: flex`, compuerta puesta, `body` en `rgb(0, 0, 0)`); a
+  los 5 s sin cortina ni compuerta, `sessionStorage` en `"1"`, `body` en
+  `rgb(243, 243, 243)`; segunda visita en la misma pestaña con la compuerta en
+  `[data-preloader-curtain]{display:none!important}`. (3) *Failsafe*: con el
+  `.mp4` bloqueado y con el pedido **colgado** —interceptado y nunca
+  contestado— la cortina se levanta igual y el contenido queda montado (`main`
+  de 604 px). (4) */studio excluido*: sin compuerta, sin cortina, `html` y
+  `body` en `rgb(243, 243, 243)` al cargar **y a los 6,5 s**, `sessionStorage`
+  intacto. (5) *Hidratación*: 8 rutas × 2 idiomas en producción → **0 avisos de
+  hidratación**; los únicos 8 mensajes son la deprecación de `@sanity/image-url`
+  (§7b).
+
+  **No-regresión:** los 48 altos —8 rutas × 3 anchos × 2 idiomas— comparados
+  contra los medidos sobre el build de M11: **0 diferencias**, y **0 casos de
+  scroll horizontal** en las 48 (`scrollWidth` = `clientWidth` en todas).
+
+  **Puertas con el servidor bajado:** `npm run lint` exit 0, sin salida;
+  `npm run build` exit 0, 15 páginas estáticas.
+
+- **Pendientes que deja:**
+  1. **Sigue en pie el desvío de encuadre del asset** que reportó M11: el logo
+     no está centrado dentro del video —el centro de su trazo cae 45 px a la
+     izquierda del centro del cuadro, 2,34 % del ancho—, y eso se traduce en
+     pantalla en un corrimiento de **1,0 a 1,6 % del ancho del viewport** según
+     el rango. Es del archivo, no del código, y viene desde M3. Al invertirse
+     las proporciones el desvío absoluto **creció en mobile** (de 3,5 a 6,0 px a
+     390) y **bajó en escritorio** (de 27,5 a 21,5 px a 1920). El arreglo de raíz
+     sería reencuadrar el video.
+  2. Siguen abiertos los pendientes heredados de M9 y M10: el dominio propio
+     verificado en Resend, `error.tsx` / `not-found.tsx`, los `<main>` anidados
+     y la instalación del harness ECC.
+
+- **Verificación humana pendiente:**
+  1. **Ver el preloader en una pestaña nueva, en la computadora y en el
+     teléfono**, y confirmar que ahora sí el tamaño es el que las clientas
+     pidieron: **grande en el teléfono, chico en la compu**. Es el punto de
+     cierre: recién después se publica.
+  2. **En el teléfono**, la lectura del centrado vertical. El logo está centrado
+     en el viewport, pero la barra del navegador lo hace percibir más arriba y
+     el banco no puede reproducir esa barra (§7b).
+  3. Con el sitio publicado, **volver a mirarlo en producción**. Lo verificado
+     acá es el build local; la rama quedó **dos commits adelante** de
+     `origin/main` (M11 y M12), así que hasta que se publique, producción sigue
+     con el logo de antes de M11.
+
+- **Commits:** el de este sprint.
