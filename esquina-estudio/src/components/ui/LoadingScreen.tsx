@@ -93,7 +93,7 @@ const CURTAIN_BLACK = "#000000";
  * Ancho del video, **declarado y no heredado del viewport** (M11).
  *
  * El pedido de las clientas es un ancho de logo: 37 % del ancho del viewport
- * debajo de 1024 y 27 % de ahí para arriba. El logo ocupa el 58,281 % del ancho
+ * debajo de 1024 y 19 % de ahí para arriba. El logo ocupa el 58,281 % del ancho
  * del cuadro —medido sobre los 36 cuadros del archivo—, así que el ancho del
  * video sale de dividir uno por el otro. Esa aritmética, la constante medida y
  * el porqué de declarar el ancho en vez de dejarlo en `100%` están en
@@ -105,12 +105,13 @@ const CURTAIN_BLACK = "#000000";
  * es exactamente lo que rompió la hidratación en el precedente que documenta
  * `preloader-gate.ts`. En CSS no hay nada que React pueda desacordar.
  *
- * El respaldo del `var()` es el más chico de los dos —desde M12, el de
- * escritorio— por si la hoja de Next todavía no se aplicó: sin él, un ancho
- * inválido cae en `auto` y el elemento tomaría los 1920 px intrínsecos del
- * video.
+ * El respaldo del `var()` es el más chico de los dos —el de escritorio— por si
+ * la hoja de Next todavía no se aplicó: sin él, un ancho inválido cae en `auto`
+ * y el elemento tomaría los 1920 px intrínsecos del video. Sigue al valor de
+ * escritorio cuando ese cambia, para que no quede nombrando un ancho que ya no
+ * existe en ningún rango.
  */
-const VIDEO_WIDTH = "var(--preloader-video-width, 46.33vw)";
+const VIDEO_WIDTH = "var(--preloader-video-width, 32.60vw)";
 
 export default function LoadingScreen() {
   const { markPreloaderDone } = usePreloader();

@@ -4757,3 +4757,125 @@ imagen de la galería y a los cambios de dataset posteriores.
      con el logo de antes de M11.
 
 - **Commits:** el de este sprint.
+
+## 2026-08-28 · M13 · El logo del preloader se achica en escritorio
+
+- **Qué se hizo:** mobile quedó aprobado en 37 % y no se tocó. Escritorio baja de
+  27 % a **19 % del ancho del viewport** en ≥1024. Es **un valor** de
+  `--preloader-logo-share` en `globals.css`, con su media query intacta; la
+  parametrización de M11 aguantó el tercer sprint seguido.
+
+  **La aritmética del 19 %, verificada antes de aplicar.** El criterio no es el
+  ancho sino la **presencia relativa**: el área del logo sobre el área de la
+  pantalla. Con la proporción del logo **medida en 2,8473:1** —la instrucción
+  decía 2,85, coincide al 0,1 %—, un ancho del 37 % en un teléfono de 390 × 844
+  ocupa el **2,222 %** del área, que es exactamente la cifra de la instrucción.
+  Para dar lo mismo en un viewport de 16/9 el ancho tiene que ser **18,86 %**;
+  con el 19 % pedido el área da **2,254 %**, un 1,5 % relativo más. **Cierra**, y
+  19 % cae en el rango aceptable 18–20.
+
+  Dos matices que se reportaron y no bloquean: la paridad está definida contra un
+  **teléfono alto** (19,5:9) y un escritorio de **16/9 exacto**. En un 320 × 568
+  el mismo 37 % da 2,71 % de área, y en un 1920 × 937 real —más bajo que 16/9— el
+  19 % da 2,60 %. Lo que se fija y se verifica es el **ancho**, que desde M11 no
+  depende del alto de la ventana.
+
+  **Lo único que se tocó además del valor** fue el respaldo del `var()` en
+  `LoadingScreen.tsx`: era `46.33vw`, que con el cambio dejaba de corresponder a
+  **ninguno** de los dos rangos, y su comentario decía «el más chico de los dos».
+  Pasó a `32.60vw`, que es el ancho de video del 19 %. **No cambia nada de lo que
+  se ve**: ese respaldo solo entra si la hoja de Next no estuviera aplicada, y en
+  producción se sirve bloqueante. No se consideró bifurcación porque no es un
+  mecanismo nuevo: es el mismo respaldo siguiendo al valor que dice seguir. Más
+  la prosa que nombra el porcentaje de escritorio, en los dos archivos.
+  Diff de código: 2 archivos, +20 / −11.
+
+- **Decisiones tomadas en ejecución:** ninguna de producto. Una de método, la del
+  respaldo del `var()`, explicada arriba.
+
+- **Mediciones / salidas de puertas:** mismo banco de M11/M12 —Chrome
+  `--headless=new` por DevTools Protocol sobre `npm run build` +
+  `npm run start -- -p 3010`—, midiendo **píxeles pintados** del último cuadro
+  del video. Rango de escritorio del banco llevado a 18–20 y agregada la medición
+  de área.
+
+  **Ancho del logo como % del ancho del viewport (M12 → M13):** 320 × 568 →
+  36,88 → **36,88 %** · 390 × 844 → 36,92 → **36,92 %** · 430 × 932 → 36,74 →
+  **36,74 %** · 768 × 1024 → 36,98 → **36,98 %** · 1366 × 768 → 26,94 →
+  **18,96 %** · 1920 × 1080 → 26,93 → **18,96 %** · 1920 × 937 → 26,93 →
+  **18,96 %**. **Los siete en su rango** (35–40 en mobile, 18–20 en escritorio),
+  y mobile **idéntico al de M12 hasta el segundo decimal**, que es la prueba de
+  que no se lo tocó. **1920 × 1080 y 1920 × 937 vuelven a dar el mismo número**:
+  la independencia del alto que ganó M11 se conserva.
+
+  **El corte de 1024, en los dos lados:** 1024 × 900 → **18,95 %** (escritorio) y
+  1023 × 900 → **36,85 %** (mobile).
+
+  **La paridad de área, que es el objetivo del sprint.** Área del logo sobre área
+  del viewport: **390 × 844 → 2,187 %** (la referencia aprobada) contra
+  **1920 × 1080 → 2,229 %**, o sea **+1,9 %**; 1366 × 768 da 2,222 % (+1,6 %) y
+  430 × 932 da 2,208 % (+0,9 %). La predicción era +1,5 %; los 0,4 puntos de
+  diferencia son el umbral de la medición, que recorta el antialias del trazo un
+  poco distinto en cada tamaño. **Quedaron parejas.** Como se anticipó, los
+  viewports que no son ni teléfono alto ni 16/9 se apartan: 1920 × 937 da 2,570 %
+  (+17,5 %), 320 × 568 da 2,662 % (+21,7 %) y 768 × 1024 —tablet, todavía del
+  lado de mobile— da 3,575 % (+63,4 %).
+
+  **Encuadre y centrado:** el logo **entra completo en los nueve viewports** y su
+  caja no toca ningún borde; el más chico ahora es 1024 × 900 (194 × 68 px) y el
+  más grande 1023 × 900 (377 × 132 px). El elemento del video queda centrado a
+  **0,01 px** en los dos ejes.
+
+  **Sin borde ni cambio de tono:** banda de 13 px a caballo de los cuatro bordes
+  de la caja del video en 320, 390, 1366 y 1920 — **188 656 píxeles, luma máxima
+  0**, con el fondo del video y el de la cortina los dos en `rgb(0, 0, 0)`.
+
+  **Las cinco garantías, re-verificadas.** (1) *Lienzo negro desde el primer
+  cuadro pintado*, a 40 y a 12 kB/s: primer cuadro con luma 18 en las esquinas
+  —el off-white daría 243— y negro hasta que arranca la salida; a 12 kB/s la
+  traza es 2,95 s: 0 · 3,03: 0 · 3,11: 0 · 3,20: 0 · 3,25: 8 · 3,26: 74 ·
+  3,28: 214 · 3,30: 243. La corrida de 40 kB/s tardó 12,35 s en llegar a la
+  salida y **el lienzo se mantuvo negro los 12,35 s**. (2) *Una vez por pestaña*:
+  primera visita con cortina (`display: flex`, compuerta puesta, `body` en
+  `rgb(0, 0, 0)`); a los 5 s sin cortina ni compuerta, `sessionStorage` en `"1"`;
+  segunda visita en la misma pestaña con la compuerta en
+  `[data-preloader-curtain]{display:none!important}`. (3) *Failsafe*: con el
+  `.mp4` bloqueado y con el pedido **colgado** la cortina se levanta igual y el
+  contenido queda montado (`main` de 604 px). (4) */studio excluido*: sin
+  compuerta, sin cortina, `html` y `body` en `rgb(243, 243, 243)` al cargar **y a
+  los 6,5 s**, `sessionStorage` intacto. (5) *Hidratación*: 8 rutas × 2 idiomas
+  en producción → **0 avisos de hidratación**; los únicos 8 mensajes son la
+  deprecación de `@sanity/image-url` (§7b).
+
+  **No-regresión:** los 48 altos —8 rutas × 3 anchos × 2 idiomas— contra los
+  medidos sobre el build de M12: **0 diferencias**, y **0 casos de scroll
+  horizontal** en las 48.
+
+  **Puertas con el servidor bajado:** `npm run lint` exit 0, sin salida;
+  `npm run build` exit 0, 15 páginas estáticas.
+
+- **Pendientes que deja:**
+  1. **Sigue el desvío de encuadre del asset** que reportó M11: el logo no está
+     centrado dentro del video —45 px a la izquierda del centro del cuadro,
+     2,34 % de su ancho—. Al achicarse el logo de escritorio el desvío bajó ahí
+     (de 21,5 a **15,0 px** a 1920, o sea 0,78 % del ancho del viewport) y en
+     mobile quedó igual que en M12 (6,0 px a 390, 1,54 %). Es del archivo, no del
+     código, y viene desde M3; el arreglo de raíz sería reencuadrar el video.
+  2. Siguen abiertos los pendientes heredados de M9 y M10: el dominio propio
+     verificado en Resend, `error.tsx` / `not-found.tsx`, los `<main>` anidados
+     y la instalación del harness ECC.
+
+- **Verificación humana pendiente:**
+  1. **Ver el preloader en una pestaña nueva, en la compu y en el teléfono.** El
+     teléfono no debería haber cambiado nada respecto de lo ya aprobado —los
+     números de mobile son idénticos a los de M12—; lo que hay que mirar es la
+     compu. Es el punto de cierre: recién después se publica.
+  2. **En el teléfono**, la lectura del centrado vertical: el logo está centrado
+     en el viewport, pero la barra del navegador lo hace percibir más arriba y el
+     banco no puede reproducir esa barra (§7b).
+  3. Con el sitio publicado, **volver a mirarlo en producción**. Lo verificado
+     acá es el build local; la rama quedó **tres commits adelante** de
+     `origin/main` (M11, M12 y M13), así que hasta que se publique, producción
+     sigue con el logo de antes de M11.
+
+- **Commits:** el de este sprint.
