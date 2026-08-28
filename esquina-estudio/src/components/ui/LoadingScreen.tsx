@@ -89,6 +89,28 @@ const EASE_EXIT: [number, number, number, number] = [0.76, 0, 0.24, 1];
  */
 const CURTAIN_BLACK = "#000000";
 
+/**
+ * Ancho del video, **declarado y no heredado del viewport** (M11).
+ *
+ * El pedido de las clientas es un ancho de logo: 27 % del ancho del viewport
+ * debajo de 1024 y 37 % de ahí para arriba. El logo ocupa el 58,281 % del ancho
+ * del cuadro —medido sobre los 36 cuadros del archivo—, así que el ancho del
+ * video sale de dividir uno por el otro. Esa aritmética, la constante medida y
+ * el porqué de declarar el ancho en vez de dejarlo en `100%` están en
+ * `globals.css`, donde vive `--preloader-logo-share`, que es lo único que se
+ * toca para cambiar el tamaño.
+ *
+ * Va como variable de CSS y no como estado de React porque el corte de 1024 es
+ * una media query, y resolver una media query en el primer render del cliente
+ * es exactamente lo que rompió la hidratación en el precedente que documenta
+ * `preloader-gate.ts`. En CSS no hay nada que React pueda desacordar.
+ *
+ * El respaldo del `var()` es el valor de mobile —el más chico— por si la hoja
+ * de Next todavía no se aplicó: sin él, un ancho inválido cae en `auto` y el
+ * elemento tomaría los 1920 px intrínsecos del video.
+ */
+const VIDEO_WIDTH = "var(--preloader-video-width, 46.33vw)";
+
 export default function LoadingScreen() {
   const { markPreloaderDone } = usePreloader();
 
@@ -198,6 +220,24 @@ export default function LoadingScreen() {
             inset: 0,
             zIndex: 9998,
             backgroundColor: CURTAIN_BLACK,
+            /*
+              El video ya no llena la cortina, así que hay que centrarlo: es
+              flex y no un `transform` de centrado porque un transform con
+              desplazamiento fraccionario deja los artefactos sub-pixel que
+              documenta §7.5 de `CLAUDE.md`.
+
+              `overflow: hidden` cubre el caso extremo de una ventana mucho más
+              ancha que 16/9 y muy baja, donde la caja del video —16/9 sobre un
+              ancho fijo— sobresale por arriba y por abajo. Lo que sobresale es
+              negro sobre negro y no se ve, pero recortarlo garantiza que no
+              aparezca scroll. Acotar el alto en cambio NO sirve: haría que
+              `object-contain` volviera a achicar el logo y el porcentaje pedido
+              dejaría de cumplirse.
+            */
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
           }}
         >
           <video
@@ -219,16 +259,29 @@ export default function LoadingScreen() {
             onError={handleVideoError}
             /*
               `object-contain` y no `cover`: el video no tiene alfa, así que
-              `cover` recortaría el logo en vertical. Las bandas que deja son
-              invisibles porque el fondo de la cortina es el mismo negro puro del
-              video (ver `CURTAIN_BLACK`). El `backgroundColor` del propio
-              elemento cubre el hueco entre que se monta y llega el primer
-              cuadro, junto con el póster.
+              `cover` recortaría el logo en vertical. Desde M11 la caja del
+              elemento ya es de 16/9, así que no quedan bandas dentro del video;
+              las que quedan son de la cortina, alrededor, y son invisibles
+              porque su fondo es el mismo negro puro del video (ver
+              `CURTAIN_BLACK`) y porque el borde del cuadro da luma 0 en los 36
+              cuadros. El `backgroundColor` del propio elemento cubre el hueco
+              entre que se monta y llega el primer cuadro, junto con el póster.
             */
             style={{
               display: "block",
-              width: "100%",
-              height: "100%",
+              width: VIDEO_WIDTH,
+              /*
+                La relación se fija a mano en vez de dejar `height: auto` con la
+                intrínseca: hasta que llegan los metadatos, un `<video>` mide
+                300 × 150 por defecto, y la caja daría un salto. Declarada, el
+                alto es el correcto desde el primer cuadro pintado.
+              */
+              aspectRatio: "16 / 9",
+              /*
+                `object-contain` se conserva por lo que dice el comentario del
+                elemento, pero con la caja ya en 16/9 —la del video y la del
+                póster— no tiene nada que recortar ni que rellenar.
+              */
               objectFit: "contain",
               backgroundColor: CURTAIN_BLACK,
             }}

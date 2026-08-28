@@ -42,6 +42,71 @@ body[data-custom-cursor="true"] * {
   justamente lo que mantiene la hidratación sana.
 */
 
+/*
+  El tamaño del logo de la cortina (M11).
+
+  El pedido de las clientas llega expresado como **ancho del logo sobre ancho
+  del viewport**: 27 % debajo de 1024 y 37 % de ahí para arriba. Eso no es un
+  factor de escala que se pueda aplicar al video, porque el logo no ocupa el
+  cuadro entero: hay que pasar de «cuánto tiene que medir el logo» a «cuánto
+  tiene que medir el video».
+
+  ## La constante, medida y no estimada
+
+  El fondo del video es negro puro y el trazo es blanco, así que la caja del
+  logo se obtiene por umbral. Medido sobre los 36 cuadros de
+  `public/preloader-logo.mp4` (1920 × 1080), la caja más ancha es la del último
+  —el logo terminado— y mide **1119 × 393 px**: el logo ocupa el
+  **58,281 % del ancho del video** (1119 / 1920) y el 36,4 % de su alto. La
+  medición es estable entre los umbrales 1 y 200 —varía 2 px sobre 1119, o sea
+  el 0,1 %—, así que el número no depende de dónde se corte el antialias.
+
+  De ahí sale `--preloader-logo-ratio`. Es una propiedad **del asset**: si
+  alguna vez se reemplaza el video, se vuelve a medir y se cambia acá.
+
+  ## Por qué el ancho del video se declara y no se deja en 100 %
+
+  Hasta M10 el video iba `width: 100%; height: 100%` con `object-contain`, y
+  entonces el ancho pintado era `min(ancho, alto × 16/9)`: el porcentaje que el
+  logo ocupaba del viewport **dependía del alto de la ventana**. En un viewport
+  de 16/9 daba el 58,3 %, pero en una ventana de escritorio real —más ancha que
+  16/9 una vez descontado el cromo del navegador— caía solo, y no a un valor
+  fijo. Un objetivo escrito en «% del ancho del viewport» no se puede cumplir
+  así. Declarando el ancho en `vw` y fijando la relación en 16/9, el ancho
+  pintado es el ancho declarado en **toda** ventana, y el porcentaje del logo
+  queda clavado.
+
+  Con la relación fijada en 16/9 —la del video y la del poster, que es de
+  32 × 18— `object-contain` no recorta ni deja bandas dentro del elemento: se
+  vuelve una identidad, y se conserva por la razón que da `LoadingScreen`. La
+  caja no puede dibujar ningún borde porque la fila y la columna de borde del video
+  dan luma 0 en los 36 cuadros, igual que el poster y que el fondo de la
+  cortina.
+
+  ## Qué se toca para cambiar el tamaño
+
+  Solo `--preloader-logo-share`: es, literal, el objetivo del pedido. El resto
+  es aritmética.
+*/
+:root {
+  /* Propiedad medida del asset: 1119 px de logo / 1920 px de video. */
+  --preloader-logo-ratio: 0.58281;
+
+  /* El pedido: mobile (< 1024). 46,33vw de video × 0,58281 = 27,00vw de logo. */
+  --preloader-logo-share: 27vw;
+
+  --preloader-video-width: calc(
+    var(--preloader-logo-share) / var(--preloader-logo-ratio)
+  );
+}
+
+@media (min-width: 1024px) {
+  :root {
+    /* Escritorio. 63,49vw de video × 0,58281 = 37,00vw de logo. */
+    --preloader-logo-share: 37vw;
+  }
+}
+
 html {
   background-color: var(--color-off-white);
   color: var(--color-off-black);

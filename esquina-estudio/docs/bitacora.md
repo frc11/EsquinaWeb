@@ -4514,3 +4514,139 @@ imagen de la galería y a los cambios de dataset posteriores.
      cambia lo que se ve.
   3. Con el sitio ya publicado, **volver a mirar la galería en producción** y
      confirmar contra el Studio que el orden es el de los números.
+
+## 2026-08-28 · M11 · El tamaño del logo en el preloader
+
+- **Qué se hizo:** el logo de la cortina de entrada pasa a medir **27 % del
+  ancho del viewport debajo de 1024 y 37 % de ahí para arriba**, que es como
+  las clientas expresaron el pedido. **El video no se tocó**: sigue siendo el
+  mismo `public/preloader-logo.mp4` de 1920 × 1080, 36 cuadros a 12 fps, sin
+  audio. Lo que cambió es la escala con que se muestra, y el camino para llegar
+  a ella fue medir, no estimar.
+
+  1. **La caja del logo dentro del cuadro, medida.** El fondo es negro puro y el
+     trazo es blanco, así que la caja sale por umbral. Sobre los **36** cuadros
+     decodificados a gris: la caja más ancha es la del **último** —el logo
+     terminado— y mide **1119 × 393 px**, o sea el **58,281 % del ancho** del
+     video y el 36,4 % de su alto. La unión de los 36 cuadros coincide exacto
+     con esa caja, así que el último es efectivamente el más ancho. La medición
+     es estable entre los umbrales 1 y 200: varía 2 px sobre 1119 (0,1 %).
+  2. **La causa raíz, que no era la escala.** Hasta M10 el video iba
+     `width: 100%; height: 100%` con `object-contain`, así que el ancho pintado
+     era `min(ancho, alto × 16/9)` y **el porcentaje del logo dependía del alto
+     de la ventana**. Medido sobre el build servido: 58,1–58,2 % en 320, 390,
+     430, 768, 1366 y 1920 × 1080 —todos 16/9 o más angostos— pero **50,47 %**
+     en 1920 × 937, que es una ventana de escritorio real con el cromo del
+     navegador descontado. Un objetivo escrito en «% del ancho del viewport» no
+     se puede cumplir con una geometría que depende del alto.
+  3. **El arreglo.** El ancho del video se **declara** en `vw` y la relación se
+     fija en 16/9. En `globals.css` viven tres propiedades: la constante medida
+     del asset (`--preloader-logo-ratio: 0.58281`), el objetivo del pedido
+     (`--preloader-logo-share`, 27vw y 37vw a partir de 1024) y la división de
+     una por otra (`--preloader-video-width`). `LoadingScreen` solo la consume.
+     **Lo único que se toca para cambiar el tamaño es `--preloader-logo-share`.**
+     Va como variable de CSS y no como estado de React porque el corte de 1024
+     es una media query, y resolver una media query en el primer render del
+     cliente es lo que rompió la hidratación en el precedente de
+     `preloader-gate.ts`.
+  4. **Escala aplicada**, respecto de la geometría anterior: **0,463** en mobile
+     (58,28 % → 27 %) y **0,635** en escritorio (58,28 % → 37 %).
+
+  Con la caja ya en 16/9 —la del video y la del póster, que es de 32 × 18—
+  `object-contain` se vuelve una identidad y se conserva. El video se centra con
+  flex y no con un `transform`, para no reintroducir los artefactos sub-pixel de
+  §7.5; la cortina lleva `overflow: hidden` para el caso extremo de una ventana
+  mucho más ancha que 16/9 y muy baja, donde la caja sobresale por arriba y por
+  abajo. **Acotar el alto no sirve**: haría que `object-contain` volviera a
+  achicar el logo y el porcentaje pedido dejaría de cumplirse.
+
+- **Decisiones tomadas en ejecución:** ninguna de producto. Dos de método:
+  (1) el ancho se declara en vez de escalar con `transform`, porque un
+  `transform` sobre `width: 100%` heredaría la misma dependencia del alto que es
+  la causa raíz; (2) el `var()` del estilo en línea lleva respaldo `46.33vw` —el
+  valor de mobile, el más chico— por si la hoja de Next no estuviera aplicada:
+  sin él un ancho inválido cae en `auto` y el elemento tomaría los 1920 px
+  intrínsecos del video.
+
+- **Mediciones / salidas de puertas:** todo sobre `npm run build` +
+  `npm run start -- -p 3010` y el banco de Chrome `--headless=new` por DevTools
+  Protocol, reconstruido para este sprint (van cinco). Se miden **píxeles
+  pintados**, no layout: se captura la pantalla con el video parado y buscado a
+  su último cuadro, y se saca la caja del trazo por umbral.
+
+  **Ancho del logo como % del ancho del viewport (después / antes):** 320 × 568
+  → **26,56 %** / 58,13 · 390 × 844 → **26,92 %** / 57,95 · 430 × 932 →
+  **26,98 %** / 58,14 · 768 × 1024 → **26,95 %** / 58,07 · 1366 × 768 →
+  **36,90 %** / 58,13 · 1920 × 1080 → **36,93 %** / 58,18 · 1920 × 937 →
+  **36,93 %** / 50,47. **Los siete caen en su rango** (25–30 y 35–40). El par
+  1920 × 1080 y 1920 × 937 dando el mismo 36,93 % es la prueba de que la
+  dependencia del alto se fue. El corte de 1024 verificado en los dos lados:
+  1024 × 900 → 36,91 % (escritorio) y 1023 × 900 → 26,98 % (mobile).
+
+  **Encuadre y centrado:** el logo entra completo en los nueve viewports —su
+  caja no toca ningún borde—, incluido el más chico (320: 85 × 30 px) y el más
+  grande (1920: 709 × 248 px). El elemento del video queda centrado a **0,01 px**
+  en los dos ejes.
+
+  **Sin borde ni cambio de tono (§3.4):** banda de 13 px a caballo de los cuatro
+  bordes de la caja del video, en 320, 390, 1366 y 1920 — **189 000 píxeles,
+  luma máxima 0** en todos. Concuerda con el asset: la fila y la columna de
+  borde del video dan luma 0 en los 36 cuadros, y el póster (32 × 18) es negro
+  puro entero.
+
+  **Las cinco garantías, re-verificadas.** (1) *Lienzo negro desde el primer
+  cuadro pintado*, a 40 y a 12 kB/s: el primer cuadro pintado da luma 18 en las
+  esquinas —el off-white daría 243— y a 12 kB/s la traza es 2,94 s: 0 · 3,03: 0
+  · 3,11: 0 · 3,19: 0 · 3,27: 0 · 3,28: 22 · 3,29: 117 · 3,31: 243, o sea negro
+  hasta que arranca el deslizamiento de salida. (2) *Una vez por pestaña*:
+  primera visita con cortina (`display: flex`, compuerta puesta, `body` en
+  `rgb(0, 0, 0)`); a los 5 s sin cortina, sin compuerta, `sessionStorage` en
+  `"1"` y `body` en `rgb(243, 243, 243)`; segunda visita en la misma pestaña con
+  la compuerta en `[data-preloader-curtain]{display:none!important}` y sin
+  cortina. (3) *Failsafe*: con el `.mp4` bloqueado y con el pedido **colgado**
+  —interceptado y nunca contestado— la cortina se levanta igual, la compuerta se
+  saca y el contenido queda montado (`main` de 604 px). (4) */studio excluido*:
+  sin nodo de compuerta, sin cortina, `html` y `body` en `rgb(243, 243, 243)` al
+  cargar **y a los 6,5 s**, y `sessionStorage` intacto. (5) *Hidratación*: 8
+  rutas × 2 idiomas sobre el build de producción → **0 avisos de hidratación**;
+  los únicos 8 mensajes son la deprecación de `@sanity/image-url`, ruido
+  conocido del paquete (§7b).
+
+  **No-regresión, contra dos builds de verdad.** Se midieron los altos de las 8
+  rutas a 1920, 1366 y 390 en los dos idiomas —48 mediciones— sobre el build de
+  M11; después se hizo `git stash`, se **reconstruyó** el build anterior, se
+  volvió a medir las mismas 48 y se comparó: **0 diferencias** y **0 casos de
+  scroll horizontal** en las 48. `scrollWidth` = `clientWidth` en todas.
+
+  **Puertas con el servidor bajado:** `npm run lint` exit 0, sin salida;
+  `npm run build` exit 0, 15 páginas estáticas, sin errores nuevos. Diff acotado
+  a 2 archivos (+125 / −7).
+
+- **Pendientes que deja:**
+  1. **El logo no está centrado dentro del asset**, y no se corrigió porque el
+     sprint prohíbe los corrimientos y prohíbe tocar el video. El centro de la
+     caja del trazo cae en x = 915 sobre un cuadro de 1920: **45 px a la
+     izquierda del centro**, o sea 2,34 % del ancho del video. Es una propiedad
+     del archivo, no del código, y **estaba desde M3**. En pantalla se traduce
+     en un desvío de −1,4 % del ancho del viewport en escritorio (27,5 px a
+     1920) y de −0,9 a −1,2 % en mobile (3,5 px a 390). Achicar el logo lo
+     **redujo** en términos absolutos: eran 45 px a 1920, ahora son 27,5.
+     Verticalmente sí está centrado (1 px sobre 1080). Si molesta, el arreglo de
+     raíz es reencuadrar el asset, no correr el video.
+  2. Siguen abiertos los pendientes heredados de M9 y M10: el dominio propio
+     verificado en Resend, `error.tsx` / `not-found.tsx`, los `<main>` anidados
+     y la instalación del harness ECC.
+
+- **Verificación humana pendiente:**
+  1. **Ver el preloader en una pestaña nueva, en la computadora y en el
+     teléfono**, y confirmar que el tamaño es el que las clientas pidieron. Es
+     el punto de cierre del sprint: recién después se publica.
+  2. **En el teléfono**, confirmar la lectura del centrado vertical. El logo
+     está efectivamente centrado en el viewport, pero la barra del navegador
+     hace que se perciba más arriba; el banco no puede reproducir esa barra
+     (§7b).
+  3. Con el sitio ya publicado, **volver a mirarlo en producción**: lo
+     verificado acá es el build local, y la rama está al día con `origin/main`
+     pero el commit de este sprint todavía no se publicó.
+
+- **Commits:** el de este sprint.
