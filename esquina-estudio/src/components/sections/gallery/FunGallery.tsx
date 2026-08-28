@@ -134,31 +134,50 @@ const SECTION_PAD_TOP = "clamp(32px, 6.5svh, 72px)";
 const TITLE_GAP = "clamp(24px, 3.7svh, 40px)";
 
 /*
-  CUATRO COLUMNAS, Y LA ÚLTIMA FILA CENTRADA (M9/F2)
-  ──────────────────────────────────────────────────
+  CUATRO COLUMNAS, FILAS COMPLETAS DE ARRIBA HACIA ABAJO (M9/F2, corregido en M10)
+  ───────────────────────────────────────────────────────────────────────────────
   Hasta M8 las columnas salían de `ceil(sqrt(n × 1,15))` y las celdas se
-  sorteaban: con nueve objetos la grilla pedía 4 × 3 = **doce** celdas y el
-  sorteo repartía nueve por ahí adentro, así que quedaban tres huecos sueltos
-  entre medio y el objeto de la celda sorteada no tenía nada que ver con el
-  número puesto en el Studio. Con ocho el síntoma no se veía —4 × 2 = ocho
-  celdas justas—, y por eso apareció recién al cargar la novena.
+  sorteaban: con diez objetos la grilla pedía 4 × 3 = **doce** celdas y el
+  sorteo repartía diez por ahí adentro, así que quedaban dos huecos sueltos
+  entre medio —el reparto se leía 3+4+3— y el objeto de la celda sorteada no
+  tenía nada que ver con el número puesto en el Studio. Con ocho el síntoma no
+  se veía —4 × 2 = ocho celdas justas—, y por eso apareció al cargar la novena.
 
   Ahora las filas son de cuatro fijas, los objetos entran en ORDEN DE LECTURA
-  —celda `i` para el ítem `i`, que ya viene ordenado por la query— y el resto
-  de la última fila se **centra** corriendo su columna media celda por cada
-  lugar que sobra. No hay celdas vacías: la última fila se centra, no se
-  rellena.
+  —celda `i` para el ítem `i`, que ya viene ordenado por prioridad desde la
+  query— y el sobrante va SIEMPRE en la última fila: nunca se equilibra el
+  reparto entre filas. 8 → 4+4 · 9 → 4+4+1 · 10 → 4+4+2 · 11 → 4+4+3 ·
+  12 → 4+4+4 · 13 → 4+4+4+1.
 */
 const GRID_COLUMNS = 4;
 
 /**
- * Corrimiento de la última fila, en celdas. Con 9 objetos sobra 1 y la fila se
- * corre 1,5 celdas —queda centrada—; con 12 no sobra nada y vale 0.
+ * Columna de un objeto, en celdas y **posiblemente fraccionaria**. Las filas
+ * completas devuelven la columna entera; la última fila incompleta reparte a
+ * sus `k` objetos de forma pareja a lo ancho de las `columns` columnas —cada
+ * uno en el centro de su franja de ancho `columns / k`—, que es lo que los deja
+ * cayendo en los huecos de la fila de arriba.
+ *
+ * Con 4 columnas: k = 2 da columnas 0,5 y 2,5, o sea centros en 1/4 y 3/4 del
+ * ancho —justo entre el primer y el segundo objeto de arriba, y entre el
+ * tercero y el cuarto—; k = 1 da 1,5, o sea el centro exacto; k = 3 da 0,167,
+ * 1,5 y 2,833. En los tres casos el reparto es simétrico.
+ *
+ * M9 corría la fila entera media celda por lugar sobrante, con lo que los
+ * objetos quedaban CONTIGUOS y apiñados en el medio (con k = 2, columnas 1 y
+ * 2) y el aire se acumulaba en los costados. Centrado sí, parejo no.
  */
-function getLastRowOffset(count: number, columns: number) {
-  const remainder = count % columns;
+function getColumn(index: number, count: number, columns: number) {
+  const fullRows = Math.floor(count / columns);
+  const row = Math.floor(index / columns);
+  const positionInRow = index % columns;
 
-  return remainder === 0 ? 0 : (columns - remainder) / 2;
+  if (row < fullRows) return positionInRow;
+
+  // Sólo se llega acá con `count % columns !== 0`, así que el resto nunca es 0.
+  const remainder = count - fullRows * columns;
+
+  return ((positionInRow + 0.5) * columns) / remainder - 0.5;
 }
 
 /** Alto de celda / ancho de celda. Medido en el mockup: 404 px sobre 416 px. */
@@ -619,9 +638,6 @@ function buildComposition(
   );
   const random = createRandom(randomSeed);
   const columns = GRID_COLUMNS;
-  const rows = Math.ceil(count / columns);
-  const lastRow = rows - 1;
-  const lastRowOffset = getLastRowOffset(count, columns);
   const cellWidth = 1 / columns;
   const cellHeight = cellWidth * ROW_PITCH;
 
@@ -629,8 +645,7 @@ function buildComposition(
     // Orden de lectura, sin sorteo: la celda es el índice, y el índice ya viene
     // ordenado por prioridad desde la query (ver `FUN_GALLERY_IMAGES_QUERY`).
     const row = Math.floor(index / columns);
-    const column =
-      (index % columns) + (row === lastRow ? lastRowOffset : 0);
+    const column = getColumn(index, count, columns);
     const size = randomBetween(random, minItemWidth, maxItemWidth);
     const centerX =
       (column + randomBetween(random, CELL_PLACE_MIN, CELL_PLACE_MAX)) *
@@ -740,10 +755,11 @@ type GridLayout = {
   captionTop: string;
   /**
    * Por objeto: el viaje del montón —en porcentaje del lado del objeto— y la
-   * columna donde arranca su celda. `colStart` está en **medias celdas**: la
-   * grilla del DOM se declara con el doble de columnas y cada objeto ocupa
-   * dos, que es lo que deja centrar una última fila impar sin celdas vacías
-   * (con dos columnas y un objeto suelto, el corrimiento es media celda).
+   * columna donde arranca su celda. `colStart` está en **cuartos de celda**: la
+   * grilla del DOM se declara con cuatro veces las columnas visibles y cada
+   * objeto ocupa cuatro, que es la resolución que hace falta para repartir
+   * parejo el sobrante de la última fila (en tablet, dos objetos sueltos piden
+   * cuartos: con medias celdas el par salía asimétrico).
    */
   pile: { x: string; y: string; colStart: number }[];
 };
@@ -765,21 +781,20 @@ function buildGridLayout(
   columns: number,
   maxItemSize: number,
 ): GridLayout {
+  const count = items.length;
   const cell = 1 / columns;
-  const rows = Math.max(1, Math.ceil(items.length / columns));
-  const lastRow = rows - 1;
-  const lastRowOffset = getLastRowOffset(items.length, columns);
+  const rows = Math.max(1, Math.ceil(count / columns));
   const aspect = rows * cell;
   const pileCenterY = cell / 2;
   const radiusScale = cell / Math.max(maxItemSize, Number.EPSILON);
 
   const pile = items.map((item, index) => {
     const row = Math.floor(index / columns);
-    // Mismo criterio que en escritorio: la última fila se corre para quedar
-    // centrada, y el viaje del montón sale contra la celda ya corrida — si no,
-    // el despliegue del último objeto apuntaría a donde ya no está.
-    const offset = row === lastRow ? lastRowOffset : 0;
-    const column = (index % columns) + offset;
+    // Mismo criterio que en escritorio: la última fila reparte su sobrante
+    // parejo a lo ancho, y el viaje del montón sale contra la celda ya
+    // repartida — si no, el despliegue del último objeto apuntaría a donde ya
+    // no está.
+    const column = getColumn(index, count, columns);
     const centerX = (column + 0.5) * cell;
     const centerY = (row + 0.5) * cell;
     const radius = item.pileRadius * radiusScale;
@@ -789,9 +804,12 @@ function buildGridLayout(
     return {
       x: `${((pileX - centerX) / cell) * 100}%`,
       y: `${((pileY - centerY) / cell) * 100}%`,
-      // `grid-column-start` es 1-based y va en medias celdas: dos sub-columnas
-      // por objeto más el corrimiento de la fila.
-      colStart: Math.round(column * 2) + 1,
+      // `grid-column-start` es 1-based y va en CUARTOS de celda: cuatro
+      // sub-columnas por objeto. Con medias celdas —lo que había hasta M10— el
+      // único reparto expresable era el contiguo; el parejo pide cuartos, y con
+      // ellos las columnas de los tres repartos caen todas en sub-columna
+      // entera, así que el `round` no redondea nada (ver `getColumn`).
+      colStart: Math.round(column * 4) + 1,
     };
   });
 
@@ -1053,14 +1071,14 @@ function GalleryCard({
         variables y las consumen clases literales acotadas a `lg:`, así que el
         reparto de arriba de 1024 no cambia ni un píxel.
 
-        La celda ocupa **dos sub-columnas**: la grilla del DOM se declara con el
-        doble de columnas de las que se ven (4 en teléfono, 6 en tablet) para
-        que la última fila se pueda centrar aunque el corrimiento sea de media
-        celda —el caso de un objeto suelto en una grilla de dos—. El reparto
-        visible no cambia: dos por fila en teléfono y tres en tablet, como
-        antes.
+        La celda ocupa **cuatro sub-columnas**: la grilla del DOM se declara con
+        cuatro veces las columnas que se ven (8 en teléfono, 12 en tablet) para
+        que el sobrante de la última fila se pueda repartir parejo aunque la
+        columna caiga en un cuarto de celda —el caso de dos objetos sueltos en
+        una grilla de tres—. El reparto visible no cambia: dos por fila en
+        teléfono y tres en tablet, como antes.
       */
-      className={`relative aspect-square w-full [grid-column-end:span_2] [grid-column-start:var(--a-col)] md:[grid-column-start:var(--b-col)] lg:absolute lg:left-[var(--d-x)] lg:top-[var(--d-y)] lg:w-[var(--d-w)] ${
+      className={`relative aspect-square w-full [grid-column-end:span_4] [grid-column-start:var(--a-col)] md:[grid-column-start:var(--b-col)] lg:absolute lg:left-[var(--d-x)] lg:top-[var(--d-y)] lg:w-[var(--d-w)] ${
         interactive ? "cursor-pointer" : ""
       }`}
       style={{
@@ -1320,13 +1338,13 @@ export default function FunGallery({
         relación de aspecto. Las dos medidas de escritorio van como variables
         para que las clases sigan siendo literales.
 
-        Las columnas del DOM son el doble de las que se ven —cada objeto ocupa
-        dos— y eso es lo único que cambió en M9: es lo que permite centrar la
-        última fila cuando sobra un número impar de objetos. Ver la clase del
-        objeto.
+        Las columnas del DOM son cuatro veces las que se ven —cada objeto ocupa
+        cuatro—: es lo que permite repartir parejo el sobrante de la última fila
+        con la resolución que pide el peor caso (dos objetos en la grilla de
+        tres, que caen en cuartos de celda). Ver la clase del objeto.
       */}
       <div
-        className="relative mx-auto grid w-full grid-cols-4 md:grid-cols-6 lg:block lg:aspect-[var(--d-aspect)] lg:max-w-[var(--d-max-width)]"
+        className="relative mx-auto grid w-full grid-cols-8 md:grid-cols-12 lg:block lg:aspect-[var(--d-aspect)] lg:max-w-[var(--d-max-width)]"
         style={
           {
             marginTop: TITLE_GAP,

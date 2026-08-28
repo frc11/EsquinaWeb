@@ -31,8 +31,17 @@ export const PROJECT_BY_SLUG_QUERY = `
 //
 // Y los que NO tienen número van al final: `order asc` de GROQ ordena primero
 // los números y deja el resto —`null` incluido— después, así que la segunda
-// clave, `_createdAt asc`, es la que ordena entre ellos. Comprobado contra la
-// API: `[{o:3},{o:null},{o:1}] | order(o asc)` devuelve 1, 3, null.
+// clave, `_createdAt asc`, es la que ordena entre ellos.
+//
+// Comprobado en M10 contra el motor GROQ real (no contra una simulación), con
+// las tres reglas a la vez en una sola lectura — números sueltos, un número
+// repetido tres veces y dos sin número:
+//
+//   order=1 · order=3 (tres, juntos y desempatados por `_createdAt` y, a
+//   igual fecha, por `_id`) · order=10 · los dos sin número, por `_createdAt`.
+//
+// O sea: EL NÚMERO ES UNA PRIORIDAD, NO UNA POSICIÓN. Repetirlo agrupa; no
+// deja huecos ni reserva celda.
 export const FUN_GALLERY_IMAGES_QUERY = `
   *[_type == "funGalleryImage" && defined(image.asset)] | order(order asc, _createdAt asc, _id asc) {
     _id,

@@ -4372,3 +4372,145 @@ imagen de la galería y a los cambios de dataset posteriores.
 3. **Publicar**, porque el formulario está roto en producción. M9 se cerró **sin
    `git push`**: la decisión de cuándo publicar es de Valentino.
 4. **Decidir el cambio de puntuación del bio de Team** que llegó en `046e601`.
+
+---
+
+## 2026-08-27 · M10 · El orden y el reparto de Fun Gallery, de verdad
+
+- **Qué se hizo:**
+
+  **Fase 0 — diagnóstico.** El sitio en producción mostraba diez objetos
+  repartidos 3+4+3 y en el orden 4, 3, 8, … El código de `main` no explicaba
+  eso: `FUN_GALLERY_IMAGES_QUERY` ya ordenaba bien y `buildComposition` ya
+  colocaba el ítem `i` en la celda `i`. La causa raíz no estaba en el código
+  sino **en qué código estaba desplegado**: `git status -sb` da
+  `## main...origin/main [ahead 3]`, o sea que producción corre `ff34d7b` y los
+  tres commits de M9 —incluido `f64d360`, el arreglo de la galería— **nunca se
+  publicaron**. Reproducido para no dejarlo en hipótesis: se extrajo el
+  `FunGallery.tsx` de `ff34d7b`, se replicó su motor y se lo alimentó con los
+  ocho `_id` reales del dataset. Da orden de lectura **Brickhouse(4),
+  Ejemplo(3), Napoliia(8), Algo(7), Matsu(6), Brooks(5), akasha(1),
+  Tukumi(2)** —el «4, 3, 8» del reporte— y con diez ítems reparte **3+4+3**,
+  porque `ceil(sqrt(10 × 1,15))` pide 4 columnas × 3 filas = **doce** celdas y
+  el `shuffle` mete diez adentro dejando dos vacías.
+
+  **Por qué la prueba de M9 dio bien y el sitio da mal** —que es lo que había
+  que entender—: M9 midió `npm run build` + `npm run start` sobre su propia
+  rama, donde el arreglo estaba y funcionaba, y lo reportó como si fuera el
+  sitio. Nunca comparó contra lo desplegado. A eso se sumó una segunda capa:
+  M9 documentó «9 `funGalleryImage`, `order` del 1 al 9» cuando la API devuelve
+  **8, del 1 al 8** — un dato que no se leyó del dataset. Las dos cosas son la
+  misma falla: verificar contra lo que uno cree en vez de contra lo que hay.
+
+  **El orden ya estaba bien, y se comprobó contra el motor GROQ real** (no
+  contra una simulación), con las tres reglas en una sola lectura: números
+  sueltos, un `order` repetido tres veces y dos documentos sin número. Sale
+  `1 · 3 · 3 · 3 · 10 · sin número · sin número`, con los tres repetidos juntos
+  desempatados por `_createdAt` y, a igual fecha, por `_id`, y los sin número al
+  final por fecha. La query no se tocó; se documentó lo comprobado.
+
+  **El reparto sí se corrigió.** `getLastRowOffset` corría la última fila entera
+  media celda por lugar sobrante: quedaba centrada pero **contigua**, con los
+  objetos apiñados en el medio y el aire acumulado en los costados. Lo
+  reemplaza `getColumn(index, count, columns)`, que devuelve la columna en
+  celdas —posiblemente fraccionaria— y **reparte el sobrante parejo a lo
+  ancho**: cada uno de los `k` objetos en el centro de su franja de ancho
+  `columns / k`. Con 4 columnas y 2 sobrantes eso los deja justo en los huecos
+  de la fila de arriba (centros en 1/4 y 3/4). La función es **una sola** y la
+  consumen el motor de escritorio y las dos grillas de mobile, así que los tres
+  repartos no pueden discrepar.
+
+  **La grilla del DOM de mobile pasó de medias celdas a cuartos**
+  (`grid-cols-4 md:grid-cols-6` → `grid-cols-8 md:grid-cols-12`, `span_2` →
+  `span_4`). No es cosmético: el peor caso —dos objetos sueltos en la grilla de
+  tres de tablet— cae en cuartos de celda, y con medias el par salía
+  asimétrico. Con cuartos, las columnas de los tres repartos caen todas en
+  sub-columna entera y el `Math.round` del `colStart` no redondea nada.
+
+- **Decisiones tomadas en ejecución:** una, declarada. «Centrado y repartido de
+  forma pareja en el ancho» admitía dos lecturas: repartir a lo ancho completo
+  o apiñar contiguo en el medio. Se tomó la primera, que es la que cumple
+  literalmente «repartido de forma pareja en el ancho» y la que produce el
+  ejemplo que da la instrucción —«como si ocupara los huecos de la fila de
+  arriba»— en el caso de 10 objetos, que es el reportado. Con 4 columnas y 3
+  sobrantes las dos lecturas divergen: la elegida da centros en 0,167 / 0,5 /
+  0,833 y la contigua en 0,25 / 0,5 / 0,75. Si se prefiere la otra, es cambiar
+  una fórmula en `getColumn`.
+
+- **Mediciones / salidas de puertas:**
+
+  Todo sobre `npm run build` + `npm run start -- -p 3010`, con Chrome
+  `--headless=new` por DevTools Protocol. Nunca `next dev`. El servidor se bajó
+  por PID; el puerto 3000 no se tocó.
+
+  **La prueba que vale — dataset real, sitio servido.** El dataset tiene **8**
+  objetos, no 10 (leído contra `api.sanity.io`, sin borradores). Posición final
+  de cada uno, idéntica en los cinco anchos y con reparto 4+4 en escritorio,
+  3+3+2 en tablet y 2+2+2+2 en teléfono:
+
+  | # | título | `order` | `_createdAt` | escritorio | tablet | teléfono |
+  |---|---|---|---|---|---|---|
+  | 1 | akasha | 1 | 2026-08-20T00:01:03Z | f0 c0 | f0 c0 | f0 c0 |
+  | 2 | Tukumi | 2 | 2026-08-20T15:32:58Z | f0 c1 | f0 c1 | f0 c1 |
+  | 3 | Ejemplo | 3 | 2026-08-20T15:33:26Z | f0 c2 | f0 c2 | f1 c0 |
+  | 4 | Brickhouse | 4 | 2026-08-20T15:33:49Z | f0 c3 | f1 c0 | f1 c1 |
+  | 5 | Brooks | 5 | 2026-08-20T15:34:49Z | f1 c0 | f1 c1 | f2 c0 |
+  | 6 | Matsu | 6 | 2026-08-20T15:35:11Z | f1 c1 | f1 c2 | f2 c1 |
+  | 7 | Algo | 7 | 2026-08-20T15:35:28Z | f1 c2 | f2 c0 | f3 c0 |
+  | 8 | Napoliia | 8 | 2026-08-20T15:35:55Z | f1 c3 | f2 c1 | f3 c1 |
+
+  Los dos de la última fila de tablet caen en **25,00 %** y **75,00 %** del
+  ancho: asimetría **0,000 %**.
+
+  **Los seis conteos, cada uno sobre su propio build servido** (los datos de la
+  query suplantados en el `fetch` del servidor; build, render, CSS y motor son
+  los del sitio). Reparto obtenido y orden, en los tres rangos:
+
+  | n | escritorio | tablet | teléfono | orden |
+  |---|---|---|---|---|
+  | 8 | 4+4 | 3+3+2 | 2+2+2+2 | 1…8 |
+  | 9 | 4+4+1 | 3+3+3 | 2+2+2+2+1 | 1…9 |
+  | 10 | **4+4+2** | 3+3+3+1 | 2+2+2+2+2 | 1…10 |
+  | 11 | 4+4+3 | 3+3+3+2 | 2+2+2+2+2+1 | 1…11 |
+  | 12 | 4+4+4 | 3+3+3+3 | 2+2+2+2+2+2 | 1…12 |
+  | 13 | 4+4+4+1 | 3+3+3+3+1 | 2+2+2+2+2+2+1 | 1…13 |
+
+  Asimetría de la última fila en mobile y tablet: **0,0000 % en los seis**. En
+  escritorio no es cero —entre 0,92 % y 4,49 %— y es el jitter del motor, que
+  llega hasta 0,15 celda por eje: es la identidad de la pantalla, no un defecto.
+
+  **Lo que se conserva, medido y no supuesto.** Montón antes del tap: dispersión
+  de 91 × 74 px a 1920, 63 × 47 a 768 y 51 × 40 a 390 — amontonados. Cartel
+  «(clic para ver)» presente en los tres. Tras un click de confianza del propio
+  Chrome la dispersión salta a 1231 × 411, 453 × 438 y 178 × 497: el tap
+  despliega. Cada imagen llega al centro de su celda con **error máximo 18,2 px
+  y medio 7–8 px**, que es la deriva del flotado corriendo — o sea que el
+  flotado también sigue vivo. Hover a 1920: el objeto bajo el puntero escala
+  **1,130×** = `HOVER_SCALE`, y sólo ése; probado sobre tres objetos distintos.
+
+  **Cero scroll horizontal** en `/fun-gallery`: nueve anchos
+  (320/360/390/414/430/768/1024/1366/1920) × dos idiomas = **18 de 18 en cero**.
+
+  **Puertas, con el servidor bajado:** `npm run lint` limpio, `npm run build`
+  compila en 33,6 s y genera las 15 páginas; `/fun-gallery` sigue clasificando
+  `○ (Static)` con `revalidate 60`.
+
+- **Pendientes que deja:**
+  1. **Publicar.** Es lo único que hace que este arreglo exista para las
+     clientas: `main` queda **cuatro commits adelante de `origin/main`** y M10
+     se cerró **sin `git push`**, igual que M9. Mientras eso no pase, producción
+     sigue con el motor viejo — y con el formulario de contacto roto, que era el
+     otro pendiente de M9.
+  2. La cuenta de Resend sigue sin dominio propio verificado (M9/F1).
+  3. Siguen abiertos `error.tsx` / `not-found.tsx`, los `<main>` anidados y la
+     instalación del harness ECC.
+
+- **Verificación humana pendiente:**
+  1. **Abrir la galería en un teléfono de verdad** y confirmar que el tap
+     despliega y que la última fila se lee centrada. El banco no simula gestos
+     táctiles (§7b).
+  2. **Confirmar la lectura del reparto parejo con 4 columnas y 3 sobrantes**
+     (11 objetos), que es el único caso donde la decisión declarada arriba
+     cambia lo que se ve.
+  3. Con el sitio ya publicado, **volver a mirar la galería en producción** y
+     confirmar contra el Studio que el orden es el de los números.
