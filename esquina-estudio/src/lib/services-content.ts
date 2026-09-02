@@ -1,11 +1,15 @@
 import type { Locale } from "@/lib/i18n/types";
 
 /**
- * Contenido de `/services`. El inglés es transcripción verbatim de `Final.pdf`
- * pág. 8 y **no se edita**: guiones largos (—), asteriscos, mayúsculas,
- * apóstrofos rectos y rangos con guion corto van tal cual llegaron. La variante
- * en castellano la agrega B4 con el criterio del sprint —contextual, voseo, y
- * brevedad como decisión de diseño—.
+ * Contenido de `/services`. El inglés nació como transcripción verbatim de
+ * `Final.pdf` pág. 8, y esa regla se conserva **para la forma**: guiones largos
+ * (—), asteriscos, mayúsculas, apóstrofos rectos y rangos con guion corto van
+ * tal cual llegan. Lo que cambió en R2 es que **el inglés ya no es intocable**:
+ * la ronda 2 de devoluciones lo edita donde las clientas lo pidieron por escrito
+ * (`docs/archivo/mockups/r2-trad-03.jpg`). El criterio pasa a ser el de siempre:
+ * el copy lo deciden ellas, y la fuente de verdad es el PDF de la ronda vigente.
+ * La variante en castellano la agregó B4 con el criterio del sprint —contextual,
+ * voseo, y brevedad como decisión de diseño—.
  *
  * ## Cómo entra el castellano
  *
@@ -202,8 +206,9 @@ export const SERVICE_PACKS: ServicePackList = [
         detail: "Full report with findings and actionable recommendations",
       },
       {
-        name: "Honest Recommendations",
-        detail: "What we can solve — and trusted colleagues for what we can't",
+        name: "From point A to point B",
+        detail:
+          "We turn our findings into a strategic roadmap, defining priorities, opportunities, and the tools or resources needed to bring them to life",
       },
     ],
     price: "$200",
