@@ -48,6 +48,9 @@ export default function ServicePackSection({
   const quoteHref = pack.quoteService
     ? `/contact?service=${encodeURIComponent(pack.quoteService)}`
     : "/contact";
+  // Un solo punto de resolución del rótulo: el del pack le gana al global. Sin
+  // esto habría que repetir el `<Link>` entero en dos ramas.
+  const quoteLabel = pack.quoteLabel ?? getServicesCopy(locale).quoteLabel;
 
   return (
     <section
@@ -148,6 +151,27 @@ export default function ServicePackSection({
 
           <div className="mt-12 flex flex-col items-end md:mt-[88px]">
             {/*
+              El precio va ARRIBA del CTA y alineado a la derecha con él: lo
+              alinea el `items-end` de esta columna, que es el mismo eje del que
+              ya cuelgan el link y la nota. Medido contra
+              `docs/archivo/mockups/r2-trad-03.jpg`.
+
+              La escala es la de los nombres de ítem (`SERVICES_HEADING_30`) y no
+              la del link: el precio es un valor, no una acción, y en la
+              referencia se lee un escalón por encima del CTA.
+            */}
+            {pack.price ? (
+              <p
+                className={cn(
+                  "mb-[10px] font-body text-off-black md:mb-[14px]",
+                  SERVICES_HEADING_30,
+                )}
+              >
+                {pack.price}
+              </p>
+            ) : null}
+
+            {/*
               El link envuelve texto y flecha, pero el subrayado y el relleno de
               hover son solo del texto: en el mockup la flecha queda fuera de la
               línea. `HoverButton` va como `span` porque el `<a>` ya es este
@@ -161,7 +185,7 @@ export default function ServicePackSection({
                 as="span"
                 className={cn("font-body uppercase", SERVICES_LINK_24)}
               >
-                {getServicesCopy(locale).quoteLabel}
+                {quoteLabel}
               </HoverButton>
               <ServicesArrow />
             </Link>

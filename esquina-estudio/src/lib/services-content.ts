@@ -58,6 +58,23 @@ export interface ServicePack {
   /** Nota al pie de la descripción (hoy solo Universe). */
   readonly footnote?: readonly string[];
   readonly items: readonly ServicePackItem[];
+  /**
+   * Precio del pack, **como cadena y no como número**: es texto de catálogo, no
+   * un dato calculable. Va arriba del CTA y alineado a la derecha con él (R2,
+   * `docs/archivo/mockups/r2-trad-03.jpg`). Opcional porque hoy solo lo lleva
+   * consultoría; los otros tres se presupuestan y por eso no cambian.
+   *
+   * No es —ni va a ser— un campo de Sanity: el catálogo de Services es
+   * hardcodeado bilingüe por decisión cerrada, igual que el resto de este
+   * archivo.
+   */
+  readonly price?: string;
+  /**
+   * Rótulo del CTA **de este pack**. Cuando está, le gana al `quoteLabel` global
+   * de `ServicesCopy`; cuando no, sale el global. La resolución ocurre en un solo
+   * lugar (`ServicePackSection`), no en dos ramas copiadas.
+   */
+  readonly quoteLabel?: string;
   /** Nota bajo el botón de cotización. */
   readonly quoteNote?: string;
   /**
@@ -103,6 +120,10 @@ export interface ServicesCopy {
     readonly paragraph: string;
     readonly links: readonly { readonly label: string; readonly href: string }[];
   };
+  /**
+   * Rótulo del CTA por defecto. Un pack puede pisarlo con su propio
+   * `quoteLabel`; ver `ServicePack.quoteLabel`.
+   */
   readonly quoteLabel: string;
 }
 
@@ -185,6 +206,8 @@ export const SERVICE_PACKS: ServicePackList = [
         detail: "What we can solve — and trusted colleagues for what we can't",
       },
     ],
+    price: "$200",
+    quoteLabel: "BOOK A CONSULTATION",
     quoteNote:
       "100% of investment credited toward any branding pack you start with us",
     quoteService: "CONSULTATION",
@@ -352,7 +375,9 @@ export const SERVICES_COPY_ES: ServicesCopy = {
       { label: "HAGAMOS REALIDAD TUS IDEAS", href: "/contact" },
     ],
   },
-  quoteLabel: "PEDIR PRESUPUESTO",
+  // Global: cubre Esenciales, Universo y Adicionales. Consultoría lleva el suyo
+  // propio (`quoteLabel` del pack), que le gana a este.
+  quoteLabel: "SOLICITAR PRESUPUESTO",
 };
 
 export const SERVICE_PACKS_ES: ServicePackList = [
@@ -390,6 +415,8 @@ export const SERVICE_PACKS_ES: ServicePackList = [
           "Lo que podemos resolver — y colegas de confianza para lo que no",
       },
     ],
+    price: "$200",
+    quoteLabel: "SOLICITAR CONSULTORÍA",
     quoteNote:
       "El 100% de la inversión se acredita al pack de branding que arranques con nosotras",
     quoteService: "CONSULTATION",
