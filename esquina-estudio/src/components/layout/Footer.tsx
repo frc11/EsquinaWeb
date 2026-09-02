@@ -217,35 +217,41 @@ function DevelopCredit({
  * script en home) a la derecha. **No cambió desde B2**: los dos grupos siguen
  * siendo los mismos nodos y los mismos `gap`.
  *
- * # Mobile (< 1024): tres filas de dos columnas y el logo al pie
+ * # Mobile (< 1024): tres filas, tres columnas y el logo en la del medio
  *
  * ```
- *   NACIDO EN                        INSTAGRAM
+ *   NACIDO EN                                      INSTAGRAM
  *   ARGENTINA
  *
- *   TRABAJANDO                       LINKEDIN
- *   EN TODO EL MUNDO
+ *                        [logo script]             LINKEDIN
+ *                        ← solo el footer claro
  *
- *   HECHO POR develOP                © 2024
- *
- *              [logo script]         ← solo el footer claro
+ *   © 2024                                        develOP
  * ```
  *
- * La izquierda apoya en el gutter izquierdo y la derecha en el derecho, tres
- * ítems cada una, y el logo cierra centrado a lo ancho. Cómo se consigue que las
- * dos columnas terminen parejas está en `MOBILE_PLACE_CELL`.
+ * La izquierda apoya en el gutter izquierdo y la derecha en el derecho; el logo
+ * ocupa la columna del medio, abarcando las tres filas. Cómo se consigue que las
+ * dos columnas terminen parejas está en `MOBILE_PLACE_CELL`, y ahí está también
+ * por qué **`WORKING WORLDWIDE` no aparece acá y sí de 1024 para arriba**.
  *
- * Antes de esto el crédito iba solo y centrado en una fila propia y el logo
- * abajo a la derecha: eran **tres ejes** en cuatro filas —el par de columnas, el
- * crédito al centro, el logo a la derecha— y el logo se leía como un elemento
- * suelto. Antes de eso —M1— era una sola columna de cinco bloques apilados, que
- * medía 488 px de alto: más de la mitad de un teléfono de 844.
+ * Medido sobre el sitio servido: el footer de `/` mide **180 px** a 320, 390 y
+ * 430 en los dos idiomas —de ahí sale `HOME_BLOCK_HEIGHT_MOBILE`—, la columna
+ * izquierda apoya en x = 24 y la derecha cierra contra el gutter derecho.
  *
- * **Los pares de lugar van apilados y no uno al lado del otro**, y es una
- * medida: en castellano piden 71,58 + 121,83 px y con INSTAGRAM al costado dan
- * 267 px de contenido **a 13 px de tipografía**, que ya no entra en los 272 de
- * caja útil a 320. Apilados, el nivel 1 pide 159,31 + 96,44 = 255,75 a 17 px y
- * entra en los cinco anchos.
+ * Antes de R2/F11.3 eran **cuatro filas y 304 px**: los dos pares de lugar a la
+ * izquierda, el crédito con su prefijo y el copyright compartiendo la tercera, y
+ * el logo script en una fila propia al pie. Antes de eso —M4/F3— el crédito iba
+ * solo y centrado en una fila propia y el logo abajo a la derecha: eran **tres
+ * ejes** en cuatro filas —el par de columnas, el crédito al centro, el logo a la
+ * derecha— y el logo se leía como un elemento suelto. Antes de eso —M1— era una
+ * sola columna de cinco bloques apilados, que medía 488 px de alto: más de la
+ * mitad de un teléfono de 844.
+ *
+ * **El par de lugar que queda va apilado y no en una línea**, y es una medida:
+ * en castellano `TRABAJANDO` + `EN TODO EL MUNDO` pedían 71,58 + 121,83 px y con
+ * INSTAGRAM al costado daban 267 px de contenido **a 13 px de tipografía**, que
+ * ya no entra en los 272 de caja útil a 320. Apilado, `NACIDO EN` + `ARGENTINA`
+ * pide 159,31 + 96,44 = 255,75 a 17 px y entra en los cinco anchos.
  *
  * # Cómo se arma sin duplicar el markup
  *

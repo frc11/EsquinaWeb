@@ -560,16 +560,39 @@ decidirlo.
   criterio de aceptación del propio documento de la ronda. La compresión que sí
   se hizo es la del footer oscuro y el claro (ver la bitácora de R2).
 
+  **Cuál es «la frase», porque ya se leyó mal una vez.** En ese footer hay dos
+  candidatas: el par `WORKING WORLDWIDE` de la fila de info y la frase de la
+  marca de la banda clara (`IN A WORLD FULL OF NOISE…`). **`WORKING WORLDWIDE` ya
+  salió de mobile en R2/F11.3** —`MOBILE_PLACE_CELL[1]` es `max-lg:hidden`, y en
+  escritorio se queda, en inglés, como pidió el PDF de traducción—. **Lo que
+  sigue abierto es la frase de la marca**, y es la que cambia el alto de las seis
+  rutas internas. La instrucción de R2.1 volvió a pedir la primera dándola por no
+  hecha y su Fase 2 quedó sin trabajo; el desvío está registrado en la bitácora.
+
 ### Técnico — abierto y medido
 
-- **[Mobile]** **El botón de volver arriba no llega a mostrarse en cuatro de las
-  seis rutas donde existe.** El umbral es de **dos pantallas** de scroll, que es
-  la constante que fijó el sprint, y para cumplirlo hace falta un documento de
-  más de tres viewports. Medido a 390 × 844 lo cumplen `/services` (7597 px de
-  recorrido) y `/team` (3438); no lo cumplen `/work` (1570), `/contact` (1309),
-  `/fun-gallery` (1043) ni `/work/[slug]` (828). **Con una sola pantalla
-  aparecería en las seis.** Es una línea: `APPEAR_AFTER_VIEWPORTS` en
-  `src/components/ui/BackToTop.tsx`.
+- ~~**[Mobile]** **El botón de volver arriba no llega a mostrarse en cuatro de
+  las seis rutas donde existe.**~~ **Cerrado a medias en R2.1/F1, y la parte que
+  no cerró es la interesante.** `APPEAR_AFTER_VIEWPORTS` pasó de 2 a 1 y el botón
+  sumó `/work` y `/contact`: son **cuatro de seis**, no las seis que este
+  pendiente anunciaba. **Lo que deja afuera a `/fun-gallery` y a `/work/[slug]`
+  no es el umbral sino la regla del footer** —la que impide que el botón tape el
+  crédito—, que en una ruta corta empieza a valer antes de que el scroll llegue
+  al umbral, así que la ventana útil queda vacía. Medido a 390 × 844: en
+  `/fun-gallery` el footer cierra la ventana en `scrollY` 427 y el umbral la abre
+  en 844; en `/work/matsu` el documento inglés tiene 828 px de recorrido —menos
+  de una pantalla, inalcanzable para cualquier umbral— y el castellano, que sí
+  cruza, tiene el footer cerrando en 319. La tabla completa está en el docblock
+  de `APPEAR_AFTER_VIEWPORTS`.
+- **[Mobile]** **El botón de volver arriba sigue sin existir en las dos rutas
+  cortas, y arreglarlo es una decisión de producto, no un número.** Las dos reglas
+  que lo gobiernan —umbral y no-tapar-el-footer— son deliberadas y en un
+  documento corto no tienen intersección. Las salidas posibles, ninguna elegida:
+  (a) dejarlo así, asumiendo que en una ruta que se recorre en un gesto y medio
+  el botón no hace falta; (b) que el botón se apoye **encima** del footer en vez
+  de apagarse, lo que contradice el requisito escrito de R2; (c) que el viaje
+  tenga como tope el borde superior del footer y el botón viva por debajo del
+  umbral en esas rutas. **Hace falta verlo en el teléfono antes de decidir.**
 - **[Galería]** **El reapilado del montón se ve, y el fundido lo estaba
   tapando.** Cuando carga la última imagen, las ocho mediciones de tinta se
   completan y los `zIndex` cambian **de una sola vez**: pintando las dos

@@ -5123,3 +5123,161 @@ regla que dejó M10 —*una verificación que no se corre contra lo que ve el
 visitante no es una verificación*— y por eso se dice con estas palabras.
 
 - **Commits:** doce de producto (uno por fase, F2 a F12) más el de registros.
+
+---
+
+## 2026-09-02 · R2.1 · El umbral del botón y el footer de mobile
+
+**Objetivo:** aplicar las dos decisiones que R2 dejó pendientes, para que la
+verificación humana se haga una sola vez sobre el estado final. Sobre `main`,
+**sin `git push`** — producción sigue en M13 (`6c59c46`).
+
+**De las dos fases previstas, una se ejecutó y la otra ya estaba hecha.** Lo
+segundo es el resultado que importa de esta ronda corta, y la causa está a la
+vista más abajo.
+
+### Fase 0 — la vara
+
+`git status` limpio salvo el `docs.zip` sin trackear, HEAD en `04d11d2`, `lint` y
+`build` en verde. Los 48 altos del banco de `tools/bench/` y, aparte, lo que los
+48 altos no pueden ver: el alto del **footer** y el del **bloque de contenido**
+de `/` y de `/contact/success`, medidos por separado a 320, 390 y 430 en los dos
+idiomas.
+
+Footer de mobile **180,00 px** en las seis combinaciones. Bloque de home 332 /
+536 / 624 según el ancho, con la **holgura contra el footer en 0,00 px** en las
+seis. O sea que `HOME_BLOCK_HEIGHT_MOBILE` ya estaba bien calibrado antes de
+empezar.
+
+### Fase 1 — el botón de volver arriba aparece a una pantalla
+
+`APPEAR_AFTER_VIEWPORTS` pasa de **2 a 1** en `src/components/ui/BackToTop.tsx`.
+Nada más se tocó: ni las rutas donde está montado, ni el área táctil, ni el
+sumidero de scroll, ni la animación.
+
+**Y el resultado no es el que anunciaban los pendientes.** El cabo abierto de R2
+decía «con una sola pantalla aparecería en las seis». Medido a 390 × 844 en los
+dos idiomas, aparece en **cuatro**:
+
+| ruta | recorrido EN / ES | antes (umbral 2) | ahora (umbral 1) |
+|---|---|---|---|
+| `/services` | 7499 / 7597 | aparece | aparece |
+| `/team` | 3438 / 3400 | aparece | aparece |
+| `/work` | 1569 / 1508 | nunca | **aparece** (844 → 953) |
+| `/contact` | 1309 / 1264 | nunca | **aparece** (844 → 1037 · 992) |
+| `/fun-gallery` | 1043 / 1007 | nunca | **nunca** |
+| `/work/[slug]` | 828 / 874 | nunca | **nunca** |
+
+**Lo que deja afuera a las dos últimas no es el umbral sino la regla del
+footer**, la que R2 agregó para que el botón no le tape el crédito. El botón se
+enciende en la intersección de las dos condiciones, o sea en la ventana
+`(innerHeight × umbral, footerTop − innerHeight + EDGE_GAP]`, y en una ruta corta
+el footer entra en la banda del botón **antes** de que el scroll llegue al
+umbral:
+
+- **`/fun-gallery`** — el footer arranca en 1247 px de documento (1273 en
+  castellano), así que la ventana se cierra en `scrollY` 427 y el umbral la abre
+  en 844. No se cruzan.
+- **`/work/[slug]`** — `/work/matsu` mide 1672 px en inglés: **828 de recorrido,
+  menos de una pantalla**, que ningún umbral positivo alcanza. En castellano mide
+  1718 y el umbral sí se cruza, pero el footer cierra la ventana en 319.
+
+Las dos reglas son deliberadas y ninguna se tocó, así que esas dos rutas quedan
+sin botón **por la geometría de su pie**. La tabla, con el porqué, quedó escrita
+en el componente. Bajar el umbral por debajo de 1 no las arregla: lo que habría
+que decidir es otra cosa —el botón por encima del footer, o el footer como tope
+del viaje— y esa decisión no está tomada.
+
+**Verificación:** 48 de 48 altos idénticos a la Fase 0, cero desborde horizontal
+en las 48, fit del formulario idéntico en los ocho casos. El cambio es de
+comportamiento, no de layout.
+
+### Fase 2 — `WORKING WORLDWIDE` ya estaba fuera del footer de mobile
+
+**No hubo cambio de producto, porque el cambio ya estaba hecho: lo hizo R2/F11.3
+y la instrucción de esta ronda partía de una premisa vieja.** Medido antes de
+tocar nada:
+
+- `MOBILE_PLACE_CELL[1]` es `"max-lg:hidden"` desde R2, con su comentario. El par
+  `WORKING / WORLDWIDE` **no se renderiza** debajo de 1024 —caja de 0 × 0 en el
+  footer de `/` y en el de las rutas internas, a 320 y a 390, en los dos
+  idiomas— y **sí se renderiza a 1024 y a 1920, en inglés en los dos idiomas**,
+  que es lo que pidió el PDF de traducción.
+- `places` sigue siendo la tupla de dos pares (`readonly [TwoLines, TwoLines]`),
+  `MOBILE_PLACE_CELL` sigue siendo una tabla de dos entradas indexada por el
+  `.map`, y **el único consumidor de `places` es `Footer.tsx`**. No hay
+  `undefined` interpolándose en ningún `className`: el índice no se sale de rango
+  y la decisión —filtro de render, no colapso de la estructura— está escrita en
+  el comentario, que es la alternativa que la propia instrucción autorizaba.
+- `HOME_BLOCK_HEIGHT_MOBILE` está en 180 **porque el footer ya mide 180 sin la
+  frase**. El desfasaje de 124 px que la instrucción temía reintroducir es
+  exactamente el que R2 arregló, y sigue arreglado: holgura 0,00 px a 320, 390 y
+  430 en los dos idiomas.
+- El footer de mobile contra `r2-mob-02.jpg`: izquierda `BORN IN` / `ARGENTINA` y
+  `© 2024` apoyados en x = 24; derecha `INSTAGRAM`, `LINKEDIN`, `develOP`
+  cerrando contra el gutter derecho. Es el reparto de la referencia.
+
+**De dónde salió la confusión, que es lo que conviene registrar.** La anotación
+de `r2-mob-02.jpg` dice «sacar **la frase**», y hay dos frases candidatas en ese
+footer: el par `WORKING WORLDWIDE` y la frase de la marca de la banda clara
+(`IN A WORLD FULL OF NOISE…`). R2 sacó la primera y dejó la segunda **abierta a
+propósito**, anotada en pendientes como decisión de Valentino. La instrucción de
+R2.1 volvió a pedir la primera dándola por no hecha. **El par ya no está; la
+frase de la marca sigue ahí y sigue sin decidirse.**
+
+### Lo que sí se corrigió: dos comentarios que envejecieron sin avisar
+
+Es la misma clase de defecto que §9 de `CLAUDE.md` registra como lección de R2 —
+una medición resumida en prosa que el código deja atrás— y es lo que hizo que
+esta instrucción se escribiera sobre una premisa falsa. Los dos describían el
+footer de mobile **anterior** a R2/F11.3:
+
+1. **`src/app/(site)/page.tsx`** decía que el footer de mobile «son dos columnas
+   alineadas abajo más el crédito y el logo script en filas propias, y mide 304
+   px». Son tres filas con el logo en la columna del medio, y mide 180. Se le
+   agregó además **cómo se verifica**: bloque contra footer, no alto de
+   documento.
+2. **`Footer.tsx`, el docblock de `InfoRow`** llevaba el diagrama viejo, con
+   `TRABAJANDO / EN TODO EL MUNDO` a la izquierda, `HECHO POR develOP` y
+   `© 2024` compartiendo fila y el logo en una cuarta fila al pie. Ninguna de las
+   cuatro cosas es cierta desde R2. El diagrama nuevo coincide con el de
+   `MOBILE_PLACE_CELL`, que sí estaba al día.
+
+Cero cambio de comportamiento: 48 de 48 altos idénticos y las 12 mediciones de
+bloque y footer idénticas después de la corrección.
+
+### Mediciones del cierre
+
+1. **48 de 48 altos idénticos** a la Fase 0, en las ocho rutas × tres anchos ×
+   dos idiomas. Ninguna diferencia que explicar, porque no hubo ninguna.
+2. **Cero desborde horizontal** en las 48.
+3. **Bloque y footer por separado**, `/` y `/contact/success` a 320, 390 y 430 en
+   los dos idiomas: footer 180,00 px en las doce; holgura bloque-footer 0,00 px
+   en las seis de `/` y −180,00 en las seis de `/contact/success`, que es el
+   footer superpuesto de esa ruta y no un defecto.
+4. **Escritorio idéntico** en las 16 combinaciones de 1024 y 1920, con
+   `WORKING WORLDWIDE` presente en las cuatro medidas del footer.
+5. **`npm run lint` y `npm run build` en verde**, con el servidor bajado por PID.
+
+### Verificación humana pendiente
+
+Los siete puntos de R2 siguen en pie. Los dos que agrega esta ronda:
+
+1. **El botón a una pantalla**, y no en `/fun-gallery` como preveía la
+   instrucción —ahí no aparece— sino en **`/work` y `/contact`**, que son las dos
+   rutas donde el cambio se nota. La ventana es corta: 109 px de scroll en
+   `/work` y 148–193 en `/contact`. La pregunta es si aparecer y desaparecer en
+   ese tramo se lee como una función o como un parpadeo.
+2. **El footer de mobile contra `r2-mob-02.jpg` con el teléfono en la mano.** No
+   cambió en esta ronda, pero es lo que había que mirar: si la compresión que
+   pedían quedó lograda o quedó vacío. Y con eso a la vista, decidir el cabo que
+   sigue abierto —sacar o no la **frase de la marca** de la banda clara—, que
+   cambia el alto de las seis rutas internas en mobile.
+
+### Estado de publicación
+
+`main` local, **sin `git push`**. Producción sigue en M13. Lo verificado acá es
+el build local.
+
+- **Commits:** uno de producto (F1) más el de la sincronización de comentarios y
+  registros.
