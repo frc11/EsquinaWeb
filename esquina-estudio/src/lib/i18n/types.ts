@@ -87,14 +87,38 @@ export interface Dictionary {
     /** Intro centrado. Los cortes son de diseño y van explícitos. */
     readonly intro: readonly string[];
     /**
-     * Primer párrafo, partido en tres porque el medio va en semibold: los dos
-     * nombres propios. Los extremos llevan sus espacios como en el original.
+     * Primer párrafo de la sección 01, partido en tres porque el del medio —los
+     * dos nombres— va en `font-medium`. Los extremos llevan sus espacios como en
+     * el original, así que la puntuación se escribe literal y no depende de
+     * ningún contrato de unión.
      */
-    readonly foundedBy: readonly [string, string, string];
-    readonly bio: string;
-    /** Bloques con párrafos separados por línea en blanco (`whitespace-pre-line`). */
-    readonly approach: string;
-    readonly headed: string;
+    readonly whoWeAre: readonly [string, string, string];
+    /**
+     * # Los tres bloques de texto de Team: UNA ENTRADA POR PÁRRAFO
+     *
+     * Hasta R2 estos tres eran `string` con los párrafos separados por `\n\n` y
+     * el render los partía con `split`, apoyado además en `whitespace-pre-line`.
+     * Eso arrastraba dos defectos que el PDF de mobile reportó como uno solo
+     * («hay partes del texto que tienen enter en el medio de las frases»):
+     *
+     * 1. **Cortes de escritorio codificados en el copy.** Los `\n` sueltos de
+     *    `approach` y `headed` —«We are highly ⏎ detail-oriented»— eran saltos
+     *    de línea REALES en cualquier ancho, así que en un teléfono partían la
+     *    frase por la mitad.
+     * 2. **Un renglón fantasma.** `headed` traía `\n\n\n`, o sea que el segundo
+     *    párrafo empezaba con un `\n` que `whitespace-pre-line` pintaba como una
+     *    línea en blanco; se compensaba a mano con un `space-y-0` que solo se
+     *    aplicaba a la sección `03`.
+     *
+     * **Un párrafo es una entrada del arreglo y el navegador decide dónde corta.**
+     * El separador entre párrafos es la estructura, no un carácter. Con eso se
+     * fueron el `split`, el `whitespace-pre-line` y el parche del `space-y-0`.
+     * (`intro` es otra cosa y por eso sigue como está: sus cinco entradas son un
+     * corte de composición medido a 40 px, no párrafos.)
+     */
+    readonly bio: readonly string[];
+    readonly approach: readonly string[];
+    readonly headed: readonly string[];
     readonly sections: readonly [string, string, string];
     readonly photoAlt: string;
   };

@@ -44,20 +44,42 @@ function TeamVideo() {
   );
 }
 
+/**
+ * Una sección de Team. **Un solo camino de render para las tres** (R2/F6).
+ *
+ * Hasta R2 había dos: la `01` estaba escrita a mano dentro de un `id === "01"`
+ * —un párrafo con énfasis más la `bio` en un `<p>` suelto— y las otras dos
+ * partían un `string` por `\n\n` con `whitespace-pre-line`. De ahí salían los
+ * dos defectos que reportó el PDF de mobile y que documenta `i18n/types.ts`: los
+ * cortes de escritorio codificados en el copy y el renglón fantasma del `\n\n\n`
+ * de `headed`, compensado con un `space-y-0` que solo se aplicaba a la `03`.
+ *
+ * Ahora el copy llega **ya partido en párrafos** y este componente los renderiza
+ * igual en las tres, con el mismo `space-y-8`. Lo único que distingue a la `01`
+ * es que su primer párrafo lleva énfasis intra-línea, y para eso alcanza una
+ * prop opcional: no hay una rama por sección.
+ */
 function TeamSubsection({
   id,
   label,
-  content,
+  lead,
+  paragraphs,
   showSlide = false,
 }: {
+  /** El número de la sección (`01`, `02`, `03`); es rótulo, no comportamiento. */
   id: string;
   label: string;
-  content?: string;
+  /**
+   * Párrafo con énfasis intra-línea, partido en tres: lo de antes, los nombres
+   * y lo de después. Hoy solo lo lleva la sección `01`. Los espacios de los
+   * extremos viven en los strings, así que la puntuación se escribe literal.
+   */
+  lead?: readonly [string, string, string];
+  paragraphs: readonly string[];
   showSlide?: boolean;
 }) {
   const { t } = useLocale();
   const teamPhoto = useImageLoad();
-  const bodySpacingClass = id === "03" ? "space-y-0" : "space-y-8";
 
   return (
     <section className="grid grid-cols-1 gap-8 md:grid-cols-[235px_minmax(0,1fr)] md:gap-[60px]">
@@ -90,22 +112,23 @@ function TeamSubsection({
           initialX={TEAM_TEXT_INITIAL_X}
           initialY={0}
         >
-          {id === "01" ? (
-            <div className="max-w-[1280px] space-y-8 font-body text-[20px] leading-[1.25] text-off-black md:text-[30px]">
+          <div className="max-w-[1285px] space-y-8 font-body text-[20px] leading-[1.25] text-off-black md:text-[30px]">
+            {lead ? (
               <p>
-                {t.team.foundedBy[0]}
-                <strong className="font-medium">{t.team.foundedBy[1]}</strong>
-                {t.team.foundedBy[2]}
+                {lead[0]}
+                <strong className="font-medium">{lead[1]}</strong>
+                {lead[2]}
               </p>
-              <p>{t.team.bio}</p>
-            </div>
-          ) : (
-            <div className={`max-w-[1285px] ${bodySpacingClass} whitespace-pre-line font-body text-[20px] leading-[1.25] text-off-black md:text-[30px]`}>
-              {content?.split("\n\n").map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
-          )}
+            ) : null}
+            {/*
+              `key` por índice y no por texto (§6, contrato 5 del i18n): con el
+              texto como clave, cambiar de idioma desmonta y vuelve a montar cada
+              `<p>`. Antes de R2 este map usaba el párrafo entero como clave.
+            */}
+            {paragraphs.map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
+            ))}
+          </div>
         </RevealOnScroll>
 
         {showSlide && (
@@ -153,16 +176,22 @@ export default function TeamSection() {
         <TeamVideo />
       </section>
       <div className="space-y-20 md:space-y-32">
-        <TeamSubsection id="01" label={t.team.sections[0]} showSlide />
+        <TeamSubsection
+          id="01"
+          label={t.team.sections[0]}
+          lead={t.team.whoWeAre}
+          paragraphs={t.team.bio}
+          showSlide
+        />
         <TeamSubsection
           id="02"
           label={t.team.sections[1]}
-          content={t.team.approach}
+          paragraphs={t.team.approach}
         />
         <TeamSubsection
           id="03"
           label={t.team.sections[2]}
-          content={t.team.headed}
+          paragraphs={t.team.headed}
         />
       </div>
     </main>

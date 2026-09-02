@@ -44,21 +44,28 @@ export const EN: Dictionary = {
       "compelling businesses, while also working with established",
       "brands to rethink and elevate their identity.",
     ],
-    foundedBy: [
-      "Founded by ",
+    whoWeAre: [
+      "We're ",
       "Virginia and Victoria",
-      " — also known as Vireli and Toli — the studio is built on a lifelong creative partnership. We've been friends since we were four years old, and later studied Multimedia Design together in Tucumán, Argentina.",
+      " — Vireli and Toli — co-founders of Esquina Estudio.",
     ],
-    bio: "Over the years, we've developed a shared eye and a deep understanding of visual identity — and the real value it holds today for brands of all sizes. We're inspired by fashion, food, and design in all its forms, constantly observing and translating what we see into thoughtful, intentional brand experiences.",
-    approach: `Our vision blends aesthetics, concept, and timeless foundations. We are highly
-detail-oriented and believe that strong design lives in both the big picture and the smallest decisions.
-
-We work closely with our clients through direct communication, making collaboration an essential part of the process. Our priority is to bring each vision to life through our creative perspective — staying open, thoughtful, and focused on finding the most fitting solution for every project.`,
-    headed: `Looking ahead, we aim to grow beyond borders. As we prepare to move to Australia, our goal is
-to expand our reach and work with clients worldwide — collaborating with people from different places, cultures, and industries.
-
-
-We're driven by the idea of helping others build something of their own — turning ideas into real, tangible brands with intention, character, and identity.`,
+    bio: [
+      "This project grew from a bond built over many years, shaped by creativity, shared ambitions, and a natural understanding of each other. Before becoming business partners, we were classmates in kindergarten, school, and university in Tucumán, Argentina.",
+      "Over time, we developed a shared perspective and a deep understanding of visual identity, as well as the value it holds for brands, regardless of their size. We're inspired by design in all its forms, as well as fashion, food, and communication. But above all, we're inspired by those building something of their own: entrepreneurs with an idea they believe in, and brands looking to find their place in the market, communicate with clarity, and do so with a voice of their own.",
+    ],
+    // El inglés de la sección 02 NO cambia en R2: lo único que se fue es el salto
+    // de línea intra-párrafo que partía «We are highly / detail-oriented» en
+    // cualquier ancho, que es el defecto que reportó el PDF de mobile.
+    approach: [
+      "Our vision blends aesthetics, concept, and timeless foundations. We are highly detail-oriented and believe that strong design lives in both the big picture and the smallest decisions.",
+      "We work closely with our clients through direct communication, making collaboration an essential part of the process. Our priority is to bring each vision to life through our creative perspective — staying open, thoughtful, and focused on finding the most fitting solution for every project.",
+    ],
+    headed: [
+      "We believe that growth also means stepping beyond what is familiar. We want to broaden our perspective, explore new cultures and ways of approaching design, and keep learning from the people and contexts we encounter along the way.",
+      "In this next chapter, we aim to take Esquina Estudio beyond our borders, collaborating with clients and creatives from different parts of the world and building relationships that allow us to keep expanding our perspective on design and its practice.",
+      "We're driven by curiosity: the desire to keep learning, understand different ways of working, and discover new possibilities within the industry. We want Esquina Estudio to grow alongside us — staying true to who we are while remaining open to new ideas, influences, and ways of creating.",
+      "Above all, we want to continue supporting people who are building something of their own, turning ideas into brands with intention, character, and an identity that feels truly their own.",
+    ],
     sections: ["THE TEAM", "OUR APPROACH", "WHERE WE ARE HEADED"],
     photoAlt: "ESQUINA ESTUDIO team",
   },

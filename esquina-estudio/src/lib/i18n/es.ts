@@ -65,21 +65,29 @@ export const ES: Dictionary = {
       "en negocios profesionales y visualmente potentes, y también",
       "a marcas establecidas a repensar y elevar su identidad.",
     ],
-    foundedBy: [
-      "Fundado por ",
+    // El guion largo vuelve al castellano, y con él se cierra el pendiente que
+    // dejó el commit `046e601` (fuera de sprint, 2026-08-26): había cambiado el
+    // guion por paréntesis solo en esta variante, así que EN y ES puntuaban
+    // distinto. El copy de R2 los vuelve a alinear.
+    whoWeAre: [
+      "Somos ",
       "Virginia y Victoria",
-      " (también conocidas como Vireli y Toli), el estudio nace de una sociedad creativa de toda la vida. Somos amigas desde los cuatro años y después estudiamos juntas Diseño Multimedial en Tucumán, Argentina.",
+      " —Vireli y Toli—, co-creadoras de Esquina Estudio.",
     ],
-    bio: "Con los años desarrollamos una mirada compartida y un entendimiento profundo de la identidad visual, y del valor real que hoy tiene para marcas de cualquier tamaño. Nos inspiran la moda, la gastronomía y el diseño en todas sus formas: observamos todo el tiempo y traducimos lo que vemos en experiencias de marca pensadas y con intención.",
-    approach: `Nuestra visión combina estética, concepto y bases atemporales. Somos muy
-detallistas y creemos que el buen diseño vive tanto en la mirada general como en la decisión más chica.
-
-Trabajamos cerca de nuestros clientes, con comunicación directa: la colaboración es una parte esencial del proceso. Nuestra prioridad es dar vida a cada visión desde nuestra mirada creativa, con apertura, atención y foco en encontrar la solución más justa para cada proyecto.`,
-    headed: `Mirando hacia adelante, queremos crecer más allá de las fronteras. Mientras nos preparamos
-para mudarnos a Australia, nuestro objetivo es ampliar el alcance y trabajar con clientes de todo el mundo, con gente de distintos lugares, culturas e industrias.
-
-
-Nos mueve la idea de ayudar a otros a construir algo propio: convertir ideas en marcas reales y tangibles, con intención, carácter e identidad.`,
+    bio: [
+      "Este proyecto nace de un vínculo construido a lo largo de muchos años, entre creatividad, complicidad y aspiraciones compartidas. Antes de ser socias, fuimos compañeras de jardín, colegio y facultad en Tucumán, Argentina.",
+      "Con el tiempo, desarrollamos una mirada en común y un profundo entendimiento de la identidad visual, así como del valor que tiene para las marcas, sin importar su tamaño. Nos inspira el diseño en todas sus formas, como también la moda, la gastronomía, la comunicación y todo lo que sucede a su alrededor. Pero, sobre todo, nos inspiran quienes están construyendo algo propio: emprendedores con una idea en la que creen y marcas que buscan encontrar su lugar en el mercado, comunicar con claridad y hacerlo con voz propia.",
+    ],
+    approach: [
+      "Nuestra visión combina estética, concepto y fundamentos atemporales. Prestamos especial atención a cada detalle y creemos que el buen diseño se construye tanto desde la mirada general como desde las decisiones más pequeñas.",
+      "Trabajamos de la mano de nuestros clientes, con una comunicación directa y abierta, entendiendo la colaboración y la comprensión de sus objetivos como partes esenciales del proceso. Nuestra prioridad es dar vida a cada visión desde nuestra perspectiva creativa, con apertura, criterio y atención, buscando siempre la solución más adecuada para cada proyecto.",
+    ],
+    headed: [
+      "Creemos que crecer también significa salir de lo conocido. Queremos ampliar nuestra mirada, explorar nuevas culturas y formas de hacer diseño, y seguir aprendiendo de las personas y los contextos que encontramos en el camino.",
+      "En esta próxima etapa, buscamos llevar Esquina Estudio más allá de nuestras fronteras, colaborando con clientes y creativos de distintas partes del mundo y construyendo vínculos que nos permitan seguir expandiendo nuestra perspectiva sobre el diseño y su práctica.",
+      "Nos mueve la curiosidad por seguir aprendiendo, entender otras formas de trabajar y descubrir nuevas posibilidades dentro de la industria. Queremos que Esquina Estudio crezca con nosotras: manteniendo nuestra identidad, pero siempre abierta a nuevas ideas, influencias y formas de hacer.",
+      "Sobre todo, queremos seguir acompañando a personas que están construyendo algo propio, transformando ideas en marcas con intención, carácter y una identidad que les pertenezca.",
+    ],
     sections: ["EL EQUIPO", "NUESTRO ENFOQUE", "HACIA DÓNDE VAMOS"],
     photoAlt: "El equipo de ESQUINA ESTUDIO",
   },
