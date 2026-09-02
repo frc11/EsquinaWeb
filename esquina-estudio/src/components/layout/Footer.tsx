@@ -24,76 +24,83 @@ const SOCIAL_LINKS = [
 const COPYRIGHT = "© 2024";
 
 /**
- * Dónde cae cada pieza en la grilla de mobile.
+ * Dónde cae cada pieza en la grilla de mobile. **Rearmada en R2/F11.3.**
  *
  * Van como tablas de literales enteros porque Tailwind v4 busca los nombres de
  * clase como texto: `` `row-start-${index + 1}` `` no llegaría nunca al CSS.
  *
- * # El reparto
+ * # El reparto nuevo
  *
- * Tres filas de dos columnas, más una cuarta a lo ancho para el logo:
+ * Tres filas y tres columnas; la del medio es solo para el logo, que dejó de
+ * tener fila propia:
  *
  * ```
- *   fila 1   BORN IN / ARGENTINA          INSTAGRAM
- *   fila 2   WORKING / WORLDWIDE          LINKEDIN
- *   fila 3   POWERED BY develOP           © 2024
- *   fila 4        [logo script, centrado]        ← solo el footer claro
+ *   fila 1   BORN IN / ARGENTINA                       INSTAGRAM
+ *   fila 2                          [logo script]      LINKEDIN
+ *   fila 3   © 2024                                    develOP
  * ```
  *
- * **Las dos columnas terminan a la misma altura sin una sola regla de
- * alineación.** Cada fila se dimensiona por su ítem más alto, y en las tres es
- * el de la derecha: 44 px de piso de área táctil contra los 40 que miden dos
- * renglones a `leading-[20px]`. El `self-end` que hacía falta cuando la
- * izquierda tenía dos ítems y la derecha tres ya no existe: ahora son tres
- * contra tres.
+ * # Qué cambió y por qué
+ *
+ * Contra `docs/archivo/mockups/r2-mob-02.jpg` (columna del medio) y
+ * `r2-mob-01.jpg` (segunda captura):
+ *
+ * 1. **`WORKING WORLDWIDE` sale de mobile.** En escritorio se queda, y en
+ *    inglés: el PDF de traducción lo pide explícitamente
+ *    (`r2-trad-01.jpg`/`r2-trad-02.jpg`). Es una divergencia deliberada por
+ *    rango, no un borrado: el diccionario sigue llevando los dos pares y el
+ *    segundo se apaga con una variante.
+ * 2. **El crédito pierde el prefijo en mobile**: dice `develOP` a secas, sin
+ *    `POWERED BY` / `HECHO POR`. En escritorio los dos prefijos quedan.
+ * 3. **El copyright se muda a la izquierda**, debajo del par de lugar, y el
+ *    crédito a la derecha, cerrando la columna de los enlaces.
+ * 4. **El logo script deja la cuarta fila** y pasa a la columna del medio,
+ *    centrado vertical y horizontalmente entre las otras dos. Con eso se van la
+ *    fila entera y su `mt-4`, que es de dónde sale la compresión vertical que
+ *    pide la referencia.
+ *
+ * **Las dos columnas siguen terminando a la misma altura**, que es el criterio
+ * de §2b y no la cantidad de renglones: la derecha llena las tres filas y la
+ * izquierda se apoya en la primera y en la tercera (`self-end` en el copyright).
+ *
+ * **Lo que la referencia pide y NO se aplica, y hay que decirlo:** en el mockup
+ * los renglones quedan a ~18 px unos de otros. Acá no pueden: `INSTAGRAM`,
+ * `LINKEDIN` y `develOP` son enlaces y arrastran el piso de 44 px de área
+ * táctil, que §2b declara innegociable. La compresión que sí se hizo es la de la
+ * cuarta fila.
  */
 const MOBILE_PLACE_CELL = [
   "max-lg:col-start-1 max-lg:row-start-1",
-  "max-lg:col-start-1 max-lg:row-start-2",
+  // El segundo par —WORKING WORLDWIDE— no existe debajo de 1024.
+  "max-lg:hidden",
 ] as const;
 
-/** La columna derecha, de arriba abajo. `© 2024` toma la tercera fila aparte. */
+/** La columna derecha, de arriba abajo. El crédito toma la tercera fila aparte. */
 const MOBILE_SOCIAL_CELL = [
-  "max-lg:col-start-2 max-lg:row-start-1",
-  "max-lg:col-start-2 max-lg:row-start-2",
+  "max-lg:col-start-3 max-lg:row-start-1",
+  "max-lg:col-start-3 max-lg:row-start-2",
 ] as const;
 
 /**
- * El piso de área táctil, aplicado a mano a `© 2024`.
- *
- * `TOUCH_LINKS` alcanza al `<a>` que emite `HoverButton` y el copyright no es un
- * enlace, así que sin esto su fila mediría 20 px y quedaría descolgado del
- * crédito, que comparte la fila 3 y sí arrastra sus 44 por ser enlace. No es un
- * área táctil de verdad —no hay nada que tocar— sino la **misma unidad de fila**
- * que usan los otros dos ítems de la columna: es lo que le da a la derecha un
- * solo ritmo.
+ * El copyright cierra la columna izquierda, apoyado en el borde inferior de la
+ * grilla (`self-end`) para que las dos columnas terminen parejas. No lleva piso
+ * de área táctil porque no es un enlace y ya no comparte fila con uno: su altura
+ * la fija la fila, que la fija el crédito de la derecha.
  */
 const MOBILE_COPYRIGHT_CELL =
-  "max-lg:col-start-2 max-lg:row-start-3 max-lg:flex max-lg:min-h-[44px] max-lg:items-center max-lg:justify-self-end";
+  "max-lg:col-start-1 max-lg:row-start-3 max-lg:flex max-lg:items-end max-lg:justify-self-start max-lg:self-end";
 
 /**
- * El crédito cierra la columna izquierda; el logo cierra el footer.
+ * El crédito cierra la columna derecha; el logo ocupa la columna del medio.
  *
- * **El crédito dejó de ser una fila propia centrada** y bajó a la columna
- * izquierda, fila 3, apoyado en el gutter igual que los dos pares de lugar. Es
- * el elemento más ancho del footer —185,03 px a 15 px de tipografía— así que es
- * el que decide si la fila 3 entra: 185,03 + 16 de `gap-x-4` + 51,36 de
- * `© 2024` = 252,39 contra los 272 de caja útil a 320. Entra por 19,6 px, y es
- * el margen más chico de la composición: **si ese texto cambia, hay que volver a
- * medir a 320.**
- *
- * El logo script se queda en su propia fila, a lo ancho y **centrado**. Centrado
- * y no a la derecha porque a la derecha quedaba como un tercer eje suelto: la
- * grilla ya tiene el eje del gutter izquierdo y el del derecho, y el logo
- * alineado a uno de ellos se leía como una cuarta entrada de esa columna en vez
- * de como el remate del footer. En fila propia y no al lado del crédito porque
- * los dos juntos piden 185,03 + 120,5 = 305,53 px sin contar el aire, contra 272
- * de caja útil a 320.
+ * En mobile el crédito dice `develOP` a secas —el prefijo se esconde—, así que
+ * pasó de 185,03 px a 15 px de tipografía a poco más de 80: ya no es el elemento
+ * más ancho del footer y ya no es él quien decide si la fila entra a 320.
  */
 const MOBILE_CREDIT_CELL =
-  "max-lg:col-start-1 max-lg:row-start-3 max-lg:flex max-lg:justify-self-start";
+  "max-lg:col-start-3 max-lg:row-start-3 max-lg:flex max-lg:justify-self-end";
 const MOBILE_LOGO_CELL =
-  "max-lg:col-span-2 max-lg:row-start-4 max-lg:mt-4 max-lg:flex max-lg:justify-center";
+  "max-lg:col-start-2 max-lg:row-start-1 max-lg:row-span-3 max-lg:flex max-lg:items-center max-lg:justify-center";
 
 /**
  * Gutter horizontal del chrome: alinea el footer con el Navbar. Sale del módulo
@@ -179,8 +186,13 @@ function DevelopCredit({
       className={`normal-case ${textClassName}`}
     >
       <span className="inline-flex items-center gap-2 whitespace-nowrap">
+        {/*
+          El prefijo se esconde debajo de 1024 (R2/F11.3): en mobile el crédito
+          dice `develOP` a secas. El espacio va DENTRO del span que se esconde,
+          así que al apagarse no queda un hueco delante de la marca.
+        */}
         <span>
-          {t.footer.poweredBy}{" "}
+          <span className="max-lg:hidden">{t.footer.poweredBy}{" "}</span>
           <span className="normal-case">develOP</span>
         </span>
         <Image
@@ -296,7 +308,7 @@ function InfoRow({
         40 px de texto dentro de filas de 44), acá es donde se toca: `gap-y-3`
         con el `lg:gap-y-0` de al lado protegiendo el escritorio.
       */
-      className={`grid w-full grid-cols-[auto_auto] items-start justify-between gap-x-4 gap-y-0 lg:flex lg:flex-row lg:justify-between lg:gap-x-12 lg:gap-y-0 ${align} ${TOUCH_LINKS} ${INFO_TYPE} ${leadingClass} ${textClass}`}
+      className={`grid w-full grid-cols-[auto_1fr_auto] items-start justify-between gap-x-4 gap-y-0 lg:flex lg:flex-row lg:justify-between lg:gap-x-12 lg:gap-y-0 ${align} ${TOUCH_LINKS} ${INFO_TYPE} ${leadingClass} ${textClass}`}
     >
       {/*
         El grupo de la izquierda de escritorio. En mobile se declara

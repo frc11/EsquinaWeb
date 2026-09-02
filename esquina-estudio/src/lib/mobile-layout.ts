@@ -51,12 +51,15 @@ export const TOUCH_TARGET_MIN = 44;
  * servidor, sin JavaScript—, el alto del footer se **resta**, igual que hace el
  * escritorio con sus 164 px desde B2.
  *
- * **El número es 304 y está medido**, no estimado: el `HomeFooter` de mobile
- * mide 304,00 px en los cinco anchos de prueba (320, 360, 390, 414, 430) y en
- * los dos idiomas. Se compone de `py-6` (24 + 24) más las cinco filas de la
- * grilla: 44 de INSTAGRAM, 44 de LINKEDIN, 44 de `© 2024` —las tres columnas de
- * la derecha, sin hueco entre ellas—, 16 de aire, 44 del crédito, 16 de aire y
- * 48 del logo script. 48 + 256 = 304.
+ * **El número es 180 y está medido**, no estimado: el `HomeFooter` de mobile
+ * mide 180,00 px en los anchos de prueba y en los dos idiomas. Se compone de
+ * `py-6` (24 + 24) más las **tres** filas de la grilla —44 de INSTAGRAM, 44 de
+ * LINKEDIN y 44 del crédito, sin hueco entre ellas—: 48 + 132 = 180. El logo
+ * script no suma alto porque desde R2/F11.3 vive en la columna del medio y no en
+ * una cuarta fila.
+ *
+ * **Era 304 hasta R2/F11.3**, cuando la grilla tenía cinco filas: las tres de
+ * arriba más 16 de aire, 44 del crédito, 16 de aire y 48 del logo script.
  *
  * **Eran 244 hasta M3, y los 60 px de diferencia son de M4/F3.** El copyright se
  * mudó a la columna derecha, así que la última línea de antes —copyright y
@@ -71,9 +74,27 @@ export const TOUCH_TARGET_MIN = 44;
  * ser su propia celda, así que el piso de área táctil de 44 empezó a aplicarse
  * por fila en vez de una sola vez sobre la celda entera.
  *
+ * **Y en R2/F11.3 el footer cambió: son 180, no 304.** La reorganización de
+ * mobile —`WORKING WORLDWIDE` afuera, el crédito sin prefijo, el copyright a la
+ * izquierda y el logo script a la columna del medio en vez de a una cuarta fila—
+ * se llevó 124 px. Medido sobre el sitio servido: el `<footer>` de `/` mide
+ * **180 px** en 320 × 640, 390 × 844, 430 × 932 y 768 × 1024, y 164 en 1920 (el
+ * escritorio no se movió).
+ *
+ * **Este es el número que ningún alto de documento delata**, y por eso hay que
+ * medirlo aparte: `/` mide una pantalla exacta pase lo que pase, porque el
+ * `mt-auto` del footer absorbe la diferencia. Con el 304 viejo contra un footer
+ * de 180 quedaban **124 px de holgura muerta** entre el bloque del hero y el
+ * footer —medidos, idénticos en los cuatro anchos de mobile—, o sea la frase
+ * centrada en un bloque más corto que el espacio disponible. Es la misma clase de
+ * defecto que el punto 13 de M2 y la trampa 2 de §7.1: `scrollHeight` nunca baja
+ * del alto del viewport, así que los 48 altos salen idénticos con el defecto
+ * puesto.
+ *
  * **Si el footer cambia, este número cambia.** La verificación es directa: medir
  * `document.querySelector("footer").getBoundingClientRect().height` en los cinco
- * anchos y los dos idiomas y confirmar que `docH === viewH` en `/`.
+ * anchos y los dos idiomas, confirmar que `docH === viewH` en `/` **y** que el
+ * borde inferior del bloque del hero toca el borde superior del footer.
  *
  * Va escrito **entero** y no compuesto: Tailwind v4 busca los nombres de clase
  * como literales en el código, y una clase armada con una plantilla no llega
@@ -81,7 +102,7 @@ export const TOUCH_TARGET_MIN = 44;
  * y lo que quedó documentado como el punto 13 de este sprint.
  */
 export const HOME_BLOCK_HEIGHT_MOBILE =
-  "max-lg:h-[calc(100svh-var(--header-height)-304px)]";
+  "max-lg:h-[calc(100svh-var(--header-height)-180px)]";
 
 /**
  * El hueco que ocupa el footer de home, como relleno inferior (M2/F3, punto 9).
@@ -91,12 +112,12 @@ export const HOME_BLOCK_HEIGHT_MOBILE =
  * que queda por encima de esa franja y no en la pantalla entera, o a 320 × 640
  * el párrafo terminaba 46 px por debajo del borde superior del footer.
  *
- * Los dos números son los mismos altos de siempre —**304** en mobile desde M4/F3
- * (ver arriba; eran 244) y 164 en escritorio, los `40 + 84 + 40` que `page.tsx`
- * publica desde B2— y van escritos enteros por la misma razón: Tailwind busca
- * literales.
+ * Los dos números son los altos reales del footer: **180** en mobile desde
+ * R2/F11.3 (eran 304 desde M4/F3 y 244 antes; ver arriba) y 164 en escritorio,
+ * los `40 + 84 + 40` que `page.tsx` publica desde B2 y que R2 no tocó. Van
+ * escritos enteros por la misma razón: Tailwind busca literales.
  */
-export const HOME_FOOTER_CLEARANCE = "pb-[304px] lg:pb-[164px]";
+export const HOME_FOOTER_CLEARANCE = "pb-[180px] lg:pb-[164px]";
 
 /**
  * Le da los 44 px de alto tocable al `<a>` que emite `HoverButton`, **sin tocar

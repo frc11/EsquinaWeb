@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   NavIndicator,
   measureTabIndicator,
@@ -8,6 +8,7 @@ import {
   type IndicatorMeasure,
 } from "@/components/layout/nav-indicator";
 import { usePrefersReducedMotion } from "@/components/layout/RouteTransitionProvider";
+import { useIsBelowDesktop } from "@/lib/use-media-query";
 import { LOCALES, useLocale, type Locale } from "@/lib/i18n";
 
 /**
@@ -158,6 +159,25 @@ export default function LocaleToggle({
    * para lo que fue hecho.
    */
   const [chosen, setChosen] = useState(false);
+  /**
+   * ¿Está abierto el desplegable de mobile? (R2/F11.2.)
+   *
+   * Debajo de 1024 el control deja de ser `EN / ES` y pasa a ser `EN ⌄`: se ve
+   * el idioma elegido y el otro aparece al tocar. De 1024 para arriba **no
+   * existe**: este estado no gobierna nada allá arriba, porque lo que esconde al
+   * inactivo es una variante `max-lg:` y no una condición de JavaScript.
+   */
+  const [open, setOpen] = useState(false);
+  /**
+   * El corte se pregunta desde JavaScript **solo para el comportamiento del
+   * toque**, que es el uso que §2b autoriza para este hook: en mobile, tocar el
+   * idioma activo abre el desplegable en vez de reelegirlo. El layout lo sigue
+   * decidiendo Tailwind, así que sale correcto del servidor y no parpadea al
+   * hidratar. En el primer render el hook devuelve `false` —o sea, escritorio—;
+   * un toque en ese cuadro llamaría a `setLocale` con el idioma que ya está
+   * puesto, que no hace nada.
+   */
+  const isBelowDesktop = useIsBelowDesktop();
 
   const groupRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Partial<Record<Locale, HTMLButtonElement | null>>>(
@@ -193,6 +213,32 @@ export default function LocaleToggle({
     animate: chosen && !reduceMotion,
   });
 
+  /*
+    El desplegable se cierra solo: al elegir, al tocar afuera y con Escape. Las
+    tres salidas viven acá y no en tres lugares, y el efecto **no se registra si
+    está cerrado**, así que en reposo el control no cuelga ni un listener.
+  */
+  useEffect(() => {
+    if (!open) return;
+
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Node && groupRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeOnOutside);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
   // El color pleno del cromo: el mismo que porta el menú en cada tono. El activo
   // lo lleva fijo; el inactivo lo alcanza con hover y foco.
   const fullToneClass = tone === "dark" ? "text-off-white" : "text-off-black";
@@ -200,6 +246,21 @@ export default function LocaleToggle({
     tone === "dark"
       ? "text-gray-brand hover:text-off-white focus-visible:text-off-white"
       : "text-gray-brand hover:text-off-black focus-visible:text-off-black";
+
+  /*
+    La superficie del desplegable de mobile. Es la misma que usa el desplegable
+    del formulario —borde de 1 px del color pleno sobre el fondo de la página—,
+    invertida en las rutas oscuras. Solo existe debajo de 1024: de ahí para
+    arriba ninguna de estas clases aplica y el control queda exactamente como
+    estaba.
+  */
+  const optionCellClass = [
+    "max-lg:absolute max-lg:right-0 max-lg:top-full max-lg:z-[3] max-lg:mt-3",
+    "max-lg:border max-lg:px-3 max-lg:justify-end",
+    tone === "dark"
+      ? "max-lg:border-off-white max-lg:bg-off-black"
+      : "max-lg:border-off-black max-lg:bg-off-white",
+  ].join(" ");
 
   return (
     <div
@@ -219,10 +280,26 @@ export default function LocaleToggle({
       */
       className="relative flex items-center pr-[6px] font-body text-[17px] font-medium uppercase tracking-normal text-gray-brand min-[1024px]:max-[1151.98px]:text-[15px]"
     >
-      {LOCALES.map((code: Locale, index) => (
-        <span key={code} className="flex items-center">
+      {LOCALES.map((code: Locale, index) => {
+        const isSelected = code === selectedLocale;
+
+        return (
+        /*
+          En mobile el idioma que NO está elegido sale de la fila y pasa a ser el
+          contenido del desplegable, y cuando está cerrado se esconde con
+          `display: none` —o sea que tampoco recibe foco—. Que lo esconda una
+          variante y no una condición de JavaScript es lo que mantiene el layout
+          correcto desde el servidor (§2b): el árbol es el mismo en los dos
+          rangos, y de `lg` para arriba ninguna de estas clases aplica.
+        */
+        <span
+          key={code}
+          className={`flex items-center ${
+            isSelected ? "" : `${optionCellClass} ${open ? "" : "max-lg:hidden"}`
+          }`}
+        >
           {index > 0 && (
-            <span aria-hidden="true" className="select-none px-[4px] max-lg:px-[12px]">
+            <span aria-hidden="true" className="select-none px-[4px] max-lg:hidden">
               /
             </span>
           )}
@@ -230,8 +307,22 @@ export default function LocaleToggle({
             ref={setButtonRef(code)}
             type="button"
             lang={code}
-            aria-pressed={code === selectedLocale}
+            aria-pressed={isSelected}
+            /*
+              El activo es además el disparador del desplegable **en mobile**, y
+              por eso anuncia su estado. En escritorio no despliega nada, así que
+              allá no hay nada que anunciar.
+            */
+            aria-expanded={isSelected && isBelowDesktop ? open : undefined}
             onClick={() => {
+              if (isSelected) {
+                // En mobile el activo abre y cierra; en escritorio reelegir el
+                // idioma puesto no hace nada, que es lo que hacía antes.
+                if (isBelowDesktop) setOpen((current) => !current);
+                return;
+              }
+
+              setOpen(false);
               // Las dos van en el mismo click y React las agrupa: el render que
               // sigue ya tiene el idioma nuevo **y** la puerta abierta, así que
               // la remedición de ese render sale con viaje.
@@ -260,11 +351,15 @@ export default function LocaleToggle({
               posición. Es el mismo reparto que hace `HoverButton`.
             */}
             {/*
-              El relleno sube a 11 px debajo de `lg`, que es donde el toggle
-              solo existe adentro del menú de mobile: 23,2 px de caja de texto
+              El relleno sube a 11 px debajo de `lg`: 23,2 px de caja de texto
               más 22 dan 45,2 px de alto tocable, sobre el piso de 44 (§3.4.3
-              de M1). De `lg` para arriba —el header— queda en los 6 px del
-              `balancedPadding` del menú, sin mover un píxel.
+              de M1). De `lg` para arriba —donde el control comparte fila con
+              `CONTACT US`— queda en los 6 px del `balancedPadding` del menú,
+              sin mover un píxel.
+
+              (El comentario decía «debajo de `lg` el toggle solo existe adentro
+              del menú de mobile». Es de antes de M2/F1, que lo sacó a la fila
+              del header: el número era correcto y la razón escrita no.)
             */}
             <span className="block py-[6px] max-lg:py-[11px]">
               {code.toUpperCase()}
@@ -278,9 +373,46 @@ export default function LocaleToggle({
             <span className="sr-only">{` ${t.common.languageNames[code]}`}</span>
           </button>
         </span>
-      ))}
+        );
+      })}
 
-      <NavIndicator animation={indicator} className={fullToneClass} />
+      {/*
+        La flecha del desplegable. Solo en mobile, decorativa —el estado lo
+        anuncia el `aria-expanded` del botón— y con la misma geometría que la del
+        select del formulario, girada un cuarto de vuelta: es el único chevron
+        del sitio y no se dibuja un segundo.
+      */}
+      <span
+        aria-hidden="true"
+        className={`ml-[6px] flex shrink-0 items-center lg:hidden ${fullToneClass}`}
+      >
+        <svg
+          viewBox="0 0 12 12"
+          className="h-[12px] w-[12px] transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M 2.5 4 L 6 8 L 9.5 4" />
+        </svg>
+      </span>
+
+      {/*
+        La barrita es de escritorio. Debajo de 1024 el control muestra un solo
+        idioma, así que no hay entre qué y qué viajar y el mockup de R2 no la
+        lleva (`docs/archivo/mockups/r2-mob-01.jpg`). Se esconde con una variante
+        y no se desmonta: la medición sigue corriendo igual, y —verificado— ni
+        `ACK_DELAY` ni `TRANSITION_MS` dependen de ella. Las dos son constantes
+        de módulo de `LocaleProvider`, derivadas de `NAV_INDICATOR_DURATION`, que
+        es un número y no una medición.
+      */}
+      <NavIndicator
+        animation={indicator}
+        className={`${fullToneClass} max-lg:hidden`}
+      />
     </div>
   );
 }
