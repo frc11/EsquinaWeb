@@ -30,13 +30,27 @@ import type { Locale } from "@/lib/i18n/types";
   perdido en producción.
 */
 
+/**
+ * Las diez pills, en el orden del mockup.
+ *
+ * **R2 cambió una por otra, en su lugar**: se fue `Motion Graphics` y entró
+ * `Naming` («quitar motion graphics y agregar NAMING»,
+ * `docs/archivo/mockups/r2-trad-15.jpg`). La anotación no dice dónde va la
+ * nueva, así que ocupa la casilla de la que salió: es la lectura literal de
+ * «quitar X y agregar Y» y deja el resto del orden intacto.
+ *
+ * **Queda una inconsistencia del pedido, y es de ellas, no del código:**
+ * `Motion graphics` sigue siendo un ítem de `+ ADICIONALES` en `/services`
+ * (`services-content.ts`), así que el servicio existe pero ya no se puede elegir
+ * en el formulario. Está registrado en el reporte de la ronda para consultarlo.
+ */
 export const WORK_TYPE_OPTIONS = [
   "Consultation",
   "Branding",
   "Rebranding",
   "Event Visual Identity",
   "Package Design",
-  "Motion Graphics",
+  "Naming",
   "Advertising/Campaign",
   "Illustration",
   "Editorial Design",
@@ -63,11 +77,24 @@ export const TIMELINE_OPTIONS = [
 
 export type TimelineOption = (typeof TIMELINE_OPTIONS)[number];
 
+/**
+ * Los cuatro rangos, **con el formato exacto que escribieron las clientas** en
+ * `docs/archivo/mockups/r2-trad-15.jpg`: sin `USD`, sin separador de miles, y
+ * con guion corto rodeado de espacios. R2 los reemplazó enteros.
+ *
+ * **Entre `$4000 – $6500` y `$7000 +` queda un pozo**: un presupuesto de $6.800
+ * no tiene opción. Se implementa como lo pidieron y queda registrado en el
+ * reporte de la ronda.
+ *
+ * Medido: el más ancho de los cuatro (`$4000 – $6500`) pide 236,5 px a 34 px
+ * contra los 314 de la lista vieja, así que **el piso del control derecho baja
+ * 77,6 px**. El aire no se usa para nada: esta ronda no rediseña el fit.
+ */
 export const BUDGET_OPTIONS = [
-  "$2,500–$4,000 USD",
-  "$4,000–$6,500 USD",
-  "$6,500–$8,000 USD",
-  "$9,000+ USD",
+  "$1000 – $2500",
+  "$2500 – $4000",
+  "$4000 – $6500",
+  "$7000 +",
 ] as const;
 
 export type BudgetOption = (typeof BUDGET_OPTIONS)[number];
@@ -286,7 +313,7 @@ const WORK_TYPE_ES: { readonly [K in WorkTypeOption]: string } = {
   Rebranding: "Rebranding",
   "Event Visual Identity": "Identidad de evento",
   "Package Design": "Packaging",
-  "Motion Graphics": "Motion graphics",
+  Naming: "Naming",
   "Advertising/Campaign": "Publicidad/Campaña",
   Illustration: "Ilustración",
   "Editorial Design": "Diseño editorial",
@@ -653,10 +680,15 @@ export function countrySearchTerms(option: string): readonly string[] {
 }
 
 /**
- * Los rangos de presupuesto **no se traducen**: son cifras y una moneda. Poner
- * el punto de miles a la argentina (`$2.500`) sobre montos en dólares se lee
- * como «2,5», que es peor que dejarlo. Además es lo que protege el piso medido
- * de 352 px del control derecho, que sale justo de `$2,500–$4,000 USD`.
+ * Los rangos de presupuesto **no se traducen**: son cifras. Desde R2 ni siquiera
+ * llevan moneda, así que no hay nada que traducir; el formato es el que
+ * escribieron las clientas y está documentado en `BUDGET_OPTIONS`.
+ *
+ * Nota sobre el piso del control derecho, que este archivo declaraba mal: hasta
+ * R2 decía que los 352 px salían de `$2,500–$4,000 USD`, y no era cierto — el
+ * más ancho de la lista vieja era `$6,500–$8,000 USD`, 2,09 px más a 34 px. Con
+ * la lista nueva la discusión es otra: el piso lo fija el **placeholder**, que es
+ * el único texto del select con `truncate`.
  */
 export function budgetLabel(_locale: Locale, value: string) {
   return value;

@@ -183,7 +183,16 @@ export interface Dictionary {
       readonly name: string;
       readonly email: string;
       readonly select: string;
+      /** El campo «¿cómo nos conociste?». */
       readonly shortAnswer: string;
+      /**
+       * El campo de rubro, **y es una clave aparte porque las clientas pidieron
+       * dos palabras distintas para el mismo tipo de campo**: `RESPUESTA BREVE`
+       * acá y `RESPUESTA CORTA` en «¿cómo nos conociste?»
+       * (`docs/archivo/mockups/r2-trad-14.jpg`). En inglés las dos siguen
+       * valiendo `SHORT ANSWER`: el PDF no pidió distinguirlas ahí.
+       */
+      readonly shortAnswerIndustry: string;
       readonly search: string;
     };
     readonly noResults: string;

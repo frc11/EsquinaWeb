@@ -73,10 +73,19 @@ const SCOPED_SELECTION =
 const CONTROL_SCALE =
   "md:max-[1279.98px]:min-h-[58px] md:max-[1279.98px]:text-[34px] min-[1280px]:max-[1359.98px]:min-h-[44px] min-[1280px]:max-[1359.98px]:text-[26px] min-[1600px]:min-h-[58px] min-[1600px]:text-[34px]";
 // Escalon de mobile (M1/F4), disjunto de los cuatro de arriba, que arrancan en
-// `md`. Los 28 px de base no entran a 320: el placeholder del select mide 242,6
-// px y la pista util del boton —descontados el `pl-1`, el `gap-4` y la flecha—
-// es de 234, asi que `ELEGI UNA OPCION` se truncaba. A 24 px mide 207,9 y sobra
-// aire; sigue muy por encima de los 16 px que evitan el zoom de iOS (§3.4.2).
+// `md`. Los 28 px de base no entraban a 320: el placeholder del select medía
+// 242,6 px y la pista util del boton —descontados el `pl-1`, el `gap-4` y la
+// flecha— es de 234, asi que `ELEGI UNA OPCION` se truncaba. A 24 px medía 207,9
+// y sobraba aire; sigue muy por encima de los 16 px que evitan el zoom de iOS
+// (§3.4.2).
+//
+// **R2 sacó el motivo, y el escalón se queda igual.** El placeholder pasó a
+// `SELECCIONAR`, que mide 184,2 px a 28 px: entra a 320 con 49,8 px de aire, así
+// que este escalón ya no es necesario para que el select no se trunque. Se
+// conserva porque no gobierna solo al select —lo comparten los cuatro inputs de
+// texto y los cuatro botones— y volverlo a 28 px cambiaría la tipografía del
+// formulario entero en mobile, que es una decisión de composición que nadie
+// pidió en esta ronda. Queda anotado por si alguna vez se quiere recuperar.
 const CONTROL_SCALE_MOBILE = "max-md:text-[24px]";
 const CONTROL_TEXT_CLASS =
   `min-h-[48px] w-full bg-transparent pl-1 font-body text-[28px] uppercase leading-none text-off-black caret-off-black outline-none transition-colors duration-200 placeholder:text-gray-brand ${SCOPED_SELECTION} group-focus-within/contact-focus:text-off-white group-focus-within/contact-focus:caret-off-white group-focus-within/contact-focus:placeholder:text-off-white/70 ${CONTROL_SCALE} ${CONTROL_SCALE_MOBILE}`;
@@ -190,7 +199,11 @@ const SERVICE_KEYWORDS: ReadonlyArray<readonly [string, WorkTypeOption]> = [
   ["rebrand", "Rebranding"],
   ["event", "Event Visual Identity"],
   ["packag", "Package Design"],
-  ["motion", "Motion Graphics"],
+  // `motion` se fue con la pill de Motion Graphics (R2/F8.4). No lo reemplaza
+  // `naming` porque nadie emite ese link: `quoteService` solo manda
+  // `CONSULTATION` y `BRANDING`, y un `?service=motion graphics` escrito a mano
+  // ahora cae en `null`, o sea que el formulario abre sin nada marcado —que es
+  // lo correcto cuando el servicio ya no está entre las opciones—.
   ["advertis", "Advertising/Campaign"],
   ["campaign", "Advertising/Campaign"],
   ["publicid", "Advertising/Campaign"],
@@ -242,7 +255,16 @@ function FieldShell({
   asGroup = false,
   children,
 }: {
-  /** Dos líneas fijas: el corte lo decide el mockup, no el ancho de la columna. */
+  /**
+   * Dos líneas fijas: el corte lo decide el mockup, no el ancho de la columna.
+   *
+   * **Una entrada vacía es un rótulo de una sola línea** (`["PAÍS", ""]` desde
+   * R2). React no emite nodo de texto para `""`, así que el segundo
+   * `<span class="block">` queda sin contenido y —al no generar caja de línea—
+   * mide **0 px**: medido, el label baja de 32,19 a 16,09 px a 14 px de
+   * tipografía y la fila no se mueve, porque en los rangos con el label al
+   * costado manda el alto del control.
+   */
   label: readonly [string, string];
   /**
    * `id` del control que este label nombra. Los cuatro selects ya usaban este
@@ -857,8 +879,29 @@ export default function ContactForm({ service = null }: { service?: string | nul
 
               Los tres pisos de control estan medidos, no elegidos: 396/332/291
               es el ancho minimo donde las 10 pills siguen entrando en 4 filas
-              a 17/15/13 px, y 352/295/275 el minimo donde $2,500-$4,000 USD no
-              se trunca a 34/28/26 px. Las columnas de label (176/111/95 y
+              a 17/15/13 px, y 352/295/275 el minimo donde el rotulo mas ancho
+              del select derecho no se trunca a 34/28/26 px.
+
+              R2 BAJO LOS DOS PISOS, Y LAS PISTAS NO SE TOCARON. Medido sobre el
+              sitio servido despues del cambio de copy:
+                - pills: el piso real es 387/315/279 (ingles, que es el que
+                  manda; en castellano 377/306/271). Bajo 9/17/12 px porque
+                  `Naming` reemplazo a `Motion Graphics` y la tinta total de las
+                  diez cayo de 1503 a 1417 px a 17 px.
+                - select derecho: el rotulo mas ancho ya no es un rango de
+                  presupuesto —los nuevos miden 236,5 px a 34 px contra los 314
+                  de los viejos— sino el placeholder `SELECCIONAR`, que es el
+                  unico texto del select con `truncate`: 223,6 px a 34 px.
+              El aire que dejan esas dos bajadas **no se usa**: los `minmax` de
+              esta grilla quedan como estaban, y el fit medido de >= 1280 es
+              identico al de antes de la ronda (426/450/498 de alto y 610/634/682
+              de borde inferior, en los dos idiomas).
+
+              Ojo con un numero que este bloque declaraba mal desde B2.7: el piso
+              de 352 px no salia de `$2,500-$4,000 USD` sino de
+              `$6,500-$8,000 USD`, 2,09 px mas ancho a 34 px.
+
+              Las columnas de label (176/111/95 y
               140/98/84) son el minimo donde ningun label pasa de tres lineas,
               que es lo que entra en el alto del control sin engordar el campo.
               El tope de 420 en todas las pistas es el mismo tope de control del
@@ -988,7 +1031,11 @@ export default function ContactForm({ service = null }: { service?: string | nul
                     <input
                       id="industry"
                       type="text"
-                      placeholder={copy.placeholders.shortAnswer}
+                      // Clave propia: en castellano este campo dice «RESPUESTA
+                      // BREVE» y el de «¿cómo nos conociste?» sigue diciendo
+                      // «RESPUESTA CORTA» (R2/F8.3). En inglés las dos valen
+                      // `SHORT ANSWER`.
+                      placeholder={copy.placeholders.shortAnswerIndustry}
                       className={CONTROL_TEXT_CLASS}
                       {...register("industry")}
                     />

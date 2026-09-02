@@ -115,27 +115,84 @@ export const ES: Dictionary = {
   form: {
     // «Hagamos realidad tus ideas», la misma frase del footer, cortada en tres.
     title: ["HAGAMOS", "REALIDAD", "TUS IDEAS"],
-    // Medido: la línea más ancha da 267,9 px a 17 px contra los 269,2 de la
-    // inglesa, y ese número es justo el que fija el piso de la pista del aside.
-    // O sea que el castellano no la mueve.
-    subtitle: ["CONTANOS SOBRE TU PROYECTO", "Y TE MANDAMOS UNA PROPUESTA"],
+    /*
+      El texto lo pidieron ellas en R2 (`docs/archivo/mockups/r2-trad-14.jpg`) y
+      **no entra en dos renglones en la pista del aside**: medido a 17 px, el
+      mejor corte posible de los nueve deja la mitad más larga en 333,1 px contra
+      los 272 (1280–1599) / 280 (≥1600) de esa pista. O sea que no es cuestión de
+      elegir mejor el corte.
+
+      De los tres cortes que conservan el sentido, este es el de menor daño:
+      tres renglones visuales en 1232–1599 —21 px más de alto— y dos a 560 px de
+      caja, que es el ancho del bloque apilado por debajo de 1232. El aside es
+      `self-start` (`ContactForm.tsx:780`), así que de 1232 para arriba esos
+      21 px **no mueven el formulario**; por debajo empujan el bloque apilado.
+    */
+    subtitle: [
+      "CONTANOS SOBRE TU PROYECTO",
+      "PARA RECIBIR UNA PROPUESTA PERSONALIZADA",
+    ],
     formLabel: "Cuestionario de proyecto",
     labels: {
       fullName: ["TU NOMBRE", "Y APELLIDO *"],
       email: ["DIRECCIÓN", "DE MAIL *"],
-      workType: ["¿EN QUÉ", "QUERÉS TRABAJAR?"],
+      /*
+        El corte de dos líneas de «¿QUÉ TIPO DE PROYECTO BUSCAS REALIZAR?» **no
+        puede quedar en tres renglones** en las columnas de label chicas: la
+        mejor mitad pide 126,1 px a 14 px contra los 111 disponibles y 108,1 a
+        12 px contra los 95. Las seis palabras no entran, con ningún corte.
+
+        Acá no importa, y es lo que lo hace aceptable: `workType` es el único
+        campo con `alignLabelTop` y su control **no es un input de 44/48/58 px
+        sino el bloque de pills**, que mide 126–194 px según el rango. Un label
+        de cuatro renglones mide 55,2–64,4 px, o sea que entra con 60–70 px de
+        sobra. El techo de «tres renglones» que documenta `ContactForm` es el de
+        los campos cuyo control es un input, no el de este.
+
+        `BUSCAS` va sin tilde porque así lo escribieron ellas. El resto del sitio
+        vosea (`CONTANOS`, `TENÉS`, `ELEGÍ`), así que la inconsistencia queda
+        registrada para consultarles, no corregida por nuestra cuenta.
+      */
+      workType: ["¿QUÉ TIPO DE PROYECTO", "BUSCAS REALIZAR?"],
       businessType: ["¿CÓMO DEFINIRÍAS", "TU NEGOCIO?"],
-      industry: ["¿CUÁL ES TU", "RUBRO?"],
-      country: ["¿EN QUÉ PAÍS", "ESTÁS?"],
-      timeline: ["¿TENÉS UN", "PLAZO EN MENTE?"],
-      budget: ["¿CUÁL ES TU", "PRESUPUESTO?"],
+      industry: ["¿EN QUÉ RUBRO", "OPERA TU NEGOCIO?"],
+      /*
+        Un rótulo de una sola palabra. La segunda entrada va **vacía** y no con
+        un `&nbsp;`: un `<span class="block">` sin contenido no genera caja de
+        línea, así que ocupa 0 px y el rótulo queda centrado contra su control
+        como corresponde a un label de una línea. Con `&nbsp;` se fingiría una
+        segunda línea para conservar un alto que ya no tiene razón de ser.
+
+        Medido: en los cuatro rangos donde el label va al costado, la fila **no
+        se mueve** (manda el alto del control) y lo único que cambia es que la
+        primera línea baja 9,2 / 8,1 / 6,9 px al centrarse. En los dos rangos
+        donde el label va arriba, el campo se acorta 18,4 / 16,1 px.
+      */
+      country: ["PAÍS", ""],
+      timeline: ["PLAZO", "IDEAL"],
+      budget: ["RANGO DE", "PRESUPUESTO"],
       hearAbout: ["¿CÓMO NOS", "CONOCISTE?"],
     },
     placeholders: {
       name: "NOMBRE",
       email: "MAIL",
-      select: "ELEGÍ UNA OPCIÓN",
+      /*
+        Las clientas pidieron `SELECCIONE UNA OPCIÓN`. **No entra en ningún
+        rango**: mide 407,6 px a 34 px contra una pista útil de 312, y el peor
+        caso de los catorce (siete rangos × dos columnas) se pasa por 95,6 px.
+        `SELECCIONÁ UNA OPCIÓN` es todavía peor (409,7). El placeholder es el
+        único texto del select con `truncate`, así que lo que se vería es el
+        rótulo cortado con puntos suspensivos.
+
+        `SELECCIONAR` dice lo mismo, es la primera opción de la lista de
+        preferencia que entra en los siete rangos, y entra con holgura: 223,6 px
+        a 34 px, mínimo de 68 px de aire en el peor rango (el actual `ELEGÍ UNA
+        OPCIÓN` deja 13,8, o sea por debajo del piso de 14 px que pedía el
+        sprint). Los números están en el reporte para llevárselos a ellas.
+      */
+      select: "SELECCIONAR",
       shortAnswer: "RESPUESTA CORTA",
+      shortAnswerIndustry: "RESPUESTA BREVE",
       search: "BUSCAR",
     },
     noResults: "Sin resultados",

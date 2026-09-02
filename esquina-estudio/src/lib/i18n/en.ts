@@ -94,7 +94,10 @@ export const EN: Dictionary = {
       email: ["EMAIL", "ADDRESS *"],
       workType: ["WHAT ARE YOU", "LOOKING TO WORK ON?"],
       businessType: ["WHAT BEST DESCRIBES", "YOUR BUSINESS?"],
-      industry: ["WHAT IS YOUR", "INDUSTRY/FIELD"],
+      // El signo de pregunta lo pidieron ellas en R2, con la marca verde de
+      // «corrección en inglés» (`docs/archivo/mockups/r2-trad-15.jpg`): era el
+      // único de los nueve rótulos que preguntaba sin preguntar.
+      industry: ["WHAT IS YOUR", "INDUSTRY/FIELD?"],
       country: ["WHERE ARE", "YOU BASED?"],
       timeline: ["DO YOU HAVE A", "TIMELINE IN MIND?"],
       budget: ["WHAT IS YOUR", "BUDGET RANGE?"],
@@ -104,7 +107,10 @@ export const EN: Dictionary = {
       name: "NAME",
       email: "EMAIL",
       select: "SELECT OPTION",
+      // Las dos valen lo mismo en inglés: la distinción es un pedido del
+      // castellano. Ver `shortAnswerIndustry` en `types.ts`.
       shortAnswer: "SHORT ANSWER",
+      shortAnswerIndustry: "SHORT ANSWER",
       search: "SEARCH",
     },
     noResults: "No results",
