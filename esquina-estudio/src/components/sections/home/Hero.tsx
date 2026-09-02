@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
 import { getHeroLines } from "@/lib/site-copy";
@@ -42,6 +42,33 @@ const lineVariants: Variants = {
 export default function Hero() {
   const { isPreloaderDone } = usePreloader();
   const { locale } = useLocale();
+  /*
+    ¿La entrada ya corrió? (R2/F7.)
+
+    Desde R2 los dos idiomas **no tienen la misma cantidad de líneas** —tres en
+    inglés, dos en castellano—, así que al pasar de castellano a inglés aparece
+    un `<p>` que antes no existía. Un hijo que se monta dentro de un padre que ya
+    está en su variante final hereda `hidden` y anima solo hasta `visible`: la
+    tercera línea entraba sola, con su stagger, a mitad de la cortina de cambio
+    de idioma.
+
+    La `key` no lo arregla, y conviene dejarlo escrito porque es contraintuitivo:
+    con una `key` derivada del texto se remontarían **las tres** líneas en cada
+    cambio —el texto cambia entero— y la frase se reanimaría completa, que es
+    justo lo que §6 (contrato 5) manda evitar. El índice deja sobrevivir a las
+    líneas que existen en los dos idiomas; lo único que falta es que la línea
+    nueva **nazca ya en su estado final**, y eso es `initial={false}`.
+
+    La puerta es **estado y no un `ref`**: `initial` se lee durante el render y
+    leer un `ref` ahí es impuro (lo ataja `react-hooks/refs`). El render de más
+    que cuesta ocurre una sola vez, cuando la entrada termina, y no toca a los
+    `<p>` que ya están montados: `initial` solo se consume al montar.
+
+    Se cierra cuando la entrada termina, o sea que la primera visita —y la
+    recarga a mitad de sesión, donde el preloader dura 0 ms— animan igual que
+    siempre.
+  */
+  const [hasEntered, setHasEntered] = useState(false);
 
   return (
     <section className="flex h-full min-h-0 flex-col items-center justify-center overflow-hidden px-6 py-4 text-center md:px-12">
@@ -55,15 +82,22 @@ export default function Hero() {
           variants={containerVariants}
           initial="hidden"
           animate={isPreloaderDone ? "visible" : "hidden"}
+          onAnimationComplete={() => setHasEntered(true)}
           className="font-display text-[26px] uppercase leading-[31px] tracking-normal text-off-black md:text-[40px] md:leading-[48px]"
         >
           {getHeroLines(locale).map((line, lineIndex) => (
             // `key` por índice y no por texto: con el texto, cambiar de idioma
-            // desmontaría y volvería a montar estos `<p>`, y como tienen
-            // animación de entrada la frase se reanimaría en cada cambio. Las
-            // dos variantes tienen tres líneas —lo garantiza `ThreeLines`—, así
-            // que el índice es estable.
-            <motion.p key={lineIndex} variants={lineVariants}>
+            // desmontaría y volvería a montar TODOS estos `<p>`, y como tienen
+            // animación de entrada la frase se reanimaría entera en cada cambio.
+            // Con el índice sobreviven las líneas comunes a los dos idiomas.
+            // `initial={false}` una vez que la entrada corrió: es lo que hace que
+            // la línea que se monta al pasar a inglés aparezca ya en su lugar en
+            // vez de animarse sola. Ver el bloque de `hasEntered`.
+            <motion.p
+              key={lineIndex}
+              variants={lineVariants}
+              initial={hasEntered ? false : undefined}
+            >
               {line.map((fragment, index) => (
                 <Fragment key={index}>
                   {index > 0 && " "}

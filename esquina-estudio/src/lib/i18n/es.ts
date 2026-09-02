@@ -39,9 +39,15 @@ export const ES: Dictionary = {
   },
 
   footer: {
+    // **Se quedan en inglés, y lo pidieron ellas.** Los dos PDF de R2 tachan la
+    // versión castellana y escriben al lado «(MANTENER EN INGLES)»:
+    // `docs/archivo/mockups/r2-trad-01.jpg` (footer claro de `/`) y
+    // `r2-trad-02.jpg` (banda oscura de las rutas internas). El par sigue
+    // viajando por idioma —el tipo no cambia— pero hoy las dos variantes dicen
+    // lo mismo; si mañana se vuelven a traducir, se cambia acá y nada más.
     places: [
-      ["NACIDO EN", "ARGENTINA"],
-      ["TRABAJANDO", "EN TODO EL MUNDO"],
+      ["BORN IN", "ARGENTINA"],
+      ["WORKING", "WORLDWIDE"],
     ],
     poweredBy: "HECHO POR",
     contactCta: "CONTACTANOS",
@@ -50,8 +56,6 @@ export const ES: Dictionary = {
     // aparece: dos líneas acá, tres en el aside de Contact, una sola en el link
     // de Services. Es más corta que la inglesa, que es lo que pide §2.3.
     contactLines: ["HAGAMOS REALIDAD", "TUS IDEAS"],
-    clubCta: "SUMATE AL CLUB",
-    clubLines: ["FORMÁ PARTE DE UNA", "COMUNIDAD CREATIVA"],
   },
 
   team: {

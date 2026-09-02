@@ -32,8 +32,6 @@ export const EN: Dictionary = {
     poweredBy: "POWERED BY",
     contactCta: "CONTACT US",
     contactLines: ["LET'S BRING", "YOUR IDEAS TO LIFE"],
-    clubCta: "JOIN OUR CLUB",
-    clubLines: ["BECOME PART OF A", "CREATIVE COMMUNITY"],
   },
 
   team: {

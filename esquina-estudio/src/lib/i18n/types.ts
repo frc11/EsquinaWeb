@@ -34,8 +34,25 @@ export const LOCALES = ["en", "es"] as const satisfies readonly Locale[];
 export type CopyFragment = { readonly text: string; readonly bold?: boolean };
 export type CopyLine = ReadonlyArray<CopyFragment>;
 
-/** Composición de tres líneas: la frase de la marca, en hero y en footer. */
-export type ThreeLines = readonly [CopyLine, CopyLine, CopyLine];
+/**
+ * Composición de la frase de la marca —hero y footer—: **una entrada por línea,
+ * de largo variable**.
+ *
+ * Era `ThreeLines`, una tupla de exactamente tres, y ese largo fijo era lo que
+ * hacía estable la `key` por índice. R2 lo rompió por pedido de las clientas: el
+ * castellano pasa a dos líneas y el inglés se queda en tres, así que **el índice
+ * ya no identifica la misma línea entre idiomas**. El corte sigue siendo decisión
+ * de diseño y sigue escrito en el código; lo único que se fue es la garantía de
+ * que los dos idiomas tienen la misma cantidad de líneas.
+ *
+ * Consecuencia que los dos consumidores tienen que respetar, y está resuelta en
+ * `Hero.tsx`: al cambiar de idioma, el idioma más largo **monta un `<p>` nuevo**,
+ * y un elemento que se monta dentro de un padre que ya está en su variante final
+ * se animaría solo. La `key` sigue siendo el índice (§6, contrato 5: con el texto
+ * como clave se remontarían **todas** las líneas, que es peor); lo que evita la
+ * reanimación es que el hijo nuevo nazca ya en su estado final.
+ */
+export type CopyLines = readonly CopyLine[];
 
 /** Par de dos líneas: el corte lo decide el mockup, no el ancho de la caja. */
 export type TwoLines = readonly [string, string];
@@ -79,8 +96,6 @@ export interface Dictionary {
     readonly poweredBy: string;
     readonly contactCta: string;
     readonly contactLines: TwoLines;
-    readonly clubCta: string;
-    readonly clubLines: TwoLines;
   };
 
   readonly team: {

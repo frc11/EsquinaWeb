@@ -389,10 +389,12 @@ function InfoRow({
 /**
  * Franja clara de las rutas internas: la frase de la marca a la izquierda y la
  * llamada a contacto a la derecha. Reemplaza al CTA «LET'S WORK TOGETHER!».
- * En `/contact` el bloque de llamada a contacto no se renderiza: la clienta
- * ya está en el formulario.
+ *
+ * **En `/contact` esta franja ya no se monta** (R2/F7.3), así que el componente
+ * dejó de necesitar el prop `isContactPage` con el que se callaba a sí mismo:
+ * quien decide es `SiteFooter`. Ver el bloque de decisión que hay allá.
  */
-function StatementBand({ isContactPage }: { isContactPage: boolean }) {
+function StatementBand() {
   const { locale, t } = useLocale();
 
   return (
@@ -441,30 +443,28 @@ function StatementBand({ isContactPage }: { isContactPage: boolean }) {
         ))}
       </div>
 
-      {!isContactPage && (
-        /*
-          En mobile baja a la escala de cuerpo (17/21) y va alineado a la
-          derecha. La proporción es la del escritorio, no un número nuevo: allá
-          la frase va a 40 y este bloque a 26, o sea 0,65; en mobile la frase va
-          a 26 y 26 × 0,65 = 17. A 26 px este bloque medía lo mismo que la frase
-          y por eso los dos se leían con el mismo peso.
-        */
-        <div className="flex flex-col items-end gap-y-[8px] text-right font-body font-[550] uppercase tracking-normal text-off-black max-lg:flex-none">
-          <HoverButton
-            href="/contact"
-            underline
-            tightUnderline
-            className="text-[17px] leading-[21px] lg:text-[26px] lg:leading-[31px]"
-          >
-            {t.footer.contactCta}
-          </HoverButton>
-          <p className="whitespace-nowrap text-[17px] leading-[21px] lg:text-[26px] lg:leading-[31px]">
-            {t.footer.contactLines[0]}
-            <br />
-            {t.footer.contactLines[1]}
-          </p>
-        </div>
-      )}
+      {/*
+        En mobile baja a la escala de cuerpo (17/21) y va alineado a la
+        derecha. La proporción es la del escritorio, no un número nuevo: allá
+        la frase va a 40 y este bloque a 26, o sea 0,65; en mobile la frase va
+        a 26 y 26 × 0,65 = 17. A 26 px este bloque medía lo mismo que la frase
+        y por eso los dos se leían con el mismo peso.
+      */}
+      <div className="flex flex-col items-end gap-y-[8px] text-right font-body font-[550] uppercase tracking-normal text-off-black max-lg:flex-none">
+        <HoverButton
+          href="/contact"
+          underline
+          tightUnderline
+          className="text-[17px] leading-[21px] lg:text-[26px] lg:leading-[31px]"
+        >
+          {t.footer.contactCta}
+        </HoverButton>
+        <p className="whitespace-nowrap text-[17px] leading-[21px] lg:text-[26px] lg:leading-[31px]">
+          {t.footer.contactLines[0]}
+          <br />
+          {t.footer.contactLines[1]}
+        </p>
+      </div>
     </div>
   );
 }
@@ -474,9 +474,13 @@ function StatementBand({ isContactPage }: { isContactPage: boolean }) {
  * el asset ya viene cortado por su propio lienzo arriba y a la derecha, así que
  * se monta a ancho completo y sin gutter — su borde derecho es el del viewport
  * — y el sangrado del mockup sale sin recortar de más (perderíamos el ™).
- * El aire propio del asset a la izquierda (24,8 % del ancho) aloja «JOIN OUR
- * CLUB», que se superpone sin tocar la tinta. Solo se renderiza en `/contact`
- * (mockup de esa ruta); el resto de las rutas internas lo omite.
+ *
+ * **El aire propio del asset a la izquierda (24,8 % del ancho) quedó libre en
+ * R2**: ahí vivía «JOIN OUR CLUB», superpuesto sin tocar la tinta y solo en
+ * `/contact`. Las clientas lo sacaron del sitio entero
+ * (`docs/archivo/mockups/r2-trad-02.jpg`), y no había nada detrás — ni endpoint,
+ * ni newsletter, ni campo de Sanity—, así que se fue el bloque, sus dos claves
+ * del diccionario y el prop con el que esta banda decidía si mostrarlo.
  *
  * # La composición de mobile es la misma del footer claro
  *
@@ -488,19 +492,16 @@ function StatementBand({ isContactPage }: { isContactPage: boolean }) {
  *
  * **Verificado que la composición no lo desacomoda** (cinco anchos, dos
  * idiomas): el asset sigue montándose a ancho completo del viewport —320 × 95,5
- * px a 320 y 430 × 128,3 a 430—, el borde inferior de la imagen y el borde
- * superior del bloque de información siguen siendo **el mismo píxel**, y en
- * `/contact` el bloque de «JOIN OUR CLUB» conserva su lugar en flujo normal
- * debajo de la imagen. Cero desborde horizontal en las tres rutas medidas.
+ * px a 320 y 430 × 128,3 a 430—, y el borde inferior de la imagen y el borde
+ * superior del bloque de información siguen siendo **el mismo píxel**. Cero
+ * desborde horizontal en las tres rutas medidas.
  *
  * **El relleno de abajo baja a 24 px en mobile** y se queda en 40 de `lg` para
  * arriba. La banda cierra con la fila del crédito y el copyright, que arrastran
  * 12 px de su caja táctil de 44: con `pb-10` quedaban 52 px de aire muerto al
  * pie de la página, contra los 24 con que abre. Con 24 la banda es simétrica.
  */
-function ScriptBand({ isContactPage }: { isContactPage: boolean }) {
-  const { t } = useLocale();
-
+function ScriptBand() {
   return (
     <div className="relative w-full overflow-hidden bg-off-black">
       <Image
@@ -509,31 +510,6 @@ function ScriptBand({ isContactPage }: { isContactPage: boolean }) {
         className="block h-auto w-full"
         sizes="100vw"
       />
-
-      {isContactPage && (
-        // Debajo de `md` el bloque sale del modo superpuesto y pasa a FLUJO
-        // NORMAL, debajo del logo: a 390 la imagen mide 116 px de alto y el
-        // bloque, apoyado en el 46 % de esa altura, terminaba 39 px por debajo
-        // de ella, encima de la fila de informacion. Medido en F0.
-        <div
-          className={`static mt-8 px-6 md:absolute md:left-12 md:top-[46%] md:mt-0 md:px-0 lg:left-16 ${TOUCH_LINKS} font-body font-[550] uppercase tracking-normal text-off-white`}
-        >
-          <HoverButton
-            href="/contact"
-            underline
-            tightUnderline
-            tone="dark"
-            className="text-[26px] leading-[31px]"
-          >
-            {t.footer.clubCta}
-          </HoverButton>
-          <p className="mt-3 whitespace-nowrap text-[22px] leading-[26px]">
-            {t.footer.clubLines[0]}
-            <br />
-            {t.footer.clubLines[1]}
-          </p>
-        </div>
-      )}
 
       <div className={`${GUTTER} pb-6 pt-6 lg:pb-10`}>
         <InfoRow
@@ -550,8 +526,25 @@ function ScriptBand({ isContactPage }: { isContactPage: boolean }) {
 }
 
 /**
- * Footer de las rutas internas: franja clara + banda oscura. La llamada a
- * contacto alterna por ruta entre las dos bandas (`isContactPage`).
+ * Footer de las rutas internas: franja clara + banda oscura.
+ *
+ * # En `/contact` la franja clara NO SE MONTA (R2/F7.3)
+ *
+ * Hasta R2 la llamada a contacto alternaba entre las dos bandas con un XOR:
+ * `StatementBand` la callaba en `/contact` —la clienta ya está en el
+ * formulario— y `ScriptBand` mostraba ahí «JOIN OUR CLUB» en su lugar. R2 se
+ * llevó el club del sitio entero (no había backend detrás: ni endpoint, ni
+ * newsletter, ni campo de Sanity, y el enlace apuntaba a `/contact` desde
+ * `/contact`), y el mismo PDF pide además sacar la frase de la marca del footer
+ * de esa sección (`docs/archivo/mockups/r2-trad-14.jpg`). Con las dos cosas
+ * afuera, en `/contact` la franja clara quedaba **sin frase y sin CTA**.
+ *
+ * Por eso acá no se renderiza vacía ni con altura cero: **no se monta**. Un
+ * bloque en el árbol que no dibuja nada es exactamente lo que después nadie
+ * entiende por qué está.
+ *
+ * Con eso los dos componentes perdieron su prop `isContactPage`: la decisión
+ * vive en un solo lugar, que es este.
  *
  * El `mt-auto` es el mismo criterio que en `HomeFooter`: con
  * `PageTransitionShell` declarando `min-h-svh` en columna, el footer se apoya en
@@ -561,8 +554,8 @@ function ScriptBand({ isContactPage }: { isContactPage: boolean }) {
 function SiteFooter({ isContactPage }: { isContactPage: boolean }) {
   return (
     <footer className="mt-auto w-full border-none bg-off-white">
-      <StatementBand isContactPage={isContactPage} />
-      <ScriptBand isContactPage={isContactPage} />
+      {!isContactPage && <StatementBand />}
+      <ScriptBand />
     </footer>
   );
 }

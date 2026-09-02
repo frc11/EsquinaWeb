@@ -3,7 +3,7 @@ export { LOCALES } from "@/lib/i18n/types";
 export type {
   CopyFragment,
   CopyLine,
+  CopyLines,
   Dictionary,
   Locale,
-  ThreeLines,
 } from "@/lib/i18n/types";
