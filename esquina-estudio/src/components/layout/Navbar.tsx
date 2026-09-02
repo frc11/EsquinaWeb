@@ -47,6 +47,46 @@ const CONTACT_LINK = { key: "contact", href: "/contact" } as const satisfies {
 /** Los cinco rótulos cuya caja gobierna la medición del indicador. */
 const INDICATOR_HOSTS = [...NAV_LINKS, CONTACT_LINK] as const;
 
+/**
+ * # El escalón estrecho del cromo de escritorio (R2/F5)
+ *
+ * **Qué problema resuelve.** El menú de escritorio está **centrado en el
+ * viewport** (`left-1/2 -translate-x-1/2`) mientras el bloque de la derecha se
+ * apoya en el gutter. Cuando el menú crece, crece hacia los dos lados y se le va
+ * encima al bloque de la derecha, que no se corre. Medido a 1024 sobre el sitio
+ * servido: en castellano el menú pasó de **455,2 px** (`GALERÍA`) a **494,2**
+ * (`FUN GALLERY`, que pidieron las clientas en R2), y el borde derecho pasó de
+ * 739,6 a 759,1 contra un `CONTACTANOS` que empieza en 728,2. O sea que los
+ * glifos se montan **18,9 px**, y el defecto dura de 1024 hasta 1062 px.
+ *
+ * **Y venía con margen cero desde antes.** Con `GALERÍA` la holgura entre glifos
+ * a 1024 era de **0,64 px**: cualquier crecimiento del copy en castellano lo
+ * rompía. (§2b de `CLAUDE.md` dice «403 px» para el menú en castellano; ese
+ * número está viejo — el medido es 455,2.) En inglés sobra en los dos casos.
+ *
+ * **La solución es un escalón, no un ajuste.** De 1024 a 1151 el cromo baja a
+ * 15 px con 24 px de aire; **de 1152 para arriba no cambia un píxel**. Es el
+ * mismo patrón que el repo ya usa donde una composición no entra: los cuatro
+ * escalones de `ContactForm`, la escala de mobile de Services y los 15 px del
+ * footer. Con el escalón la holgura a 1024 pasa a **42,2 px**, porque además el
+ * bloque de la derecha adelgaza y su borde izquierdo se corre hacia afuera.
+ *
+ * **Por qué el borde es 1152 y no 1088.** El corte tiene que caer donde la fila
+ * SIN escalón vuelve a tener el aire que el inglés ya tenía: la holgura sin
+ * escalón crece con el ancho según `W/2 − 530,87`, así que a 1088 da 13,1 px
+ * —medido, y a ojo `FUN GALLERY` y `CONTACTANOS` se leen como un solo grupo— y
+ * recién a 1136 alcanza los ~37 px que el inglés tenía a 1024 antes de esta
+ * ronda. 1152 es el primer valor redondo por encima de eso, y ahí da 45,1 px.
+ *
+ * **Los dos rangos van arbitrarios y son mutuamente excluyentes a propósito**
+ * (§7.1 de `CLAUDE.md`): Tailwind v4 emite las variantes arbitrarias antes que
+ * los breakpoints con nombre, así que un `lg:` suelto le ganaría al `max-[…]`
+ * sobre la misma propiedad. Escritos los dos bordes, el par no se puede pisar.
+ */
+const CHROME_TIER_TEXT =
+  "max-[1151.98px]:text-[15px] min-[1152px]:text-[17px]";
+const CHROME_TIER_GAP = "max-[1151.98px]:gap-6 min-[1152px]:gap-8";
+
 const EASE_EXIT: [number, number, number, number] = [0.76, 0, 0.24, 1];
 const NAV_INDICATOR_HOME_GAP = 24;
 const MOBILE_MENU_ID = "mobile-menu";
@@ -389,7 +429,9 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 lg:flex">
+        <div
+          className={`absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center lg:flex ${CHROME_TIER_GAP}`}
+        >
           {NAV_LINKS.map((link) => {
             return (
               <span
@@ -402,7 +444,7 @@ export default function Navbar() {
                   underline={false}
                   tone={navTone}
                   balancedPadding
-                  className={`text-[17px] uppercase font-body font-[480] tracking-normal ${linkTextClass}`}
+                  className={`uppercase font-body font-[480] tracking-normal ${CHROME_TIER_TEXT} ${linkTextClass}`}
                 >
                   {t.nav[link.key]}
                 </HoverButton>
@@ -429,14 +471,14 @@ export default function Navbar() {
           CONTACT US no se mueve: es el ítem más alto, así que la alineación no
           lo toca.
         */}
-        <div className="hidden items-start gap-8 lg:flex">
+        <div className={`hidden items-start lg:flex ${CHROME_TIER_GAP}`}>
           <span ref={setDesktopLinkRef("/contact")} className="inline-flex">
             <HoverButton
               href={CONTACT_LINK.href}
               underline={false}
               tone={navTone}
               balancedPadding
-              className={`text-[17px] uppercase font-body font-medium tracking-normal ${linkTextClass}`}
+              className={`uppercase font-body font-medium tracking-normal ${CHROME_TIER_TEXT} ${linkTextClass}`}
             >
               {t.nav.contact}
             </HoverButton>

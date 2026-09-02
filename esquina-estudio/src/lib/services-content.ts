@@ -373,7 +373,7 @@ export const SERVICES_COPY_ES: ServicesCopy = {
   latestProjects: {
     label: "ÚLTIMOS PROYECTOS",
     paragraph:
-      "En los últimos 2 años les dimos vida a más de 20 proyectos en rubros muy distintos: de gastronomía a moda y automotor.",
+      "En los últimos dos años, hemos desarrollado más de 20 proyectos para marcas de diversas industrias, desde gastronomía y moda hasta el sector automotor.",
     // Los `href` son estructura, no texto: van iguales que en inglés.
     links: [
       { label: "VER MÁS PROYECTOS", href: "/work" },

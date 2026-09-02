@@ -8,8 +8,8 @@ import type { Dictionary } from "@/lib/i18n/types";
  * con tilde (`INTENCIÓN`, `GALERÍA`) se conservan.
  *
  * No se traducen: `ESQUINA ESTUDIO`, `develOP`, `INSTAGRAM`, `LINKEDIN`,
- * `ARGENTINA` (que además es igual), los nombres de los proyectos ni los nombres
- * propios de las fundadoras.
+ * `ARGENTINA` (que además es igual), **`FUN GALLERY`** (R2), los nombres de los
+ * proyectos ni los nombres propios de las fundadoras.
  */
 export const ES: Dictionary = {
   common: {
@@ -24,11 +24,13 @@ export const ES: Dictionary = {
     work: "PROYECTOS",
     services: "SERVICIOS",
     team: "EQUIPO",
-    // «Fun Gallery» no está en la lista de nombres propios del sprint, y un menú
-    // con tres rótulos en castellano y uno en inglés se lee como un olvido, no
-    // como marca. Lo lúdico del nombre lo sostiene el título de la pantalla
-    // («¡Divertite explorando nuestros proyectos!»), no el rótulo del menú.
-    gallery: "GALERÍA",
+    // **Se queda en inglés, y lo pidieron ellas** (R2,
+    // `docs/archivo/mockups/r2-trad-01.jpg`: «FUN GALLERY (MANTENER EN INGLES)»).
+    // B4 lo había traducido con el argumento de que un menú con tres rótulos en
+    // castellano y uno en inglés se lee como un olvido; la decisión de las
+    // clientas es la contraria: «Fun Gallery» es nombre de la sección, del mismo
+    // orden que *branding* o *packaging*, y por eso no se traduce.
+    gallery: "FUN GALLERY",
     contact: "CONTACTANOS",
     openMenu: "Abrir menú",
     closeMenu: "Cerrar menú",

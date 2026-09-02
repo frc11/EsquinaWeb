@@ -206,7 +206,18 @@ export default function LocaleToggle({
       ref={groupRef}
       role="group"
       aria-label={t.common.language}
-      className="relative flex items-center pr-[6px] font-body text-[17px] font-medium uppercase tracking-normal text-gray-brand"
+      /*
+        El escalón estrecho del cromo (R2/F5, documentado entero en `Navbar.tsx`):
+        de 1024 a 1087 la fila del header baja a 15 px, que es lo que hace entrar
+        el menú en castellano sin que se le monte `CONTACTANOS`.
+
+        **El rango va acotado por abajo a propósito.** Este componente se monta
+        dos veces —el bloque de escritorio y el de mobile— y un `max-[1151.98px]`
+        suelto alcanzaría también a la instancia de mobile, que vive por debajo de
+        1024 y no tiene nada que arreglar. Con los dos bordes escritos, el
+        escalón existe solo en la banda donde el cromo de escritorio no entra.
+      */
+      className="relative flex items-center pr-[6px] font-body text-[17px] font-medium uppercase tracking-normal text-gray-brand min-[1024px]:max-[1151.98px]:text-[15px]"
     >
       {LOCALES.map((code: Locale, index) => (
         <span key={code} className="flex items-center">
