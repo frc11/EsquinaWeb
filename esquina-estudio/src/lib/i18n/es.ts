@@ -36,6 +36,7 @@ export const ES: Dictionary = {
     closeMenu: "Cerrar menú",
     logoHome: "ESQUINA ESTUDIO, ir al inicio",
     currentPage: "página actual",
+    backToTop: "VOLVER ARRIBA",
   },
 
   footer: {

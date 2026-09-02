@@ -108,8 +108,52 @@ const COMPOSITION_MAX_WIDTH = 1664;
 /**
  * Lado del objeto mayor en fracción del ancho del VIEWPORT. El 20 % es el centro
  * del 18–22 % medido en el mockup.
+ *
+ * **Solo tiene efecto de 1024 px para arriba**, y conviene saberlo antes de
+ * tocarlo: su único consumidor es `getCompositionMaxWidth`, que alimenta
+ * `--d-max-width`, que consume la clase `lg:max-w-[var(--d-max-width)]`. Debajo
+ * de 1024 la composición es una grilla real y el tamaño del objeto lo da la
+ * celda; ver `PILE_SCALE_MOBILE`.
  */
 const TARGET_MAX_ITEM_VIEWPORT_SHARE = 0.2;
+
+/**
+ * # Cuánto más grande se ve el montón en mobile (R2/F12.2)
+ *
+ * Las clientas pidieron «agrandar un poco los elementos» en el teléfono. El
+ * pedido **no se puede cumplir agrandando la celda**: debajo de 1024 el objeto
+ * ocupa media caja de contenido (dos columnas) y la caja ya es el ancho del
+ * viewport menos el gutter, así que una celda más grande dejaría la grilla
+ * desplegada más ancha que la pantalla.
+ *
+ * Lo que sí se puede es agrandar **el montón**, que es un apilado: los objetos se
+ * superponen, así que pueden dibujarse más grandes que su celda sin que nada se
+ * salga. La escala viaja como variable por rango —el mismo mecanismo que
+ * `--pile-x` / `--pile-y`, elegido por el `@media` y no por JavaScript— y vuelve
+ * a 1 al desplegarse, que es cuando cada objeto tiene que caber en su celda.
+ *
+ * **El valor sale de medir, no de elegir, y se midió dos veces.** En
+ * `docs/archivo/mockups/r2-mob-04.jpg` la tinta de la composición pasa de ocupar
+ * el **42,37 %** del ancho de la pantalla (primera captura, que es el sitio de
+ * hoy) al **55,16 %** (segunda, el estado deseado).
+ *
+ * El cociente de esos dos números **no es la escala**: al escalar cada objeto
+ * sobre su propio centro, la distancia entre los centros del montón no crece, así
+ * que la tinta del conjunto crece menos que la escala. Por eso se barrió sobre el
+ * sitio servido a 390 px, midiendo la tinta pintada —el mismo criterio con el que
+ * se midió el mockup—:
+ *
+ * ```
+ *   escala 1,28 -> 52,05 %      escala 1,40 -> 56,41 %
+ * ```
+ *
+ * De ahí la pendiente —36,3 puntos por unidad de escala— y el valor que deja la
+ * tinta en el 55,16 % pedido: **1,37**. La calibración se hizo de punta a punta,
+ * compilando el sitio con cada valor y midiendo la captura, y no forzando el
+ * `transform` desde la consola: el primer intento hizo eso y dio 3 puntos de
+ * más, porque tocar el valor a mano no pasa por el mismo camino que la animación.
+ */
+const PILE_SCALE_MOBILE = 1.37;
 
 /**
  * Escala del título. Bajó a clases en M1/F6: en mobile el título va a 26/31,
@@ -120,8 +164,20 @@ const TARGET_MAX_ITEM_VIEWPORT_SHARE = 0.2;
  * el propio `style` del `<h1>`. Sin segundo consumidor, no hay dos fuentes de
  * verdad que puedan separarse.
  */
+/**
+ * **R2/F11: en teléfono baja de 26/31 a 22/26.** Lo pidieron las clientas
+ * —«achicar un poco la letra», `docs/archivo/mockups/r2-mob-04.jpg`— y el número
+ * sale de medir la referencia: en la segunda captura, `DISCOVER OUR PROJECTS,`
+ * ocupa 498 px de tinta sobre una pantalla de 708, o sea **276,4 px** llevados a
+ * las unidades del sitio; a los 26 px de hoy la misma cadena mide **320,5**. El
+ * cociente da 0,8625, o sea **22,4 px**. El interlineado acompaña con la misma
+ * proporción 1,19 que ya usaba el par 26/31.
+ *
+ * De `md` para arriba **no cambia**: la referencia es un teléfono y el escalón de
+ * 40/48 gobierna de 768 en adelante.
+ */
 const TITLE_SCALE =
-  "text-[26px] leading-[31px] md:text-[40px] md:leading-[48px]";
+  "text-[22px] leading-[26px] md:text-[40px] md:leading-[48px]";
 
 /*
   Padding del bloque y aire entre el título y la composición: ceden alto en
@@ -132,6 +188,29 @@ const TITLE_SCALE =
 */
 const SECTION_PAD_TOP = "clamp(32px, 6.5svh, 72px)";
 const TITLE_GAP = "clamp(24px, 3.7svh, 40px)";
+
+/**
+ * # El cartel sube: en mobile va debajo de la FRASE, no del montón (R2/F12.2)
+ *
+ * «Poner el click to view abajo de la frase» (`r2-mob-04.jpg`). El cartel vive
+ * dentro del botón que cubre la composición, así que en mobile se lo ancla por
+ * arriba —fuera de la caja de la composición, dentro del aire que la separa del
+ * título— en vez de colgarlo del montón. De `lg` para arriba **no se mueve**:
+ * sigue en `--c-cap`.
+ *
+ * Los dos números salen de la referencia, medidos sobre la segunda captura y
+ * llevados a las unidades del sitio (708 px de pantalla = 393 CSS):
+ *
+ * - del pie de la frase al tope del cartel: 36 px de la captura = **20**;
+ * - del pie del cartel al tope de la composición: **40** (los 126 px de la
+ *   captura hasta la TINTA, menos el aire que el montón deja dentro de su
+ *   propia caja).
+ *
+ * De ahí el aire del título en mobile: 20 + 17 del cartel + 40 = **77 px**, y el
+ * cartel se ancla 57 px por encima del tope de la composición (40 + 17).
+ */
+const MOBILE_TITLE_GAP = "77px";
+const MOBILE_CAPTION_TOP = "-57px";
 
 /*
   CUATRO COLUMNAS, FILAS COMPLETAS DE ARRIBA HACIA ABAJO (M9/F2, corregido en M10)
@@ -1138,6 +1217,12 @@ function GalleryCard({
           "--b-col": tabletPile.colStart,
           "--c-px": `${item.pileOffsetX}%`,
           "--c-py": `${item.pileOffsetY}%`,
+          // El candidato de mobile para la escala del montón. Va acá, con los
+          // demás candidatos, y **no como estilo en línea sobre L1**: un valor en
+          // línea le gana a cualquier clase, así que el `lg:[--pile-scale:1]`
+          // nunca se aplicaría y el escritorio también se agrandaría. La
+          // selección por rango la hacen las clases, igual que con `--pile-x`.
+          "--a-s": PILE_SCALE_MOBILE,
         } as React.CSSProperties),
         // Agrandado tiene que quedar por encima de sus vecinos, igual que en el
         // hover: en la grilla de mobile los objetos son celdas y sin esto los
@@ -1192,12 +1277,20 @@ function GalleryCard({
         **ya computado** del elemento, así que el viaje sale con las coordenadas
         del reparto que se está viendo y sin que el componente pregunte nada.
       */}
+      {/*
+        `--pile-scale` viaja por el mismo camino que `--pile-x`: la elige el
+        `@media` y Framer la resuelve leyendo el valor ya computado. Vale 1 de
+        `lg` para arriba, así que el escritorio no cambia ni un píxel, y vuelve a
+        1 al desplegarse en cualquier rango, que es cuando cada objeto tiene que
+        entrar en su celda. Ver `PILE_SCALE_MOBILE`.
+      */}
       <motion.div
-        className="h-full w-full [--pile-x:var(--a-px)] [--pile-y:var(--a-py)] md:[--pile-x:var(--b-px)] md:[--pile-y:var(--b-py)] lg:[--pile-x:var(--c-px)] lg:[--pile-y:var(--c-py)]"
+        className="h-full w-full [--pile-scale:var(--a-s)] [--pile-x:var(--a-px)] [--pile-y:var(--a-py)] md:[--pile-x:var(--b-px)] md:[--pile-y:var(--b-py)] lg:[--pile-scale:1] lg:[--pile-x:var(--c-px)] lg:[--pile-y:var(--c-py)]"
         initial={false}
         animate={{
           x: spread ? "0%" : "var(--pile-x)",
           y: spread ? "0%" : "var(--pile-y)",
+          scale: spread ? 1 : "var(--pile-scale)",
         }}
         transition={
           instant
@@ -1384,10 +1477,13 @@ export default function FunGallery({
         tres, que caen en cuartos de celda). Ver la clase del objeto.
       */}
       <div
-        className="relative mx-auto grid w-full grid-cols-8 md:grid-cols-12 lg:block lg:aspect-[var(--d-aspect)] lg:max-w-[var(--d-max-width)]"
+        className="relative mx-auto mt-[var(--title-gap-mobile)] grid w-full grid-cols-8 md:mt-[var(--title-gap)] md:grid-cols-12 lg:block lg:aspect-[var(--d-aspect)] lg:max-w-[var(--d-max-width)]"
         style={
           {
-            marginTop: TITLE_GAP,
+            // El aire de mobile es mayor porque ahí adentro va el cartel, que
+            // subió a vivir entre la frase y la composición (R2/F12.2).
+            "--title-gap-mobile": MOBILE_TITLE_GAP,
+            "--title-gap": TITLE_GAP,
             "--d-max-width": getCompositionMaxWidth(composition.maxItemSize),
             "--d-aspect": `1 / ${composition.aspect}`,
           } as React.CSSProperties
@@ -1441,7 +1537,10 @@ export default function FunGallery({
                   className="absolute left-1/2 top-[var(--a-cap)] -translate-x-1/2 whitespace-nowrap font-body text-[17px] leading-none text-off-black md:top-[var(--b-cap)] lg:top-[var(--c-cap)]"
                   style={
                     {
-                      "--a-cap": mobileGrid.captionTop,
+                      // Debajo de 768 el cartel sale de la caja de la
+                      // composición y se apoya entre la frase y ella; de `md`
+                      // para arriba sigue colgando del montón, como siempre.
+                      "--a-cap": MOBILE_CAPTION_TOP,
                       "--b-cap": tabletGrid.captionTop,
                       "--c-cap": `${(composition.captionY / composition.aspect) * 100}%`,
                     } as React.CSSProperties

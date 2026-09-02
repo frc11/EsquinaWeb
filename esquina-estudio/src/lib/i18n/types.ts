@@ -84,6 +84,13 @@ export interface Dictionary {
      * depende de que la tecnologia de asistencia soporte el atributo.
      */
     readonly currentPage: string;
+    /**
+     * Rótulo del botón de volver arriba de mobile (R2/F12.3). El inglés sale de
+     * la referencia que pasaron las clientas
+     * (`docs/archivo/mockups/r2-mob-05.jpg`); el castellano lo pusimos nosotros,
+     * en la misma familia que `success.backHome` («VOLVER AL INICIO»).
+     */
+    readonly backToTop: string;
   };
 
   readonly footer: {

@@ -21,7 +21,15 @@ function StudioIntro() {
 
   return (
     <RevealOnScroll delay={0.5}>
-      <section className="mx-auto w-full text-center font-body text-[22px] leading-[1.2] text-off-black md:text-[32px] lg:text-[40px]">
+      {/*
+        Alineado a la izquierda debajo de 1024 (R2/F12.1): lo pidieron las
+        clientas —«alinear el texto a la izquierda siempre en la versión movil»,
+        `docs/archivo/mockups/r2-mob-03.jpg`— y es **solo para Team**. Los otros
+        bloques centrados del sitio no se tocan: la anotación está hecha sobre
+        esta pantalla, y en su propio mockup de la galería la frase sigue
+        centrada. De `lg` para arriba el intro sigue centrado.
+      */}
+      <section className="mx-auto w-full text-left font-body text-[22px] leading-[1.2] text-off-black md:text-[32px] lg:text-center lg:text-[40px]">
         {t.team.intro.map((line, index) => (
           <p
             key={index}
@@ -171,7 +179,7 @@ export default function TeamSection() {
 
   return (
     <main className="mb-16 px-6 pb-16 md:mb-32 md:px-12">
-      <section className="flex min-h-[calc(100svh-var(--header-height,96px))] flex-col items-center justify-start gap-[clamp(20px,3svh,34px)] pb-[clamp(24px,4svh,48px)] pt-[clamp(40px,7svh,78px)]">
+      <section className="flex min-h-[calc(100svh-var(--header-height,96px))] flex-col items-start justify-start gap-[clamp(20px,3svh,34px)] pb-[clamp(24px,4svh,48px)] pt-[clamp(40px,7svh,78px)] lg:items-center">
         <StudioIntro />
         <TeamVideo />
       </section>

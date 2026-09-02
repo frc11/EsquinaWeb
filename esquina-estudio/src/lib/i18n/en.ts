@@ -22,6 +22,7 @@ export const EN: Dictionary = {
     closeMenu: "Close menu",
     logoHome: "ESQUINA ESTUDIO home",
     currentPage: "current page",
+    backToTop: "BACK TO TOP",
   },
 
   footer: {
