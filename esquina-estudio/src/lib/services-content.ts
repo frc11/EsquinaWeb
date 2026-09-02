@@ -394,13 +394,19 @@ export const SERVICE_PACKS_ES: ServicePackList = [
     // el corte natural queda después del sustantivo. Siguen siendo dos líneas.
     name: ["CONSULTORÍA", "DE MARCA"],
     description: [
-      "Una inmersión enfocada en tu marca y en la experiencia de tus clientes.",
-      "Dónde estás, hasta dónde podés llegar y cómo lograrlo.",
+      "Un análisis profundo y estratégico de tu marca y de la experiencia de tus clientes.",
+      "Dónde estás, hacia dónde podés llegar y cómo hacerlo.",
     ],
     items: [
       {
-        name: "Auditoría de marca y experiencia",
-        detail: "Cómo está hoy tu marca en cada punto de contacto",
+        // Las clientas preguntaron si «Auditoría de marca y experiencia» entra en
+        // UNA línea; si no, pidieron dejar «Auditoría de Marca» (R2,
+        // `docs/archivo/mockups/r2-trad-04.jpg`). **No entra**: medido sobre el
+        // sitio servido, la columna de nombres da 128 / 214 / 240 / 320 / 427 px
+        // a 1024 / 1280 / 1360 / 1600 / 1920, y el rótulo largo pide 601 px a
+        // 30 px — o sea una sola línea recién a partir de ~2560 de viewport.
+        name: "Auditoría de Marca",
+        detail: "Analizamos dónde está parada tu marca hoy en cada punto de contacto",
       },
       {
         name: "3 encuentros virtuales",
@@ -411,13 +417,13 @@ export const SERVICE_PACKS_ES: ServicePackList = [
         detail: "Qué mejorar para llegar a tus objetivos — cómo y dónde",
       },
       {
-        name: "PDF de entrega",
+        name: "Informe PDF entregable",
         detail: "Informe completo con hallazgos y recomendaciones accionables",
       },
       {
-        name: "Recomendaciones honestas",
+        name: "Definimos cómo avanzar",
         detail:
-          "Lo que podemos resolver — y colegas de confianza para lo que no",
+          "Convertimos los hallazgos en un plan de acción concreto, identificando oportunidades y definiendo el mejor camino para avanzar",
       },
     ],
     price: "$200",
@@ -432,7 +438,8 @@ export const SERVICE_PACKS_ES: ServicePackList = [
     number: "01",
     name: ["ESENCIALES", "DE MARCA"],
     description: [
-      "Para marcas listas para tomar forma. Definimos quién sos y construimos una identidad visual distintiva, más las herramientas para mostrarte con coherencia desde el día uno.",
+      "Para marcas listas para tomar forma.",
+      "Definimos la esencia de tu marca y construimos una identidad visual distintiva, junto con las herramientas clave para comunicarla con coherencia desde el primer día.",
     ],
     items: [
       {
@@ -442,7 +449,7 @@ export const SERVICE_PACKS_ES: ServicePackList = [
       {
         name: "Investigación de mercado",
         detail:
-          "Investigación de escritorio, definición del público y análisis FODA",
+          "Desk Research, definición del público y análisis FODA",
       },
       {
         name: "Propuesta de valor",
@@ -452,7 +459,7 @@ export const SERVICE_PACKS_ES: ServicePackList = [
       {
         name: "Desarrollo de identidad visual",
         detail:
-          "Identidad institucional, sistema tipográfico, paleta de color, elementos gráficos y dirección fotográfica",
+          "Identidad institucional, sistema tipográfico, paleta de colores, elementos gráficos y dirección fotográfica",
       },
       {
         name: "Manual de marca",
@@ -473,7 +480,8 @@ export const SERVICE_PACKS_ES: ServicePackList = [
     number: "02",
     name: ["UNIVERSO", "DE MARCA"],
     description: [
-      "Nuestro pack más completo, para marcas que quieren un mundo entero donde crecer. Todo lo de Esenciales, ampliado para que tu marca salga formada y lista para escalar.",
+      "El paquete completo, pensado para marcas listas para construir una identidad sólida, profunda y preparada para crecer.",
+      "Incluye todo lo que ofrece Esenciales de Marca, ampliado para desarrollar una presencia coherente, estratégica y con proyección.",
     ],
     footnote: ["(*)", "ÍTEMS EXCLUSIVOS DE ESTE PACK"],
     items: [
@@ -484,7 +492,7 @@ export const SERVICE_PACKS_ES: ServicePackList = [
       {
         name: "Investigación de mercado",
         detail:
-          "Investigación de escritorio, definición del público y análisis FODA",
+          "Desk Research, definición del público y análisis FODA",
       },
       {
         name: "Propuesta de valor",
@@ -494,7 +502,7 @@ export const SERVICE_PACKS_ES: ServicePackList = [
       {
         name: "Desarrollo de identidad visual",
         detail:
-          "Identidad institucional, sistema tipográfico, paleta de color, elementos gráficos, dirección fotográfica y lineamientos visuales para redes *",
+          "Identidad institucional, sistema tipográfico, paleta de colores, elementos gráficos, dirección fotográfica y lineamientos visuales para redes *",
       },
       {
         name: "Manual de marca",
@@ -504,12 +512,12 @@ export const SERVICE_PACKS_ES: ServicePackList = [
       {
         name: "Animación del logo *",
         detail:
-          "Versión animada de tu logo para plataformas digitales e intros de video",
+          "Versión animada de tu logo para plataformas digitales",
       },
       {
         name: "Diseño de landing *",
         detail:
-          "Sitio de una página para presentar y validar tu marca online (no incluye programación)",
+          "Diseño de landing page para presentar tu marca y darle presencia online. No incluye programación",
       },
       {
         name: "Producción de fotos inicial *",
@@ -535,7 +543,7 @@ export const SERVICE_PACKS_ES: ServicePackList = [
     number: "+",
     name: ["ADICIONALES"],
     description: [
-      "Servicios complementarios para extender cualquier marca: van con branding, con consultoría o como proyecto aparte.",
+      "Servicios complementarios para potenciar cualquier marca: disponibles junto con nuestros servicios de branding y consultoría, o como proyectos independientes.",
     ],
     items: [
       { name: "Packaging" },
