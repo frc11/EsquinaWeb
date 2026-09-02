@@ -2,12 +2,14 @@
 
 Fuente de verdad del mapa de bloques de la ronda. Lo mantiene la capa de planificación; el agente de ejecución **no lo edita** salvo instrucción explícita (B4/F8 lo pidió para cerrar la ronda; M6/F5 lo pidió para archivarla; M7 sumó su fila a la tabla de sprints y corrigió los punteros de `docs/` que el archivado movió).
 
-**Estado al 2026-08-26: la ronda está cerrada y archivada.** Los cuatro bloques (B1–B4) se ejecutaron entre el 15 y el 21 de agosto, y después vinieron **siete sprints de corrección y cierre (M1–M7)**, del 22 al 26. El detalle de cada uno está en `docs/bitacora.md`; el resumen, al pie de este archivo.
+**Estado al 2026-09-01.** La primera ronda (B1–B4) se ejecutó entre el 15 y el 21 de agosto; después vinieron **siete sprints de corrección y cierre (M1–M7)**, del 22 al 26, **seis más (M8–M13)** hasta el 28, y la **ronda 2 de devoluciones (R2)** el 1 de septiembre. El detalle de cada uno está en `docs/bitacora.md`; el resumen, al pie de este archivo.
+
+**R2 corrigió una omisión de este archivo:** el mapa se detenía en M7 mientras M8 a M13 ya estaban ejecutados **y publicados**. Los seis tienen su fila más abajo.
 
 ## Ronda en curso: devoluciones de las clientas
 
 - Fuente del alcance: `Final.pdf` (13-08-2026, 15 páginas de mockups y anotaciones).
-- Insumo técnico: auditoría completa `docs/reportes/2026-08-13-auditoria-completa.md` (HEAD `2565d01`, 9 bloques, 7 sesiones).
+- Insumo técnico: auditoría completa `docs/reportes/2026-08-13-auditoria-completa.md` (HEAD `2565d01`, 9 bloques, 7 sesiones). **Ojo: está parcialmente obsoleta** —lo dice su propio encabezado desde R2— y no se lee como estado del código, sino como el registro de cómo estaba el repo el 13 de agosto.
 - Desktop-first. La adaptación mobile se planeó como ronda futura separada y **se ejecutó en M1** (2026-08-22), con cinco sprints de corrección detrás.
 
 ## Decisiones cerradas
@@ -78,6 +80,49 @@ archivaron.
 | **M6** | 26-08 | **Cierre de la ronda.** El lienzo negro de `/studio`, la pantalla de éxito en teléfonos de 640, `contentEs`, la limpieza del repo y **el archivo del conocimiento técnico**. |
 | **M7** | 26-08 | **Limpieza y archivado del repo.** Sin cambios de producto: los 32 altos quedaron idénticos. La documentación histórica —20 mockups, las instrucciones, `banderas-set.md` y `sanity-piezas-es.md`— se **archivó en `docs/archivo/`**, no se borró, con sus 20 punteros actualizados. **Borrar no hubo nada que borrar**: lo que no tiene consumidores en este repo ya no existe. |
 
+## Los seis sprints que el mapa no registraba — M8 a M13 (26 al 28 de agosto)
+
+**Este bloque faltaba.** El plan maestro se detenía en M7 mientras había seis
+sprints ejecutados **y publicados** después de él; R2 los incorporó. Ninguno
+abrió alcance nuevo: los seis son correcciones de devolución humana.
+
+| Sprint | Fecha | Qué hizo |
+|---|---|---|
+| **M8** | 26-08 | **El cierre de `/services` vuelve a su composición de escritorio** y la cuadrícula queda acotada a mobile. Revirtió el reparto que M3/F6 había aplicado en todos los rangos. |
+| **M9** | 27-08 | **El 500 del formulario** —configuración de la cuenta de Resend, destinatario configurable y error del proveedor registrado— y el orden y la distribución de Fun Gallery. |
+| **M10** | 27-08 | **El orden y el reparto de Fun Gallery, de verdad.** Lo que se veía en producción era el motor pre-M9: `main` estaba **tres commits adelante de `origin/main`** y M9 nunca se había desplegado. Dejó la regla operativa: *una verificación que no se corre contra lo que ve el visitante no es una verificación*. |
+| **M11** | 28-08 | **El tamaño del logo del preloader deja de depender del alto de la ventana** y pasa a declararse en `vw`, medido y no estimado. |
+| **M12** | 28-08 | **Las proporciones del logo del preloader quedan al revés** de como las había aplicado M11, que las había cruzado. |
+| **M13** | 28-08 | **El logo del preloader se achica en escritorio a 19 % del ancho del viewport**, que es la cuenta que iguala la presencia relativa que mobile ya tenía aprobada. |
+
+## R2 — Ronda 2 de devoluciones de las clientas (2026-09-01) · **CERRADA**
+
+Fuente: dos PDF de devolución, `Correcciones_Traducción` (15 páginas) y
+`Correcciones_Mobile` (5), exportados como imagen en `docs/archivo/mockups/`
+(`r2-trad-01…15.jpg`, `r2-mob-01…05.jpg`). **Son la fuente de verdad de esta
+ronda**, igual que `Final.pdf` lo fue de la anterior.
+
+Doce fases con un commit cada una, sobre `main`, sin `git push`:
+
+| Fase | Qué hizo |
+|---|---|
+| **2–5** | **Services y home.** Precio y CTA por pack (`$200` + `BOOK A CONSULTATION` / `SOLICITAR CONSULTORÍA`), copy nuevo en inglés y en castellano de los cuatro packs, párrafo de ÚLTIMOS PROYECTOS y `FUN GALLERY` sin traducir en el menú. |
+| **6** | **Team.** Copy nuevo bilingüe —tres párrafos en la sección 01, cuatro en la 03— y, sobre todo, **los cortes de línea salen del contenido**: se fueron los `
+` intra-párrafo, el renglón fantasma del `
+
+
+` y el `space-y-0` que lo compensaba. |
+| **7** | **La banda de cierre.** La frase de marca en castellano pasa a dos líneas, `JOIN OUR CLUB` desaparece del sitio y la banda blanca **no se monta** en `/contact`. |
+| **8** | **El formulario.** Rótulos ES nuevos, `SELECCIONAR` como placeholder, `RESPUESTA BREVE` / `RESPUESTA CORTA` separadas, `Naming` en lugar de `Motion Graphics` y los cuatro rangos de presupuesto nuevos. |
+| **9** | **Fun Gallery.** Frase nueva bilingüe y aparición sin fundido escalonado. |
+| **10** | **La entrada de Contact** pasa a ser la del intro de Services, extraída a un módulo compartido: se fueron el `clipPath` y el `blur`. |
+| **11–12** | **Mobile.** Logo del header a 37 px, toggle de idioma como desplegable `EN ⌄`, footer en dos columnas sin `WORKING WORLDWIDE` ni prefijo del crédito, Team alineado a la izquierda, galería con la frase más chica y los objetos más grandes, y un botón de volver arriba. |
+| **13** | **Registros.** Esta entrada, la bitácora, los pendientes y el banco de medición, que **deja de ser desechable** y pasa a vivir en `tools/bench/`. |
+
+**Lo que R2 dejó abierto está en `docs/pendientes.md`**, sección «Abiertos al
+cerrar R2»: cinco cosas para consultar con las clientas y cuatro técnicas, todas
+con su medición.
+
 ## Decisiones de arquitectura durables
 
 Las cuatro de abajo **sobreviven a la ronda**: no son de un sprint, son de cómo
@@ -134,14 +179,19 @@ cabos que conviene mirar primero:
    grande. Sobre off-black da 6,24:1, que sí pasa. Es atenuación deliberada, no
    un bug: hay que tomar la decisión una vez para todo el sitio en vez de
    parchearla componente por componente.
-2. **Dos decisiones de tono que son de marca y no de código:** `FUN GALLERY` →
-   `GALERÍA` y `WORK` → `PROYECTOS`. Las dos son una línea en `src/lib/i18n/es.ts`.
+2. ~~**Dos decisiones de tono que son de marca y no de código:** `FUN GALLERY` →
+   `GALERÍA` y `WORK` → `PROYECTOS`.~~ **Cerradas en R2, y las cerraron ellas:**
+   `FUN GALLERY` **se queda en inglés** («MANTENER EN INGLES», `r2-trad-01.jpg`) y
+   `WORK` sigue siendo `PROYECTOS`. Con el mismo criterio, los dos pares de lugar
+   del footer volvieron al inglés.
 3. **Contenido de las clientas:** el cuerpo de los proyectos en castellano —el
    campo ya existe, las traducciones propuestas están escritas—, el tipeo
    `FOOD & SEVERAGES`, el bloque de texto vacío de Akasha y el bloque repetido de
    Matsu, y el gif/video de Team.
 4. **Lo que quedó fuera de ronda y necesita su propio sprint:** `error.tsx` /
    `not-found.tsx`, los `<main>` anidados, `NEXT_PUBLIC_SITE_URL` sin definir y
-   la instalación del harness ECC. Y una decisión de método: **dejar el banco de
+   la instalación del harness ECC. ~~Y una decisión de método: **dejar el banco de
    medición headless como herramienta del proyecto** en vez de reconstruirlo en
-   cada sprint (van cuatro veces).
+   cada sprint (van cuatro veces).~~ **El banco se cerró en R2:** vive en
+   `tools/bench/`, trackeado, con su README. Fue la quinta reconstrucción y la
+   última.

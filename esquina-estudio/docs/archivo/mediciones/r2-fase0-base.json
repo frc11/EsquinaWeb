@@ -1,0 +1,631 @@
+{
+  "origin": "http://127.0.0.1:3010",
+  "pages": {
+    "/|390|en": {
+      "docHeight": 844,
+      "contentBottom": 844,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/work|390|en": {
+      "docHeight": 2413,
+      "contentBottom": 2413.23,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/work/matsu|390|en": {
+      "docHeight": 1672,
+      "contentBottom": 1671.56,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/services|390|en": {
+      "docHeight": 8267,
+      "contentBottom": 8267.39,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/team|390|en": {
+      "docHeight": 3504,
+      "contentBottom": 3504.19,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/fun-gallery|390|en": {
+      "docHeight": 1851,
+      "contentBottom": 1851.47,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/contact|390|en": {
+      "docHeight": 2513,
+      "contentBottom": 2513.08,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/contact/success|390|en": {
+      "docHeight": 844,
+      "contentBottom": 860,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/|1024|en": {
+      "docHeight": 768,
+      "contentBottom": 768,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/work|1024|en": {
+      "docHeight": 1410,
+      "contentBottom": 1410.22,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/work/matsu|1024|en": {
+      "docHeight": 1890,
+      "contentBottom": 1889.8,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/services|1024|en": {
+      "docHeight": 9119,
+      "contentBottom": 9118.92,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/team|1024|en": {
+      "docHeight": 4221,
+      "contentBottom": 4220.59,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/fun-gallery|1024|en": {
+      "docHeight": 1784,
+      "contentBottom": 1783.8,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/contact|1024|en": {
+      "docHeight": 1911,
+      "contentBottom": 1911.2,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/contact/success|1024|en": {
+      "docHeight": 768,
+      "contentBottom": 784,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/|1920|en": {
+      "docHeight": 1080,
+      "contentBottom": 1080,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/work|1920|en": {
+      "docHeight": 2155,
+      "contentBottom": 2154.78,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/work/matsu|1920|en": {
+      "docHeight": 2585,
+      "contentBottom": 2584.89,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/services|1920|en": {
+      "docHeight": 7654,
+      "contentBottom": 7653.63,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/team|1920|en": {
+      "docHeight": 4537,
+      "contentBottom": 4536.75,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/fun-gallery|1920|en": {
+      "docHeight": 2641,
+      "contentBottom": 2640.77,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/contact|1920|en": {
+      "docHeight": 1664,
+      "contentBottom": 1664,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/contact/success|1920|en": {
+      "docHeight": 1080,
+      "contentBottom": 1096,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/|390|es": {
+      "docHeight": 844,
+      "contentBottom": 844,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/work|390|es": {
+      "docHeight": 2445,
+      "contentBottom": 2444.52,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/work/matsu|390|es": {
+      "docHeight": 1811,
+      "contentBottom": 1810.56,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/services|390|es": {
+      "docHeight": 8243,
+      "contentBottom": 8243.39,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/team|390|es": {
+      "docHeight": 3559,
+      "contentBottom": 3558.8,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/fun-gallery|390|es": {
+      "docHeight": 1882,
+      "contentBottom": 1882.47,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/contact|390|es": {
+      "docHeight": 2494,
+      "contentBottom": 2494.08,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/contact/success|390|es": {
+      "docHeight": 844,
+      "contentBottom": 860,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/|1024|es": {
+      "docHeight": 768,
+      "contentBottom": 768,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/work|1024|es": {
+      "docHeight": 1410,
+      "contentBottom": 1410.22,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/work/matsu|1024|es": {
+      "docHeight": 1968,
+      "contentBottom": 1967.8,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/services|1024|es": {
+      "docHeight": 9239,
+      "contentBottom": 9238.92,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/team|1024|es": {
+      "docHeight": 4269,
+      "contentBottom": 4268.59,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/fun-gallery|1024|es": {
+      "docHeight": 1784,
+      "contentBottom": 1783.8,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/contact|1024|es": {
+      "docHeight": 1911,
+      "contentBottom": 1911.2,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/contact/success|1024|es": {
+      "docHeight": 768,
+      "contentBottom": 784,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/|1920|es": {
+      "docHeight": 1080,
+      "contentBottom": 1080,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/work|1920|es": {
+      "docHeight": 2155,
+      "contentBottom": 2154.78,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/work/matsu|1920|es": {
+      "docHeight": 2624,
+      "contentBottom": 2623.89,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/services|1920|es": {
+      "docHeight": 7716,
+      "contentBottom": 7715.63,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/team|1920|es": {
+      "docHeight": 4499,
+      "contentBottom": 4499.25,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/fun-gallery|1920|es": {
+      "docHeight": 2641,
+      "contentBottom": 2640.77,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/contact|1920|es": {
+      "docHeight": 1664,
+      "contentBottom": 1664,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    },
+    "/contact/success|1920|es": {
+      "docHeight": 1080,
+      "contentBottom": 1096,
+      "hOverflow": 0,
+      "bodyOverflow": 0
+    }
+  },
+  "form": {
+    "1280|en": {
+      "formHeight": 426,
+      "formBottom": 610,
+      "selects": [
+        {
+          "id": "business-type",
+          "text": "SELECT OPTION",
+          "spanScroll": 263,
+          "spanClient": 263,
+          "truncated": false,
+          "buttonWidth": 299
+        },
+        {
+          "id": "country",
+          "text": "SELECT OPTION",
+          "spanScroll": 246,
+          "spanClient": 246,
+          "truncated": false,
+          "buttonWidth": 282
+        },
+        {
+          "id": "timeline",
+          "text": "SELECT OPTION",
+          "spanScroll": 246,
+          "spanClient": 246,
+          "truncated": false,
+          "buttonWidth": 282
+        },
+        {
+          "id": "budget",
+          "text": "SELECT OPTION",
+          "spanScroll": 246,
+          "spanClient": 246,
+          "truncated": false,
+          "buttonWidth": 282
+        }
+      ],
+      "pills": {
+        "rows": 4,
+        "width": 299
+      }
+    },
+    "1360|en": {
+      "formHeight": 450,
+      "formBottom": 634,
+      "selects": [
+        {
+          "id": "business-type",
+          "text": "SELECT OPTION",
+          "spanScroll": 296,
+          "spanClient": 296,
+          "truncated": false,
+          "buttonWidth": 334
+        },
+        {
+          "id": "country",
+          "text": "SELECT OPTION",
+          "spanScroll": 259,
+          "spanClient": 259,
+          "truncated": false,
+          "buttonWidth": 297
+        },
+        {
+          "id": "timeline",
+          "text": "SELECT OPTION",
+          "spanScroll": 259,
+          "spanClient": 259,
+          "truncated": false,
+          "buttonWidth": 297
+        },
+        {
+          "id": "budget",
+          "text": "SELECT OPTION",
+          "spanScroll": 259,
+          "spanClient": 259,
+          "truncated": false,
+          "buttonWidth": 297
+        }
+      ],
+      "pills": {
+        "rows": 4,
+        "width": 334
+      }
+    },
+    "1600|en": {
+      "formHeight": 498,
+      "formBottom": 682,
+      "selects": [
+        {
+          "id": "business-type",
+          "text": "SELECT OPTION",
+          "spanScroll": 360,
+          "spanClient": 360,
+          "truncated": false,
+          "buttonWidth": 400
+        },
+        {
+          "id": "country",
+          "text": "SELECT OPTION",
+          "spanScroll": 316,
+          "spanClient": 316,
+          "truncated": false,
+          "buttonWidth": 356
+        },
+        {
+          "id": "timeline",
+          "text": "SELECT OPTION",
+          "spanScroll": 316,
+          "spanClient": 316,
+          "truncated": false,
+          "buttonWidth": 356
+        },
+        {
+          "id": "budget",
+          "text": "SELECT OPTION",
+          "spanScroll": 316,
+          "spanClient": 316,
+          "truncated": false,
+          "buttonWidth": 356
+        }
+      ],
+      "pills": {
+        "rows": 4,
+        "width": 400
+      }
+    },
+    "1920|en": {
+      "formHeight": 498,
+      "formBottom": 682,
+      "selects": [
+        {
+          "id": "business-type",
+          "text": "SELECT OPTION",
+          "spanScroll": 380,
+          "spanClient": 380,
+          "truncated": false,
+          "buttonWidth": 420
+        },
+        {
+          "id": "country",
+          "text": "SELECT OPTION",
+          "spanScroll": 336,
+          "spanClient": 336,
+          "truncated": false,
+          "buttonWidth": 376
+        },
+        {
+          "id": "timeline",
+          "text": "SELECT OPTION",
+          "spanScroll": 336,
+          "spanClient": 336,
+          "truncated": false,
+          "buttonWidth": 376
+        },
+        {
+          "id": "budget",
+          "text": "SELECT OPTION",
+          "spanScroll": 336,
+          "spanClient": 336,
+          "truncated": false,
+          "buttonWidth": 376
+        }
+      ],
+      "pills": {
+        "rows": 4,
+        "width": 420
+      }
+    },
+    "1280|es": {
+      "formHeight": 426,
+      "formBottom": 610,
+      "selects": [
+        {
+          "id": "business-type",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 263,
+          "spanClient": 263,
+          "truncated": false,
+          "buttonWidth": 299
+        },
+        {
+          "id": "country",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 246,
+          "spanClient": 246,
+          "truncated": false,
+          "buttonWidth": 282
+        },
+        {
+          "id": "timeline",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 246,
+          "spanClient": 246,
+          "truncated": false,
+          "buttonWidth": 282
+        },
+        {
+          "id": "budget",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 246,
+          "spanClient": 246,
+          "truncated": false,
+          "buttonWidth": 282
+        }
+      ],
+      "pills": {
+        "rows": 4,
+        "width": 299
+      }
+    },
+    "1360|es": {
+      "formHeight": 450,
+      "formBottom": 634,
+      "selects": [
+        {
+          "id": "business-type",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 296,
+          "spanClient": 296,
+          "truncated": false,
+          "buttonWidth": 334
+        },
+        {
+          "id": "country",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 259,
+          "spanClient": 259,
+          "truncated": false,
+          "buttonWidth": 297
+        },
+        {
+          "id": "timeline",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 259,
+          "spanClient": 259,
+          "truncated": false,
+          "buttonWidth": 297
+        },
+        {
+          "id": "budget",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 259,
+          "spanClient": 259,
+          "truncated": false,
+          "buttonWidth": 297
+        }
+      ],
+      "pills": {
+        "rows": 4,
+        "width": 334
+      }
+    },
+    "1600|es": {
+      "formHeight": 498,
+      "formBottom": 682,
+      "selects": [
+        {
+          "id": "business-type",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 360,
+          "spanClient": 360,
+          "truncated": false,
+          "buttonWidth": 400
+        },
+        {
+          "id": "country",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 316,
+          "spanClient": 316,
+          "truncated": false,
+          "buttonWidth": 356
+        },
+        {
+          "id": "timeline",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 316,
+          "spanClient": 316,
+          "truncated": false,
+          "buttonWidth": 356
+        },
+        {
+          "id": "budget",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 316,
+          "spanClient": 316,
+          "truncated": false,
+          "buttonWidth": 356
+        }
+      ],
+      "pills": {
+        "rows": 4,
+        "width": 400
+      }
+    },
+    "1920|es": {
+      "formHeight": 498,
+      "formBottom": 682,
+      "selects": [
+        {
+          "id": "business-type",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 380,
+          "spanClient": 380,
+          "truncated": false,
+          "buttonWidth": 420
+        },
+        {
+          "id": "country",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 336,
+          "spanClient": 336,
+          "truncated": false,
+          "buttonWidth": 376
+        },
+        {
+          "id": "timeline",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 336,
+          "spanClient": 336,
+          "truncated": false,
+          "buttonWidth": 376
+        },
+        {
+          "id": "budget",
+          "text": "ELEGÍ UNA OPCIÓN",
+          "spanScroll": 336,
+          "spanClient": 336,
+          "truncated": false,
+          "buttonWidth": 376
+        }
+      ],
+      "pills": {
+        "rows": 4,
+        "width": 420
+      }
+    }
+  }
+}

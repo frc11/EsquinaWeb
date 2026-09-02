@@ -4879,3 +4879,247 @@ imagen de la galería y a los cambios de dataset posteriores.
      sigue con el logo de antes de M11.
 
 - **Commits:** el de este sprint.
+
+## 2026-09-01 · R2 · Las dos tandas de correcciones de las clientas
+
+**Objetivo:** aplicar los dos PDF de devolución —`Correcciones_Traducción`
+(15 páginas) y `Correcciones_Mobile` (5)— sin regresión visual ni de fit. Doce
+fases de producto, un commit cada una, sobre `main` y **sin `git push`**.
+
+**Fuente de verdad:** las 20 páginas exportadas como imagen en
+`docs/archivo/mockups/` (`r2-trad-01…15.jpg`, `r2-mob-01…05.jpg`). Se midieron,
+no se describieron: la escala de las capturas de teléfono se deriva de la propia
+imagen (708–714 px de pantalla sobre un viewport de 393 CSS, factor ≈1,81).
+
+### El banco de medición dejó de ser desechable
+
+Quinta reconstrucción, y la última: vive en **`tools/bench/`**, trackeado, con un
+README. Chrome `--headless=new` por DevTools Protocol sobre el `WebSocket` nativo
+de Node, sin dependencias nuevas, contra `npm run build` + `next start -p 3010`.
+Ocho archivos: el cliente CDP, la pestaña, el servidor —que se baja **por PID**—,
+la matriz de no-regresión, la vara, el `diff`, una sonda genérica sobre
+ruta × ancho × idioma y el capturador.
+
+La validación de que el banco mide bien: el fit del formulario dio **426 / 450 /
+498** de alto y **610 / 634 / 682** de borde inferior en los cuatro anchos, que
+son exactamente los números que `ContactForm.tsx` documenta desde B2.7.
+
+### Diagnóstico previo — cuatro informes de solo lectura
+
+Cuatro subagentes en paralelo, ninguno con permiso de escritura. Lo que
+encontraron y que cambió la ejecución:
+
+1. **El modelo tipográfico se validó contra la fuente real** (Manrope variable,
+   cmap + hmtx + deltas de HVAR sobre `wght` a 400, con el kerning del GPOS, que
+   es obligatorio: sin él el anclaje se va 0,8 px). Error máximo **0,081 px**
+   contra los tres anclajes conocidos del repo.
+2. **`SELECCIONE UNA OPCIÓN` no entra en ningún rango** (ver abajo).
+3. **La ventana que el fundido de la galería tapaba no era de posiciones sino de
+   `zIndex`**: las posiciones del montón no cambian nunca por causa de la carga.
+4. **Sacar la barrita del toggle en mobile no toca `ACK_DELAY` ni
+   `TRANSITION_MS`** —las dos son constantes de módulo—, así que la **PARADA 1**
+   del sprint no se disparó.
+
+### Lo que se hizo, fase por fase
+
+- **F2–F5 · Services y home.** `ServicePack` suma `price?` y `quoteLabel?`, los
+  dos opcionales, con **un solo punto de resolución**: el del pack le gana al
+  global. Consultoría queda en `$200` con `BOOK A CONSULTATION` /
+  `SOLICITAR CONSULTORÍA`; el global castellano pasa a `SOLICITAR PRESUPUESTO`.
+  Copy nuevo del pack de consultoría en inglés, y de los cuatro packs en
+  castellano. Párrafo de ÚLTIMOS PROYECTOS y **`FUN GALLERY` sin traducir** en el
+  menú, que es lo que pidieron ellas.
+- **F6 · Team.** Copy nuevo bilingüe —tres párrafos en la sección 01, dos en la
+  02 y cuatro en la 03— y el arreglo de raíz: **un párrafo es una entrada del
+  arreglo y el navegador decide dónde corta**. Se fueron los saltos de línea
+  intra-párrafo que partían «We are highly / detail-oriented» en cualquier ancho,
+  el renglón fantasma del triple salto de `headed`, el `space-y-0` que lo
+  compensaba, el `whitespace-pre-line` y el `split`. Las tres secciones pasaron a
+  **un solo camino de render**.
+- **F7 · La banda de cierre.** La frase de marca en castellano pasa a dos líneas
+  (`DESTACÁ CON INTENCIÓN.` / `COMUNICÁ CON IMPACTO.`), `JOIN OUR CLUB`
+  desaparece del sitio —no había backend detrás— y en `/contact` la banda blanca
+  **no se monta**. Con eso los dos componentes perdieron su prop `isContactPage`.
+- **F8 · El formulario.** Rótulos ES nuevos, `SELECCIONAR` como placeholder de
+  los cuatro selectores, `RESPUESTA BREVE` y `RESPUESTA CORTA` separadas en dos
+  claves, `Naming` en el lugar de `Motion Graphics` y los cuatro rangos de
+  presupuesto nuevos.
+- **F9 · Fun Gallery.** Frase nueva bilingüe y **el escalonado de 0,3 s por cubo
+  de seis se fue**; el fundido baja de 1,2 s a 0,25.
+- **F10 · La entrada de Contact.** Pasa a ser la del intro de Services,
+  **extraída a `components/ui/entrance-fade.ts`**: los sistemas de «aparecer» del
+  repo bajan de cuatro a tres.
+- **F11–F12 · Mobile.** Logo del header a 37 px, toggle desplegable `EN ⌄`,
+  footer en dos columnas sin `WORKING WORLDWIDE` ni prefijo del crédito, Team
+  alineado a la izquierda, galería con la frase más chica, el cartel debajo de
+  ella y los objetos más grandes, y un botón de volver arriba.
+- **F13 · Registros.** Esta entrada, el plan maestro al día hasta R2 —le faltaban
+  **seis sprints ejecutados y publicados**, M8 a M13—, los pendientes, la nota de
+  obsolescencia de la auditoría del 13 de agosto y los 20 mockups trackeados.
+
+### Las mediciones que decidieron algo
+
+- **`SELECCIONE UNA OPCIÓN` no entra en ninguno de los catorce casos** (siete
+  rangos × dos columnas): mide 407,6 px a 34 px contra una pista útil de 312, y
+  el peor déficit es de 95,6 px. `SELECCIONÁ UNA OPCIÓN` es peor (409,7). Como el
+  placeholder es el único texto del selector con `truncate`, se vería cortado con
+  puntos suspensivos. **Se aplicó `SELECCIONAR`**: 223,6 px, con 68 px de aire en
+  el peor rango. El actual `ELEGÍ UNA OPCIÓN` dejaba 13,8, o sea por debajo del
+  piso de 14 px que pedía el sprint.
+- **El piso de la columna derecha bajó, y el aire no se usó.** Los rangos nuevos
+  miden 236,5 px a 34 px contra los 314 de los viejos, y el piso de las pills
+  bajó de 396/332/291 a **387/315/279** (inglés, que es el que manda) porque
+  `Naming` reemplazó a `Motion Graphics`. Las pistas de la grilla no se tocaron:
+  **el fit de ≥1280 quedó idéntico al de antes de la ronda**.
+- **Un desvío en la documentación del propio formulario:** decía que el piso de
+  352 px salía de `$2,500–$4,000 USD`, y no era cierto — el más ancho de la lista
+  vieja era `$6,500–$8,000 USD`, 2,09 px más a 34 px.
+- **`Auditoría de marca y experiencia` no entra en una línea**, que era la
+  pregunta de las clientas: la columna de nombres da 128 / 214 / 240 / 320 / 427
+  px a 1024 / 1280 / 1360 / 1600 / 1920, y el rótulo pide 601 px a 30 px. Entra
+  recién a partir de ~2560 de viewport. Se aplicó `Auditoría de Marca`.
+- **El reapilado de la galería se ve.** Pintando las dos ordenaciones de `zIndex`
+  y restando píxel a píxel: cambia el **4,1 % de la pantalla a 1920 y el 5,7 % a
+  390**, con un delta máximo de 749 sobre 765. La ventana entre la última carga y
+  el reapilado es de 87 ms a 390 y 215 ms a 1920 en red rápida, y de 2,6 s a
+  12 kB/s. Las **posiciones no cambian nunca**: último cambio en t = 0 ms en los
+  cuatro escenarios.
+- **El tamaño del montón en mobile se calibró de punta a punta.** El sprint
+  pedía subir `TARGET_MAX_ITEM_VIEWPORT_SHARE`, pero esa constante **solo tiene
+  efecto de 1024 para arriba**: debajo, la composición es una grilla real y el
+  tamaño lo da la celda. Se agregó `PILE_SCALE_MOBILE`, que viaja por el mismo
+  mecanismo de variable por rango que `--pile-x`. Compilando con cada valor y
+  midiendo la captura: 1,28 → 52,05 % del ancho del viewport y 1,40 → 56,41 %;
+  el pedido es 55,16 %, o sea **1,37**, que dio **55,38 %**.
+- **El logo de mobile.** Contra la segunda captura de `r2-mob-01.jpg`, la tinta
+  del logo pasa de 246 a 191 px de ancho y de 87 a 67,5 de alto: **0,776 de la
+  altura actual**, o sea 37,2 px sobre los 48 de hoy. Comprobación cruzada: 37 px
+  de alto dan el 28,9 % del ancho del viewport contra el 28,85 % del mockup.
+- **La frase de la galería en mobile.** `DISCOVER OUR PROJECTS,` ocupa 276,4 px
+  de tinta en la referencia y 320,5 a los 26 px de hoy: el cociente da **22,4 px**,
+  y con 22/26 la cadena mide 271,2. El cartel `(click to view)` sube a 20 px
+  debajo de la frase y 40 por encima de la composición, los dos medidos.
+
+### Los tres defectos que la ronda encontró de paso
+
+1. **El menú de escritorio en castellano venía con margen cero a 1024.**
+   `GALERÍA` dejaba 0,64 px entre glifos y `CONTACTANOS`; con `FUN GALLERY` se
+   montaban 18,9 px. Se resolvió con un escalón de 1024 a 1151 —el cromo baja a
+   15 px con 24 de aire— que deja la holgura mínima en 42,2 px y **no toca nada
+   de 1152 para arriba**. El corte se puso en 1152 y no en 1088 porque a 1088 la
+   holgura sin escalón es de 13,1 px y a ojo `FUN GALLERY` y `CONTACTANOS` se
+   leen como un solo grupo.
+2. **`HOME_BLOCK_HEIGHT_MOBILE` quedó desfasado 124 px** al reorganizarse el
+   footer, y **ningún alto de documento lo delataba**. Se detectó midiendo el
+   borde inferior del bloque contra el borde superior del footer: daba 124 px de
+   aire muerto, idénticos en los cuatro anchos. Las dos constantes quedaron en
+   180.
+3. **Un estilo en línea le ganaba a la variante de escritorio.** La escala del
+   montón se había declarado como estilo en línea sobre el mismo elemento que
+   llevaba `lg:[--pile-scale:1]`, así que **el escritorio también se agrandaba**.
+   Se corrigió declarando el candidato en la tarjeta —donde ya viven `--a-px` y
+   compañía— y dejando la selección por rango a las clases.
+
+### Verificación
+
+- **48 altos contra la vara de la Fase 0:** 28 cambiaron y los 28 están
+  explicados —`/services` (copy), `/team` (copy), `/contact` (banda blanca fuera),
+  `/work`, `/work/[slug]` y `/fun-gallery` en castellano (la frase del footer pasó
+  de tres líneas a dos) y `/fun-gallery` en mobile (la galería)—. `/` y
+  `/contact/success` **no se movieron**.
+- **Cero scroll horizontal** en las 48.
+- **Fit del formulario: 14 resoluciones × 2 idiomas, cero truncados, cero
+  desbordes**, y ≥1280 **idéntico** a la Fase 0.
+- **La frase del hero no se reanima al cambiar de idioma**: opacidad 1 y
+  `translateY` 0 en los 197 cuadros muestreados, en las dos direcciones.
+- **El desenfoque desapareció del formulario**, medido de dos formas: cero
+  `filter` y cero `clip-path` en 347 cuadros muestreados desde el primero, y la
+  caja de tinta del título mide 218 × 127 px en todos los cuadros visibles, igual
+  que en reposo (un `blur(7px)` la agrandaría ~14 px por eje).
+- **Las cuatro garantías del preloader:** negro desde el primer cuadro (YAVG 0),
+  una sola vez por pestaña (recarga con YAVG 239 y el flag puesto), failsafe con
+  el `.mp4` bloqueado (la cortina se levanta a los 3722 ms) y `/studio` excluido
+  (sin compuerta, fondo off-white y el flag de sesión sin tocar).
+- **Cero errores y cero avisos propios** en consola, 8 rutas × 2 idiomas. Solo
+  aparece el aviso conocido de `@sanity/image-url`, que §7b documenta como ruido
+  del paquete.
+- **`npm run lint` y `npm run build` en verde**, con el servidor bajado.
+- **La transición de idioma no cambió**: swap a los 1309 ms y cortina fuera a los
+  1970, con y sin barrita.
+
+### Decisiones tomadas en ejecución, para que se puedan revertir
+
+1. **`SELECCIONAR` en lugar de `SELECCIONE UNA OPCIÓN`**, con los números de
+   arriba. Es lo primero que hay que llevarles a las clientas.
+2. **El escalón del cromo de 1024 a 1151** y su borde en 1152. Consultado y
+   aprobado por Valentino durante la ronda.
+3. **`Auditoría de Marca`** como nombre del ítem, que es la alternativa que el
+   propio PDF ofrecía.
+4. **El corte del rótulo de `workType`** (`¿QUÉ TIPO DE PROYECTO` /
+   `BUSCAS REALIZAR?`) y del subtítulo (`CONTANOS SOBRE TU PROYECTO` / `PARA
+   RECIBIR UNA PROPUESTA PERSONALIZADA`). Ninguno de los dos entra en el techo de
+   renglones de siempre; el del rótulo no importa porque su control es el bloque
+   de pills, y el del subtítulo cuesta 21 px de alto que **no mueven el
+   formulario** porque el aside es `self-start`.
+5. **`PAÍS` va con la segunda entrada vacía**, no con un espacio duro: un `<span>`
+   vacío no genera caja de línea y mide 0 px —verificado—, así que el rótulo
+   queda centrado contra su control como corresponde a un label de una línea.
+6. **`Naming` ocupa la casilla de la que salió `Motion Graphics`**, que es la
+   lectura literal de «quitar X y agregar Y».
+7. **El fundido corto de 0,25 s** en la galería, que es la rama que el sprint
+   define para una ventana mayor a 100 ms. Lo que ese fundido no alcanza a tapar
+   está en los pendientes.
+8. **`BACK TO TOP` / `VOLVER ARRIBA`** como rótulo del botón nuevo: el inglés
+   sale de la referencia, el castellano lo pusimos nosotros.
+9. **El botón de volver arriba usa un solo sumidero**, `window.scrollTo`, y no
+   uno condicional por ruta. La razón está medida y escrita en el componente;
+   `window.lenis.animatedScroll` queda en 0 después del viaje, o sea que Lenis se
+   deja arrastrar y resincroniza.
+10. **El botón se apaga cuando el footer entra en la pantalla.** Sin esa regla
+    tapaba el enlace del crédito al llegar al pie, medido a 320, 390 y 430.
+11. **Los saltos de línea de `team.intro` NO se tocaron.** El sprint los nombra
+    como parte del síntoma pero no prescribe nada para ellos, y sus cinco
+    entradas son un corte de composición medido a 40 px: cambiarlo movería el
+    escritorio.
+
+### Lo que quedó afuera y por qué
+
+- **Sacar la frase de la marca del footer en mobile** (`r2-mob-02.jpg`). Está
+  escrito en potencial —«se podría»—, cambia el alto de las seis rutas internas
+  y contradice el criterio de aceptación del propio sprint. Consultado con
+  Valentino durante la ronda: **se reporta, no se aplica**.
+- **El pozo entre `$4000 – $6500` y `$7000 +`**, las dos palabras distintas para
+  el mismo tipo de campo y `Motion graphics` fuera del formulario pero dentro de
+  Adicionales: los tres se implementaron como los pidieron y están en pendientes
+  para consultarlos.
+
+### Verificación humana pendiente
+
+El agente no observa animaciones con la pestaña oculta, **no simula gestos
+táctiles** y `getBoundingClientRect` mide layout, no píxeles pintados (§7b).
+Queda para un teléfono de verdad:
+
+1. **La aparición de la galería.** Si «aparecen y se ponen una arriba de otra»
+   como piden, o si se ve el salto de apilado que quedó medido en 4,1 % / 5,7 %
+   de la pantalla. Es el punto de la ronda con más chance de necesitar una
+   segunda pasada.
+2. **El toggle desplegable**: si se abre bien con el pulgar y si la transición de
+   idioma se siente igual que antes —los 437 ms de pantalla quieta sin barrita
+   son el riesgo—.
+3. **El botón de volver arriba** en `/team` y `/work*`, donde convive con Lenis.
+   Y si el umbral de dos pantallas es el correcto: hoy solo se muestra en
+   `/services` y `/team`.
+4. **El logo achicado y el footer comprimido**, contra `r2-mob-01` y `r2-mob-02`.
+5. **La frase de dos líneas en castellano**: si la composición del hero cierra
+   con una línea menos.
+6. **El footer de `/contact` sin banda blanca**: si el corte se lee intencional.
+7. **Team alineado a la izquierda** y sin frases cortadas a la mitad.
+
+### Estado de publicación
+
+**La rama quedó en `main` local, sin `git push`.** Lo verificado acá es el build
+local: hasta que se publique, producción sigue con el sitio anterior a R2. Es la
+regla que dejó M10 —*una verificación que no se corre contra lo que ve el
+visitante no es una verificación*— y por eso se dice con estas palabras.
+
+- **Commits:** doce de producto (uno por fase, F2 a F12) más el de registros.

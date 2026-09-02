@@ -479,10 +479,13 @@ esto se le suma.
   Netlify hace que el formulario funcione hoy mismo, y las consultas llegan a
   una casilla que sí se lee. No hay que tocar ni una línea de código para eso, y
   se revierte cambiando la variable.
-- **[Deploy]** **La corrección del formulario no está publicada.** M9 se cerró
-  sin `git push` a pedido de Valentino, porque cada push va a producción. Hasta
-  que se despliegue, producción sigue con el destinatario hardcodeado y sin el
-  registro del error.
+- **[Deploy]** ~~**La corrección del formulario no está publicada.**~~
+  **CERRADO — se publicó el 27 de agosto de 2026.** El renglón quedó escrito el
+  día que M9 cerró sin `git push`, y **no se actualizó cuando el push ocurrió**:
+  desde entonces afirmaba en presente algo que ya era falso. Lo detectó R2 al
+  poner los registros al día. La lección de método está anotada en la bitácora de
+  R2: un pendiente que dice «no está publicado» tiene que llevar la fecha en que
+  se escribió, porque es una afirmación con vencimiento.
 
 ### Contenido y decisiones
 
@@ -511,3 +514,93 @@ esto se le suma.
   única prueba que cierra el punto anterior.
 - **Abrir la galería y confirmar el orden contra los números del Studio**, y que
   no haya huecos. El banco lo verifica en el DOM; la lectura es humana.
+
+## Abiertos al cerrar R2 (ronda 2 de devoluciones, 2026-09-01)
+
+R2 aplicó los dos PDF de devolución de las clientas —`Correcciones_Traducción`
+(15 páginas) y `Correcciones_Mobile` (5)—, exportados como imagen en
+`docs/archivo/mockups/r2-trad-*.jpg` y `r2-mob-*.jpg`. Lo que sigue son los cabos
+que la ronda **no cerró a propósito**, cada uno con lo que hace falta para
+decidirlo.
+
+### Para llevarles a las clientas — se implementó como lo pidieron, pero tiene un problema
+
+- **[Contenido]** **`SELECCIONE UNA OPCIÓN` no entra en el formulario, y no es
+  cuestión de apretar el diseño.** El PDF pide ese texto como placeholder de los
+  cuatro selectores; mide **407,6 px** a 34 px de tipografía contra una pista útil
+  de **312**, y no entra en **ninguno** de los catorce casos de la matriz (siete
+  rangos de ancho × dos columnas). El peor déficit es de 95,6 px. `SELECCIONÁ UNA
+  OPCIÓN` es todavía peor (409,7). Como el placeholder es el único texto del
+  selector con `truncate`, lo que se vería es el rótulo cortado con puntos
+  suspensivos. **Se aplicó `SELECCIONAR`**, que es la primera opción de la lista
+  de preferencia del sprint que entra en los siete rangos: 223,6 px a 34 px, con
+  un mínimo de 68 px de aire. Si ellas prefieren la frase completa, hay que
+  rediseñar el fit del formulario, que está medido al píxel desde B2.7.
+- **[Contenido]** **Entre `$4000 – $6500` y `$7000 +` queda un pozo.** Un
+  presupuesto de $6.800 no tiene opción. Se implementó tal cual lo escribieron.
+- **[Contenido]** **`RESPUESTA BREVE` y `RESPUESTA CORTA` son dos palabras
+  distintas para el mismo tipo de campo** —rubro y «¿cómo nos conociste?»—. Se
+  implementó como lo pidieron, con una clave por campo; en inglés las dos siguen
+  valiendo `SHORT ANSWER`, porque el PDF no pidió distinguirlas ahí.
+- **[Contenido]** **`Motion graphics` sale del formulario pero sigue siendo un
+  servicio en `+ ADICIONALES`.** El PDF de contacto pide sacar esa pill y agregar
+  `Naming`; el de Services deja el ítem donde estaba. Es una inconsistencia del
+  pedido, no del código.
+- **[Contenido]** **`BUSCAS` va sin tilde en el rótulo nuevo de `workType`**
+  (`¿QUÉ TIPO DE PROYECTO BUSCAS REALIZAR?`), como lo escribieron ellas. El resto
+  del sitio vosea (`CONTANOS`, `TENÉS`, `ELEGÍ`). Se transcribió literal.
+
+### Del PDF de mobile, sin fase asignada — decisión de Valentino
+
+- **[Diseño]** **Sacar la frase de la marca del footer en mobile.** La anotación
+  de `r2-mob-02.jpg` dice «se podría comprimir un toque el espaciado del footer
+  **y sacar la frase** porque queda muy cargado sino», y la captura del estado
+  deseado muestra la banda blanca sin la frase. **No se aplicó**: está escrita en
+  potencial, cambia el alto de las seis rutas internas en mobile y contradice el
+  criterio de aceptación del propio documento de la ronda. La compresión que sí
+  se hizo es la del footer oscuro y el claro (ver la bitácora de R2).
+
+### Técnico — abierto y medido
+
+- **[Mobile]** **El botón de volver arriba no llega a mostrarse en cuatro de las
+  seis rutas donde existe.** El umbral es de **dos pantallas** de scroll, que es
+  la constante que fijó el sprint, y para cumplirlo hace falta un documento de
+  más de tres viewports. Medido a 390 × 844 lo cumplen `/services` (7597 px de
+  recorrido) y `/team` (3438); no lo cumplen `/work` (1570), `/contact` (1309),
+  `/fun-gallery` (1043) ni `/work/[slug]` (828). **Con una sola pantalla
+  aparecería en las seis.** Es una línea: `APPEAR_AFTER_VIEWPORTS` en
+  `src/components/ui/BackToTop.tsx`.
+- **[Galería]** **El reapilado del montón se ve, y el fundido lo estaba
+  tapando.** Cuando carga la última imagen, las ocho mediciones de tinta se
+  completan y los `zIndex` cambian **de una sola vez**: pintando las dos
+  ordenaciones y restando píxel a píxel, cambia el **4,1 % de la pantalla a 1920
+  y el 5,7 % a 390**. R2 dejó un fundido corto de 0,25 s —el tiempo medido de la
+  ventana más un cuadro— y **sacó el escalonado**, que era lo que las clientas
+  señalaron. Pero ese fundido cubre al objeto que acaba de cargar, no a los que
+  ya están opacos: en red rápida los ocho cargan con ~200 ms de diferencia, así
+  que el primero ya terminó su fundido cuando llega el reapilado. **El arreglo de
+  fondo sería no revelar ningún objeto hasta que el apilado esté resuelto** —
+  aparecerían todos juntos y ya ordenados, que es literalmente lo que pidieron—,
+  al costo de que en una red muy lenta la galería quede vacía hasta que cargue la
+  última imagen (38–55 s medidos a 12 kB/s). Es una decisión de producto.
+- **[Cromo]** **El menú de escritorio en castellano venía con margen cero a
+  1024.** `GALERÍA` dejaba **0,64 px** entre sus glifos y los de `CONTACTANOS`, y
+  al pasar a `FUN GALLERY` se montaban 18,9 px. R2 metió un escalón: de 1024 a
+  1151 el cromo baja a 15 px con 24 de aire, y de 1152 para arriba no cambia
+  nada. La holgura mínima pasó a 42,2 px. **§2b de `CLAUDE.md` dice «403 px» para
+  el ancho de ese menú en castellano y el número está viejo**: el medido antes de
+  R2 era 455,2.
+- **[Constantes]** **`HOME_BLOCK_HEIGHT_MOBILE` y `HOME_FOOTER_CLEARANCE` estaban
+  desfasados 124 px** después de reorganizar el footer de mobile, y **ningún alto
+  de documento lo delataba**: `/` mide una pantalla exacta pase lo que pase,
+  porque el `mt-auto` del footer absorbe la diferencia. Se detectó midiendo el
+  borde inferior del bloque contra el borde superior del footer. Los dos quedaron
+  en 180. Es la tercera vez que esta clase de defecto aparece en el repo (punto
+  13 de M2, trampa 2 de §7.1): **conviene medir siempre esa distancia, no solo el
+  alto del documento.**
+
+### Heredados que siguen abiertos
+
+Los de M9 y M10 —el dominio propio verificado en Resend, `error.tsx` /
+`not-found.tsx`, los `<main>` anidados y la instalación del harness ECC— siguen
+como estaban. R2 no los tocó.

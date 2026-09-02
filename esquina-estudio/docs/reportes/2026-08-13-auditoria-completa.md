@@ -1,5 +1,32 @@
 # AUDITORÍA COMPLETA DEL REPO — Esquina Estudio
 
+> ## ⚠ PARCIALMENTE OBSOLETA — leer esto antes de usarla (nota agregada en R2, 2026-09-01)
+>
+> **Este documento describe el repo en el commit `2565d01`, del 13 de agosto de
+> 2026.** No es el estado del código: entre esa fecha y hoy pasaron los bloques
+> B1–B4, trece sprints (M1–M13) y la ronda 2 de devoluciones. Sigue siendo **la
+> base de hechos de cómo estaba el repo aquel día** —para eso se conserva— pero
+> **no se cita como si describiera el presente**.
+>
+> Dos ejemplos concretos, para que se vea el orden de magnitud del desfase:
+>
+> - **§3.4 rastrea `TITLE_1_LINE_COUNT` y lo marca de riesgo ALTO. Ese símbolo no
+>   existe desde B3.4**, que desmontó el scroll-jack de `/services` entero. Lo
+>   mismo vale para `TITLE_LINE_COUNT` del Hero, para el centinela
+>   `"Applications may include:"` y para el `id="services-list"`.
+> - Todo lo que dice sobre `/fun-gallery` y `/services` describe el diseño
+>   **anterior** a B3: la galería derivaba de los `project` y no tenía schema
+>   propio, y Services tenía una máquina de estados S0–S5 con lock de scroll.
+>
+> **Qué leer en su lugar, según lo que se busque:**
+>
+> | Si buscás… | Leé |
+> | --- | --- |
+> | El estado del código hoy | `CLAUDE.md` (raíz del proyecto), que separa ESTADO de PLAN |
+> | Qué se decidió y cuándo | `docs/plan-maestro.md` |
+> | Qué pasó en cada sprint, con sus mediciones | `docs/bitacora.md` |
+> | Qué quedó abierto | `docs/pendientes.md` |
+
 **Commit HEAD:** `2565d01a7917dfa12aeab8c13abce4660ab54c23`
 **Branch:** `main`
 **Fecha de corrida:** 2026-08-14
