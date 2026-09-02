@@ -74,7 +74,10 @@ export const EN: Dictionary = {
   },
 
   gallery: {
-    title: ["HAVE FUN EXPLORING", "OUR PROJECTS!"],
+    // R2 (`docs/archivo/mockups/r2-trad-13.jpg`). Se guarda en versales porque
+    // el render ya las aplica (`uppercase` en el `<h1>`) y el resto del
+    // diccionario de esta pantalla también viaja así.
+    title: ["DISCOVER OUR PROJECTS,", "ONE PIECE AT A TIME."],
     hint: "(click to view)",
     sectionLabel: "Fun Gallery",
     viewItem: "View",

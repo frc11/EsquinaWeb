@@ -102,7 +102,7 @@ export const ES: Dictionary = {
   },
 
   gallery: {
-    title: ["¡DIVERTITE EXPLORANDO", "NUESTROS PROYECTOS!"],
+    title: ["DESCUBRÍ NUESTROS PROYECTOS,", "PIEZA POR PIEZA."],
     hint: "(clic para ver)",
     sectionLabel: "Galería",
     viewItem: "Ver",

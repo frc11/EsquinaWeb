@@ -417,9 +417,51 @@ const HOVER_Z_INDEX = 50;
 const TAP_DURATION = HOVER_DURATION / 2;
 const TAP_DURATION_MS = TAP_DURATION * 1000;
 
-const IMAGE_FADE_DURATION = 1.2;
-const IMAGE_FADE_STAGGER = 0.3;
-const IMAGE_FADE_STAGGER_BUCKET = 6;
+/**
+ * # La aparición de los objetos (capa L3) — rehecha en R2/F9
+ *
+ * Las clientas pidieron «sacaría la aparición con opacidad de las cosas, que
+ * aparezcan y se ponga una arriba de otra tal cual»
+ * (`docs/archivo/mockups/r2-trad-13.jpg`, y lo repiten para mobile en
+ * `r2-mob-04.jpg`). Hasta R2 el fundido duraba **1,2 s** con un retardo
+ * escalonado de `(index % 6) × 0,3 s`, o sea que el último objeto terminaba de
+ * aparecer **2,7 s después de cargar**. Eso es exactamente el «aparecen de a
+ * poco» que no querían: **el escalonado se fue del todo**.
+ *
+ * ## Por qué queda un fundido corto y no cero
+ *
+ * Porque el fundido estaba tapando algo, y está medido. Cuando la última imagen
+ * del montón carga, `measureInkCoverage` completa las ocho mediciones,
+ * `buildPileStack` deja de devolver `null` y **los `zIndex` de los nueve objetos
+ * cambian de una sola vez**, del sorteo del motor al orden por tinta (que es lo
+ * que evita que un recorte ancho tape a uno angosto; ver el bloque APILADO).
+ *
+ * Medido sobre el sitio servido, con una sonda instalada antes del documento:
+ *
+ * - **Las posiciones del montón NO cambian nunca por causa de la carga**: último
+ *   cambio de `x/y` en t = 0 ms en los cuatro escenarios (1920 y 390, red rápida
+ *   y 12 kB/s). Salen del HTML del servidor y quedan quietas hasta el click.
+ * - El `zIndex` cambia **una sola vez**, y la ventana entre la última carga y ese
+ *   cambio es de **87 ms a 390 y 215 ms a 1920** en red rápida (2,6 s a 12 kB/s).
+ * - Ese reapilado **se ve**: pintando las dos ordenaciones y restando píxel a
+ *   píxel, cambia el **4,1 % de la pantalla a 1920 y el 5,7 % a 390**, con un
+ *   delta máximo de 749 sobre 765. No es sutil: los objetos chicos pasan de estar
+ *   tapados a estar arriba.
+ *
+ * Con >100 ms de ventana, la regla del sprint es dejar **el tiempo medido más un
+ * cuadro, sin escalonado**: 215 + 16,7 = 231,7 ms, redondeado a **0,25 s**.
+ *
+ * ## Lo que este fundido NO alcanza a tapar, y hay que saberlo
+ *
+ * Cubre al objeto que acaba de cargar, no a los que ya estaban opacos. En red
+ * rápida los ocho cargan con ~200 ms de diferencia entre el primero y el último,
+ * así que cuando llega el reapilado el primero ya terminó su fundido. El arreglo
+ * de fondo sería no revelar ningún objeto hasta que el apilado esté resuelto
+ * —aparecerían todos juntos y ya ordenados—, pero eso cambia el comportamiento
+ * en redes lentas (a 12 kB/s la galería quedaría vacía 38–55 s) y es una decisión
+ * de producto: está registrada en el reporte de la ronda, no tomada acá.
+ */
+const IMAGE_FADE_DURATION = 0.25;
 
 const EAGER_IMAGE_COUNT = 6;
 const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
@@ -1209,11 +1251,9 @@ function GalleryCard({
             style={{ rotate: item.rotate }}
             initial={false}
             animate={{ opacity: isLoaded ? 1 : 0 }}
-            transition={{
-              duration: IMAGE_FADE_DURATION,
-              delay: (index % IMAGE_FADE_STAGGER_BUCKET) * IMAGE_FADE_STAGGER,
-              ease: EASE,
-            }}
+            // Sin `delay`: el escalonado de `(index % 6) × 0,3 s` se fue en
+            // R2/F9. Ver el bloque de `IMAGE_FADE_DURATION`.
+            transition={{ duration: IMAGE_FADE_DURATION, ease: EASE }}
           >
             <Image
               src={item.imageUrl}
