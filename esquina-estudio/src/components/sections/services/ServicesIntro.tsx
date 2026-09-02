@@ -1,7 +1,11 @@
 "use client";
 
-import { motion, type Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import SpySentinel from "@/components/sections/services/SpySentinel";
+import {
+  entranceFadeVariants,
+  entranceGroup,
+} from "@/components/ui/entrance-fade";
 import { usePrefersReducedMotion } from "@/components/layout/RouteTransitionProvider";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
 import { SERVICES_DISPLAY_40 } from "@/components/sections/services/services-layout";
@@ -24,12 +28,13 @@ import { useLocale } from "@/lib/i18n";
  * desplazamiento, porque la frase ya está centrada en la pantalla y cualquier
  * `y` la haría aterrizar en vez de aparecer.
  *
- * El lenguaje es el mismo que el de las otras dos entradas artesanales del sitio
- * —el Hero y el formulario de Contact— y no un sistema nuevo: variantes de
- * Framer con orquestación por `staggerChildren`, la curva del Hero, y el gateo
- * por preloader, que es lo que hace que la entrada se vea **después** de la
- * cortina y no detrás de ella. Con `prefers-reduced-motion` no hay variantes ni
- * `initial`: el texto ya está.
+ * **Desde R2/F10 el patrón no vive acá**: se extrajo a
+ * `@/components/ui/entrance-fade` porque el formulario de Contact pasó a usar el
+ * mismo, por pedido de las clientas. Este componente es ahora uno de sus dos
+ * consumidores y no dueño de ningún número. El gateo por preloader sí es de acá,
+ * y es lo que hace que la entrada se vea **después** de la cortina y no detrás
+ * de ella. Con `prefers-reduced-motion` no hay variantes ni `initial`: el texto
+ * ya está.
  *
  * `↓ DISCOVER OUR SERVICES ↓` **no es un botón**: es una señal de que hay que
  * scrollear. Por eso es un `<p>` y no un link ni un `HoverButton`, no cambia con
@@ -72,28 +77,12 @@ import { useLocale } from "@/lib/i18n";
  * y el indicador siguen entrando con holgura.
  */
 
-/** La curva del Hero. Suave en las dos puntas: lo que pide un fundido largo. */
-const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
-/** Largo del fundido. Es el doble de la entrada del Hero, y a propósito. */
-const FADE_DURATION = 1.1;
-const FADE_DELAY = 0.12;
-/** El indicador entra detrás de la frase, no junto con ella. */
-const FADE_STAGGER = 0.22;
-
-const introVariants: Variants = {
-  hidden: {},
-  visible: {
-    transition: { delayChildren: FADE_DELAY, staggerChildren: FADE_STAGGER },
-  },
-};
-
-const fadeVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { duration: FADE_DURATION, ease: EASE },
-  },
-};
+/**
+ * Dos hijos —la frase y el indicador de scroll—, con la cadencia por defecto del
+ * módulo: el indicador entra detrás de la frase, no junto con ella. Se declara a
+ * nivel de módulo porque `entranceGroup` devuelve un objeto nuevo por llamada.
+ */
+const introVariants = entranceGroup();
 
 export default function ServicesIntro() {
   const { locale, t } = useLocale();
@@ -120,7 +109,7 @@ export default function ServicesIntro() {
             "max-w-[1000px] font-display uppercase tracking-normal text-off-black",
             SERVICES_DISPLAY_40,
           )}
-          variants={reduceMotion ? undefined : fadeVariants}
+          variants={reduceMotion ? undefined : entranceFadeVariants}
         >
           {phrase.map((line, index) => (
             // `key` por índice: el texto cambia con el idioma y las líneas son
@@ -133,7 +122,7 @@ export default function ServicesIntro() {
 
         <motion.p
           className="mt-8 flex items-center gap-3 font-body text-[17px] uppercase leading-[20px] text-off-black md:mt-[48px]"
-          variants={reduceMotion ? undefined : fadeVariants}
+          variants={reduceMotion ? undefined : entranceFadeVariants}
         >
           <span aria-hidden="true">&darr;</span>
           {scrollHint}

@@ -2,12 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { usePreloader } from "@/components/providers/PreloaderProvider";
 import CountryFlag from "@/components/sections/contact/CountryFlag";
 import HoverButton from "@/components/ui/HoverButton";
+import {
+  ENTRANCE_FADE_DELAY,
+  entranceFadeVariants,
+  entranceGroup,
+} from "@/components/ui/entrance-fade";
 import {
   BUDGET_OPTIONS,
   BUSINESS_TYPE_OPTIONS,
@@ -37,7 +42,6 @@ export const CONTACT_FORM_ID = "contact-form";
 // Gap (px) kept between an open dropdown and the viewport edge when the page
 // auto-scrolls the select into view.
 const SELECT_SCROLL_GUTTER = 24;
-const CONTACT_EASE = [0.22, 1, 0.36, 1] as const;
 // Scoped text selection inside the contact inputs: off-white fill / off-black
 // text — the inverse of the global ::selection — so the highlight stays visible
 // against the black focus surface. `leading-none` keeps it hugging the glyphs.
@@ -103,73 +107,28 @@ const SELECT_SEARCH_CLASS =
  */
 const labelIdFor = (controlId: string) => `${controlId}-label`;
 
-const contactFieldGroupVariants: Variants = {
-  hidden: {},
-  visible: {
-    transition: {
-      delayChildren: 0.24,
-      staggerChildren: 0.075,
-    },
-  },
-};
+/**
+ * # La entrada del formulario (R2/F10)
+ *
+ * **Es la del intro de `/services`, y no una copia**: las dos salen de
+ * `@/components/ui/entrance-fade`. Lo pidieron las clientas con esas palabras —
+ * «cambiar animación de entrada de la info. que aparezca como la animación del
+ * texto de la sección de servicios» (`docs/archivo/mockups/r2-trad-14.jpg`).
+ *
+ * Lo que se fue: `CONTACT_EASE` y las tres variantes que animaban `clipPath` +
+ * `filter: blur` + `opacity` con duraciones distintas por propiedad —un barrido
+ * de izquierda a derecha en los campos, uno de abajo hacia arriba en el título y
+ * otro de arriba hacia abajo en el aside—. Ahora los tres **solo aparecen**.
+ *
+ * Lo que queda propio de este formulario es la **cadencia**, y es por una razón
+ * medida: el intro de Services orquesta dos hijos y puede permitirse 0,22 s
+ * entre uno y otro; acá son diez por columna, y a esa cadencia el último campo
+ * arrancaría a los 2,1 s. Los 0,24 / 0,075 son los que ya tenía.
+ */
+const contactFieldGroupVariants = entranceGroup(0.075, 0.24);
 
-const contactFieldVariants: Variants = {
-  hidden: {
-    clipPath: "inset(0 100% 0 0)",
-    filter: "blur(5px)",
-    opacity: 0,
-  },
-  visible: {
-    clipPath: "inset(0 0% 0 0)",
-    filter: "blur(0px)",
-    opacity: 1,
-    transition: {
-      clipPath: { duration: 0.82, ease: CONTACT_EASE },
-      filter: { duration: 0.62, ease: CONTACT_EASE },
-      opacity: { duration: 0.42, ease: CONTACT_EASE },
-    },
-    transitionEnd: {
-      clipPath: "none",
-      filter: "none",
-    },
-  },
-};
-
-const contactTitleVariants: Variants = {
-  hidden: {
-    clipPath: "inset(100% 0 0 0)",
-    filter: "blur(7px)",
-    opacity: 0,
-  },
-  visible: {
-    clipPath: "inset(0% 0 0 0)",
-    filter: "blur(0px)",
-    opacity: 1,
-    transition: {
-      clipPath: { duration: 1.05, ease: CONTACT_EASE },
-      filter: { duration: 0.72, ease: CONTACT_EASE },
-      opacity: { duration: 0.48, ease: CONTACT_EASE },
-    },
-  },
-};
-
-const contactAsideDetailVariants: Variants = {
-  hidden: {
-    clipPath: "inset(0 0 100% 0)",
-    filter: "blur(4px)",
-    opacity: 0,
-  },
-  visible: {
-    clipPath: "inset(0 0 0% 0)",
-    filter: "blur(0px)",
-    opacity: 1,
-    transition: {
-      delay: 0.2,
-      duration: 0.72,
-      ease: CONTACT_EASE,
-    },
-  },
-};
+/** El aside son dos bloques, igual que el intro de Services: cadencia por defecto. */
+const contactAsideGroupVariants = entranceGroup();
 
 function normalizeServiceParam(value: string) {
   return value
@@ -436,7 +395,7 @@ function ContactFieldReveal({
   reduceMotion: boolean;
 }) {
   return (
-    <motion.div variants={reduceMotion ? undefined : contactFieldVariants}>
+    <motion.div variants={reduceMotion ? undefined : entranceFadeVariants}>
       {children}
     </motion.div>
   );
@@ -799,13 +758,21 @@ export default function ContactForm({ service = null }: { service?: string | nul
       // Ni el titulo ni el subtitulo cambian de tamano en ningun rango.
       className="mx-auto flex w-full max-w-[1680px] flex-col gap-12 [--contact-gap:28px] [--contact-label-w:176px] min-[1232px]:grid min-[1232px]:items-start min-[1232px]:gap-x-10 min-[1232px]:max-[1279.98px]:grid-cols-[minmax(280px,1fr)_minmax(784px,872px)] min-[1280px]:max-[1359.98px]:grid-cols-[minmax(272px,1fr)_minmax(840px,1099px)] min-[1280px]:max-[1359.98px]:[--contact-label-w:95px] min-[1360px]:max-[1599.98px]:grid-cols-[minmax(272px,1fr)_minmax(920px,1129px)] min-[1360px]:max-[1599.98px]:[--contact-label-w:111px] min-[1600px]:grid-cols-[minmax(280px,1fr)_minmax(1120px,1192px)]"
     >
-      <aside className="flex w-full max-w-[700px] flex-none flex-col self-start">
-        <motion.div
-          className="overflow-hidden"
-          initial={shouldReduceMotion ? false : "hidden"}
-          animate={isPreloaderDone ? "visible" : "hidden"}
-          variants={shouldReduceMotion ? undefined : contactTitleVariants}
-        >
+      {/*
+        El aside orquesta sus dos bloques como el intro de Services: un grupo con
+        la cadencia por defecto y dos hijos que solo aparecen. Antes eran dos
+        raíces independientes con dos gestos distintos —el título se descubría de
+        abajo hacia arriba y el subtítulo de arriba hacia abajo—, y los dos
+        `overflow-hidden` que los envolvían existían **solo** para recortar ese
+        barrido: sin `clipPath` no recortan nada y se fueron.
+      */}
+      <motion.aside
+        className="flex w-full max-w-[700px] flex-none flex-col self-start"
+        initial={shouldReduceMotion ? false : "hidden"}
+        animate={isPreloaderDone ? "visible" : "hidden"}
+        variants={shouldReduceMotion ? undefined : contactAsideGroupVariants}
+      >
+        <motion.div variants={shouldReduceMotion ? undefined : entranceFadeVariants}>
           <h1 className="font-display text-[26px] font-thin uppercase leading-[31px] tracking-normal md:text-[40px] md:leading-[48px]">
             {copy.title[0]}
             <br />
@@ -816,10 +783,8 @@ export default function ContactForm({ service = null }: { service?: string | nul
         </motion.div>
 
         <motion.div
-          className="mt-9 max-w-[560px] overflow-hidden font-body text-[17px] uppercase leading-[21px] tracking-normal"
-          initial={shouldReduceMotion ? false : "hidden"}
-          animate={isPreloaderDone ? "visible" : "hidden"}
-          variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
+          className="mt-9 max-w-[560px] font-body text-[17px] uppercase leading-[21px] tracking-normal"
+          variants={shouldReduceMotion ? undefined : entranceFadeVariants}
         >
           <p>
             {copy.subtitle[0]}
@@ -827,7 +792,7 @@ export default function ContactForm({ service = null }: { service?: string | nul
             {copy.subtitle[1]}
           </p>
         </motion.div>
-      </aside>
+      </motion.aside>
 
       <div className="min-w-0 min-[1232px]:w-full min-[1232px]:justify-self-end">
         <motion.form
@@ -1178,7 +1143,11 @@ export default function ContactForm({ service = null }: { service?: string | nul
                 className="mt-12 md:grid md:gap-x-[var(--contact-gap)] md:max-[879.98px]:mt-7 md:max-[879.98px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)] min-[880px]:max-[1279.98px]:mt-28 min-[1280px]:max-[1359.98px]:mt-14 min-[1280px]:max-[1599.98px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)] min-[1360px]:max-[1599.98px]:mt-16 min-[1600px]:mt-16 min-[1600px]:grid-cols-[var(--contact-label-w)_minmax(0,420px)]"
                 initial={shouldReduceMotion ? false : "hidden"}
                 animate={isPreloaderDone ? "visible" : "hidden"}
-                variants={shouldReduceMotion ? undefined : contactAsideDetailVariants}
+                variants={shouldReduceMotion ? undefined : entranceFadeVariants}
+                // Raiz de animacion propia, fuera del stagger de los campos
+                // —igual que antes—, con el mismo aire inicial que el modulo le
+                // da al primer hijo de cualquier grupo.
+                transition={{ delay: ENTRANCE_FADE_DELAY }}
               >
                 <div
                   aria-hidden
