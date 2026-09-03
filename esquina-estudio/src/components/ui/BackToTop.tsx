@@ -51,35 +51,31 @@ import { useLocale } from "@/lib/i18n";
  *
  * **Es la constante que hay que mirar si el botón «no aparece nunca».**
  *
- * # Por qué pasó de dos pantallas a una (R2.1/F1)
+ * # Por qué quedó en dos, después de probarlo en una (R2.1/F1)
  *
  * Con **dos** hace falta un documento de más de tres viewports de alto, y medido
- * a 390 × 844 solo lo cumplían `/services` (7499 px de recorrido) y `/team`
- * (3438). En las otras cuatro rutas donde está montado, el botón quedaba inerte,
- * y una función que aparece en dos rutas y en otras cuatro no, se lee como
- * defecto y no como función. Con **una** el umbral deja de ser el cuello de
- * botella, y el número se sigue ajustando solo cuando el portfolio crezca porque
- * está expresado en pantallas y no en píxeles.
+ * a 390 × 844 solo lo cumplen `/services` (7499 px de recorrido) y `/team`
+ * (3438). En las otras cuatro el botón queda inerte.
  *
- * # Con una pantalla llega a cuatro de las seis, y las dos que faltan no las
- * deja afuera este número
+ * Se bajó a **una** por ese motivo, y se volvió a dos con los recorridos
+ * medidos adelante: hay dos rutas largas y cuatro que son poco más que una
+ * pantalla. En una página de 1,2 pantallas la ausencia del botón no se percibe
+ * —estás a un flick del pulgar—, pero una ventana útil de 109 px en `/work` o de
+ * 148–193 en `/contact` sí se percibe, y como parpadeo. «Inerte en cuatro de
+ * seis» era el comportamiento correcto, no un defecto.
  *
- * Medido sobre el sitio servido a 390 × 844, en los dos idiomas. El botón se
- * enciende en la intersección de sus **dos** condiciones —haber pasado el umbral
- * y no estar tapando el footer—, así que la ventana útil es
- * `(innerHeight × APPEAR_AFTER_VIEWPORTS, footerTop − innerHeight + EDGE_GAP]`:
+ * El docblock anterior afirmaba que con una pantalla el botón aparecería en las
+ * seis rutas. **Era falso y nunca se había medido.** Llega a cuatro; las dos que
+ * faltan no las deja afuera este número.
  *
- * | ruta | recorrido EN / ES | ventana con umbral 1 |
- * |---|---|---|
- * | `/services` | 7499 / 7597 | 844 → 5995 · 6155 |
- * | `/team` | 3438 / 3400 | 844 → 2822 · 2845 |
- * | `/contact` | 1309 / 1264 | 844 → 1037 · 992 |
- * | `/work` | 1569 / 1508 | 844 → 953 · 953 |
- * | `/fun-gallery` | 1043 / 1007 | **vacía** |
- * | `/work/[slug]` | 828 / 874 | **vacía** |
+ * # La medición que lo decidió
  *
- * En las dos últimas la ventana es vacía, y lo que la vacía **no es el umbral
- * sino la regla del footer**, que en una ruta corta empieza a valer mucho antes:
+ * Sobre el sitio servido a 390 × 844, en los dos idiomas. El botón se enciende
+ * en la intersección de sus **dos** condiciones —haber pasado el umbral y no
+ * estar tapando el footer—, así que la ventana útil es
+ * `(innerHeight × APPEAR_AFTER_VIEWPORTS, footerTop − innerHeight + EDGE_GAP]`.
+ * La tabla es de la prueba con umbral 1; con umbral 2 el borde inferior no
+ * cambia y el superior pasa a 1688:
  *
  * 1. **`/fun-gallery`.** Su footer arranca en 1247 px de documento (1273 en
  *    castellano), así que el borde superior entra en la banda del botón a partir
@@ -90,12 +86,17 @@ import { useLocale } from "@/lib/i18n";
  *    en castellano, donde el umbral sí se cruza pero el footer arranca en 1139 y
  *    cierra la ventana en 319.
  *
- * Las dos reglas son deliberadas y ninguna se toca acá, así que esas dos rutas
- * se quedan sin botón **por la geometría de su pie, no por descuido**. O sea:
- * este número resuelve `/work` y `/contact`, que era lo que estaba a su alcance;
- * las dos rutas cortas son otra decisión, y está sin tomar.
+  * Las dos reglas son deliberadas y ninguna se toca. Esas dos rutas se quedan sin
+ * botón **por la geometría de su pie, no por descuido**, y con umbral 2 se le
+ * suman `/work` y `/contact` por la misma razón: su ventana es demasiado corta
+ * para que el botón se lea como función.
+ *
+ * Cuando el portfolio crezca y `/work` pase las dos pantallas, el botón entra
+ * solo. Y ahí conviene revisar algo que hoy no se nota: el umbral está atado al
+ * scroll, no al largo del documento. Lo correcto semánticamente es «esta página
+ * es larga, mostrá el botón», no «scrolleaste mucho».
  */
-const APPEAR_AFTER_VIEWPORTS = 1;
+const APPEAR_AFTER_VIEWPORTS = 2;
 
 /**
  * Aire entre el botón y el borde de la pantalla, en píxeles. Es el mismo gutter
