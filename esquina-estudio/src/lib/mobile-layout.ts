@@ -51,12 +51,18 @@ export const TOUCH_TARGET_MIN = 44;
  * servidor, sin JavaScript—, el alto del footer se **resta**, igual que hace el
  * escritorio con sus 164 px desde B2.
  *
- * **El número es 180 y está medido**, no estimado: el `HomeFooter` de mobile
- * mide 180,00 px en los anchos de prueba y en los dos idiomas. Se compone de
- * `py-6` (24 + 24) más las **tres** filas de la grilla —44 de INSTAGRAM, 44 de
- * LINKEDIN y 44 del crédito, sin hueco entre ellas—: 48 + 132 = 180. El logo
- * script no suma alto porque desde R2/F11.3 vive en la columna del medio y no en
- * una cuarta fila.
+ * **El número es 113 y está medido**, no estimado: el `HomeFooter` de mobile
+ * mide 113,00 px a 320, 390 y 430 en los dos idiomas (R3/F4). Se compone de
+ * `py-6` (24 + 24) más las **tres** filas de la grilla, que desde R3/F2 miden
+ * lo que mide un renglón —21 de INSTAGRAM, 21 de LINKEDIN y 23 del crédito, que
+ * lleva el logo de develOP de 22 px—: 48 + 65 = 113. El logo script no suma
+ * alto porque desde R2/F11.3 vive en la columna del medio y no en una cuarta
+ * fila, y con 48 px entra en los 65 de la grilla.
+ *
+ * **Era 180 hasta R3/F2**, cuando cada fila medía 44 por el piso táctil de
+ * `TOUCH_LINKS` (48 + 132). La compresión al paso del mockup se llevó 67 px, y
+ * medido bloque contra footer antes de recalibrar la holgura muerta era
+ * exactamente esa: **67,00 px** en las seis combinaciones.
  *
  * **Era 304 hasta R2/F11.3**, cuando la grilla tenía cinco filas: las tres de
  * arriba más 16 de aire, 44 del crédito, 16 de aire y 48 del logo script.
@@ -102,7 +108,7 @@ export const TOUCH_TARGET_MIN = 44;
  * y lo que quedó documentado como el punto 13 de este sprint.
  */
 export const HOME_BLOCK_HEIGHT_MOBILE =
-  "max-lg:h-[calc(100svh-var(--header-height)-180px)]";
+  "max-lg:h-[calc(100svh-var(--header-height)-113px)]";
 
 /**
  * El hueco que ocupa el footer de home, como relleno inferior (M2/F3, punto 9).
@@ -112,12 +118,14 @@ export const HOME_BLOCK_HEIGHT_MOBILE =
  * que queda por encima de esa franja y no en la pantalla entera, o a 320 × 640
  * el párrafo terminaba 46 px por debajo del borde superior del footer.
  *
- * Los dos números son los altos reales del footer: **180** en mobile desde
- * R2/F11.3 (eran 304 desde M4/F3 y 244 antes; ver arriba) y 164 en escritorio,
- * los `40 + 84 + 40` que `page.tsx` publica desde B2 y que R2 no tocó. Van
- * escritos enteros por la misma razón: Tailwind busca literales.
+ * Los dos números son los altos reales del footer: **113** en mobile desde
+ * R3/F4 (eran 180 desde R2/F11.3, 304 desde M4/F3 y 244 antes; ver arriba) y
+ * 164 en escritorio, los `40 + 84 + 40` que `page.tsx` publica desde B2 y que
+ * ni R2 ni R3 tocaron. Van escritos enteros por la misma razón: Tailwind busca
+ * literales. Se recalibra junto con `HOME_BLOCK_HEIGHT_MOBILE`, siempre: son la
+ * misma medida en dos consumidores.
  */
-export const HOME_FOOTER_CLEARANCE = "pb-[180px] lg:pb-[164px]";
+export const HOME_FOOTER_CLEARANCE = "pb-[113px] lg:pb-[164px]";
 
 /**
  * Le da los 44 px de alto tocable al `<a>` que emite `HoverButton`, **sin tocar

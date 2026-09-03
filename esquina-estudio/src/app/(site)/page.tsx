@@ -27,9 +27,10 @@ import { HOME_BLOCK_HEIGHT_MOBILE } from "@/lib/mobile-layout";
  *
  * El término de mobile vive aparte, en `HOME_BLOCK_HEIGHT_MOBILE`, porque su
  * footer es otro: desde R2/F11.3 son **tres filas de dos columnas con el logo
- * script en la del medio**, y mide **180 px** —eran 304 mientras el logo tuvo su
- * cuarta fila y `WORKING WORLDWIDE` su renglón—. Los dos términos son
- * excluyentes (`lg` contra `max-lg`) y nunca compiten.
+ * script en la del medio**, y desde R3/F2 esas filas miden un renglón, así que
+ * el footer mide **113 px** —eran 180 con las filas de 44 del piso táctil, y 304
+ * mientras el logo tuvo su cuarta fila y `WORKING WORLDWIDE` su renglón—. Los
+ * dos términos son excluyentes (`lg` contra `max-lg`) y nunca compiten.
  *
  * **El de mobile no se verifica con el alto del documento sino midiendo el
  * bloque contra el footer**: `/` da una pantalla exacta con el número bien o mal,

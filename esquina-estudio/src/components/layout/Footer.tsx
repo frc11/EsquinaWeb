@@ -260,9 +260,11 @@ function DevelopCredit({
  * dos columnas terminen parejas está en `MOBILE_PLACE_CELL`, y ahí está también
  * por qué **`WORKING WORLDWIDE` no aparece acá y sí de 1024 para arriba**.
  *
- * Medido sobre el sitio servido: el footer de `/` mide **180 px** a 320, 390 y
+ * Medido sobre el sitio servido: el footer de `/` mide **113 px** a 320, 390 y
  * 430 en los dos idiomas —de ahí sale `HOME_BLOCK_HEIGHT_MOBILE`—, la columna
- * izquierda apoya en x = 24 y la derecha cierra contra el gutter derecho.
+ * izquierda apoya en x = 24 y la derecha cierra contra el gutter derecho. Las
+ * tres filas miden 21 / 21 / 23 y el paso entre renglones es el del mockup
+ * (R3/F2); eran 44 cada una, y el footer 180, hasta R3.
  *
  * Antes de R2/F11.3 eran **cuatro filas y 304 px**: los dos pares de lugar a la
  * izquierda, el crédito con su prefijo y el copyright compartiendo la tercera, y
