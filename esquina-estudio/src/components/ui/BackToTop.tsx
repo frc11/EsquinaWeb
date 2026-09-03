@@ -40,6 +40,17 @@ import { useLocale } from "@/lib/i18n";
  * interrupción, que son los mismos de `ServicesSidebar`: al primer gesto el
  * viaje se detiene y suelta el scroll.
  *
+ * # El botón sube con el footer (R3.1)
+ *
+ * El botón **no se apaga nunca** —pedido de Valentino en la revisión en teléfono
+ * de R3— y **no le tapa nada al footer**. Las dos cosas juntas solo salen
+ * moviéndolo: mientras el footer está fuera del viewport el botón se apoya en su
+ * gutter de siempre, y a medida que el borde superior del footer entra, el botón
+ * se corre hacia arriba **la misma cantidad que el footer entró**, así que queda
+ * apoyado sobre el footer con el mismo aire que tenía contra el borde de la
+ * pantalla. Es continuo y no un umbral: la cuenta está en el efecto y el número
+ * en `EDGE_GAP`.
+ *
  * # Qué NO hace
  *
  * No existe de 1024 px para arriba (`lg:hidden`), ni en `/` ni en
@@ -75,13 +86,15 @@ import { useLocale } from "@/lib/i18n";
  * 3177 / 3201 lo cumplen; `/work` 1309 / 1309, `/contact` 1314 / 1269,
  * `/fun-gallery` 862 / 888 y `/work/matsu` 567 / 675 no llegan a 1688.
  *
- * Y lo que la regla del footer evitaba, dicho con números: en las rutas donde
- * el botón sí aparece, al llegar al pie queda **encima de la columna derecha
- * del footer** —a 320 × 640 su caja de 44 px cubre `LINKEDIN` y `develOP`, y a
- * 390 × 844 los mismos dos—, porque los dos se apoyan en el mismo gutter de 24
- * px. Es la consecuencia aceptada de que no desaparezca; la alternativa que
- * satisface las dos cosas —que el botón suba con el footer en vez de taparlo o
- * apagarse— quedó anotada en los pendientes de R3 y no se implementó.
+ * Lo que la regla del footer evitaba lo resuelve hoy el corrimiento, no la
+ * visibilidad: ver `EDGE_GAP` y el efecto de abajo. Dicho con números, el
+ * pisado que dejó R3 y que R3.1 cierra: al llegar al pie, la caja del botón
+ * cubría los **21 px enteros** de `LINKEDIN` y de `develOP` en las doce
+ * combinaciones donde el botón aparece —`/services` y `/team` a 390, y esas
+ * dos más `/work` y `/contact` a 320, en los dos idiomas—, y le comía además
+ * 11,1–12,1 px de la banda táctil de `INSTAGRAM`. `elementFromPoint` sobre el
+ * centro de tinta devolvía el botón en veinticuatro de esos treinta y seis
+ * puntos.
  *
  * Cuando el portfolio crezca y `/work` pase las dos pantallas, el botón entra
  * solo. Y ahí conviene revisar algo que hoy no se nota: el umbral está atado al
@@ -89,6 +102,33 @@ import { useLocale } from "@/lib/i18n";
  * es larga, mostrá el botón», no «scrolleaste mucho».
  */
 const APPEAR_AFTER_VIEWPORTS = 2;
+
+/**
+ * Aire del botón, en píxeles. Es el mismo gutter de 24 px que usa el cromo en
+ * mobile, y **es el espejo en JavaScript del `bottom-6 right-6` de abajo**: si
+ * uno cambia, cambia el otro. Va como número porque el corrimiento se calcula,
+ * y Tailwind necesita la clase escrita entera.
+ *
+ * # Gobierna dos distancias, y son la misma
+ *
+ * 1. **Contra el borde de la pantalla**, en reposo: el borde inferior del botón
+ *    queda en `innerHeight − EDGE_GAP`.
+ * 2. **Contra el tope del footer**, cuando el footer entra en el viewport: el
+ *    botón no puede bajar de `footerTop − EDGE_GAP`.
+ *
+ * El corrimiento es la diferencia entre las dos, acotada a cero, y por eso el
+ * aire que el botón conserva sobre el footer es **el mismo** que tenía contra
+ * el borde: no hay un valor nuevo, hay un techo que se mueve.
+ *
+ * # No es la constante vieja
+ *
+ * Hasta R3 existía un `EDGE_GAP` con este mismo valor, pero al servicio de una
+ * **regla de visibilidad**: decidía a partir de qué punto el botón se apagaba
+ * para no taparle nada al footer. Esa regla se fue en R3 —un botón que
+ * desaparece al llegar al final se lee como falla— y se llevó la constante con
+ * ella. Vuelve en R3.1 para lo contrario: el botón no se apaga, se corre.
+ */
+const EDGE_GAP = 24;
 
 /** Duración del viaje. Es la del salto del sidebar de Services, no un número nuevo. */
 const TRIP_VISUAL_DURATION = 0.7;
@@ -118,40 +158,85 @@ export default function BackToTop() {
   const [visible, setVisible] = useState(false);
   /** Detiene el viaje en curso y da de baja sus listeners. Idempotente. */
   const stopRef = useRef<(() => void) | null>(null);
+  /** El botón, para escribirle el corrimiento sin pasar por el estado de React. */
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const enabled = !SINGLE_SCREEN_ROUTES.has(pathname);
 
   useEffect(() => {
     // En las rutas de una pantalla el componente ni siquiera se renderiza, así
     // que no hace falta apagar el estado: alcanza con no escuchar nada. Al
-    // volver a una ruta larga, el `update()` de abajo lo recalcula.
+    // volver a una ruta larga, el `measure()` de abajo lo recalcula.
     if (!enabled) return;
 
     /*
-      Una sola condición: haber bajado más de `APPEAR_AFTER_VIEWPORTS` pantallas.
+      Una sola lectura por cuadro, y de ella salen las dos cosas que dependen del
+      scroll: si el botón se ve y cuánto sube.
 
+      # La visibilidad
+
+      Una sola condición: haber bajado más de `APPEAR_AFTER_VIEWPORTS` pantallas.
       Hasta R3 había una segunda —apagarse en cuanto el borde superior del footer
       subía por encima de la banda del botón—, escrita para que el botón no le
-      tapara nada al footer: medido, al llegar al pie quedaba justo encima del
-      enlace del crédito (`HECHO POR develOP`). En la revisión en teléfono
-      (R3/F0) Valentino la sacó: un botón que desaparece justo cuando se llega
-      al final se lee como falla, no como cortesía. El botón queda encendido
-      hasta el pie del documento y cae por encima del footer (`z-[60]`); el
-      solapamiento con el crédito es aceptado.
+      tapara nada al footer. En la revisión en teléfono (R3/F0) Valentino la
+      sacó: un botón que desaparece justo cuando se llega al final se lee como
+      falla, no como cortesía. **No se restituye**, y lo que ella evitaba lo
+      resuelve el corrimiento de acá abajo.
 
-      `resize` sigue escuchándose porque el umbral depende de `innerHeight`.
+      # El corrimiento
+
+      El botón se apoya en `innerHeight − EDGE_GAP` y no puede bajar de
+      `footerTop − EDGE_GAP`; sube la diferencia, acotada a cero. Con el footer
+      fuera del viewport `footerTop ≥ innerHeight` y la diferencia es negativa,
+      así que el botón queda donde está. Como `footerTop` baja un píxel por cada
+      píxel de scroll, el corrimiento **acompaña al footer de forma continua**:
+      no hay umbral y no hay tirón.
+
+      Va como `transform` y no como `bottom` a propósito: `translateY` no
+      dispara layout, y **no se anima**, así que sigue al scroll cuadro a cuadro
+      en vez de arrastrarse detrás de él. Por lo mismo `prefers-reduced-motion`
+      no lo toca: es una posición, no una animación —lo que se apaga ahí es la
+      transición de opacidad, con `motion-reduce:transition-none`—.
+
+      La escritura va directo al nodo y no por estado: un `setState` por cuadro
+      de scroll re-renderizaría el árbol entero del botón. Es el mismo patrón de
+      `CustomCursor` —un `requestAnimationFrame` amortiguando el evento, con la
+      referencia del cuadro como candado para no encolar dos—.
+
+      `resize` sigue escuchándose porque las dos cuentas dependen de
+      `innerHeight`.
     */
-    const update = () => {
+    let frame: number | null = null;
+
+    const measure = () => {
+      frame = null;
       setVisible(window.scrollY > window.innerHeight * APPEAR_AFTER_VIEWPORTS);
+
+      const button = buttonRef.current;
+      if (!button) return;
+
+      const restingBottom = window.innerHeight - EDGE_GAP;
+      const footer = document.querySelector("footer");
+      const ceiling = footer
+        ? footer.getBoundingClientRect().top - EDGE_GAP
+        : restingBottom;
+      const lift = Math.max(0, restingBottom - ceiling);
+
+      button.style.transform = lift > 0 ? `translateY(${-lift}px)` : "";
     };
 
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update, { passive: true });
+    const schedule = () => {
+      if (frame === null) frame = window.requestAnimationFrame(measure);
+    };
+
+    measure();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule, { passive: true });
 
     return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
     };
   }, [enabled, pathname]);
 
@@ -209,9 +294,15 @@ export default function BackToTop() {
 
       La caja es de 44 × 44, que es el piso de área táctil de §2b, y el rótulo va
       dentro. `bottom-6 right-6` lo apoya en el mismo gutter de 24 px que usa el
-      resto del cromo en mobile.
+      resto del cromo en mobile, y esos 24 son los de `EDGE_GAP`: el efecto de
+      arriba lo levanta desde acá con un `translateY` cuando el footer entra.
+
+      **La `transition` es de opacidad y solo de opacidad** (`transition-opacity`,
+      no `transition-all`): si alcanzara al `transform`, el corrimiento se
+      arrastraría 300 ms detrás del scroll en vez de acompañarlo.
     */
     <button
+      ref={buttonRef}
       type="button"
       onClick={goTop}
       aria-hidden={!visible}
