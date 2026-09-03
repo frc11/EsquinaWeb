@@ -31,7 +31,17 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
     // internas —74 px en /services, 80 en /fun-gallery, 88 en /work/[slug] a
     // 390—. Va en la sección y no en el formulario: es aire de la ruta contra
     // el footer, no composición del questionnaire, que no se toca.
-    <section className="bg-off-white px-6 pt-6 text-off-black max-lg:pb-18 md:px-12 md:pt-10 lg:px-16 lg:pt-14">
+    //
+    // El footer queda bajo el pliegue de 1024 para arriba (R3/F8): el pedido
+    // es que en /contact no se vea sin scrollear. Hasta R3 la sección
+    // terminaba en el pie del formulario y el footer se pegaba ahí, visible
+    // en reposo con 110 a 470 px de sobra según el alto (medido a 1280, 1440,
+    // 1600 y 1920, alturas 720 a 1080). Con el alto mínimo en
+    // `100svh − header` la sección cierra exactamente en el borde inferior del
+    // viewport y el footer arranca ahí: no se ve con scrollY 0 y se alcanza
+    // scrolleando. Es alto del contenedor, no composición: el formulario y
+    // sus escalones no se tocan. Solo `lg:`; en mobile manda el pb de arriba.
+    <section className="bg-off-white px-6 pt-6 text-off-black max-lg:pb-18 md:px-12 md:pt-10 lg:min-h-[calc(100svh-var(--header-height))] lg:px-16 lg:pt-14">
       <ContactForm service={serviceParam} />
     </section>
   );
