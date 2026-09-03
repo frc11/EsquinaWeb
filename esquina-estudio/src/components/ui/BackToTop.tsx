@@ -51,45 +51,27 @@ import { useLocale } from "@/lib/i18n";
  *
  * **Es la constante que hay que mirar si el botón «no aparece nunca».**
  *
- * # Por qué quedó en dos, después de probarlo en una (R2.1/F1)
+ * # Por qué quedó en dos, después de probarlo en una (R2.1/F1 → R3/F0)
  *
  * Con **dos** hace falta un documento de más de tres viewports de alto, y medido
  * a 390 × 844 solo lo cumplen `/services` (7499 px de recorrido) y `/team`
  * (3438). En las otras cuatro el botón queda inerte.
  *
  * Se bajó a **una** por ese motivo, y se volvió a dos con los recorridos
- * medidos adelante: hay dos rutas largas y cuatro que son poco más que una
+ * medidos en ese sprint: hay dos rutas largas y cuatro que son poco más que una
  * pantalla. En una página de 1,2 pantallas la ausencia del botón no se percibe
  * —estás a un flick del pulgar—, pero una ventana útil de 109 px en `/work` o de
  * 148–193 en `/contact` sí se percibe, y como parpadeo. «Inerte en cuatro de
  * seis» era el comportamiento correcto, no un defecto.
  *
- * El docblock anterior afirmaba que con una pantalla el botón aparecería en las
- * seis rutas. **Era falso y nunca se había medido.** Llega a cuatro; las dos que
- * faltan no las deja afuera este número.
- *
- * # La medición que lo decidió
- *
- * Sobre el sitio servido a 390 × 844, en los dos idiomas. El botón se enciende
- * en la intersección de sus **dos** condiciones —haber pasado el umbral y no
- * estar tapando el footer—, así que la ventana útil es
- * `(innerHeight × APPEAR_AFTER_VIEWPORTS, footerTop − innerHeight + EDGE_GAP]`.
- * La tabla es de la prueba con umbral 1; con umbral 2 el borde inferior no
- * cambia y el superior pasa a 1688:
- *
- * 1. **`/fun-gallery`.** Su footer arranca en 1247 px de documento (1273 en
- *    castellano), así que el borde superior entra en la banda del botón a partir
- *    de `scrollY` 427 (453). El umbral pide `scrollY > 844`: los dos rangos no
- *    se cruzan.
- * 2. **`/work/[slug]`.** `/work/matsu` mide 1672 px en inglés —828 de recorrido,
- *    o sea **menos de una pantalla**, que ningún umbral positivo alcanza— y 1718
- *    en castellano, donde el umbral sí se cruza pero el footer arranca en 1139 y
- *    cierra la ventana en 319.
- *
-  * Las dos reglas son deliberadas y ninguna se toca. Esas dos rutas se quedan sin
- * botón **por la geometría de su pie, no por descuido**, y con umbral 2 se le
- * suman `/work` y `/contact` por la misma razón: su ventana es demasiado corta
- * para que el botón se lea como función.
+ * Esas ventanas se midieron cuando el botón tenía **dos** condiciones —haber
+ * pasado el umbral y no estar tapando el footer— y la segunda ya no existe (ver
+ * el efecto de abajo). Hoy la ventana es
+ * `(innerHeight × APPEAR_AFTER_VIEWPORTS, docHeight − innerHeight]` y la única
+ * condición para que el botón aparezca es que el documento mida más de tres
+ * pantallas. A 390 × 844, en recorrido EN / ES: `/services` 7499 / 7597 y
+ * `/team` 3438 / 3400 lo cumplen; `/work` 1569 / 1508, `/contact` 1309 / 1264,
+ * `/fun-gallery` 1043 / 1007 y `/work/matsu` 828 / 874 no llegan a 1688.
  *
  * Cuando el portfolio crezca y `/work` pase las dos pantallas, el botón entra
  * solo. Y ahí conviene revisar algo que hoy no se nota: el umbral está atado al
@@ -97,13 +79,6 @@ import { useLocale } from "@/lib/i18n";
  * es larga, mostrá el botón», no «scrolleaste mucho».
  */
 const APPEAR_AFTER_VIEWPORTS = 2;
-
-/**
- * Aire entre el botón y el borde de la pantalla, en píxeles. Es el mismo gutter
- * de 24 px que usa el cromo en mobile (`bottom-6 right-6`), y se necesita como
- * número porque decide dónde empieza a taparse con el footer.
- */
-const EDGE_GAP = 24;
 
 /** Duración del viaje. Es la del salto del sidebar de Services, no un número nuevo. */
 const TRIP_VISUAL_DURATION = 0.7;
@@ -143,26 +118,21 @@ export default function BackToTop() {
     if (!enabled) return;
 
     /*
-      Dos condiciones, y la segunda es un requisito escrito del sprint: **el
-      botón no puede taparle nada al footer**. Medido antes de agregarla, al
-      llegar al pie del documento el botón quedaba justo encima del enlace del
-      crédito (`HECHO POR develOP`) en las tres anchuras de prueba.
+      Una sola condición: haber bajado más de `APPEAR_AFTER_VIEWPORTS` pantallas.
 
-      La regla es geométrica y no una lista de rutas: el botón ocupa la banda
-      `[innerHeight − EDGE_GAP − alto, innerHeight − EDGE_GAP]`, así que se
-      superpone con el footer en cuanto el borde superior del footer sube por
-      encima de `innerHeight − EDGE_GAP`. Ahí se apaga, y vuelve apenas se sube
-      un poco.
+      Hasta R3 había una segunda —apagarse en cuanto el borde superior del footer
+      subía por encima de la banda del botón—, escrita para que el botón no le
+      tapara nada al footer: medido, al llegar al pie quedaba justo encima del
+      enlace del crédito (`HECHO POR develOP`). En la revisión en teléfono
+      (R3/F0) Valentino la sacó: un botón que desaparece justo cuando se llega
+      al final se lee como falla, no como cortesía. El botón queda encendido
+      hasta el pie del documento y cae por encima del footer (`z-[60]`); el
+      solapamiento con el crédito es aceptado.
+
+      `resize` sigue escuchándose porque el umbral depende de `innerHeight`.
     */
     const update = () => {
-      const pasoElUmbral =
-        window.scrollY > window.innerHeight * APPEAR_AFTER_VIEWPORTS;
-      const footer = document.querySelector("footer");
-      const footerALaVista = footer
-        ? footer.getBoundingClientRect().top < window.innerHeight - EDGE_GAP
-        : false;
-
-      setVisible(pasoElUmbral && !footerALaVista);
+      setVisible(window.scrollY > window.innerHeight * APPEAR_AFTER_VIEWPORTS);
     };
 
     update();
