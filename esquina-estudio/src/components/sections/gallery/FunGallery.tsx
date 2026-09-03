@@ -202,15 +202,33 @@ const TITLE_GAP = "clamp(24px, 3.7svh, 40px)";
  * llevados a las unidades del sitio (708 px de pantalla = 393 CSS):
  *
  * - del pie de la frase al tope del cartel: 36 px de la captura = **20**;
- * - del pie del cartel al tope de la composición: **40** (los 126 px de la
- *   captura hasta la TINTA, menos el aire que el montón deja dentro de su
- *   propia caja).
+ * - del pie del cartel al tope de la composición: hasta R3 eran **40**, y ahí
+ *   estaba el error que las clientas vieron como «pegados».
  *
- * De ahí el aire del título en mobile: 20 + 17 del cartel + 40 = **77 px**, y el
- * cartel se ancla 57 px por encima del tope de la composición (40 + 17).
+ * # El aire entre el cartel y el montón se mide en tinta, no en cajas (R3/F6)
+ *
+ * Los 40 se habían calibrado contra la **caja** de la composición, y el montón
+ * no vive en su caja: escalado 1,37 sobresale 27 px por encima de ella a 390.
+ * Medido sobre el sitio servido, píxel a píxel y con el mismo método que el
+ * mockup: entre el pie de la tinta de `(click to view)` y el tope de la tinta
+ * del montón quedaban **5 px** a 390 × 844 (4 en castellano, 12 a 320 × 640).
+ * En la referencia hay **128 px de captura, o sea el 9,9 % del alto del
+ * viewport** (1288 px de captura entre la barra de estado y la de Safari).
+ *
+ * Se aplica como `10svh` de tinta a tinta. Para que la tinta quede a 10svh la
+ * caja de la composición tiene que bajar además los **35 px** que separan su
+ * tope de la tinta del montón a 390 (los 40 de caja menos los 5 de tinta que
+ * había). Es el desfase del sobresaliente del montón menos el margen
+ * transparente de los assets, y va como constante porque depende del ancho y
+ * no del alto: a 320 vale 28 y a 430 unos 40, así que el aire real queda entre
+ * 9,5 y 11 % según el teléfono. Solo tiene efecto debajo de 768 (`--a-cap` y
+ * `--title-gap-mobile`); de `md` para arriba no cambia nada.
+ *
+ * De ahí el aire del título en mobile: 20 + 17 del cartel + 35 + 10svh, y el
+ * cartel se ancla 17 + 35 + 10svh por encima del tope de la composición.
  */
-const MOBILE_TITLE_GAP = "77px";
-const MOBILE_CAPTION_TOP = "-57px";
+const MOBILE_TITLE_GAP = "calc(72px + 10svh)";
+const MOBILE_CAPTION_TOP = "calc(-52px - 10svh)";
 
 /*
   CUATRO COLUMNAS, FILAS COMPLETAS DE ARRIBA HACIA ABAJO (M9/F2, corregido en M10)
