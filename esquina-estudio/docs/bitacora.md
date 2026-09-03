@@ -5562,3 +5562,199 @@ el build local.
 
 - **Commits:** dos previos a la ronda (`f44fb80`, `90ddc0d`), ocho de producto
   (fases 2 a 9) y este de registros.
+
+---
+
+## 2026-09-03 · R3.1 · El botón de volver arriba deja de tapar el footer
+
+**Objetivo:** que el botón suba con el footer en vez de pisarlo, sin volver a
+esconderse. Cuatro fases (0 a 3), sobre `main` y **sin `git push`** — producción
+sigue en M13 (`6c59c46`). Modelo `opus-5`, esfuerzo alto, banco de `tools/bench/`
+sin reconstruir. Es el cabo que R3 dejó abierto en su Fase 0 y anotó en
+pendientes.
+
+**Lo que cambia el mapa mental del repo:** el botón de volver arriba **ya no está
+quieto**. Sigue apoyado en su gutter de 24 px mientras el footer está fuera del
+viewport, y a partir de ahí **se corre hacia arriba exactamente lo que el footer
+entró**, de forma continua. La regla que lo apagaba en el pie **no se
+restituyó** y no se va a restituir: es pedido explícito de Valentino. `EDGE_GAP`
+vuelve al archivo, pero al servicio de dos distancias en vez de una regla de
+visibilidad.
+
+### Fase 0 — terreno, la vara y el diagnóstico
+
+Árbol limpio salvo el `docs.zip` conocido. HEAD `5d898ef`. Lint y build en verde
+en base. La vara quedó en `docs/archivo/mediciones/r31-f0-base.json`: 48 altos,
+**0 desborde horizontal en los 48**, formulario 426 / 450 / 498 / 498 a
+1280 / 1360 / 1600 / 1920 con 0 truncados en los dos idiomas.
+
+**a) Dónde está montado el botón, leído del componente y no de la
+documentación.** Se renderiza en las **seis** rutas que no son `/` ni
+`/contact/success` (`SINGLE_SCREEN_ROUTES`), y es **mobile puro**: `lg:hidden`
+lo deja en `display: none` en las **24 combinaciones** de 1024 y 1920 donde se
+renderiza. Se enciende con **una sola condición** —`scrollY > innerHeight ×
+APPEAR_AFTER_VIEWPORTS`, o sea un documento de más de tres pantallas—, que es lo
+que quedó después de que R3 se llevara la segunda.
+
+**b) Cuánto mide y de qué cuelga.** 44 px de alto por **123,31** (EN) /
+**135,75** (ES) de ancho —la caja crece con el rótulo, no es un círculo de 44—.
+Se apoya a **24,00 px** de los bordes inferior y derecho en las 24
+combinaciones, y esa distancia la gobierna **el `bottom-6 right-6` de la clase y
+nada más**: `EDGE_GAP` se había ido con la regla vieja, así que en R3 no había
+ningún número en JavaScript detrás del gutter.
+
+**c) El pisado de hoy, y es peor que lo documentado.** R3 lo dejó anotado en
+tres combinaciones; medido, son **doce**: `/services` y `/team` a 390 × 844, y
+esas dos más **`/work` y `/contact`** a 320 × 640, en los dos idiomas. `/contact`
+a 320 no figuraba en ningún lado.
+
+| solapamiento a fondo de página | tinta (ancho × alto) | banda táctil de 44 px |
+|---|---|---|
+| `INSTAGRAM` | 87,09 × **0,1–0,6** | 87,09 × **11,1–12,1** |
+| `LINKEDIN` | 66,84 × **20,6–21,0** | 66,84 × **32,1–33,1** |
+| `develOP` | 58,45 × **21,0** | 90,45 × **32,9–33,9** |
+
+O sea: los **21 px enteros** de los dos renglones de abajo, que es todo el
+renglón. Con el paso de 21 px que dejó la Fase 2 de R3, dos enlaces
+completamente cubiertos.
+
+### Fase 1 — el botón sube con el footer (`faf445b`)
+
+La cuenta, en el efecto del componente:
+
+```
+restingBottom = innerHeight − EDGE_GAP     ← dónde se apoya en reposo
+ceiling       = footerTop   − EDGE_GAP     ← hasta dónde puede bajar
+lift          = max(0, restingBottom − ceiling)
+```
+
+`EDGE_GAP = 24` vuelve **con su docblock**, y el docblock dice lo que la
+constante hace ahora: gobierna **dos** distancias —contra el borde de la
+pantalla y contra el tope del footer—, que son la misma, y no una regla de
+visibilidad. No hay valor nuevo: el aire que el botón conserva sobre el footer
+sale de que el techo se mueve, no de un segundo número.
+
+Cinco decisiones que vale la pena dejar escritas:
+
+1. **Atado a la posición del footer, no a un umbral de scroll.** Como `footerTop`
+   baja un píxel por cada píxel de scroll, el corrimiento acompaña al footer de
+   forma continua. Un umbral se habría visto como tirón.
+2. **Se repuso la lectura que se llevó la regla vieja** —el
+   `document.querySelector("footer").getBoundingClientRect().top` de `90ddc0d`—
+   en vez de armar un segundo sistema de observación. El archivo no tenía otro.
+3. **Amortiguación: `requestAnimationFrame` con la referencia del cuadro como
+   candado**, que es el patrón de `CustomCursor` y el único de este tipo en el
+   repo. Una lectura por cuadro, y de ella salen las dos cosas que dependen del
+   scroll: la visibilidad y el corrimiento.
+4. **`transform` y no `bottom`, escrito directo al nodo y no por estado.**
+   `translateY` no dispara layout; un `setState` por cuadro de scroll
+   re-renderizaría el botón entero. React no pisa el estilo en línea porque el
+   elemento no declara prop `style`.
+5. **`prefers-reduced-motion` no lo toca.** El corrimiento es posicional y no se
+   anima —la `transition` del botón es `transition-opacity`, no
+   `transition-all`—, así que sigue al scroll cuadro a cuadro y se mantiene
+   bajo movimiento reducido, que es lo que corresponde: lo que evita es un
+   pisado, no una decoración.
+
+### Fase 2 — verificación
+
+**La prueba que decide la fase.** `elementFromPoint` sobre el centro de tinta de
+los tres enlaces, con el scroll en el fondo, en las doce combinaciones donde el
+botón aparece — treinta y seis puntos:
+
+| ruta | ancho | idioma | INSTAGRAM | LINKEDIN | develOP |
+|---|---|---|---|---|---|
+| `/services` | 390 | en | enlace → enlace | **BOTÓN** → enlace | **BOTÓN** → enlace |
+| `/team` | 390 | en | enlace → enlace | **BOTÓN** → enlace | **BOTÓN** → enlace |
+| `/work` | 320 | en | enlace → enlace | **BOTÓN** → enlace | **BOTÓN** → enlace |
+| `/services` | 320 | en | enlace → enlace | **BOTÓN** → enlace | **BOTÓN** → enlace |
+| `/team` | 320 | en | enlace → enlace | **BOTÓN** → enlace | **BOTÓN** → enlace |
+| `/contact` | 320 | en | enlace → enlace | **BOTÓN** → enlace | **BOTÓN** → enlace |
+| `/services` | 390 | es | enlace → enlace | **BOTÓN** → enlace | **BOTÓN** → enlace |
+| `/team` | 390 | es | enlace → enlace | **BOTÓN** → enlace | **BOTÓN** → enlace |
+| `/work` | 320 | es | enlace → enlace | **BOTÓN** → enlace | **BOTÓN** → enlace |
+| `/services` | 320 | es | enlace → enlace | **BOTÓN** → enlace | **BOTÓN** → enlace |
+| `/team` | 320 | es | enlace → enlace | **BOTÓN** → enlace | **BOTÓN** → enlace |
+| `/contact` | 320 | es | enlace → enlace | **BOTÓN** → enlace | **BOTÓN** → enlace |
+
+**Antes: el botón en 24 de 36 puntos. Después: en 0 de 36.** Los tres enlaces
+devuelven su propio `<a>` en las doce combinaciones, y el aire entre el borde
+inferior del botón y el tope del footer es de **24,00 px exactos** en las 24
+combinaciones donde el botón está montado en mobile —también en las doce donde
+no llega a encenderse—.
+
+**El corrimiento es continuo.** Trece muestras equiespaciadas por la zona de
+transición, en las doce combinaciones. El botón se mueve **1 px por cada píxel
+de scroll**, sin excepción, y el aire contra el pie se mantiene en 24 durante
+toda la serie. `/services` a 390 EN, zona de 379 px:
+
+```
+scrollY :  6859  6891  6922  6954  6985  7017  7049  7080  7112  7143  7175  7206  7238
+btnTop  :   776   744   713   681   650   618   586   555   523   492   460   429   397
+Δ btnTop:   −32   −31   −32   −31   −32   −32   −31   −32   −31   −32   −31   −32
+aire→pie:    24    24    24    24    24    24    24    24    24    24    24    24    24
+```
+
+El Δ es el paso del muestreo (1/12 de la zona), no un salto: coincide con el Δ
+del scroll en las trece muestras de las doce combinaciones. Las zonas miden
+**379–398 px** en las rutas internas y **208 px** en `/contact`, que es el alto
+de cada footer.
+
+**Lo demás:**
+
+- **El botón sigue visible al fondo** en las mismas doce combinaciones que antes
+  de la corrección: la visibilidad no se tocó.
+- **Y sigue funcionando.** `elementFromPoint` sobre su propio centro lo devuelve
+  a él, `pointer-events: auto`, y el click lleva a `scrollY` 0 en las doce —con
+  `animatedScroll` en **0** en las cuatro con Lenis (`/team` ×2, `/work` ×2)—.
+  Al llegar arriba el `transform` vuelve a `none`.
+- **Los 48 altos idénticos** a la Fase 0, y el fit del formulario también: 0
+  cambios en las 48 claves de página y en las 8 de formulario.
+- **Cero desborde horizontal** en las 48 y en las 16 de 320 × 640.
+- **El escritorio intacto:** las 32 claves de 1024 y 1920 idénticas, y el botón
+  en `display: none` en las 24 combinaciones donde se renderiza, así que el
+  `transform` no puede pintar.
+- **Lint y build en verde** con el servidor bajado.
+
+### PARADA 1, planteada y aceptada
+
+A fondo de página el botón queda, por construcción, sobre **contenido del
+cuerpo**: los 24 px sobre el footer son cuerpo. En cuatro de las doce
+combinaciones lo que hay debajo es inerte (`/team` a 390 y 320, `/contact` a
+320: solo `main` / `section`). En las otras ocho roza un tocable:
+
+| ruta | ancho | idioma | tocable | caja del enlace | tapado | % del enlace |
+|---|---|---|---|---|---|---|
+| `/services` | 390 | en | `LET'S BRING YOUR IDEAS TO LIFE` | 333,38 × 44 | 114,69 × **4** | 3,13 % |
+| `/services` | 390 | es | `HAGAMOS REALIDAD TUS IDEAS` | 328,44 × 44 | 122,19 × **4** | 3,38 % |
+| `/services` | 320 | en | ídem | 272 × 48 | 123,31 × **4** | 3,78 % |
+| `/services` | 320 | es | ídem | 272 × 48 | 135,75 × **4** | 4,16 % |
+| `/work` | 320 | en | tarjeta `04 MATSU` | 272 × 320,59 | 123,31 × **44** | 6,22 % |
+| `/work` | 320 | es | ídem | 272 × 320,59 | 135,75 × **44** | 6,85 % |
+
+En `/services` es el **borde superior** del CTA: 4 px de 44, con 40 px de alto
+libres en todo el ancho. En `/work` la tarjeta mide 87 200 px² y quedan 81 775
+libres. Valentino lo aceptó: es un orden de magnitud menos que lo que reemplaza
+—4 px de roce sobre un blanco de 44 contra el 100 % de dos renglones de 21— y
+ningún blanco queda intocable. Topar el corrimiento habría pedido un número que
+la instrucción no define.
+
+### Verificación humana declarada
+
+El agente no simula gestos táctiles. Queda para Valentino, en el teléfono:
+
+1. **Tocar `LINKEDIN` y `develOP` en el pie** de `/services` y `/team`. Es el
+   defecto que esto arregla.
+2. **Tocar `LINKEDIN` a mitad de scroll**, lejos del botón. Con 21 px de paso
+   los enlaces son finos; si ahí también cuesta, el problema no es el botón sino
+   el paso, y es otra conversación.
+3. **Scrollear hasta el fondo despacio** y mirar si el botón sube parejo o pega
+   un tirón. El banco dice que es 1:1, pero el banco mide layout, no la
+   sensación de un compositor real.
+
+### Estado de publicación
+
+`main` local, **sin `git push`**. Producción sigue en M13. Lo verificado acá es
+el build local.
+
+- **Commits:** `faf445b` (producto) y este de registros.

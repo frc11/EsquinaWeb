@@ -646,18 +646,18 @@ abierto a propósito, con los números para decidirlo.
 
 ### Decisiones de diseño — humanas, no técnicas
 
-- **[Mobile]** **El botón de volver arriba tapa la columna derecha del footer al
-  llegar al pie.** Es la consecuencia directa de la decisión de R3/F0 (que no
-  desaparezca): el botón vive en `bottom-6 right-6` y `INSTAGRAM` / `LINKEDIN`
-  / `develOP` cierran contra el mismo gutter, así que en las rutas donde
-  aparece —`/services` y `/team` a 390, y además `/work` a 320— su caja de 44
-  px queda **sobre `LINKEDIN` y `develOP`** cuando el scroll llega al final
-  (verificado con `elementFromPoint` a 320 × 640: el punto medio de `LINKEDIN`
-  devuelve el botón). Es lo que la regla del footer evitaba. La salida que
-  cumple las dos cosas —ni desaparecer ni tapar— es que **el botón suba con el
-  footer**: que su tope de viaje sea el borde superior del footer, como
-  proponía la (c) de R2. No se implementó porque no estaba pedido; hay que
-  verlo en el teléfono y decidir si el solapamiento molesta.
+- ~~**[Mobile]** **El botón de volver arriba tapa la columna derecha del footer
+  al llegar al pie.**~~ **Cerrado en R3.1 (`faf445b`), por la salida que este
+  pendiente proponía: el botón sube con el footer.** Se apoya en
+  `innerHeight − EDGE_GAP` y no puede bajar de `footerTop − EDGE_GAP`, así que
+  sube la diferencia; como `footerTop` baja un píxel por cada píxel de scroll,
+  el corrimiento es continuo y no un umbral. **La regla que lo escondía no se
+  restituyó.** El pisado era peor que lo que decía este pendiente: doce
+  combinaciones y no tres —se sumaban `/work` **y `/contact`** a 320—, con los
+  21 px enteros de `LINKEDIN` y de `develOP` cubiertos. `elementFromPoint`
+  sobre el centro de tinta devolvía el botón en 24 de 36 puntos; ahora en 0 de
+  36, con 24,00 px exactos de aire contra el tope del footer. Lo que queda
+  abierto de esto es la verificación en el teléfono, abajo.
 - **[Mobile · §2b]** **El footer de mobile ya no cumple el piso táctil de 44 px
   en el eje vertical, y es una decisión, no un descuido.** Con los renglones al
   paso del mockup (21 px) las cajas tocables de 44 de `INSTAGRAM`, `LINKEDIN` y
@@ -706,8 +706,9 @@ Está en la bitácora de R3, en «Verificación humana declarada». Son seis pun
 el footer de mobile contra `r2-mob-02.jpg`, el toggle abierto sin caja, la banda
 clara sin frase en una interna, la galería con el aire nuevo contra
 `r2-mob-04.jpg`, la alineación óptica de la banda clara en escritorio y el
-footer de `/contact` bajo el pliegue. Más el séptimo que agregó la Fase 0: el
-botón de volver arriba encima del footer.
+footer de `/contact` bajo el pliegue. ~~Más el séptimo que agregó la Fase 0: el
+botón de volver arriba encima del footer.~~ Ese séptimo lo reemplazan los tres
+de R3.1, abajo.
 
 ### Heredados que siguen abiertos
 
@@ -715,3 +716,45 @@ Los de M9, M10 y R2 —el dominio propio en Resend, `error.tsx` /
 `not-found.tsx`, los `<main>` anidados, ECC, el pozo entre `$6500` y `$7000`,
 el reapilado de la galería y el «403 px» viejo de §2b— siguen como estaban. R3
 no los tocó.
+
+## Abiertos al cerrar R3.1 (el botón sube con el footer, 2026-09-03)
+
+R3.1 cerró el único cabo de producto que R3 dejó abierto. Lo que queda es la
+verificación en el teléfono y una consecuencia aceptada.
+
+### Aceptado con números — no es un defecto abierto, es una decisión tomada
+
+- **[Mobile]** **A fondo de página el botón queda sobre contenido del cuerpo, y
+  en ocho de doce combinaciones roza un tocable.** Es inevitable por
+  construcción: los 24 px que el botón conserva sobre el footer son cuerpo. En
+  `/team` (390 y 320) y `/contact` (320) lo de abajo es inerte. En `/services`
+  el botón corta los **4 px superiores** del CTA —`LET'S BRING YOUR IDEAS TO
+  LIFE` / `HAGAMOS REALIDAD TUS IDEAS`—, o sea el 3,1–4,2 % de un blanco de
+  44/48 px, y quedan 40 px de alto libres en todo el ancho; en `/work` a 320
+  cubre el 6,2–6,9 % de la tarjeta `04 MATSU`, que mide 272 × 320,59 y deja
+  81 775 px² libres. **Planteado como PARADA 1 y aceptado por Valentino:** es un
+  orden de magnitud menos que lo que reemplaza —4 px de roce sobre un blanco de
+  44 contra el 100 % de dos renglones de 21— y ningún blanco queda intocable.
+  Topar el corrimiento pediría un número que la instrucción no definía. Si en el
+  teléfono el roce del CTA de `/services` molesta, la conversación es cuál sería
+  ese tope.
+
+### Lo que queda para la verificación humana de R3.1
+
+Está en la bitácora de R3.1, en «Verificación humana declarada». Son tres
+puntos: tocar `LINKEDIN` y `develOP` en el pie de `/services` y `/team` —el
+defecto que esto arregla—, tocar `LINKEDIN` a mitad de scroll y lejos del botón
+—si ahí también cuesta, el problema es el paso de 21 px y no el botón— y
+scrollear hasta el fondo despacio para ver si el botón sube parejo. El banco
+mide 1 px de botón por píxel de scroll, pero mide layout, no la sensación de un
+compositor real.
+
+### Heredados que siguen abiertos
+
+Los de M9, M10, R2 y R3 —el dominio propio en Resend, `error.tsx` /
+`not-found.tsx`, los `<main>` anidados, ECC, el pozo entre `$6500` y `$7000`, el
+reapilado de la galería, el desfase en píxeles del aire de la galería, los dos
+artefactos del banco y las tres fichas viejas de `CLAUDE.md` §2b— siguen como
+estaban. R3.1 tocó un solo archivo de código y no los rozó. **El paso de 21 px
+del footer sigue siendo una decisión de R3 y no se tocó:** si un toque falla
+lejos del botón, el cabo abierto es ese, no este.
