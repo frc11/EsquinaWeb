@@ -5281,3 +5281,284 @@ el build local.
 
 - **Commits:** uno de producto (F1) más el de la sincronización de comentarios y
   registros.
+
+## 2026-09-03 · R3 · Correcciones de la revisión en teléfono
+
+**Objetivo:** cerrar las cinco correcciones de mobile y las tres de escritorio
+que salieron de la revisión visual de Valentino, sin que ninguna de mobile se
+filtre al escritorio. Once fases (0 a 10), un commit por fase, sobre `main` y
+**sin `git push`** — producción sigue en M13 (`6c59c46`). Modelo `fable-5.1`,
+esfuerzo alto, banco de `tools/bench/` sin reconstruir.
+
+**Lo que cambia el mapa mental del repo:** el footer de mobile mide **113 px**
+(eran 180) y sus filas van al paso del mockup con el área táctil fuera de
+flujo (`TOUCH_LINKS_OVERLAY`); la frase de la marca **no existe en la banda
+clara debajo de 1024**; la banda clara de escritorio alinea el bloque de
+contacto por **última línea base**; el botón de volver arriba **ya no se apaga
+en el footer** y vuelve a dos pantallas; y `HOME_BLOCK_HEIGHT_MOBILE` cambió por
+tercera vez en tres rondas, detectado por el mismo método que las dos
+anteriores.
+
+### Fase 0 — terreno, dos decisiones y la vara
+
+**PARADA 0, y no era el `docs.zip`.** `git status` traía
+`src/components/ui/BackToTop.tsx` modificado sin commitear, con fecha de la
+mañana: `APPEAR_AFTER_VIEWPORTS` volvía de 1 a 2 y el docblock estaba reescrito
+para justificarlo (ventana útil de 109 px en `/work` y 148–193 en `/contact`,
+que se percibe como parpadeo). Contradecía el commit `ebe9d0e` de R2.1 y la
+regla 9 de la instrucción, así que se paró y se preguntó. Valentino decidió
+**commitearlo tal cual** y agregó un pedido que no estaba en la instrucción:
+**el botón no tiene que desaparecer al llegar al footer.** Quedaron dos commits
+previos a la ronda:
+
+- `f44fb80` — `APPEAR_AFTER_VIEWPORTS` 1 → 2, el cambio de Valentino sin tocar.
+- `90ddc0d` — se va la segunda condición del efecto (apagarse cuando el borde
+  superior del footer sube por encima de la banda del botón) y con ella
+  `EDGE_GAP`, que solo servía para esa cuenta; el gutter sigue en
+  `bottom-6 right-6`. Verificado a 390 × 844 en `/services`, dos idiomas:
+  `scrollY` 1000 → oculto, 1700 → visible, al pie (footer a 204 px del tope del
+  viewport) → **visible**. Es la derogación explícita de la regla 9 para esa
+  mitad; el umbral no se tocó más.
+
+**Lo que cuesta, medido después de la ronda:** en las rutas donde el botón
+aparece —`/services` y `/team` a 390, y `/work` a 320— al llegar al pie su caja
+de 44 px queda **encima de `LINKEDIN` y `develOP`**, porque los dos se apoyan
+en el mismo gutter de 24 px (`elementFromPoint` sobre el medio de `LINKEDIN` a
+320 × 640 devuelve el botón). Es exactamente lo que la regla del footer evitaba.
+Va a pendientes con la alternativa que cumple las dos cosas: que el botón suba
+con el footer.
+
+**La vara** (`docs/archivo/mediciones/r3-f0-base.json`, sobre `90ddc0d`): 48
+altos, 0 desborde horizontal en los 48, formulario 426 / 450 / 498 / 498 a
+1280 / 1360 / 1600 / 1920 con 0 truncados, en los dos idiomas. Aparte, lo que
+los 48 altos no ven: footer de `/` y de `/contact/success` **180,00** a 320,
+390 y 430 en los dos idiomas; bloque de home 332 / 536 / 624 con holgura
+**0,00** contra el footer en las seis de `/`. Y las dos capturas de la banda
+clara a 1920 (EN y ES) para la fase 3.b. Lint y build en verde.
+
+### Fase 1 — diagnóstico, con una premisa de la instrucción que resultó falsa
+
+- **D1 · La banda clara en escritorio.** La instrucción decía que el contenedor
+  declara `items-end`. **No en escritorio:** `StatementBand` lleva `items-end`
+  debajo de 1024 y **`lg:items-start`** de 1024 para arriba (la «restitución» de
+  M2). Esa es la causa: el bloque de contacto estaba alineado **arriba**. Medido
+  a 1920 y 1440 con las líneas base calculadas desde las métricas de la fuente
+  (`fontBoundingBoxAscent` / `Descent` sobre la caja de línea): en inglés la
+  tinta de `YOUR IDEAS TO LIFE` cerraba **33 px por encima** de la de
+  `WITH IMPACT.`; en castellano **15 px por debajo** (la frase tiene dos líneas
+  de 48 y el bloque mide 108). Sin márgenes, sin paddings, sin `self-*`. Y un
+  residuo que sí era de interlineado: la frase a 40/48 deja la línea base 8,5 px
+  por encima del pie de su caja de línea y el bloque a 26/31 la deja a 5,5, así
+  que un `lg:items-end` a secas dejaba los glifos **3 px** desalineados.
+- **D2 · El logo script de `InfoRow`.** **`r2-mob-02.jpg` no tiene el logo chico
+  en la fila de info**: el panel del medio es el footer oscuro de una interna,
+  donde el logo chico no se monta. Verificado píxel a píxel (sin tinta entre el
+  logo grande y `BORN IN`). Así que las dos cifras del mockup no existen; las del
+  sitio a 390: centro del logo en **x = 0,49** del ancho de la fila (y del
+  viewport: 191 sobre 390) y **y = 0,18** del alto. Horizontal estaba; vertical
+  no: la grilla declara `items-start` y la celda `row-span-3` quedaba apoyada en
+  la primera fila.
+- **D3 · El espaciado de `InfoRow`.** Mockup (710 px de captura = 390 CSS,
+  1,82 px por px): paso entre `INSTAGRAM` / `LINKEDIN` / `develOP` **38 px de
+  captura = 20,9 CSS**; `ARGENTINA` → `© 2024` el mismo paso; las tres líneas
+  ocupan ≈ 63 px. Sitio a 390: paso **44** (una fila por enlace, por el piso
+  táctil de `TOUCH_LINKS`), `ARGENTINA` → `©` **92** de línea base a línea base,
+  fila de **132**.
+- **D4 · El toggle abierto.** Panel `absolute right-0 top-full mt-3 border px-3
+  justify-end`: **borde `1px solid` off-black, fondo off-white pintado, sin
+  sombra ni outline**. Su borde izquierdo caía a 0,55 (EN) / 3,45 px (ES) del
+  de `EN`; lo corrido eran los glifos: `ES` arrancaba **12,45 px** a la derecha
+  de `EN` —el `px-3`—, con el texto anclado al borde derecho del grupo (330)
+  mientras `EN` termina en 306.
+- **D5 · El footer de contacto en escritorio.** A 1280 / 1440 / 1600 / 1920 y
+  alturas de 720 a 1080, el formulario (426 / 450 / 498) es mucho más bajo que
+  el viewport: la sección terminaba en el pie del formulario y el footer
+  arrancaba en **610 / 634 / 682 / 682**, visible en reposo con 110 a 470 px de
+  sobra. **PARADA 1 no se dispara**: ningún ancho excede el viewport (el peor,
+  1280 × 720, tiene 110 px libres).
+- **Galería, medida igual que el mockup, tinta contra tinta.** Mockup: **128 px
+  de captura entre el pie de `(click to view)` y el tope del montón = 9,9 % del
+  viewport** (1288 px de captura entre la barra de estado y la de Safari). Sitio:
+  **5 px** a 390 × 844 (4 en castellano), 12 a 320 × 640. Pegado porque el
+  montón escalado 1,37 sobresale 27 px por encima de su caja.
+
+**PARADA 4, en tres puntos, resueltos por Valentino antes de tocar código:**
+(1) la compresión del footer contra el piso táctil de 44 px de §2b → **paso del
+mockup con las cajas tocables solapadas**; (2) el residuo de 3 px de la banda →
+**`lg:items-baseline-last`**, aceptando +3 px de banda en castellano; (3) «en
+medio» para el logo → **centrado vertical**, el horizontal ya estaba.
+
+### Fase 2 — el footer de mobile al paso del mockup (`bfc38fa`)
+
+Debajo de 1024 las tres filas de `InfoRow` miden un renglón: el par de lugar se
+declara `contents` y sus dos renglones son celdas propias (`MOBILE_PLACE_LINE`),
+`© 2024` baja a la tercera fila debajo de `ARGENTINA`, la banda oscura pasa de
+`leading-none` a 20 px en mobile (el mismo 20 del footer claro) y la celda del
+logo suma `self-center`. El área táctil de los enlaces sale de
+**`TOUCH_LINKS_OVERLAY`**: un `::after` absoluto de 44 px centrado en el `<a>`,
+que no participa del layout, con el texto (`<span>` de `HoverButton`) en
+`z-index: 1` para que un toque sobre la palabra vaya siempre a su propio enlace.
+
+Medido a 390: filas **21 / 21 / 23** (la tercera lleva el logo de develOP de 22
+px), paso **21** contra 20,9 del mockup, `©` a 21 de `ARGENTINA`, logo en
+**y = 0,50** (x = 0,49), fila de **65** contra ≈ 63. Footer de `/` **113** en
+las seis combinaciones. Toques (`elementFromPoint`): el tope, el medio y el pie
+de cada palabra van a su enlace; 8 px por encima de `INSTAGRAM` va a `INSTAGRAM`
+y 8 px por debajo ya va a `LINKEDIN` —el solapamiento aceptado—. Los 48 altos:
+**14 cambios, todos a 390** (−67 en las seis internas; `/` y `/contact/success`
+siguen en una pantalla), **1024 y 1920 idénticos**. Escritorio: `WORKING
+WORLDWIDE`, el crédito con prefijo y el logo a la derecha, sin mover.
+
+**Lo que se rompe a sabiendas:** el piso de 44 px de §2b en el eje vertical, en
+esos tres enlaces. El área exclusiva de cada uno es su renglón. Está escrito en
+`MOBILE_PLACE_CELL` y en `TOUCH_LINKS_OVERLAY`, y va a pendientes.
+
+### Fase 3 — la frase fuera en mobile, el bloque al pie en escritorio (`c89747e`)
+
+**3.a, mobile.** La frase no se monta debajo de 1024 (`max-lg:hidden`; sigue
+viva en el Hero y en escritorio, y `getHeroLines` conserva sus dos consumidores).
+El bloque de contacto se declara `contents` y sus dos piezas son la fila:
+`CONTACT US` contra el gutter izquierdo, las dos líneas contra el derecho,
+alineados por **primera línea base** —en el mockup `CONTACT US` cae a la altura
+de `LET'S BRING`, y como el `<a>` del CTA lleva 44 px táctiles con el texto
+centrado, `items-start` lo habría dejado 11,5 px más abajo—. `flex-wrap` se
+queda, ahora por el CTA y las líneas: a 320 no entran en una fila
+(`CONTACTANOS` + 16 + `HAGAMOS REALIDAD` > 272) y las líneas bajan solas con
+`ml-auto`. Se fueron con la frase su escalón 26/31, `basis-[min-content]`,
+`flex-1` y el `gap-y-10`. Medido: banda **150** a 390 y 430 (era 344 EN / 282
+ES), **190** a 320 (dos filas), CTA en x = 24, líneas cerrando en x = 366; 0
+desborde.
+
+**3.b, escritorio.** `lg:items-start` → **`lg:items-baseline-last`**. Delta de
+línea base y de tinta **0,00 px** a 1920 y 1440, EN y ES (con `items-end`
+habría quedado 3). Banda EN 304 sin cambio; **ES 268 → 271**, el reparto del
+aire bajo la línea base que la Fase 1 había anticipado.
+
+Los 48 altos contra la Fase 2: −194 (EN) / −132 (ES) en las cinco internas
+con banda a 390, y **+3 en las cinco internas de castellano a 1024 y 1920**.
+Nada más.
+
+### Fase 4 — `HOME_BLOCK_HEIGHT_MOBILE`, tercera recalibración (`31d596c`)
+
+Medido bloque contra footer después de las fases 2 y 3: footer de `/` **113,00**
+a 320, 390 y 430 en los dos idiomas y **67,00 px de holgura muerta** en las
+seis, o sea exactamente los 180 − 113. Viejo **180**, nuevo **113**, diferencia
+**67**. `HOME_FOOTER_CLEARANCE` es la misma medida en su segundo consumidor
+(`/contact/success`) y fue con ella: `pb-[180px]` → `pb-[113px]`. Después:
+holgura **0,00** en las seis, `docH === viewH` en `/` y en `/contact/success`,
+**48 de 48 altos idénticos** —que es la prueba de que este defecto no se ve por
+ahí—. Tres comentarios que citaban los 180 quedaron al día.
+
+### Fase 5 — el toggle sin caja (`40ea415`)
+
+`OPTION_CELL_CLASS` pasa a `absolute left-0 top-full mt-3 justify-start`: sin
+borde, sin fondo, sin relleno, anclado a la izquierda. Medido a 390: borde
+**0**, fondo **transparente**, sombra **none**, borde izquierdo del código
+inactivo a **0,00 px** del activo (antes 12,45 a la derecha), `::after` de
+45,6 × 47,5. La secuencia de cambio de idioma, muestreada cada 8 ms antes y
+después: el diccionario cambia a **1311 / 1311 ms** del click en mobile (vara:
+1316 / 1311) y a **1300** en escritorio (vara: 1304); `TRANSITION_MS` y el
+failsafe sin tocar. 48 altos idénticos (el ±0,06 del pie de
+`/contact/success` a 1920 es ruido del panel que entra; ver pendientes).
+
+### Fase 6 — aire entre el cartel y el montón (`7624b23`)
+
+`MOBILE_TITLE_GAP` 77px → `calc(72px + 10svh)` y `MOBILE_CAPTION_TOP` −57px →
+`calc(-52px - 10svh)`: la caja de la composición baja `10svh + 35 px` respecto
+del cartel, donde el 10 % es el del mockup y los 35 son el desfase medido entre
+la caja y la tinta del montón escalado a 390 (40 de caja, 5 de tinta). Medido
+en tinta después: **83 px a 390 × 844** en los dos idiomas (9,8 %), 71 a
+320 × 640 (11,1 %), 89 a 430 × 932 (9,5 %). La escena de entrada sigue entrando
+en la primera pantalla (montón cierra en 601 de 844 y 525 de 640). Pila,
+`PILE_SCALE_MOBILE`, fundido y despliegue intactos; 1024 y 1920 sin cambio.
+`/fun-gallery` a 390: **+80 px**, recorrido 862 / 888 (EN / ES); el botón de
+volver arriba sigue sin aparecer ahí (< 1688) y no se tocó (regla 9).
+
+### Fase 7 — aire entre el envío y el footer (`abb81ae`)
+
+`max-lg:pb-18` en la sección de `/contact`: **72 px** = 3 × el gutter de 24. El
+múltiplo salió de medir el cierre de las otras internas a 390 (74 en
+`/services`, 80 en `/fun-gallery`, 88 en `/work/[slug]`), no de elegirlo; antes
+el botón cerraba a **0 px** del footer. Después: 72,00 a 320 y 390, EN y ES; 0
+desborde; solo `/contact` a 390 cambia (+72).
+
+### Fase 8 — el footer de `/contact` bajo el pliegue (`272fee1`)
+
+`lg:min-h-[calc(100svh-var(--header-height))]` en la misma sección. A 1280 /
+1440 / 1600 / 1920 y alturas 720 a 1080, EN y ES: el borde superior del footer
+con `scrollY` 0 cae **exactamente en `innerHeight`**, la ruta scrollea y al
+final el pie del footer coincide con el del viewport (±0,33). Formulario
+426 / 450 / 498 sin mover. A 1024 la sección ya era más alta que el mínimo y no
+cambia. `/contact` a 1920: **+398**.
+
+### Fase 9 — vuelve el `USD` (`12d6b9f`)
+
+`BUDGET_OPTIONS` con ` USD` en el valor; `budgetLabel` sigue devolviendo el
+valor tal cual. El más ancho, `$4000 – $6500 USD`, medido con la opción elegida:
+**309,93 px a 34, 255,23 a 28, 237 a 26 y 218,77 a 24**. Contra la pista útil
+del selector en las 14 resoluciones × 2 idiomas más 390 y 320: **0 truncados, 0
+desbordes, una línea en todos**. Holgura mínima **3,77 px a 1360** (escalón 1,
+pista 259), 6,07 a 1600, 9 a 1280, 15,23 a 320, 26,07 a 1920. Fit idéntico:
+426 / 450 / 498 y **≥1600 sin un píxel de cambio**. **PARADA 2 no se dispara.**
+
+### Fase 10 — registros
+
+Esta entrada; pendientes al día (la decisión sobre la frase de la banda queda
+tomada, los dos cabos del botón quedan cerrados y se abren los de R3); y tres
+comentarios que describían el estado anterior: la tabla de recorridos de
+`APPEAR_AFTER_VIEWPORTS`, el párrafo del `pb` de `ScriptBand` (que explicaba
+los 24 px con una caja táctil de 44 que ya no ocupa lugar) y el historial del
+footer en `ContactSuccess`. `docs.zip` sigue sin trackear y no se tocó.
+
+### Mediciones del cierre
+
+1. **48 altos contra la Fase 0 (`r3-cierre.json` contra `r3-f0-base.json`):
+   26 cambios, todos explicados.** A 390: las cinco internas con banda −261 EN /
+   −199 ES (footer −67, banda −194 / −132), `/fun-gallery` −181 / −119 (lo
+   mismo más los +80 del aire), `/contact` +5 / +5 (−67 + 72), `/` y
+   `/contact/success` en 844. A 1024 y 1920: **solo** las cinco internas con
+   banda en castellano, **+3** (fase 3.b), y `/contact` +398 (fase 8). El «pie»
+   de `/` a 390 figura en 847,6 sobre 844: es el relleno de hover de
+   `HoverButton` trasladado dentro de un `overflow-hidden`, no desborde (ver
+   pendientes).
+2. **Cero desborde horizontal** en los 48, y en 320 en `/contact` y
+   `/fun-gallery`, EN y ES.
+3. **Escritorio a 1920 idéntico a la Fase 0** en todo salvo la banda clara en
+   castellano (+3) y `/contact` (+398). Ninguna otra diferencia. Footer de `/`
+   164 a 1024 y 1920; footer de `/work` 982 a 1920.
+4. **Bloque contra footer:** 0,00 en las seis combinaciones de `/`;
+   `/contact/success` con el footer superpuesto de 113 y el contenido centrado
+   en lo que queda.
+5. **Formulario:** 14 × 2, cero truncados, cero desbordes; ≥1600 idéntico.
+6. **Secuencia de cambio de idioma:** 1311 / 1311 / 1300 ms contra 1316 / 1311 /
+   1304 de la vara, dentro del muestreo de 8 ms.
+7. **Preloader:** las cuatro garantías, re-verificadas sobre el build de cierre. (1) *Negro desde el primer cuadro*: primera visita sin el flag, luma **0** en las cuatro esquinas al `load` y a 1,5 s, cortina `flex`, compuerta `html,body{background-color:#000000}` y `body` en `rgb(0, 0, 0)`; a 5,5 s luma 243, sin cortina, sin compuerta y `sessionStorage` en `"1"`. (2) *Una vez por pestaña*: segunda visita con la compuerta en `[data-preloader-curtain]{display:none!important}`, sin cortina y luma 242 al `load`. (3) *Failsafe* con el `.mp4` bloqueado: la cortina empieza a irse a los **3091 ms** de `Page.navigate` (compuerta levantada, flag puesto, `transform` arrancando). (4) *`/studio` excluido*: sin compuerta, `body` off-white y el flag de sesión sin tocar (`null`).
+8. **Consola:** cero errores y cero avisos propios en 8 rutas × 2 idiomas (1920 en inglés, 390 en castellano), con `console.warn`/`error`, `error` y `unhandledrejection` interceptados antes del documento. Lo único que aparece es el aviso de `@sanity/image-url` en las cuatro rutas que consumen imágenes de Sanity, el ruido del paquete que documenta §7b.
+9. **Lint y build en verde** en cada fase y al cierre, con el servidor bajado
+   por PID en cada corrida del banco.
+
+### Verificación humana declarada
+
+El agente no simula gestos táctiles y `getBoundingClientRect` mide layout, no
+píxeles pintados. Queda para Valentino:
+
+1. **El footer de mobile contra `r2-mob-02.jpg`**, con la imagen al lado.
+2. **El toggle abierto:** si sin caja se lee igual de claro, y si el área
+   táctil sigue cómoda con el pulgar.
+3. **La banda clara sin frase en una interna:** si el corte se lee intencional,
+   y a 320 la segunda fila de las líneas.
+4. **La galería con el aire nuevo**, contra `r2-mob-04.jpg`.
+5. **La banda clara en escritorio:** si los dos bordes inferiores se ven
+   alineados; es alineación óptica y el ojo manda sobre el 0,00.
+6. **`/contact` en escritorio:** que el footer no asome y se alcance.
+7. **El botón de volver arriba encima del footer** en `/services` y `/team`: si
+   tapar `LINKEDIN` y `develOP` al llegar al pie molesta, la salida está en
+   pendientes.
+
+### Estado de publicación
+
+`main` local, **sin `git push`**. Producción sigue en M13. Lo verificado acá es
+el build local.
+
+- **Commits:** dos previos a la ronda (`f44fb80`, `90ddc0d`), ocho de producto
+  (fases 2 a 9) y este de registros.

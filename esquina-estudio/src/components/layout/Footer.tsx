@@ -564,9 +564,11 @@ function StatementBand() {
  * desborde horizontal en las tres rutas medidas.
  *
  * **El relleno de abajo baja a 24 px en mobile** y se queda en 40 de `lg` para
- * arriba. La banda cierra con la fila del crédito y el copyright, que arrastran
- * 12 px de su caja táctil de 44: con `pb-10` quedaban 52 px de aire muerto al
- * pie de la página, contra los 24 con que abre. Con 24 la banda es simétrica.
+ * arriba. Cuando se decidió (M2) la banda cerraba con una fila de 44 px que
+ * arrastraba 12 px de caja táctil: con `pb-10` quedaban 52 px de aire muerto al
+ * pie, contra los 24 con que abre. Desde R3/F2 la última fila mide 23 px —el
+ * logo de develOP— y el área táctil no ocupa lugar, así que los 24 de abajo son
+ * exactamente los 24 de arriba: la banda es simétrica sin corrección.
  */
 function ScriptBand() {
   return (

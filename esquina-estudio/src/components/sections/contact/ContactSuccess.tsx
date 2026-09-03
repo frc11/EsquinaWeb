@@ -150,7 +150,11 @@ export default function ContactSuccess() {
 
             M4/F3 devolvió el logo script al footer claro y ese footer pasó de
             244 a **304 px**, así que la caja útil de esta pantalla a 640 de alto
-            bajó de 268 a **208**. El bloque pedía 262,89 (inglés) y 241,89
+            bajó de 268 a **208**. (Después el footer volvió a bajar: 180 en
+            R2/F11.3 y **113** en R3/F4, o sea 399 px útiles a 640; la escala de
+            abajo se dejó como estaba porque el pedido era comprimir el texto,
+            no volver a agrandarlo, y `HOME_FOOTER_CLEARANCE` es lo único que
+            sigue al footer.) El bloque pedía 262,89 (inglés) y 241,89
             (castellano) y se desplazaba dentro del panel: 55 px y 34 px. La
             ruta seguía midiendo una pantalla exacta, pero `BACK TO HOME`
             quedaba debajo del pliegue hasta que se deslizaba.

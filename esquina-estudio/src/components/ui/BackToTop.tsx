@@ -69,9 +69,19 @@ import { useLocale } from "@/lib/i18n";
  * el efecto de abajo). Hoy la ventana es
  * `(innerHeight × APPEAR_AFTER_VIEWPORTS, docHeight − innerHeight]` y la única
  * condición para que el botón aparezca es que el documento mida más de tres
- * pantallas. A 390 × 844, en recorrido EN / ES: `/services` 7499 / 7597 y
- * `/team` 3438 / 3400 lo cumplen; `/work` 1569 / 1508, `/contact` 1309 / 1264,
- * `/fun-gallery` 1043 / 1007 y `/work/matsu` 828 / 874 no llegan a 1688.
+ * pantallas. A 390 × 844 y después de R3 —que acortó el footer de mobile 67
+ * px, sacó la frase de la banda clara y le dio aire a la galería y al pie de
+ * contacto—, en recorrido EN / ES: `/services` 7238 / 7398 y `/team`
+ * 3177 / 3201 lo cumplen; `/work` 1309 / 1309, `/contact` 1314 / 1269,
+ * `/fun-gallery` 862 / 888 y `/work/matsu` 567 / 675 no llegan a 1688.
+ *
+ * Y lo que la regla del footer evitaba, dicho con números: en las rutas donde
+ * el botón sí aparece, al llegar al pie queda **encima de la columna derecha
+ * del footer** —a 320 × 640 su caja de 44 px cubre `LINKEDIN` y `develOP`, y a
+ * 390 × 844 los mismos dos—, porque los dos se apoyan en el mismo gutter de 24
+ * px. Es la consecuencia aceptada de que no desaparezca; la alternativa que
+ * satisface las dos cosas —que el botón suba con el footer en vez de taparlo o
+ * apagarse— quedó anotada en los pendientes de R3 y no se implementó.
  *
  * Cuando el portfolio crezca y `/work` pase las dos pantallas, el botón entra
  * solo. Y ahí conviene revisar algo que hoy no se nota: el umbral está atado al

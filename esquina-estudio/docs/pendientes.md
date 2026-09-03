@@ -9,7 +9,7 @@ siguieron M7 (limpieza), M8 (`/services`) y M9 (formulario + Fun Gallery).
 no le llega a las clientas hasta que la cuenta de Resend tenga un dominio propio
 verificado. Está en la última sección, «Abiertos al cerrar M9».
 
-**Si venís a planificar el próximo sprint, empezá por la última sección**, «Abiertos al cerrar M9»: ahí está consolidado lo que sigue vivo. El resto del archivo es historia por sprint, con lo resuelto tachado.
+**Si venís a planificar el próximo sprint, empezá por la última sección**, «Abiertos al cerrar R3»: ahí está lo que sigue vivo después de la revisión en teléfono. El resto del archivo es historia por sprint, con lo resuelto tachado.
 
 - **[Clientas]** Formato de entrega del logo grande del footer (lo preguntan en Final.pdf pág. 4). Responderles; es insumo del sprint de footer (B2).
 - **[Clientas]** Gif/video de Team: contenido pendiente de ellas; el placeholder `VIDEO O GIF` queda hasta que llegue. No bloquea código.
@@ -552,13 +552,18 @@ decidirlo.
 
 ### Del PDF de mobile, sin fase asignada — decisión de Valentino
 
-- **[Diseño]** **Sacar la frase de la marca del footer en mobile.** La anotación
+- ~~**[Diseño]** **Sacar la frase de la marca del footer en mobile.** La anotación
   de `r2-mob-02.jpg` dice «se podría comprimir un toque el espaciado del footer
   **y sacar la frase** porque queda muy cargado sino», y la captura del estado
   deseado muestra la banda blanca sin la frase. **No se aplicó**: está escrita en
   potencial, cambia el alto de las seis rutas internas en mobile y contradice el
   criterio de aceptación del propio documento de la ronda. La compresión que sí
-  se hizo es la del footer oscuro y el claro (ver la bitácora de R2).
+  se hizo es la del footer oscuro y el claro (ver la bitácora de R2).~~
+  **Decidido por Valentino y aplicado en R3/F3:** la frase no se monta debajo de
+  1024 (`max-lg:hidden`), `CONTACT US` pasa al gutter izquierdo y las dos
+  líneas al derecho. La banda pasó de 344 / 282 px (EN / ES) a 150 a 390 y a
+  190 a 320, donde las líneas bajan a una segunda fila. Los cinco recorridos
+  internos de 390 bajaron entre 119 y 261 px (footer comprimido incluido).
 
   **Cuál es «la frase», porque ya se leyó mal una vez.** En ese footer hay dos
   candidatas: el par `WORKING WORLDWIDE` de la fila de info y la frase de la
@@ -584,7 +589,7 @@ decidirlo.
   de una pantalla, inalcanzable para cualquier umbral— y el castellano, que sí
   cruza, tiene el footer cerrando en 319. La tabla completa está en el docblock
   de `APPEAR_AFTER_VIEWPORTS`.
-- **[Mobile]** **El botón de volver arriba sigue sin existir en las dos rutas
+- ~~**[Mobile]** **El botón de volver arriba sigue sin existir en las dos rutas
   cortas, y arreglarlo es una decisión de producto, no un número.** Las dos reglas
   que lo gobiernan —umbral y no-tapar-el-footer— son deliberadas y en un
   documento corto no tienen intersección. Las salidas posibles, ninguna elegida:
@@ -592,7 +597,11 @@ decidirlo.
   el botón no hace falta; (b) que el botón se apoye **encima** del footer en vez
   de apagarse, lo que contradice el requisito escrito de R2; (c) que el viaje
   tenga como tope el borde superior del footer y el botón viva por debajo del
-  umbral en esas rutas. **Hace falta verlo en el teléfono antes de decidir.**
+  umbral en esas rutas. **Hace falta verlo en el teléfono antes de decidir.**~~
+  **Decidido en R3/F0 después de verlo en el teléfono, y fue la (b) con el
+  umbral en dos:** `APPEAR_AFTER_VIEWPORTS` volvió a 2 y la regla del footer se
+  fue. El botón ya no desaparece al llegar al pie; queda encima del footer. Lo
+  que eso cuesta está en «Abiertos al cerrar R3».
 - **[Galería]** **El reapilado del montón se ve, y el fundido lo estaba
   tapando.** Cuando carga la última imagen, las ocho mediciones de tinta se
   completan y los `zIndex` cambian **de una sola vez**: pintando las dos
@@ -627,3 +636,82 @@ decidirlo.
 Los de M9 y M10 —el dominio propio verificado en Resend, `error.tsx` /
 `not-found.tsx`, los `<main>` anidados y la instalación del harness ECC— siguen
 como estaban. R2 no los tocó.
+
+## Abiertos al cerrar R3 (revisión en teléfono, 2026-09-03)
+
+R3 aplicó las ocho correcciones de la revisión de Valentino en el teléfono y en
+escritorio —cinco de mobile, tres de escritorio— más dos decisiones tomadas en
+la Fase 0 sobre el botón de volver arriba. Lo que sigue es lo que la ronda dejó
+abierto a propósito, con los números para decidirlo.
+
+### Decisiones de diseño — humanas, no técnicas
+
+- **[Mobile]** **El botón de volver arriba tapa la columna derecha del footer al
+  llegar al pie.** Es la consecuencia directa de la decisión de R3/F0 (que no
+  desaparezca): el botón vive en `bottom-6 right-6` y `INSTAGRAM` / `LINKEDIN`
+  / `develOP` cierran contra el mismo gutter, así que en las rutas donde
+  aparece —`/services` y `/team` a 390, y además `/work` a 320— su caja de 44
+  px queda **sobre `LINKEDIN` y `develOP`** cuando el scroll llega al final
+  (verificado con `elementFromPoint` a 320 × 640: el punto medio de `LINKEDIN`
+  devuelve el botón). Es lo que la regla del footer evitaba. La salida que
+  cumple las dos cosas —ni desaparecer ni tapar— es que **el botón suba con el
+  footer**: que su tope de viaje sea el borde superior del footer, como
+  proponía la (c) de R2. No se implementó porque no estaba pedido; hay que
+  verlo en el teléfono y decidir si el solapamiento molesta.
+- **[Mobile · §2b]** **El footer de mobile ya no cumple el piso táctil de 44 px
+  en el eje vertical, y es una decisión, no un descuido.** Con los renglones al
+  paso del mockup (21 px) las cajas tocables de 44 de `INSTAGRAM`, `LINKEDIN` y
+  `develOP` se pisan 23 px: el área **exclusiva** de cada enlace es su renglón.
+  Un toque sobre la palabra va siempre a su enlace (el texto se pinta por encima
+  de las cajas vecinas); el aire entre renglones queda repartido por orden de
+  DOM. Valentino eligió esto sobre no comprimir (R3/F1). Si en el teléfono se
+  falla el toque, la alternativa es volver al paso de 44 solo en los tres
+  enlaces y dejar comprimida la columna izquierda, que no es tocable.
+  **§2b de `CLAUDE.md` («ninguna por debajo») quedó viejo en este punto.**
+- **[Escritorio]** **La banda clara en castellano creció 3 px** (268 → 271 a
+  1024 y 1920) por alinear el bloque de contacto por última línea base en vez
+  de por pie de caja. Es el costo de que los glifos queden a 0,00 px; con
+  `items-end` la banda no cambiaba pero los glifos quedaban 3 px desalineados.
+  Elegido por Valentino en R3/F1. Diez de los 48 altos llevan ese +3.
+
+### Técnico — abierto y medido
+
+- **[Galería]** **El aire entre el cartel y el montón depende del ancho además
+  del alto.** Se aplica como `10svh + 35 px` de caja, donde los 35 son el desfase
+  entre la caja de la composición y la tinta del montón escalado **a 390**. A
+  320 ese desfase es 28 y a 430 unos 40, así que el aire real medido en tinta
+  va del 9,5 % (430) al 11,1 % (320) del viewport, contra el 9,9 % del mockup.
+  Si alguna vez se quiere exacto en todos los anchos, el desfase tiene que
+  expresarse en `vw`, no en píxeles; hoy no vale la pena.
+- **[Banco]** **El banco cuenta el relleno de hover de `HoverButton` como
+  «pie del contenido».** `PAGE_PROBE` toma el rect de todo elemento, y el span
+  del relleno vive trasladado un 120 % hacia abajo dentro de un
+  `overflow-hidden`: desde que las filas del footer miden 21 px, ese span cierra
+  3,6 px por debajo del `<footer>` de `/` y el «pie» de esa ruta figura en 847,6
+  sobre un documento de 844. **No es desborde** —`scrollHeight` sigue en 844 y
+  no hay scroll—, es un artefacto de la sonda. Si molesta en los diffs, la
+  sonda debería saltear descendientes de cajas con `overflow: hidden`.
+- **[Banco]** **El pie de `/contact/success` a 1920 oscila ±0,06 px entre
+  corridas** (1096 ↔ 1096,06). Es el panel oscuro que entra desde abajo y una
+  muestra que lo agarra a mitad de cuadro; no depende de ningún cambio de R3.
+- **[Docs]** **`CLAUDE.md` §2b sigue diciendo que el footer de mobile son filas
+  de 44 y que `HOME_BLOCK_HEIGHT_MOBILE` vale 304**, y desde R2 y R3 ninguna de
+  las dos cosas es cierta (21 / 21 / 23 y 113). La capa de planificación
+  sincroniza ese archivo; queda anotado para que no se «corrija» el código hacia
+  la ficha vieja.
+
+### Lo que queda para la verificación humana de R3
+
+Está en la bitácora de R3, en «Verificación humana declarada». Son seis puntos:
+el footer de mobile contra `r2-mob-02.jpg`, el toggle abierto sin caja, la banda
+clara sin frase en una interna, la galería con el aire nuevo contra
+`r2-mob-04.jpg`, la alineación óptica de la banda clara en escritorio y el
+footer de `/contact` bajo el pliegue. Más el séptimo que agregó la Fase 0: el
+botón de volver arriba encima del footer.
+
+### Heredados que siguen abiertos
+
+Los de M9, M10 y R2 —el dominio propio en Resend, `error.tsx` /
+`not-found.tsx`, los `<main>` anidados, ECC, el pozo entre `$6500` y `$7000`,
+el reapilado de la galería y el «403 px» viejo de §2b— siguen como estaban. R3
+no los tocó.
