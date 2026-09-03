@@ -436,42 +436,63 @@ function InfoRow({
  * **En `/contact` esta franja ya no se monta** (R2/F7.3), así que el componente
  * dejó de necesitar el prop `isContactPage` con el que se callaba a sí mismo:
  * quien decide es `SiteFooter`. Ver el bloque de decisión que hay allá.
+ *
+ * # Debajo de 1024 la frase no existe (R3/F3)
+ *
+ * «Sacar la frase porque queda muy cargado» (`docs/archivo/mockups/r2-mob-02.jpg`,
+ * panel del medio). R2 lo dejó abierto por estar escrito en potencial; Valentino
+ * lo cerró en R3. La frase sigue viva en el Hero de `/` y en esta banda de 1024
+ * para arriba; acá se apaga con una variante (`max-lg:hidden`), así que el
+ * layout sale correcto del servidor y `getHeroLines` tiene un solo consumidor
+ * por rango. Con la frase afuera, el bloque de contacto **es** la fila:
+ * `CONTACT US` contra el gutter izquierdo y las dos líneas contra el derecho.
+ *
+ * # De 1024 para arriba el bloque de contacto cierra con la frase (R3/F3)
+ *
+ * El pedido era que el pie de `LET'S BRING YOUR IDEAS TO LIFE` quedara alineado
+ * con el de `WITH IMPACT.`. Hasta R3 la fila declaraba `lg:items-start`, así
+ * que el bloque se alineaba **arriba**: medido a 1920 y 1440, su tinta cerraba
+ * 33 px por encima en inglés y 15 px por debajo en castellano (la frase tiene
+ * tres líneas de 48 en inglés y dos en castellano; el bloque mide 108 en los
+ * dos). Se alinea por **última línea base** (`lg:items-baseline-last`) y no por
+ * pie de caja (`items-end`), porque las dos escalas dejan distinto aire bajo la
+ * línea base —8,5 px la frase a 40/48, 5,5 el bloque a 26/31— y `items-end`
+ * habría dejado los glifos 3 px desalineados. Costo, medido: en castellano la
+ * banda crece 3 px (de 268 a 271) porque la línea flex reparte el aire sobre y
+ * bajo la línea base; en inglés no cambia.
  */
 function StatementBand() {
   const { locale, t } = useLocale();
 
   return (
     /*
-      M2/F2, punto 6 — la franja pasa a ser una FILA también en mobile: la frase
-      a la izquierda y el bloque de contacto a la derecha, **alineado abajo**
-      (`items-end`), o sea a la altura de la última línea de la frase y no de la
-      primera.
+      Debajo de 1024 la fila son las dos piezas del bloque de contacto, y se
+      alinean por **primera línea base** (`items-baseline`): en el mockup
+      `CONTACT US` cae a la altura de `LET'S BRING`, y el `<a>` del CTA lleva 44
+      px de alto táctil con el texto centrado, así que `items-start` lo dejaría
+      11,5 px más abajo que la primera línea.
 
-      `flex-wrap` no es decoración, es lo que hace que la regla se pueda aplicar
-      sin romper nada: los dos bloques tienen ancho mínimo propio —la frase, su
-      palabra más larga (146 px en castellano a 26 px); el bloque de contacto, su
-      corte de línea escrito, que **no se deja al ancho del navegador**
-      (`CLAUDE.md` §6.4)— y la suma no entra en cualquier teléfono. Medido a 320:
-      146 + 16 + 166 = 328 contra 272 de caja útil. Con `flex-wrap` el bloque de
-      contacto **baja solo** donde no entra y la franja queda como estaba, sin
-      desborde y sin un corte de ancho nuevo. Entra en fila a partir de 376 px de
-      viewport; de los cinco anchos de prueba, en 390, 414 y 430.
+      `flex-wrap` sigue haciendo falta, ahora por el CTA y las dos líneas: los
+      dos tienen ancho mínimo propio —el corte de línea escrito no se deja al
+      ancho del navegador (`CLAUDE.md` §6.4)— y a 320 no entran en una fila
+      (`CONTACTANOS` + 16 + `HAGAMOS REALIDAD` piden más que los 272 de caja
+      útil). Donde no entran, las dos líneas bajan solas a una segunda fila y
+      se apoyan en el gutter derecho (`ml-auto`); el hueco entre las dos filas
+      es el mismo `8px` que separa las dos piezas apiladas en escritorio.
 
-      De `lg` para arriba se restituye exactamente lo de antes: `flex-nowrap`,
-      `items-start`, `gap-x-12` y `gap-y-0`.
+      De `lg` para arriba: `flex-nowrap`, `gap-x-12`, `gap-y-0` y la alineación
+      por última línea base que explica el docblock.
     */
     <div
-      className={`flex w-full flex-row flex-wrap items-end justify-between gap-x-4 gap-y-10 lg:flex-nowrap lg:items-start lg:gap-x-12 lg:gap-y-0 ${TOUCH_LINKS} ${GUTTER} py-12 lg:py-20`}
+      className={`flex w-full flex-row flex-wrap items-baseline justify-between gap-x-4 gap-y-[8px] lg:flex-nowrap lg:items-baseline-last lg:gap-x-12 lg:gap-y-0 ${TOUCH_LINKS} ${GUTTER} py-12 lg:py-20`}
     >
       {/*
-        La frase baja a 26/31 debajo de `md`. Los cortes de tres líneas siguen
-        siendo tres `<p>` —las negritas son por fragmento y viven adentro de su
-        línea—, pero cada línea envuelve sola: a 320 la más larga del castellano
-        mide 381,7 px contra 272 de caja, así que se parte en dos. Es lo que
-        pide §3.3 de la instrucción: el corte escrito no aplica en mobile, las
-        negritas se conservan.
+        Solo de 1024 para arriba, y solo en la escala de escritorio: debajo de
+        `lg` la frase no se monta, así que el escalón de 26/31 que tenía en
+        mobile se fue con ella. Los cortes son tres `<p>` y las negritas van por
+        fragmento, adentro de su línea.
       */}
-      <div className="font-display text-[26px] uppercase leading-[31px] tracking-normal text-off-black max-lg:flex-1 max-lg:basis-[min-content] md:text-[40px] md:leading-[48px]">
+      <div className="font-display text-[40px] uppercase leading-[48px] tracking-normal text-off-black max-lg:hidden">
         {getHeroLines(locale).map((line, lineIndex) => (
           <p key={lineIndex}>
             {line.map((fragment, index) => (
@@ -487,13 +508,14 @@ function StatementBand() {
       </div>
 
       {/*
-        En mobile baja a la escala de cuerpo (17/21) y va alineado a la
-        derecha. La proporción es la del escritorio, no un número nuevo: allá
-        la frase va a 40 y este bloque a 26, o sea 0,65; en mobile la frase va
-        a 26 y 26 × 0,65 = 17. A 26 px este bloque medía lo mismo que la frase
-        y por eso los dos se leían con el mismo peso.
+        En mobile este bloque se declara `contents`: el CTA y las dos líneas
+        pasan a ser hijos directos de la fila, uno en cada gutter. La escala de
+        cuerpo (17/21) es la de M2 y la proporción sigue siendo la del
+        escritorio —allá la frase va a 40 y este bloque a 26, o sea 0,65—; el
+        `text-right` se hereda igual, porque `contents` saca la caja y no el
+        nodo. De `lg` para arriba es la columna apilada de siempre.
       */}
-      <div className="flex flex-col items-end gap-y-[8px] text-right font-body font-[550] uppercase tracking-normal text-off-black max-lg:flex-none">
+      <div className="text-right font-body font-[550] uppercase tracking-normal text-off-black max-lg:contents lg:flex lg:flex-col lg:items-end lg:gap-y-[8px]">
         <HoverButton
           href="/contact"
           underline
@@ -502,7 +524,7 @@ function StatementBand() {
         >
           {t.footer.contactCta}
         </HoverButton>
-        <p className="whitespace-nowrap text-[17px] leading-[21px] lg:text-[26px] lg:leading-[31px]">
+        <p className="whitespace-nowrap text-[17px] leading-[21px] max-lg:ml-auto lg:text-[26px] lg:leading-[31px]">
           {t.footer.contactLines[0]}
           <br />
           {t.footer.contactLines[1]}
