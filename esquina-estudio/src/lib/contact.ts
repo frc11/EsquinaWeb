@@ -78,23 +78,30 @@ export const TIMELINE_OPTIONS = [
 export type TimelineOption = (typeof TIMELINE_OPTIONS)[number];
 
 /**
- * Los cuatro rangos, **con el formato exacto que escribieron las clientas** en
- * `docs/archivo/mockups/r2-trad-15.jpg`: sin `USD`, sin separador de miles, y
- * con guion corto rodeado de espacios. R2 los reemplazó enteros.
+ * Los cuatro rangos, con las cifras y el formato que escribieron las clientas
+ * en `docs/archivo/mockups/r2-trad-15.jpg` —sin separador de miles y con guion
+ * corto rodeado de espacios— **y el sufijo `USD` de vuelta (R3/F9)**: el
+ * pedido era cambiar los rangos, no sacar la moneda, y R2 la sacó de más.
  *
  * **Entre `$4000 – $6500` y `$7000 +` queda un pozo**: un presupuesto de $6.800
  * no tiene opción. Se implementa como lo pidieron y queda registrado en el
  * reporte de la ronda.
  *
- * Medido: el más ancho de los cuatro (`$4000 – $6500`) pide 236,5 px a 34 px
- * contra los 314 de la lista vieja, así que **el piso del control derecho baja
- * 77,6 px**. El aire no se usa para nada: esta ronda no rediseña el fit.
+ * El sufijo ensancha los cuatro, y el más ancho —`$4000 – $6500 USD`— es lo
+ * que fija el piso de la columna derecha del formulario. Medido con la opción
+ * elegida en los cuatro escalones tipográficos: **309,93 px a 34, 255,23 a 28,
+ * 237 a 26 y 218,77 a 24**, contra una pista útil del selector de 336 / 316
+ * (1920 / 1600), 259–382 (1360–1599), 246–285,5 (1280–1359) y 234–304
+ * (320–390). Entra en los catorce anchos de la matriz y en mobile sin truncar
+ * ni partir línea; la holgura mínima es **3,77 px a 1360** (escalón 1), y en
+ * los demás rangos 6,07 (1600), 9 (1280) y 15,23 (320). El fit no se movió:
+ * 426 / 450 / 498 px en los tres escalones, idéntico a antes de la ronda.
  */
 export const BUDGET_OPTIONS = [
-  "$1000 – $2500",
-  "$2500 – $4000",
-  "$4000 – $6500",
-  "$7000 +",
+  "$1000 – $2500 USD",
+  "$2500 – $4000 USD",
+  "$4000 – $6500 USD",
+  "$7000 + USD",
 ] as const;
 
 export type BudgetOption = (typeof BUDGET_OPTIONS)[number];
@@ -680,9 +687,10 @@ export function countrySearchTerms(option: string): readonly string[] {
 }
 
 /**
- * Los rangos de presupuesto **no se traducen**: son cifras. Desde R2 ni siquiera
- * llevan moneda, así que no hay nada que traducir; el formato es el que
- * escribieron las clientas y está documentado en `BUDGET_OPTIONS`.
+ * Los rangos de presupuesto **no se traducen**: son cifras con un código de
+ * moneda, y `USD` se escribe igual en los dos idiomas. El sufijo vive en el
+ * valor —es parte de la identidad de la opción, no del render por idioma— y el
+ * formato es el que escribieron las clientas, documentado en `BUDGET_OPTIONS`.
  *
  * Nota sobre el piso del control derecho, que este archivo declaraba mal: hasta
  * R2 decía que los 352 px salían de `$2,500–$4,000 USD`, y no era cierto — el
