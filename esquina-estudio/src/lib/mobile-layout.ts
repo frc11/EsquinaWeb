@@ -137,6 +137,35 @@ export const TOUCH_LINKS =
   "max-lg:[&_a]:inline-flex max-lg:[&_a]:min-h-[44px] max-lg:[&_a]:items-center";
 
 /**
+ * La misma área táctil de 44 px, pero **sin ocupar lugar** (R3/F2).
+ *
+ * `TOUCH_LINKS` engorda el `<a>` a 44 px, y donde el enlace es una celda de
+ * grilla eso hace que la fila mida 44. En el footer de mobile las clientas
+ * pidieron los renglones al paso del mockup —21 px—, así que el alto tocable
+ * sale de un pseudo-elemento absoluto de 44 px centrado en el enlace, que no
+ * participa del layout. El ancho es el del propio enlace (los tres del footer
+ * pasan de 66 px).
+ *
+ * **A 21 px de paso las cajas de dos enlaces vecinos se pisan**, y en la zona
+ * compartida gana el que se pinta último. Por eso el texto de cada enlace —el
+ * `<span>` que emite `HoverButton`, que ya es `relative`— sube a `z-index: 1`:
+ * un toque sobre la palabra va siempre a su propio enlace, y solo el aire
+ * entre renglones queda repartido por orden. El área **exclusiva** de cada
+ * enlace es su renglón; es la decisión de R3 y está registrada en
+ * `MOBILE_PLACE_CELL` de `Footer.tsx`.
+ *
+ * El `<a>` no debe volverse contexto de apilamiento (sin `z-index` propio):
+ * los pseudo-elementos y los textos de los tres enlaces tienen que convivir en
+ * el mismo contexto para que el `z-index: 1` del texto le gane al pseudo del
+ * vecino.
+ */
+export const TOUCH_LINKS_OVERLAY = [
+  "max-lg:[&_a]:relative max-lg:[&_a]:inline-flex max-lg:[&_a]:items-center",
+  "max-lg:[&_a]:after:absolute max-lg:[&_a]:after:inset-x-0 max-lg:[&_a]:after:top-1/2 max-lg:[&_a]:after:h-[44px] max-lg:[&_a]:after:-translate-y-1/2 max-lg:[&_a]:after:content-['']",
+  "max-lg:[&_a>span]:z-[1]",
+].join(" ");
+
+/**
  * # Nota sobre `sizes` en mobile — por qué algunos van dentro de `calc()`
  *
  * Los anchos de teléfono de este sprint (320 a 430) están **por debajo del

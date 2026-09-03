@@ -7,7 +7,11 @@ import LogoScript from "@/components/ui/LogoScript";
 import HoverButton from "@/components/ui/HoverButton";
 import { getHeroLines } from "@/lib/site-copy";
 import { useLocale } from "@/lib/i18n";
-import { CHROME_GUTTER, TOUCH_LINKS } from "@/lib/mobile-layout";
+import {
+  CHROME_GUTTER,
+  TOUCH_LINKS,
+  TOUCH_LINKS_OVERLAY,
+} from "@/lib/mobile-layout";
 import developLogo from "../../../logos/logodevelOP.png";
 import footerScriptLarge from "../../../logos/logo-footer-grande.png";
 
@@ -24,19 +28,20 @@ const SOCIAL_LINKS = [
 const COPYRIGHT = "© 2024";
 
 /**
- * Dónde cae cada pieza en la grilla de mobile. **Rearmada en R2/F11.3.**
+ * Dónde cae cada pieza en la grilla de mobile. **Rearmada en R2/F11.3 y
+ * comprimida en R3/F2.**
  *
  * Van como tablas de literales enteros porque Tailwind v4 busca los nombres de
  * clase como texto: `` `row-start-${index + 1}` `` no llegaría nunca al CSS.
  *
- * # El reparto nuevo
+ * # El reparto
  *
- * Tres filas y tres columnas; la del medio es solo para el logo, que dejó de
- * tener fila propia:
+ * Tres filas de **un renglón cada una** y tres columnas; la del medio es solo
+ * para el logo, que dejó de tener fila propia:
  *
  * ```
- *   fila 1   BORN IN / ARGENTINA                       INSTAGRAM
- *   fila 2                          [logo script]      LINKEDIN
+ *   fila 1   BORN IN                                   INSTAGRAM
+ *   fila 2   ARGENTINA              [logo script]      LINKEDIN
  *   fila 3   © 2024                                    develOP
  * ```
  *
@@ -55,24 +60,40 @@ const COPYRIGHT = "© 2024";
  * 3. **El copyright se muda a la izquierda**, debajo del par de lugar, y el
  *    crédito a la derecha, cerrando la columna de los enlaces.
  * 4. **El logo script deja la cuarta fila** y pasa a la columna del medio,
- *    centrado vertical y horizontalmente entre las otras dos. Con eso se van la
- *    fila entera y su `mt-4`, que es de dónde sale la compresión vertical que
- *    pide la referencia.
+ *    centrado vertical y horizontalmente entre las otras dos.
+ * 5. **R3/F2: el par de lugar se parte en dos filas y los renglones van al
+ *    paso del mockup.** En `r2-mob-02.jpg` los seis renglones caen a **20,9
+ *    px** unos de otros (38 px de captura a 1,82 px por px CSS) y `© 2024` va
+ *    pegado debajo de `ARGENTINA` con ese mismo paso. Hasta R3 cada fila medía
+ *    44 px —el piso táctil de `TOUCH_LINKS`— y el copyright quedaba 92 px
+ *    debajo de `ARGENTINA`. Ahora el par se declara `contents` en mobile, sus
+ *    dos renglones son celdas propias (`MOBILE_PLACE_LINE`), las tres filas
+ *    miden lo que mide un renglón y el área táctil de los enlaces sale de un
+ *    pseudo-elemento que no ocupa lugar (`TOUCH_LINKS_OVERLAY`).
  *
- * **Las dos columnas siguen terminando a la misma altura**, que es el criterio
- * de §2b y no la cantidad de renglones: la derecha llena las tres filas y la
- * izquierda se apoya en la primera y en la tercera (`self-end` en el copyright).
- *
- * **Lo que la referencia pide y NO se aplica, y hay que decirlo:** en el mockup
- * los renglones quedan a ~18 px unos de otros. Acá no pueden: `INSTAGRAM`,
- * `LINKEDIN` y `develOP` son enlaces y arrastran el piso de 44 px de área
- * táctil, que §2b declara innegociable. La compresión que sí se hizo es la de la
- * cuarta fila.
+ * **Lo que esa compresión le cuesta al piso de 44 px, dicho de frente.** Cada
+ * enlace conserva una caja tocable de 44 px de alto, pero a 21 px de paso las
+ * cajas de dos enlaces vecinos se pisan 23 px: el área **exclusiva** de
+ * `INSTAGRAM` y de `LINKEDIN` es la de su renglón, ~21 px. Es la decisión de
+ * Valentino en R3 (la alternativa era no comprimir), y es el único lugar del
+ * sitio donde §2b no se cumple en el eje vertical. Para que un toque sobre la
+ * palabra vaya siempre a su propio enlace, el texto se pinta por encima de las
+ * cajas vecinas; ver `TOUCH_LINKS_OVERLAY`.
  */
 const MOBILE_PLACE_CELL = [
-  "max-lg:col-start-1 max-lg:row-start-1",
+  "max-lg:contents",
   // El segundo par —WORKING WORLDWIDE— no existe debajo de 1024.
   "max-lg:hidden",
+] as const;
+
+/**
+ * Los dos renglones del par de lugar, cada uno en su fila. Solo importa para
+ * el primer par: el segundo está apagado entero debajo de 1024 y sus hijos no
+ * llegan a la grilla.
+ */
+const MOBILE_PLACE_LINE = [
+  "max-lg:col-start-1 max-lg:row-start-1",
+  "max-lg:col-start-1 max-lg:row-start-2",
 ] as const;
 
 /** La columna derecha, de arriba abajo. El crédito toma la tercera fila aparte. */
@@ -82,13 +103,11 @@ const MOBILE_SOCIAL_CELL = [
 ] as const;
 
 /**
- * El copyright cierra la columna izquierda, apoyado en el borde inferior de la
- * grilla (`self-end`) para que las dos columnas terminen parejas. No lleva piso
- * de área táctil porque no es un enlace y ya no comparte fila con uno: su altura
- * la fija la fila, que la fija el crédito de la derecha.
+ * El copyright cierra la columna izquierda, en la tercera fila, debajo de
+ * `ARGENTINA`. No lleva piso de área táctil porque no es un enlace.
  */
 const MOBILE_COPYRIGHT_CELL =
-  "max-lg:col-start-1 max-lg:row-start-3 max-lg:flex max-lg:items-end max-lg:justify-self-start max-lg:self-end";
+  "max-lg:col-start-1 max-lg:row-start-3 max-lg:justify-self-start";
 
 /**
  * El crédito cierra la columna derecha; el logo ocupa la columna del medio.
@@ -99,8 +118,15 @@ const MOBILE_COPYRIGHT_CELL =
  */
 const MOBILE_CREDIT_CELL =
   "max-lg:col-start-3 max-lg:row-start-3 max-lg:flex max-lg:justify-self-end";
+/*
+  `self-center` es lo que lo centra **en el eje vertical** (R3/F2): la grilla
+  alinea sus celdas arriba (`items-start`) y sin esto la celda del logo, que
+  abarca las tres filas, quedaba apoyada en la primera —medido a 390: centro
+  del logo en el 18 % del alto de la fila—. El `items-center` de adentro centra
+  al logo dentro de la celda, que no es lo mismo.
+*/
 const MOBILE_LOGO_CELL =
-  "max-lg:col-start-2 max-lg:row-start-1 max-lg:row-span-3 max-lg:flex max-lg:items-center max-lg:justify-center";
+  "max-lg:col-start-2 max-lg:row-start-1 max-lg:row-span-3 max-lg:flex max-lg:items-center max-lg:justify-center max-lg:self-center";
 
 /**
  * Gutter horizontal del chrome: alinea el footer con el Navbar. Sale del módulo
@@ -303,18 +329,13 @@ function InfoRow({
   return (
     <div
       /*
-        `gap-y-0` y no `gap-y-4`, y no es ahorro por ahorro: las tres filas miden
-        **44 px** cada una por el piso de área táctil, así que entre dos
-        renglones de texto de 20 px ya quedan 24 px de aire. Los 16 px de hueco
-        encima de eso separaban de más y engordaban el footer. El aire que sí
-        hace falta —el que aparta el logo del bloque de las tres filas— lo pone
-        el `mt-4` de esa celda, que es donde se ve.
-
-        Si los dos pares de lugar se leen apretados (quedan a 4 px uno del otro:
-        40 px de texto dentro de filas de 44), acá es donde se toca: `gap-y-3`
-        con el `lg:gap-y-0` de al lado protegiendo el escritorio.
+        `gap-y-0`: desde R3/F2 cada fila mide lo que mide un renglón —20 px de
+        caja de línea, 21 con el píxel de relleno de `HoverButton`— y el paso
+        entre renglones es el del mockup. Un hueco acá lo alejaría de la
+        referencia. El área táctil de los enlaces ya no fija el alto de la fila:
+        la pone `TOUCH_LINKS_OVERLAY` con un pseudo-elemento fuera de flujo.
       */
-      className={`grid w-full grid-cols-[auto_1fr_auto] items-start justify-between gap-x-4 gap-y-0 lg:flex lg:flex-row lg:justify-between lg:gap-x-12 lg:gap-y-0 ${align} ${TOUCH_LINKS} ${INFO_TYPE} ${leadingClass} ${textClass}`}
+      className={`grid w-full grid-cols-[auto_1fr_auto] items-start justify-between gap-x-4 gap-y-0 lg:flex lg:flex-row lg:justify-between lg:gap-x-12 lg:gap-y-0 ${align} ${TOUCH_LINKS_OVERLAY} ${INFO_TYPE} ${leadingClass} ${textClass}`}
     >
       {/*
         El grupo de la izquierda de escritorio. En mobile se declara
@@ -330,8 +351,12 @@ function InfoRow({
             key={index}
             className={`flex flex-col ${MOBILE_PLACE_CELL[index]} ${stackGap}`}
           >
-            <span className="whitespace-nowrap">{first}</span>
-            <span className="whitespace-nowrap">{second}</span>
+            <span className={`whitespace-nowrap ${MOBILE_PLACE_LINE[0]}`}>
+              {first}
+            </span>
+            <span className={`whitespace-nowrap ${MOBILE_PLACE_LINE[1]}`}>
+              {second}
+            </span>
           </div>
         ))}
 
@@ -532,7 +557,10 @@ function ScriptBand() {
       <div className={`${GUTTER} pb-6 pt-6 lg:pb-10`}>
         <InfoRow
           tone="dark"
-          leadingClass="leading-none"
+          // `leading-none` es de escritorio; debajo de 1024 el renglón mide 20
+          // px para que las tres filas vayan al paso del mockup (R3/F2), el
+          // mismo que ya usa el footer claro.
+          leadingClass="max-lg:leading-[20px] lg:leading-none"
           stackGap="gap-y-[8px]"
           align="lg:items-start"
           inlineCredit
