@@ -12,6 +12,25 @@ import { useIsBelowDesktop } from "@/lib/use-media-query";
 import { LOCALES, useLocale, type Locale } from "@/lib/i18n";
 
 /**
+ * Dónde cae el idioma inactivo cuando el desplegable de mobile está abierto.
+ *
+ * Hasta R3 la celda era una caja —borde de 1 px del color pleno, fondo de la
+ * página y 12 px de relleno—, anclada al borde **derecho** del grupo. En la
+ * revisión en teléfono se leía como un rectángulo suelto y corrido: medido a
+ * 390, `ES` arrancaba 12,45 px a la derecha de `EN` (el relleno) y la caja
+ * cerraba contra el chevron. R3/F5 la deja sin caja y anclada a la
+ * **izquierda**: el estado abierto ya se lee porque aparece la opción, y el
+ * código nuevo cae exactamente debajo del activo, mismo borde izquierdo. El
+ * área táctil no cambia: la pone el `::after` del propio botón, no el relleno
+ * que se fue.
+ *
+ * Solo existe debajo de 1024: de ahí para arriba ninguna de estas clases
+ * aplica y el control queda exactamente como estaba.
+ */
+const OPTION_CELL_CLASS =
+  "max-lg:absolute max-lg:left-0 max-lg:top-full max-lg:z-[3] max-lg:mt-3 max-lg:justify-start";
+
+/**
  * Control `EN / ES` del header, a la derecha de `CONTACT US`.
  *
  * # Dónde vive (revisado en M2/F1)
@@ -247,21 +266,6 @@ export default function LocaleToggle({
       ? "text-gray-brand hover:text-off-white focus-visible:text-off-white"
       : "text-gray-brand hover:text-off-black focus-visible:text-off-black";
 
-  /*
-    La superficie del desplegable de mobile. Es la misma que usa el desplegable
-    del formulario —borde de 1 px del color pleno sobre el fondo de la página—,
-    invertida en las rutas oscuras. Solo existe debajo de 1024: de ahí para
-    arriba ninguna de estas clases aplica y el control queda exactamente como
-    estaba.
-  */
-  const optionCellClass = [
-    "max-lg:absolute max-lg:right-0 max-lg:top-full max-lg:z-[3] max-lg:mt-3",
-    "max-lg:border max-lg:px-3 max-lg:justify-end",
-    tone === "dark"
-      ? "max-lg:border-off-white max-lg:bg-off-black"
-      : "max-lg:border-off-black max-lg:bg-off-white",
-  ].join(" ");
-
   return (
     <div
       ref={groupRef}
@@ -295,7 +299,7 @@ export default function LocaleToggle({
         <span
           key={code}
           className={`flex items-center ${
-            isSelected ? "" : `${optionCellClass} ${open ? "" : "max-lg:hidden"}`
+            isSelected ? "" : `${OPTION_CELL_CLASS} ${open ? "" : "max-lg:hidden"}`
           }`}
         >
           {index > 0 && (
