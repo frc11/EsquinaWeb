@@ -15,7 +15,7 @@ import {
 import developLogo from "../../../logos/logodevelOP.png";
 import footerScriptLarge from "../../../logos/logo-footer-grande.png";
 
-const DEVELOP_URL = "https://develop-portfolio.netlify.app";
+const DEVELOP_URL = "https://develop.com.ar";
 
 const SOCIAL_LINKS = [
   { label: "INSTAGRAM", href: "https://www.instagram.com/esquina_estudio/" },
