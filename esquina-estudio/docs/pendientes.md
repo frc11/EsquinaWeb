@@ -758,3 +758,80 @@ artefactos del banco y las tres fichas viejas de `CLAUDE.md` §2b— siguen como
 estaban. R3.1 tocó un solo archivo de código y no los rozó. **El paso de 21 px
 del footer sigue siendo una decisión de R3 y no se tocó:** si un toque falla
 lejos del botón, el cabo abierto es ese, no este.
+
+## Abiertos al cerrar R4 (nitidez de las imágenes de proyecto, 2026-10-19)
+
+R4 arregló lo que era código: el `sizes`, el tope de Sanity y la calidad. Lo que
+queda es **material** —originales más chicos que lo que el sitio ahora puede
+mostrar— y la verificación en producción.
+
+### Para pasarles a las clientas: qué tamaño subir
+
+Sale de los topes nuevos de `ProjectContentRenderer.tsx` (peor caso: un monitor
+de 1920 en Retina). Subir más grande **no mejora nada** —el sitio no pide más—
+y **no hace más pesada la página** —el visitante nunca baja el original—, pero sí
+hace más lento el primer pedido de cada imagen.
+
+| bloque | proporción | mínimo para que se vea nítida |
+|---|---|---|
+| foto sola (`Media item`) | 4:3, cuadrada o vertical | **3000 px de ancho** (3000 × 2250 en 4:3) |
+| foto sola | más apaisada que 4:3 (16:9, 2:1) | **3840 px de ancho** |
+| cada foto del par (`Dual media`) | vertical 2:3 | **1500 × 2250 px** |
+| cada foto del par | vertical 4:5 | **1800 × 2250 px** |
+
+Regla corta para el par: **2250 px de alto**. Formato: **JPG de calidad alta
+para fotos sin transparencia**; PNG solo si hay transparencia de verdad. Hoy
+ocho de los once PNG tienen canal alfa sin un solo píxel transparente: es peso
+que no compra nada —un PNG de 3456 px viaja con 30 MB al optimizador—.
+
+**Los que hoy están cortos**, medidos contra la API el 2026-10-19:
+
+| proyecto | bloque | original | necesita | llega al |
+|---|---|---|---|---|
+| `tukumi` | foto sola (portada roja) | 2400 × 1800 PNG | 2976 | 81 % |
+| `tukumi` | foto sola | 1916 × 1201 PNG | 3561 | 54 % |
+| `tukumi` | par (las dos) | 957 × 1201 PNG | 1779 | 54 % |
+| `pepe` | foto sola | 2250 × 2250 PNG | 2976 | 76 % |
+| `akasha-blends` | dos fotos solas | 2881 × 2161 PNG | 2976 | 97 % |
+
+El resto cubre. La portada de Tukumi es la del reporte del tercero: con R4 llega
+entera (2400 px, antes 1200) pero a 1920 en Retina le falta un 19 %.
+
+### Abiertos
+
+- **[R4 · Producción]** **No se pudo verificar contra el sitio publicado**: no
+  hay URL de producción en el repo. Y `@netlify/plugin-nextjs` puede servir
+  `/_next/image` con el CDN de imágenes de Netlify en vez del optimizador de
+  Next: el `q=82` viaja igual en la URL, pero la relación calidad/bytes medida
+  acá (AVIF de sharp con `q − 20`) es la de Next. Después del deploy: abrir
+  `/work/matsu` a 1920 en Retina, mirar en la pestaña de red qué URL sirve la
+  imagen, cuánto pesa y de qué ancho es.
+- **[R4 · Peso]** **El GIF de `akasha-blends` pesa 4,75 MB**, el 86 % de la ruta.
+  No pasa por el optimizador (va como `<img>` para conservar la animación) y R4
+  no lo tocó. El LCP de 27 s de esa ruta en Lighthouse mobile es **anterior a la
+  ronda** e idéntico en base; el elemento LCP es un párrafo, y que la causa sea
+  el GIF compitiendo por el ancho de banda es una hipótesis **sin verificar**.
+  Como video (`mp4`) pesaría una fracción; es decisión de planificación, y
+  `SingleMedia` ya sabe mostrar `.mp4`.
+- **[R4 · Navegadores]** `sizes` con `min()` / `max()` / `vh` está verificado en
+  Chrome, **no en Safari**. Si Safari no lo entiende, esa entrada cae a `100vw`:
+  pide de más, nunca estira. Solo afecta a las fotos más apaisadas que su caja
+  (hoy las dos 2:1 de Akasha, la 1916 × 1201 de Tukumi y los pares de Tukumi
+  y de Romar).
+- **[R4 · Peso]** Matsu a 1920 en Retina pasó de 749 a 1355 kB (×1,81): es la
+  foto que ahora llega entera (2976 px, antes 1200) y su render tiene ruido, que
+  es lo más caro de codificar. Aceptado por la vara de la Fase 5 —LCP sin
+  cambios, el LCP no es esa foto—; si en la mano se siente pesada, el ajuste más
+  chico es bajar **solo la calidad** (q=75 la deja en ~1075 kB), no el tope.
+- **[R4 · Ficha]** `CLAUDE.md` §5 dice 4 `project`; el dataset tiene **6** al
+  2026-10-19. §7.5 y §6 no mencionan los cuatro hechos nuevos del optimizador y
+  de Sanity (AVIF a `q − 20`, original servido si la codificación pasa de 7 s,
+  Sanity agranda, Sanity recodifica JPG a q=75); están en la bitácora de R4.
+- **[R4 · Banco]** `/contact/success|1920|es` da un borde inferior que varía
+  entre corridas del mismo código (1096,46 – 1101,27): una animación capturada a
+  mitad de camino. No es de R4, pero hace ruido en `diff.mjs`.
+
+### Heredados que siguen abiertos
+
+Los de R3.1 y anteriores siguen como estaban: R4 tocó
+`ProjectContentRenderer.tsx` y `next.config.ts` y no los rozó.

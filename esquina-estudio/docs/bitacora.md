@@ -5758,3 +5758,239 @@ El agente no simula gestos táctiles. Queda para Valentino, en el teléfono:
 el build local.
 
 - **Commits:** `faf445b` (producto) y este de registros.
+
+## 2026-10-19 · R4 · Nitidez de las imágenes de proyecto
+
+**Objetivo:** que las fotos de `/work/[slug]` se vean nítidas en pantalla común y
+en Retina sin que la página se vuelva pesada. Siete fases (0 a 6), sobre `main` y
+**sin `git push`**. Modelo `opus-5.5`, esfuerzo alto, banco de `tools/bench/` sin
+reconstruir (las sondas de la ronda lo importan; solo agregan DPR 2 por
+`Emulation.setDeviceMetricsOverride` y la lectura de bytes por eventos de red).
+
+**Lo que cambia el mapa mental del repo:** el `sizes`, el tope de Sanity y la
+calidad de las imágenes de proyecto **ya no son literales**: salen de una sola
+geometría escrita en `ProjectContentRenderer.tsx` (la de `ProjectDetailClient`:
+columna de `100vw − 48` / `100vw − 432`, fila 4:3 topada a `88svh`) **y de la
+proporción del original**, que se lee del `_ref` del asset
+(`image-<hash>-2400x1800-png`). Si cambian las clases de la ficha, cambian esos
+números. Y `next.config.ts` tiene por primera vez `images.qualities`.
+
+### Fase 0 — terreno y vara
+
+Árbol limpio, HEAD `e788faa`, `main` al día con `origin/main`. Lint y build en
+verde en base. **El dataset tiene seis `project`**, no los cuatro de `CLAUDE.md`
+§5 (leído contra la API el mismo día); uno, `como-en-napoles`, sin bloques.
+
+La vara se tomó sobre `/work/matsu` (un `mediaItem` 6000×4500 PNG) y
+`/work/akasha-blends` (siete `mediaItem`, entre ellos dos 2:1 y un GIF, y un
+`dualMedia` vertical): 2 rutas × 5 anchos × altos 720 y 1080 × DPR 1 y 2 = 40
+casos, 160 imágenes. Por cada una: la caja, el ancho **pintado** con
+`object-cover`, el `sizes`, el `w=` que pidió el navegador, el `w=` de la URL de
+Sanity y el archivo que llega —ancho y formato leídos con `sharp` sobre los
+bytes, no de la URL—.
+
+Las cajas a 1920: foto sola **1488 × 950**, cada mitad del par **743 × 950**. La
+hipótesis de la instrucción decía ~1267 para la sola; el hueco era **mayor**:
+la columna mide `1920 − 432` y la fila es `w-full`, así que el tope de `88svh`
+baja el alto pero no el ancho. Lo que sí depende del alto es el ancho **pintado**
+de una foto más apaisada que la caja: la 2:1 de Akasha pinta 1488 a 1920 × 720 y
+**1901** a 1920 × 1080.
+
+Bytes de la ruta, base: Matsu 682 kB (DPR 1) / 749 kB (DPR 2) a 1920 × 1080;
+Akasha 5,54 / 5,59 MB, de los que **4,75 MB son un solo GIF** que no pasa por el
+optimizador.
+
+### Fase 1 — diagnóstico
+
+**D1 · El `sizes` mentía en los dos sentidos.** La foto sola declaraba `800px` de
+768 para arriba: a 768 el hueco es 336 (pedía 2,4 veces de más) y a 1920 es 1488
+(pedía la mitad). El par declaraba `calc(50vw)` = 960 contra 743 a 1920. Debajo
+de 768 los dos estaban bien. **`sizes` sí puede expresar la dependencia del
+alto**: Chrome resuelve `vh`, `svh`, `min()` y `max()` dentro de `sizes`
+(verificado con un `srcset` de prueba: `max(100vw − 432px, 88vh × 2)` a 1920 ×
+1080 elige el candidato de 2100). Lo que no está verificado es Safari; si no lo
+entiende, la regla cae a `100vw`, que es pedir de más.
+
+**D2 · Dónde se perdía la resolución, a 1920 × 1080 DPR 2:**
+
+| | foto sola 4:3 (Matsu) | foto sola 2:1 (Akasha) | mitad del par 2:3 |
+|---|---|---|---|
+| px que necesita el hueco | 2976 | 3801 | 1486 |
+| px que declaraba `sizes` (× 2) | 1600 | 1600 | 1920 |
+| variante que pedía el navegador | 1920 | 1920 | 1920 |
+| px que entregaba Sanity | **1200** | **1200** | **800** |
+| px que entregaba `/_next/image` | 1200 | 1200 × 600 | 800 |
+| llega / necesita | **40 %** | **32 %** | **54 %** |
+
+A DPR 2 el eslabón que corta es el **tope de Sanity**; a DPR 1 es el **`sizes`**
+(a 1920 pedía 828 para 1488: el 56 %, con Sanity mandando 1200 que nadie usaba).
+Los dos se apilaban: arreglar solo el tope no movía nada a DPR 1. En toda la
+vara, **88 de 160 imágenes** cubrían su hueco.
+
+**D3 · La configuración.** `next.config.ts` solo tenía `remotePatterns` y
+`formats: [avif, webp]`. Leído en `node_modules/next` (16.2.6): `deviceSizes`
+por defecto `[640, 750, 828, 1080, 1200, 1920, 2048, 3840]`, `imageSizes`
+`[32 … 384]`, **`qualities` por defecto `[75]`** (`image-config.js`), y el
+cargador por defecto lleva cualquier `quality` a la más cercana de esa lista
+(`find-closest-quality.js`); el servidor rechaza un `q=` que no esté. Tres
+hallazgos del optimizador (`image-optimizer.js`) que no estaban en ninguna ficha:
+**(1)** para AVIF le pasa a sharp **`quality − 20`** —q=75 es 55 de
+codificador—; **(2)** redimensiona con `withoutEnlargement`; **(3)** si la
+codificación pasa de **7 s** (`imgOptTimeoutInSeconds`) **sirve el original del
+upstream tal cual**. Medido: codificar 2976 px tarda 330–360 ms en esta
+máquina, lejos del límite. **Ningún ancho nuevo hace falta en `deviceSizes`**:
+el tope de Sanity, dimensionado al hueco, decide el archivo aunque el navegador
+pida el 3840.
+
+**D4 · El formato.** Sanity devuelve el formato del original (sin `fm`) y
+`/_next/image` sirve AVIF. De los once PNG de contenido, **ocho tienen canal alfa
+pero ningún píxel transparente** (alfa mínimo 255) y tres tienen transparencia
+real (mínimos 0, 120 y 134). Dos cosas que no sabíamos y que cambiaron la Fase 3:
+
+- **Sanity agranda sin avisar.** `w=2976` sobre un original de 2400 devuelve
+  2976 px; `w=8000`, 8000 × 6000 y 53 MB. **El par de Tukumi ya se servía
+  agrandado** (957 → 1200).
+- **Sanity recodifica los JPG a q=75** al redimensionar (byte a byte idéntico a
+  `q=75`); el PNG ignora `q`. El optimizador comprimía encima de eso.
+
+Convertir el viaje de los PNG a JPG o WebP en Sanity lo aliviana 3 a 4 veces
+(Tukumi a 2400: 3,7 MB → 1,0–1,4 MB) pero **le cuesta 1,1 dB de PSNR a la salida
+final** (37,85 → 36,71): Sanity submuestrea el color aun a q=100. No se hizo.
+
+### Fase 2 — el `sizes` dice la verdad (`eef9b42`)
+
+`mediaSizes(slot, aspect)`: el ancho de la caja si el original es igual o más
+angosto que ella (4:3 la sola, 2:3 la mitad), y si es más apaisado,
+`max(caja, min(fila × ¾ × proporción, 88vh × proporción))`. En `vh` y no en
+`svh`: en el teléfono es el mayor de los dos. Todos los términos van dentro de
+`calc()`/`max()` por la nota de `mobile-layout.ts`. Sin `_ref` se asume la
+proporción de la caja.
+
+Verificación: el `w=` pedido cubre el hueco en **los 160** casos; a 1920 DPR 1
+la sola pasa de 828 a 1920 y a DPR 2 de 1920 a 3840; de 768 a 1023 se pide
+menos que antes (Matsu a 768: 828 → 384). Cobertura real del hueco: 88 → **108
+de 160** — el resto lo seguía cortando Sanity.
+
+### Fase 3 — el tope de Sanity deja de ser el techo (`8d3071e`)
+
+`sanityWidth(slot, image)`, por imagen y con la misma geometría: el peor caso
+es **1920 de ancho a DPR 2**, con el alto de la fila en su máximo estructural
+(¾ de 1488 = 1116, cualquiera sea el alto de la ventana: ese es el margen).
+Sola 4:3 → **2976**; sola 2:1 → 4464, que el techo de 3840 deja en **3840**;
+mitad 2:3 → **1488**; mitad 4:5 → **1786**. Acotado además **al ancho del
+original** (Sanity agranda) y a **3840**, el `deviceSizes` más grande. Los JPG
+viajan con **`q=90`**: medido sobre la foto del par, la salida final gana 0,84 dB
+y pesa *menos* (79,4 contra 81,0 kB); q=100 sumaba 0,18 dB más con cuatro veces
+el viaje. El GIF se separó y sigue en 1200: no pasa por el optimizador, así que
+su tope es peso directo para el visitante. `deviceSizes` no se tocó.
+
+Verificación sobre el archivo: a 1920 × 1080 DPR 2 llegan **2976** px para un
+hueco de 2976 (Matsu), **3840** para 3801 (la 2:1) y **1488** para 1486 (el
+par). Cobertura: **160 de 160**.
+
+### Fase 4 — la calidad, decidida con números (`e833f2b`)
+
+Pipeline del optimizador replicado con `sharp` (rotate → resize sin agrandar →
+AVIF `q − 20`, effort 3), en el ancho que se sirve en el peor caso, contra el
+original. SSIM de luminancia en ventanas de 8 × 8; «detalle» es la energía del
+laplaciano de la salida sobre la de la referencia (cuánto grano sobrevive).
+
+| imagen | q | bytes | PSNR | SSIM | detalle |
+|---|---|---|---|---|---|
+| Tukumi 2400 (papel con grano) | 75 | 54,0 kB | 37,85 | 0,9288 | 0,415 |
+| | **82** | 84,5 kB | 38,17 | 0,9329 | 0,459 |
+| | 90 | 141,4 kB | 38,50 | 0,9378 | 0,507 |
+| foto del par 1488 (viaje q=90) | 75 | 79,8 kB | 37,69 | 0,9634 | 0,477 |
+| | **82** | 106,0 kB | 38,17 | 0,9668 | 0,507 |
+| | 90 | 134,1 kB | 38,53 | 0,9698 | 0,527 |
+| Matsu 2976 (render con ruido) | 75 | 380 kB | 32,48 | 0,7887 | 0,388 |
+| | **82** | 661 kB | 33,73 | 0,8527 | 0,490 |
+| | 90 | 963 kB | 34,88 | 0,8952 | 0,556 |
+
+En las tres, el paso de 82 a 90 compra **entre 18 y 38 % menos SSIM por kB** que
+el de 75 a 82: ahí la mejora deja de pagar su peso. A 1:1, a q=75 el rojo de
+Tukumi queda casi liso y a 82 vuelve la trama. **Se eligió 82**, aplicado como
+prop `quality` en las tres `<Image>` del renderer más `qualities: [75, 82]`: el
+resto del sitio sigue en 75 por la regla de la más cercana. Medido: `/work`,
+`/fun-gallery`, `/services`, `/` y `/team` a 1920 DPR 1 y 2 y a 390 DPR 2 siguen
+pidiendo `q=75` con delta de bytes de **0 a −18 B** (cabeceras). Sin PARADA 1.
+
+### Fase 5 — que no se haya vuelto pesada (`e202d01`)
+
+**Bytes de la ruta, base → final:**
+
+| | 390 DPR 1 | 390 DPR 2 | 1440 DPR 1 | 1440 DPR 2 | 1920 DPR 1 | 1920 DPR 2 |
+|---|---|---|---|---|---|---|
+| Matsu | ×1,00 | ×1,01 | ×1,04 | ×1,22 | ×1,23 | **×1,81** (749 → 1355 kB) |
+| Akasha | ×1,00 | ×1,01 | ×1,02 | ×1,05 | ×1,03 | ×1,08 |
+
+El peor multiplicador es el caso que la ronda vino a arreglar: Matsu en Retina,
+donde antes llegaba el 40 % de la resolución. En teléfonos no se mueve, y de 768
+a 1023 baja.
+
+**Lighthouse 13** (mediana de 3, caché del optimizador caliente, sobre el server
+local; base recompilada desde `e788faa`):
+
+| | perf | a11y | BP | SEO | LCP | FCP | TBT | CLS |
+|---|---|---|---|---|---|---|---|---|
+| Matsu mobile | 93 → 92 | 100 | 100 | 100 | 3210 → 3405 ms | 758 → 760 | 19 → 19 | 0 |
+| Matsu desktop | 100 → 100 | 96 | 100 | 100 | 679 → 679 ms | 208 | 0 | 0,001 |
+| Akasha mobile | 75 → 75 | 96 | 100 | 100 | 26 872 → 26 913 ms | 759 | 38 → 48 | 0 |
+| Akasha desktop | 78 → 78 | 96 | 100 | 100 | 4718 → 4736 ms | 207 | 0 | 0,001 |
+
+**El LCP no empeoró:** la diferencia de Matsu mobile está dentro del ruido entre
+corridas (base 3169–3333, final 2801–3407). Y **el elemento LCP no es ninguna
+foto de proyecto**: es el logo del header en Matsu y un párrafo en Akasha —las
+fotos entran después de la cortina y en diferido—. Sin PARADA 2. El LCP de 27 s
+de Akasha en mobile es **anterior a la ronda** e idéntico en base.
+
+**Primer pedido con la caché fría** (`w` nunca pedidos, dos muestras): Matsu 2,2
+/ 1,0 s → 2,7 / 2,2 s; Tukumi 1,7 / 1,7 → 2,7 / 0,7; el PNG del par 3,0 / 2,8 →
+1,5 / 1,0. Mismo orden, dominado por la red de Sanity y muy ruidoso; se paga una
+vez por variante.
+
+**No-regresión:** los **48 altos idénticos**, **0 desborde horizontal** en los
+48, el fit del formulario idéntico en los 8, y las **180 cajas de imagen** de la
+vara idénticas entre base y final. `diff.mjs` marca una sola clave,
+`/contact/success|1920|es`, en el **borde inferior** (alto igual): con el mismo
+código final dio 1101,27, 1096,46 y 1096,46 en tres corridas, contra 1096 en
+base. Es una animación de esa ruta capturada a mitad de camino; la ronda no la
+toca. Lint y build en verde con el servidor bajado.
+
+Archivado: `docs/archivo/mediciones/r4-f0-base.json`, `r4-cierre.json` (los
+48, comparables con `diff.mjs`) y `r4-nitidez.json` (las 160 imágenes base contra
+final, la tabla de calidad y Lighthouse).
+
+### Notas de entorno
+
+- **Git Bash convierte `/work/matsu` en ruta de Windows** al pasarlo como
+  argumento a Node: `MSYS_NO_PATHCONV=1`.
+- **Dos servidores seguidos chocan en el 3010**: el `taskkill` de
+  `server.stop()` es asíncrono y la corrida siguiente puede arrancar antes de
+  que el puerto se libere. Esperar o reintentar.
+- **Lighthouse en Windows sale con EPERM** al borrar su perfil temporal, pero
+  `run.js` guarda el reporte **antes** de `kill()`: el reporte vale. Los
+  perfiles `lighthouse.*` quedan en `%TEMP%` (la regla de no borrar alcanza).
+- **No hay URL de producción en el repo**, así que nada de esto se verificó
+  contra el sitio publicado (§7b, la lección de M10).
+
+### Verificación humana declarada
+
+1. **Una foto con textura en una pantalla Retina**: la portada de Tukumi (el
+   papel rojo) y Matsu. Es el caso que reportaron las clientas.
+2. **El par de fotos en un monitor de 1920**: Akasha o Romar.
+3. **La misma ruta desde el teléfono con datos móviles.** En teléfonos el peso
+   casi no se movió (×1,00–1,01), pero el número no cuenta la paciencia.
+4. **En producción**, después del deploy: `@netlify/plugin-nextjs` puede servir
+   `/_next/image` con su propio CDN de imágenes y no con el optimizador de Next
+   que se midió acá. Si es así, el `q=82` llega igual en la URL pero la relación
+   entre calidad y bytes es la de ese codificador. Conviene abrir Matsu a 1920
+   en Retina y mirar el peso de la imagen en la pestaña de red.
+
+### Estado de publicación
+
+`main` local, **sin `git push`**: cinco commits adelante de `origin/main` con
+este. Producción sigue sirviendo el `sizes` de 800 y los topes de 1200 / 800.
+
+- **Commits:** `eef9b42` (Fase 2), `8d3071e` (Fase 3), `e833f2b` (Fase 4),
+  `e202d01` (mediciones) y este de registros.
