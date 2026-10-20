@@ -4,9 +4,72 @@ import Image from "next/image";
 import { PortableText, PortableTextComponents } from "@portabletext/react";
 import { useLocale } from "@/lib/i18n";
 import { urlFor } from "@/lib/sanity";
+import type { SanityImageLike } from "@/types/project";
 import ImageLoadIndicator, {
   useImageLoad,
 } from "@/components/ui/ImageLoadIndicator";
+
+/* ── El hueco real de cada imagen (R4) ──────────────────────── */
+/*
+  `sizes` describe el ancho que ocupa la imagen PINTADA, no el de su caja. Con
+  `object-cover`, una foto más apaisada que la caja se escala hasta llenar el
+  alto y desborda a los costados: lo que hay que pedir es ese ancho escalado.
+  Hasta R4 la foto sola declaraba 800 px para una caja de 1488 a 1920, y el
+  navegador pedía la variante chica y la estiraba.
+
+  La geometría es la de `ProjectDetailClient`: debajo de 768 la columna mide
+  `100vw − 48` (`px-6` por lado); de 768 para arriba le restan los dos gutters
+  de 48 (`px-12`), el aside de 240 y el gap de 96 → `100vw − 432`. Si esas
+  clases cambian, estos números cambian. La fila es `aspect-[4/3]` con tope de
+  `88svh`, y el par la parte en dos con 2 px de aire.
+
+  El alto del viewport entra en la cuenta —una fila topada por `88svh` es más
+  apaisada, y la foto apaisada desborda menos—, y `sizes` lo puede expresar:
+  admite `vh`, `min()` y `max()` (verificado en Chrome). Se escribe en `vh` y no
+  en `svh`: en un teléfono `vh` es el mayor de los dos, o sea que se equivoca
+  pidiendo de más. Un navegador que no entienda la expresión cae a `100vw`,
+  que también es pedir de más: nunca estirar.
+
+  Los términos van dentro de `calc()`/`max()` también por la nota de `sizes` de
+  `src/lib/mobile-layout.ts`: un `vw` suelto le borra a `next/image` los cortes
+  chicos del `srcset`.
+*/
+type MediaSlot = "single" | "half";
+
+const MOBILE_QUERY = "(max-width: 767.98px)";
+const ROW_INSET = { mobile: 48, desktop: 432 } as const;
+const PAIR_GAP = 2;
+const ROW_HEIGHT_RATIO = 3 / 4;
+const ROW_MAX_VH = 88;
+// La proporción más angosta que puede tener la caja (la fila sin topar por
+// alto). Una imagen igual o más angosta la llena a lo ancho y no desborda.
+const SLOT_MIN_ASPECT: Record<MediaSlot, number> = { single: 4 / 3, half: 2 / 3 };
+
+// El `_ref` de un asset de Sanity lleva las dimensiones del original:
+// `image-<hash>-2400x1800-png`. Sin `_ref` (contenido de respaldo) no se sabe.
+const ASSET_REF_RE = /^image-[a-f0-9]+-(\d+)x(\d+)-[a-z]+$/;
+
+function assetAspect(image: SanityImageLike | undefined): number | null {
+  const ref = image?.asset?._ref ?? image?.asset?._id;
+  const match = ref ? ASSET_REF_RE.exec(ref) : null;
+  return match ? Number(match[1]) / Number(match[2]) : null;
+}
+
+function coverWidth(slot: MediaSlot, inset: number, aspect: number): string {
+  const slotWidth =
+    slot === "single" ? `100vw - ${inset}px` : `50vw - ${(inset + PAIR_GAP) / 2}px`;
+  if (aspect <= SLOT_MIN_ASPECT[slot]) return `calc(${slotWidth})`;
+  // Desborda: el ancho pintado es la proporción por el alto de la fila, que es
+  // el menor entre 3/4 del ancho y el tope de 88vh.
+  const k = (n: number) => Number(n.toFixed(4));
+  return `max(${slotWidth}, min((100vw - ${inset}px) * ${k(ROW_HEIGHT_RATIO * aspect)}, ${ROW_MAX_VH}vh * ${k(aspect)}))`;
+}
+
+/** Sin proporción conocida se asume la de la caja: no desborda. */
+function mediaSizes(slot: MediaSlot, aspect: number | null): string {
+  const a = aspect ?? SLOT_MIN_ASPECT[slot];
+  return `${MOBILE_QUERY} ${coverWidth(slot, ROW_INSET.mobile, a)}, ${coverWidth(slot, ROW_INSET.desktop, a)}`;
+}
 
 /* ── Portable Text overrides ────────────────────────────────── */
 const ptComponents: PortableTextComponents = {
@@ -110,7 +173,7 @@ function SingleMedia({ block }: { block: any }) {
             src={imageUrl}
             alt={caption || t.work.mediaAlt}
             fill
-            sizes="(max-width: 767.98px) calc(100vw - 48px), 800px"
+            sizes={mediaSizes("single", assetAspect(file))}
             className="object-cover"
             onLoad={single.onLoad}
             onError={single.onError}
@@ -154,7 +217,7 @@ function DualMedia({ block }: { block: any }) {
             src={leftUrl}
             alt={t.work.mediaAlt}
             fill
-            sizes="(max-width: 767.98px) calc(50vw - 25px), calc(50vw)"
+            sizes={mediaSizes("half", assetAspect(left))}
             className="object-cover"
             onLoad={leftImage.onLoad}
             onError={leftImage.onError}
@@ -168,7 +231,7 @@ function DualMedia({ block }: { block: any }) {
             src={rightUrl}
             alt={t.work.mediaAlt}
             fill
-            sizes="(max-width: 767.98px) calc(50vw - 25px), calc(50vw)"
+            sizes={mediaSizes("half", assetAspect(right))}
             className="object-cover"
             onLoad={rightImage.onLoad}
             onError={rightImage.onError}
