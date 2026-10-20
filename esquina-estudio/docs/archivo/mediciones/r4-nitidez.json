@@ -1,0 +1,5287 @@
+{
+ "round": "R4",
+ "date": "2026-10-19",
+ "note": "Pares [base e788faa, final]. servedPx y bytes medidos sobre el archivo que entrega /_next/image (sharp metadata), no sobre la URL. Server local next start; produccion corre en Netlify.",
+ "quality": {
+  "method": "AVIF de next/image 16.2.6 (sharp quality=q-20, effort 3) contra el original; SSIM de luminancia 8x8, detalle = energia del laplaciano relativa",
+  "rows": [
+   {
+    "image": "Tukumi 2400 PNG",
+    "q75": [
+     54026,
+     37.85,
+     0.9288,
+     0.415
+    ],
+    "q82": [
+     84520,
+     38.17,
+     0.9329,
+     0.459
+    ],
+    "q90": [
+     141394,
+     38.5,
+     0.9378,
+     0.507
+    ]
+   },
+   {
+    "image": "Akasha foto 1488 JPG (viaje q=90)",
+    "q75": [
+     79779,
+     37.69,
+     0.9634,
+     0.477
+    ],
+    "q82": [
+     106002,
+     38.17,
+     0.9668,
+     0.507
+    ],
+    "q90": [
+     134062,
+     38.53,
+     0.9698,
+     0.527
+    ]
+   },
+   {
+    "image": "Matsu 2976 PNG",
+    "q75": [
+     380203,
+     32.48,
+     0.7887,
+     0.388
+    ],
+    "q82": [
+     660621,
+     33.73,
+     0.8527,
+     0.49
+    ],
+    "q90": [
+     962983,
+     34.88,
+     0.8952,
+     0.556
+    ]
+   }
+  ],
+  "columns": [
+   "bytes",
+   "psnr",
+   "ssim",
+   "detalle"
+  ]
+ },
+ "lighthouse": {
+  "base": [
+   {
+    "route": "/work/matsu",
+    "preset": "mobile",
+    "perf": 93,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 100,
+    "lcp": 3210,
+    "fcp": 758,
+    "tbt": 19,
+    "cls": 0,
+    "si": 758,
+    "bytes": 613733,
+    "lcpEl": "div.pointer-events-auto > div.relative > a.inline-flex > img.h-[37px]",
+    "lcpRuns": [
+     3169,
+     3333,
+     3210
+    ]
+   },
+   {
+    "route": "/work/matsu",
+    "preset": "desktop",
+    "perf": 100,
+    "a11y": 96,
+    "bp": 100,
+    "seo": 100,
+    "lcp": 679,
+    "fcp": 208,
+    "tbt": 0,
+    "cls": 0.001,
+    "si": 208,
+    "bytes": 686073,
+    "lcpEl": "div.pointer-events-auto > div.relative > a.inline-flex > img.h-[37px]",
+    "lcpRuns": [
+     679,
+     685,
+     677
+    ]
+   },
+   {
+    "route": "/work/akasha-blends",
+    "preset": "mobile",
+    "perf": 75,
+    "a11y": 96,
+    "bp": 100,
+    "seo": 100,
+    "lcp": 26872,
+    "fcp": 759,
+    "tbt": 38,
+    "cls": 0,
+    "si": 759,
+    "bytes": 5437561,
+    "lcpEl": "main.min-h-svh > div.flex > div.flex-1 > p.mb-10",
+    "lcpRuns": [
+     26829,
+     26932,
+     26872
+    ]
+   },
+   {
+    "route": "/work/akasha-blends",
+    "preset": "desktop",
+    "perf": 78,
+    "a11y": 96,
+    "bp": 100,
+    "seo": 100,
+    "lcp": 4718,
+    "fcp": 207,
+    "tbt": 0,
+    "cls": 0.001,
+    "si": 207,
+    "bytes": 5506335,
+    "lcpEl": "main.min-h-svh > div.flex > div.flex-1 > p.mb-10",
+    "lcpRuns": [
+     920,
+     4718,
+     4728
+    ]
+   }
+  ],
+  "final": [
+   {
+    "route": "/work/matsu",
+    "preset": "mobile",
+    "perf": 92,
+    "a11y": 100,
+    "bp": 100,
+    "seo": 100,
+    "lcp": 3405,
+    "fcp": 760,
+    "tbt": 19,
+    "cls": 0,
+    "si": 760,
+    "bytes": 618220,
+    "lcpEl": "div.pointer-events-auto > div.relative > a.inline-flex > img.h-[37px]",
+    "lcpRuns": [
+     3407,
+     3405,
+     2801
+    ]
+   },
+   {
+    "route": "/work/matsu",
+    "preset": "desktop",
+    "perf": 100,
+    "a11y": 96,
+    "bp": 100,
+    "seo": 100,
+    "lcp": 679,
+    "fcp": 208,
+    "tbt": 0,
+    "cls": 0.001,
+    "si": 208,
+    "bytes": 714218,
+    "lcpEl": "div.pointer-events-auto > div.relative > a.inline-flex > img.h-[37px]",
+    "lcpRuns": [
+     678,
+     681,
+     679
+    ]
+   },
+   {
+    "route": "/work/akasha-blends",
+    "preset": "mobile",
+    "perf": 75,
+    "a11y": 96,
+    "bp": 100,
+    "seo": 100,
+    "lcp": 26913,
+    "fcp": 759,
+    "tbt": 48,
+    "cls": 0,
+    "si": 760,
+    "bytes": 5475194,
+    "lcpEl": "main.min-h-svh > div.flex > div.flex-1 > p.mb-10",
+    "lcpRuns": [
+     27015,
+     26913,
+     26822
+    ]
+   },
+   {
+    "route": "/work/akasha-blends",
+    "preset": "desktop",
+    "perf": 78,
+    "a11y": 96,
+    "bp": 100,
+    "seo": 100,
+    "lcp": 4736,
+    "fcp": 207,
+    "tbt": 0,
+    "cls": 0.001,
+    "si": 207,
+    "bytes": 5541558,
+    "lcpEl": "main.min-h-svh > div.flex > div.flex-1 > p.mb-10",
+    "lcpRuns": [
+     4735,
+     4744,
+     4736
+    ]
+   }
+  ]
+ },
+ "cases": [
+  {
+   "case": "/work/matsu 390x720@1",
+   "routeBytes": [
+    603792,
+    605915
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 342,
+     "requestedW": [
+      384,
+      384
+     ],
+     "servedPx": [
+      384,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      8564,
+      10278
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 390x720@2",
+   "routeBytes": [
+    625545,
+    632288
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 684,
+     "requestedW": [
+      750,
+      750
+     ],
+     "servedPx": [
+      750,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      23825,
+      30134
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 390x1080@1",
+   "routeBytes": [
+    600904,
+    603027
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 342,
+     "requestedW": [
+      384,
+      384
+     ],
+     "servedPx": [
+      384,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      8564,
+      10278
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 390x1080@2",
+   "routeBytes": [
+    626086,
+    634420
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 684,
+     "requestedW": [
+      750,
+      750
+     ],
+     "servedPx": [
+      750,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      23825,
+      30134
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 768x720@1",
+   "routeBytes": [
+    622339,
+    605391
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 336,
+     "requestedW": [
+      828,
+      384
+     ],
+     "servedPx": [
+      828,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      27661,
+      10278
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 768x720@2",
+   "routeBytes": [
+    675725,
+    655141
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 672,
+     "requestedW": [
+      1920,
+      750
+     ],
+     "servedPx": [
+      1200,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      51153,
+      30134
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 768x1080@1",
+   "routeBytes": [
+    623930,
+    607523
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 336,
+     "requestedW": [
+      828,
+      384
+     ],
+     "servedPx": [
+      828,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      27661,
+      10278
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 768x1080@2",
+   "routeBytes": [
+    675698,
+    656732
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 672,
+     "requestedW": [
+      1920,
+      750
+     ],
+     "servedPx": [
+      1200,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      51153,
+      30134
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 1024x720@1",
+   "routeBytes": [
+    663520,
+    658764
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 592,
+     "requestedW": [
+      828,
+      640
+     ],
+     "servedPx": [
+      828,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      27661,
+      22505
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 1024x720@2",
+   "routeBytes": [
+    714613,
+    730676
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 1184,
+     "requestedW": [
+      1920,
+      1200
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      51153,
+      67332
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 1024x1080@1",
+   "routeBytes": [
+    670800,
+    663941
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 592,
+     "requestedW": [
+      828,
+      640
+     ],
+     "servedPx": [
+      828,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      27661,
+      22505
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 1024x1080@2",
+   "routeBytes": [
+    717627,
+    734776
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 1184,
+     "requestedW": [
+      1920,
+      1200
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      51153,
+      67332
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 1440x720@1",
+   "routeBytes": [
+    680839,
+    708992
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1008,
+     "neededPx": 1008,
+     "requestedW": [
+      828,
+      1080
+     ],
+     "servedPx": [
+      828,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      27661,
+      55388
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 1440x720@2",
+   "routeBytes": [
+    749164,
+    916385
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1008,
+     "neededPx": 2016,
+     "requestedW": [
+      1920,
+      2048
+     ],
+     "servedPx": [
+      1200,
+      2048
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      51153,
+      219538
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 1440x1080@1",
+   "routeBytes": [
+    688181,
+    716876
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1008,
+     "neededPx": 1008,
+     "requestedW": [
+      828,
+      1080
+     ],
+     "servedPx": [
+      828,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      27661,
+      55388
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 1440x1080@2",
+   "routeBytes": [
+    755066,
+    922828
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1008,
+     "neededPx": 2016,
+     "requestedW": [
+      1920,
+      2048
+     ],
+     "servedPx": [
+      1200,
+      2048
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      51153,
+      219538
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 1920x720@1",
+   "routeBytes": [
+    680839,
+    840283
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 1488,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      27661,
+      186678
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 1920x720@2",
+   "routeBytes": [
+    749165,
+    1355343
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 2976,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      2976
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      51153,
+      659037
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 1920x1080@1",
+   "routeBytes": [
+    681888,
+    840283
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1488,
+     "neededPx": 1488,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      27661,
+      186678
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/matsu 1920x1080@2",
+   "routeBytes": [
+    748625,
+    1355343
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "6000x4500.png",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1488,
+     "neededPx": 2976,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      2976
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      51153,
+      659037
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 390x720@1",
+   "routeBytes": [
+    5378025,
+    5391396
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 513,
+     "neededPx": 513,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 512.9,
+     "neededPx": 513,
+     "requestedW": [
+      384,
+      640
+     ],
+     "servedPx": [
+      384,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      2718,
+      6463
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      170,
+      256.5
+     ],
+     "paintedW": 171,
+     "neededPx": 171,
+     "requestedW": [
+      256,
+      256
+     ],
+     "servedPx": [
+      256,
+      256
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      10754,
+      13065
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      170,
+      256.5
+     ],
+     "paintedW": 171,
+     "neededPx": 171,
+     "requestedW": [
+      256,
+      256
+     ],
+     "servedPx": [
+      256,
+      256
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      15251,
+      17933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 342,
+     "requestedW": [
+      384,
+      384
+     ],
+     "servedPx": [
+      384,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      4270,
+      4854
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 342,
+     "requestedW": [
+      384,
+      384
+     ],
+     "servedPx": [
+      384,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      4387,
+      4832
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 342,
+     "requestedW": [
+      384,
+      384
+     ],
+     "servedPx": [
+      384,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      4563,
+      5079
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 512.9,
+     "neededPx": 513,
+     "requestedW": [
+      384,
+      640
+     ],
+     "servedPx": [
+      384,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      5708,
+      13956
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 390x720@2",
+   "routeBytes": [
+    5432279,
+    5460798
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 513,
+     "neededPx": 1026,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 512.9,
+     "neededPx": 1026,
+     "requestedW": [
+      750,
+      1080
+     ],
+     "servedPx": [
+      750,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      7114,
+      12459
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      170,
+      256.5
+     ],
+     "paintedW": 171,
+     "neededPx": 342,
+     "requestedW": [
+      384,
+      384
+     ],
+     "servedPx": [
+      384,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      16811,
+      21400
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      170,
+      256.5
+     ],
+     "paintedW": 171,
+     "neededPx": 342,
+     "requestedW": [
+      384,
+      384
+     ],
+     "servedPx": [
+      384,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      26670,
+      31844
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 684,
+     "requestedW": [
+      750,
+      750
+     ],
+     "servedPx": [
+      750,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      11399,
+      12943
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 684,
+     "requestedW": [
+      750,
+      750
+     ],
+     "servedPx": [
+      750,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      11701,
+      13642
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 684,
+     "requestedW": [
+      750,
+      750
+     ],
+     "servedPx": [
+      750,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      11798,
+      13805
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 512.9,
+     "neededPx": 1026,
+     "requestedW": [
+      750,
+      1080
+     ],
+     "servedPx": [
+      750,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      14000,
+      28116
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 390x1080@1",
+   "routeBytes": [
+    5366454,
+    5387211
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 513,
+     "neededPx": 513,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 512.9,
+     "neededPx": 513,
+     "requestedW": [
+      384,
+      640
+     ],
+     "servedPx": [
+      384,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      2718,
+      6463
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      170,
+      256.5
+     ],
+     "paintedW": 171,
+     "neededPx": 171,
+     "requestedW": [
+      256,
+      256
+     ],
+     "servedPx": [
+      256,
+      256
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      10754,
+      13065
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      170,
+      256.5
+     ],
+     "paintedW": 171,
+     "neededPx": 171,
+     "requestedW": [
+      256,
+      256
+     ],
+     "servedPx": [
+      256,
+      256
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      15251,
+      17933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 342,
+     "requestedW": [
+      384,
+      384
+     ],
+     "servedPx": [
+      384,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      4270,
+      4854
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 342,
+     "requestedW": [
+      384,
+      384
+     ],
+     "servedPx": [
+      384,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      4387,
+      4832
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 342,
+     "requestedW": [
+      384,
+      384
+     ],
+     "servedPx": [
+      384,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      4563,
+      5079
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 512.9,
+     "neededPx": 513,
+     "requestedW": [
+      384,
+      640
+     ],
+     "servedPx": [
+      384,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      5708,
+      13956
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 390x1080@2",
+   "routeBytes": [
+    5422956,
+    5460101
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 513,
+     "neededPx": 1026,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 512.9,
+     "neededPx": 1026,
+     "requestedW": [
+      750,
+      1080
+     ],
+     "servedPx": [
+      750,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      7114,
+      12459
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      170,
+      256.5
+     ],
+     "paintedW": 171,
+     "neededPx": 342,
+     "requestedW": [
+      384,
+      384
+     ],
+     "servedPx": [
+      384,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      16811,
+      21400
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      170,
+      256.5
+     ],
+     "paintedW": 171,
+     "neededPx": 342,
+     "requestedW": [
+      384,
+      384
+     ],
+     "servedPx": [
+      384,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      26670,
+      31844
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 684,
+     "requestedW": [
+      750,
+      750
+     ],
+     "servedPx": [
+      750,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      11399,
+      12943
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 684,
+     "requestedW": [
+      750,
+      750
+     ],
+     "servedPx": [
+      750,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      11701,
+      13642
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 342,
+     "neededPx": 684,
+     "requestedW": [
+      750,
+      750
+     ],
+     "servedPx": [
+      750,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      11798,
+      13805
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      342,
+      256.5
+     ],
+     "paintedW": 512.9,
+     "neededPx": 1026,
+     "requestedW": [
+      750,
+      1080
+     ],
+     "servedPx": [
+      750,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      14000,
+      28116
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 768x720@1",
+   "routeBytes": [
+    5423785,
+    5383266
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 504,
+     "neededPx": 504,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 503.9,
+     "neededPx": 504,
+     "requestedW": [
+      828,
+      640
+     ],
+     "servedPx": [
+      828,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      8256,
+      6463
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      167,
+      252
+     ],
+     "paintedW": 168,
+     "neededPx": 168,
+     "requestedW": [
+      384,
+      256
+     ],
+     "servedPx": [
+      384,
+      256
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      16811,
+      13065
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      167,
+      252
+     ],
+     "paintedW": 168,
+     "neededPx": 168,
+     "requestedW": [
+      384,
+      256
+     ],
+     "servedPx": [
+      384,
+      256
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      26670,
+      17933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 336,
+     "requestedW": [
+      828,
+      384
+     ],
+     "servedPx": [
+      828,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      12918,
+      4854
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 336,
+     "requestedW": [
+      828,
+      384
+     ],
+     "servedPx": [
+      828,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13414,
+      4832
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 336,
+     "requestedW": [
+      828,
+      384
+     ],
+     "servedPx": [
+      828,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13199,
+      5079
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 503.9,
+     "neededPx": 504,
+     "requestedW": [
+      828,
+      640
+     ],
+     "servedPx": [
+      828,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      15947,
+      13956
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 768x720@2",
+   "routeBytes": [
+    5534885,
+    5458190
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 504,
+     "neededPx": 1008,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 503.9,
+     "neededPx": 1008,
+     "requestedW": [
+      1920,
+      1080
+     ],
+     "servedPx": [
+      1200,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13096,
+      12459
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      167,
+      252
+     ],
+     "paintedW": 168,
+     "neededPx": 336,
+     "requestedW": [
+      828,
+      384
+     ],
+     "servedPx": [
+      800,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      40188,
+      21400
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      167,
+      252
+     ],
+     "paintedW": 168,
+     "neededPx": 336,
+     "requestedW": [
+      828,
+      384
+     ],
+     "servedPx": [
+      800,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      68743,
+      31844
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 672,
+     "requestedW": [
+      1920,
+      750
+     ],
+     "servedPx": [
+      1200,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      21334,
+      12943
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 672,
+     "requestedW": [
+      1920,
+      750
+     ],
+     "servedPx": [
+      1200,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20768,
+      13642
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 672,
+     "requestedW": [
+      1920,
+      750
+     ],
+     "servedPx": [
+      1200,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20628,
+      13805
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 503.9,
+     "neededPx": 1008,
+     "requestedW": [
+      1920,
+      1080
+     ],
+     "servedPx": [
+      1200,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      26662,
+      28116
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 768x1080@1",
+   "routeBytes": [
+    5423787,
+    5383266
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 504,
+     "neededPx": 504,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 503.9,
+     "neededPx": 504,
+     "requestedW": [
+      828,
+      640
+     ],
+     "servedPx": [
+      828,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      8256,
+      6463
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      167,
+      252
+     ],
+     "paintedW": 168,
+     "neededPx": 168,
+     "requestedW": [
+      384,
+      256
+     ],
+     "servedPx": [
+      384,
+      256
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      16811,
+      13065
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      167,
+      252
+     ],
+     "paintedW": 168,
+     "neededPx": 168,
+     "requestedW": [
+      384,
+      256
+     ],
+     "servedPx": [
+      384,
+      256
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      26670,
+      17933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 336,
+     "requestedW": [
+      828,
+      384
+     ],
+     "servedPx": [
+      828,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      12918,
+      4854
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 336,
+     "requestedW": [
+      828,
+      384
+     ],
+     "servedPx": [
+      828,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13414,
+      4832
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 336,
+     "requestedW": [
+      828,
+      384
+     ],
+     "servedPx": [
+      828,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13199,
+      5079
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 503.9,
+     "neededPx": 504,
+     "requestedW": [
+      828,
+      640
+     ],
+     "servedPx": [
+      828,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      15947,
+      13956
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 768x1080@2",
+   "routeBytes": [
+    5534888,
+    5458190
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 504,
+     "neededPx": 1008,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 503.9,
+     "neededPx": 1008,
+     "requestedW": [
+      1920,
+      1080
+     ],
+     "servedPx": [
+      1200,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13096,
+      12459
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      167,
+      252
+     ],
+     "paintedW": 168,
+     "neededPx": 336,
+     "requestedW": [
+      828,
+      384
+     ],
+     "servedPx": [
+      800,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      40188,
+      21400
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      167,
+      252
+     ],
+     "paintedW": 168,
+     "neededPx": 336,
+     "requestedW": [
+      828,
+      384
+     ],
+     "servedPx": [
+      800,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      68743,
+      31844
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 672,
+     "requestedW": [
+      1920,
+      750
+     ],
+     "servedPx": [
+      1200,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      21334,
+      12943
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 672,
+     "requestedW": [
+      1920,
+      750
+     ],
+     "servedPx": [
+      1200,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20768,
+      13642
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 336,
+     "neededPx": 672,
+     "requestedW": [
+      1920,
+      750
+     ],
+     "servedPx": [
+      1200,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20628,
+      13805
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      336,
+      252
+     ],
+     "paintedW": 503.9,
+     "neededPx": 1008,
+     "requestedW": [
+      1920,
+      1080
+     ],
+     "servedPx": [
+      1200,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      26662,
+      28116
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 1024x720@1",
+   "routeBytes": [
+    5511769,
+    5495898
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 888,
+     "neededPx": 888,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 887.8,
+     "neededPx": 888,
+     "requestedW": [
+      828,
+      1080
+     ],
+     "servedPx": [
+      828,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      8256,
+      12459
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      295,
+      444
+     ],
+     "paintedW": 296,
+     "neededPx": 296,
+     "requestedW": [
+      640,
+      384
+     ],
+     "servedPx": [
+      640,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      29697,
+      21400
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      295,
+      444
+     ],
+     "paintedW": 296,
+     "neededPx": 296,
+     "requestedW": [
+      640,
+      384
+     ],
+     "servedPx": [
+      640,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      51548,
+      31844
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 592,
+     "requestedW": [
+      828,
+      640
+     ],
+     "servedPx": [
+      828,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      12918,
+      10635
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 592,
+     "requestedW": [
+      828,
+      640
+     ],
+     "servedPx": [
+      828,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13414,
+      11147
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 592,
+     "requestedW": [
+      828,
+      640
+     ],
+     "servedPx": [
+      828,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13199,
+      10883
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 887.8,
+     "neededPx": 888,
+     "requestedW": [
+      828,
+      1080
+     ],
+     "servedPx": [
+      828,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      15947,
+      28116
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 1024x720@2",
+   "routeBytes": [
+    5583608,
+    5630594
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 888,
+     "neededPx": 1776,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 887.8,
+     "neededPx": 1776,
+     "requestedW": [
+      1920,
+      1920
+     ],
+     "servedPx": [
+      1200,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13096,
+      24668
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      295,
+      444
+     ],
+     "paintedW": 296,
+     "neededPx": 592,
+     "requestedW": [
+      1080,
+      640
+     ],
+     "servedPx": [
+      800,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      40188,
+      37474
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      295,
+      444
+     ],
+     "paintedW": 296,
+     "neededPx": 592,
+     "requestedW": [
+      1080,
+      640
+     ],
+     "servedPx": [
+      800,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      68743,
+      62136
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 1184,
+     "requestedW": [
+      1920,
+      1200
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      21334,
+      23892
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 1184,
+     "requestedW": [
+      1920,
+      1200
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20768,
+      25215
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 1184,
+     "requestedW": [
+      1920,
+      1200
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20628,
+      25046
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 887.8,
+     "neededPx": 1776,
+     "requestedW": [
+      1920,
+      1920
+     ],
+     "servedPx": [
+      1200,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      26662,
+      57862
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 1024x1080@1",
+   "routeBytes": [
+    5513878,
+    5494305
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 888,
+     "neededPx": 888,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 887.8,
+     "neededPx": 888,
+     "requestedW": [
+      828,
+      1080
+     ],
+     "servedPx": [
+      828,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      8256,
+      12459
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      295,
+      444
+     ],
+     "paintedW": 296,
+     "neededPx": 296,
+     "requestedW": [
+      640,
+      384
+     ],
+     "servedPx": [
+      640,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      29697,
+      21400
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      295,
+      444
+     ],
+     "paintedW": 296,
+     "neededPx": 296,
+     "requestedW": [
+      640,
+      384
+     ],
+     "servedPx": [
+      640,
+      384
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      51548,
+      31844
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 592,
+     "requestedW": [
+      828,
+      640
+     ],
+     "servedPx": [
+      828,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      12918,
+      10635
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 592,
+     "requestedW": [
+      828,
+      640
+     ],
+     "servedPx": [
+      828,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13414,
+      11147
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 592,
+     "requestedW": [
+      828,
+      640
+     ],
+     "servedPx": [
+      828,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13199,
+      10883
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 887.8,
+     "neededPx": 888,
+     "requestedW": [
+      828,
+      1080
+     ],
+     "servedPx": [
+      828,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      15947,
+      28116
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 1024x1080@2",
+   "routeBytes": [
+    5583608,
+    5628473
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 888,
+     "neededPx": 1776,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 887.8,
+     "neededPx": 1776,
+     "requestedW": [
+      1920,
+      1920
+     ],
+     "servedPx": [
+      1200,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13096,
+      24668
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      295,
+      444
+     ],
+     "paintedW": 296,
+     "neededPx": 592,
+     "requestedW": [
+      1080,
+      640
+     ],
+     "servedPx": [
+      800,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      40188,
+      37474
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      295,
+      444
+     ],
+     "paintedW": 296,
+     "neededPx": 592,
+     "requestedW": [
+      1080,
+      640
+     ],
+     "servedPx": [
+      800,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      68743,
+      62136
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 1184,
+     "requestedW": [
+      1920,
+      1200
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      21334,
+      23892
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 1184,
+     "requestedW": [
+      1920,
+      1200
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20768,
+      25215
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 592,
+     "neededPx": 1184,
+     "requestedW": [
+      1920,
+      1200
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20628,
+      25046
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      592,
+      444
+     ],
+     "paintedW": 887.8,
+     "neededPx": 1776,
+     "requestedW": [
+      1920,
+      1920
+     ],
+     "servedPx": [
+      1200,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      26662,
+      57862
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 1440x720@1",
+   "routeBytes": [
+    5530863,
+    5614717
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1267.2,
+     "neededPx": 1267,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1267,
+     "neededPx": 1267,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      8256,
+      24668
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      503,
+      633.59
+     ],
+     "paintedW": 503,
+     "neededPx": 503,
+     "requestedW": [
+      750,
+      640
+     ],
+     "servedPx": [
+      750,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      35510,
+      37474
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      503,
+      633.59
+     ],
+     "paintedW": 503,
+     "neededPx": 503,
+     "requestedW": [
+      750,
+      640
+     ],
+     "servedPx": [
+      750,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      62718,
+      62136
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1008,
+     "neededPx": 1008,
+     "requestedW": [
+      828,
+      1080
+     ],
+     "servedPx": [
+      828,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      12918,
+      20889
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1008,
+     "neededPx": 1008,
+     "requestedW": [
+      828,
+      1080
+     ],
+     "servedPx": [
+      828,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13414,
+      22327
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1008,
+     "neededPx": 1008,
+     "requestedW": [
+      828,
+      1080
+     ],
+     "servedPx": [
+      828,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13199,
+      21529
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1267,
+     "neededPx": 1267,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      15947,
+      57862
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 1440x720@2",
+   "routeBytes": [
+    5585198,
+    5875646
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1267.2,
+     "neededPx": 2534,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1267,
+     "neededPx": 2534,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      3840
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13096,
+      46786
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      503,
+      633.59
+     ],
+     "paintedW": 503,
+     "neededPx": 1006,
+     "requestedW": [
+      1920,
+      1080
+     ],
+     "servedPx": [
+      800,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      40188,
+      68343
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      503,
+      633.59
+     ],
+     "paintedW": 503,
+     "neededPx": 1006,
+     "requestedW": [
+      1920,
+      1080
+     ],
+     "servedPx": [
+      800,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      68743,
+      120455
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1008,
+     "neededPx": 2016,
+     "requestedW": [
+      1920,
+      2048
+     ],
+     "servedPx": [
+      1200,
+      2048
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      21334,
+      43167
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1008,
+     "neededPx": 2016,
+     "requestedW": [
+      1920,
+      2048
+     ],
+     "servedPx": [
+      1200,
+      2048
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20768,
+      46555
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1008,
+     "neededPx": 2016,
+     "requestedW": [
+      1920,
+      2048
+     ],
+     "servedPx": [
+      1200,
+      2048
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20628,
+      45950
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1008,
+      633.59
+     ],
+     "paintedW": 1267,
+     "neededPx": 2534,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      3840
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      26662,
+      131678
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 1440x1080@1",
+   "routeBytes": [
+    5529270,
+    5614706
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1512,
+     "neededPx": 1512,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1511.7,
+     "neededPx": 1512,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      8256,
+      24668
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      503,
+      756
+     ],
+     "paintedW": 504,
+     "neededPx": 504,
+     "requestedW": [
+      750,
+      640
+     ],
+     "servedPx": [
+      750,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      35510,
+      37474
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      503,
+      756
+     ],
+     "paintedW": 504,
+     "neededPx": 504,
+     "requestedW": [
+      750,
+      640
+     ],
+     "servedPx": [
+      750,
+      640
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      62718,
+      62136
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1008,
+     "neededPx": 1008,
+     "requestedW": [
+      828,
+      1080
+     ],
+     "servedPx": [
+      828,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      12918,
+      20889
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1008,
+     "neededPx": 1008,
+     "requestedW": [
+      828,
+      1080
+     ],
+     "servedPx": [
+      828,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13414,
+      22327
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1008,
+     "neededPx": 1008,
+     "requestedW": [
+      828,
+      1080
+     ],
+     "servedPx": [
+      828,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13199,
+      21529
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1511.7,
+     "neededPx": 1512,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      15947,
+      57862
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 1440x1080@2",
+   "routeBytes": [
+    5583608,
+    5877227
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1512,
+     "neededPx": 3024,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1511.7,
+     "neededPx": 3023,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      3840
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13096,
+      46786
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      503,
+      756
+     ],
+     "paintedW": 504,
+     "neededPx": 1008,
+     "requestedW": [
+      1920,
+      1080
+     ],
+     "servedPx": [
+      800,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      40188,
+      68343
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      503,
+      756
+     ],
+     "paintedW": 504,
+     "neededPx": 1008,
+     "requestedW": [
+      1920,
+      1080
+     ],
+     "servedPx": [
+      800,
+      1080
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      68743,
+      120455
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1008,
+     "neededPx": 2016,
+     "requestedW": [
+      1920,
+      2048
+     ],
+     "servedPx": [
+      1200,
+      2048
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      21334,
+      43167
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1008,
+     "neededPx": 2016,
+     "requestedW": [
+      1920,
+      2048
+     ],
+     "servedPx": [
+      1200,
+      2048
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20768,
+      46555
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1008,
+     "neededPx": 2016,
+     "requestedW": [
+      1920,
+      2048
+     ],
+     "servedPx": [
+      1200,
+      2048
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20628,
+      45950
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1008,
+      756
+     ],
+     "paintedW": 1511.7,
+     "neededPx": 3023,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      3840
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      26662,
+      131678
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 1920x720@1",
+   "routeBytes": [
+    5541563,
+    5699941
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 1488,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 1488,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      8256,
+      24668
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      743,
+      633.59
+     ],
+     "paintedW": 743,
+     "neededPx": 743,
+     "requestedW": [
+      1080,
+      750
+     ],
+     "servedPx": [
+      800,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      40188,
+      45284
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      743,
+      633.59
+     ],
+     "paintedW": 743,
+     "neededPx": 743,
+     "requestedW": [
+      1080,
+      750
+     ],
+     "servedPx": [
+      800,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      68743,
+      76156
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 1488,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      12918,
+      40290
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 1488,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13414,
+      43452
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 1488,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13199,
+      42811
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 1488,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      15947,
+      57862
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 1920x720@2",
+   "routeBytes": [
+    5583608,
+    6024233
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 2976,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 2976,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      3840
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13096,
+      46786
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      743,
+      633.59
+     ],
+     "paintedW": 743,
+     "neededPx": 1486,
+     "requestedW": [
+      1920,
+      1920
+     ],
+     "servedPx": [
+      800,
+      1488
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      40188,
+      105221
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      743,
+      633.59
+     ],
+     "paintedW": 743,
+     "neededPx": 1486,
+     "requestedW": [
+      1920,
+      1920
+     ],
+     "servedPx": [
+      800,
+      1488
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      68743,
+      177369
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 2976,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      2976
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      21334,
+      62588
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 2976,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      2881
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20768,
+      64757
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 2976,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      2881
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20628,
+      63125
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1488,
+      633.59
+     ],
+     "paintedW": 1488,
+     "neededPx": 2976,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      3840
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      26662,
+      131678
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 1920x1080@1",
+   "routeBytes": [
+    5539973,
+    5698344
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1900.8,
+     "neededPx": 1901,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1900.5,
+     "neededPx": 1901,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      8256,
+      24668
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      743,
+      950.39
+     ],
+     "paintedW": 743,
+     "neededPx": 743,
+     "requestedW": [
+      1080,
+      750
+     ],
+     "servedPx": [
+      800,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      40188,
+      45284
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      743,
+      950.39
+     ],
+     "paintedW": 743,
+     "neededPx": 743,
+     "requestedW": [
+      1080,
+      750
+     ],
+     "servedPx": [
+      800,
+      750
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      68743,
+      76156
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1488,
+     "neededPx": 1488,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      12918,
+      40290
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1488,
+     "neededPx": 1488,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13414,
+      43452
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1488,
+     "neededPx": 1488,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13199,
+      42811
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1900.5,
+     "neededPx": 1901,
+     "requestedW": [
+      828,
+      1920
+     ],
+     "servedPx": [
+      828,
+      1920
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      15947,
+      57862
+     ]
+    }
+   ]
+  },
+  {
+   "case": "/work/akasha-blends 1920x1080@2",
+   "routeBytes": [
+    5585198,
+    6024228
+   ],
+   "images": [
+    {
+     "block": "single",
+     "source": "1400x700.gif",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1900.8,
+     "neededPx": 3802,
+     "requestedW": [
+      null,
+      null
+     ],
+     "servedPx": [
+      1200,
+      1200
+     ],
+     "q": [
+      null,
+      null
+     ],
+     "bytes": [
+      4750933,
+      4750933
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1900.5,
+     "neededPx": 3801,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      3840
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      13096,
+      46786
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.jpg",
+     "box": [
+      743,
+      950.39
+     ],
+     "paintedW": 743,
+     "neededPx": 1486,
+     "requestedW": [
+      1920,
+      1920
+     ],
+     "servedPx": [
+      800,
+      1488
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      40188,
+      105221
+     ]
+    },
+    {
+     "block": "dual",
+     "source": "3456x5184.png",
+     "box": [
+      743,
+      950.39
+     ],
+     "paintedW": 743,
+     "neededPx": 1486,
+     "requestedW": [
+      1920,
+      1920
+     ],
+     "servedPx": [
+      800,
+      1488
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      68743,
+      177369
+     ]
+    },
+    {
+     "block": "single",
+     "source": "6000x4500.jpg",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1488,
+     "neededPx": 2976,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      2976
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      21334,
+      62588
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1488,
+     "neededPx": 2976,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      2881
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20768,
+      64757
+     ]
+    },
+    {
+     "block": "single",
+     "source": "2881x2161.png",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1488,
+     "neededPx": 2976,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      2881
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      20628,
+      63125
+     ]
+    },
+    {
+     "block": "single",
+     "source": "5833x2917.jpg",
+     "box": [
+      1488,
+      950.39
+     ],
+     "paintedW": 1900.5,
+     "neededPx": 3801,
+     "requestedW": [
+      1920,
+      3840
+     ],
+     "servedPx": [
+      1200,
+      3840
+     ],
+     "q": [
+      75,
+      82
+     ],
+     "bytes": [
+      26662,
+      131678
+     ]
+    }
+   ]
+  }
+ ]
+}
