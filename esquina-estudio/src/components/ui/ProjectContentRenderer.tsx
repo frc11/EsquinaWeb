@@ -133,6 +133,21 @@ function projectImageUrl(
     .url();
 }
 
+/*
+  La calidad con que el optimizador codifica (R4), elegida midiendo 75, 82 y 90
+  en el ancho del peor caso. Ojo: para AVIF, que es lo que reciben los
+  navegadores actuales, `next/image` le pasa a sharp `q − 20`; 82 es 62 de
+  codificador. Bytes y SSIM de luminancia contra el original:
+    · Tukumi, 2400 (papel con grano): 54,0 / 84,5 / 141,4 kB — ,9288 / ,9329 / ,9378
+    · foto del par, 1488:             79,8 / 106,0 / 134,1 kB — ,9634 / ,9668 / ,9698
+    · Matsu, 2976 (render con ruido): 380 / 661 / 963 kB    — ,7887 / ,8527 / ,8952
+  En las tres, el paso de 82 a 90 compra entre 18 y 38 % menos SSIM por kB que
+  el de 75 a 82: ahí la mejora deja de pagar su peso. A 75 el grano del papel de
+  Tukumi desaparece; a 82 vuelve. Va como prop y no como default global para
+  que la galería y las portadas de `/work` sigan en 75.
+*/
+const PROJECT_IMAGE_QUALITY = 82;
+
 // El GIF va como `<img>` nativo y no pasa por el optimizador (así conserva la
 // animación): su tope es peso directo para el visitante. R4 no lo sube.
 const GIF_WIDTH = 1200;
@@ -258,6 +273,7 @@ function SingleMedia({ block }: { block: any }) {
             alt={caption || t.work.mediaAlt}
             fill
             sizes={mediaSizes("single", assetAspect(file))}
+            quality={PROJECT_IMAGE_QUALITY}
             className="object-cover"
             onLoad={single.onLoad}
             onError={single.onError}
@@ -302,6 +318,7 @@ function DualMedia({ block }: { block: any }) {
             alt={t.work.mediaAlt}
             fill
             sizes={mediaSizes("half", assetAspect(left))}
+            quality={PROJECT_IMAGE_QUALITY}
             className="object-cover"
             onLoad={leftImage.onLoad}
             onError={leftImage.onError}
@@ -316,6 +333,7 @@ function DualMedia({ block }: { block: any }) {
             alt={t.work.mediaAlt}
             fill
             sizes={mediaSizes("half", assetAspect(right))}
+            quality={PROJECT_IMAGE_QUALITY}
             className="object-cover"
             onLoad={rightImage.onLoad}
             onError={rightImage.onError}
