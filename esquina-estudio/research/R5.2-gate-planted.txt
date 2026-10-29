@@ -1,0 +1,45 @@
+PASS A0 /work/pepe imágenes renderizadas = imágenes del contenido — API 3, DOM 3 en 20 muestras
+PASS A1 /work/pepe img#0 (2250x2250, single) proporción — foto 1.0000 · caja 1.0000..1.0000 (desvío 0.000%) · pintada desvío 0.000% · 20 muestras
+PASS A2 /work/pepe img#0 (2250x2250, single) la proporción no se mueve — caja 1.0000..1.0000 · dispersión 0.000% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/pepe img#0 (2250x2250, single) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 100.000%
+FAIL A8 /work/pepe img#0 (2250x2250, single) sizes = ancho pintado — declarado − pintado 0.00..854.41 px en 20 muestras (ancho pintado mín 336.0 px)
+PASS A1 /work/pepe img#1 (3241x5765, half) proporción — foto 0.5622 · caja 0.5622..0.5622 (desvío 0.003%) · pintada desvío 0.356% · 20 muestras
+PASS A2 /work/pepe img#1 (3241x5765, half) la proporción no se mueve — caja 0.5622..0.5622 · dispersión 0.003% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/pepe img#1 (3241x5765, half) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.648%
+FAIL A8 /work/pepe img#1 (3241x5765, half) sizes = ancho pintado — declarado − pintado 0.00..386.81 px en 20 muestras (ancho pintado mín 167.0 px)
+PASS A1 /work/pepe img#2 (3456x5184, half) proporción — foto 0.6667 · caja 0.6667..0.6667 (desvío 0.001%) · pintada desvío 0.200% · 20 muestras
+PASS A2 /work/pepe img#2 (3456x5184, half) la proporción no se mueve — caja 0.6667..0.6667 · dispersión 0.001% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/pepe img#2 (3456x5184, half) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.800%
+FAIL A8 /work/pepe img#2 (3456x5184, half) sizes = ancho pintado — declarado − pintado 0.00..320.61 px en 20 muestras (ancho pintado mín 167.0 px)
+FAIL A5 /work/pepe par#0 mitades e imágenes iguales — |mitad izq − mitad der| máx 0.000 px · |imagen izq − imagen der| máx 99.297 px en 20 muestras (mitad típica 170.0 px)
+FAIL A10 /work/pepe par#0 sin aire horizontal — fila − (izq + der + 2) máx 707.422 px en 20 muestras
+INFO A10 /work/pepe par#0 390×720: fila 342.0 = izq 170.0 + der 170.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 390×1080: fila 342.0 = izq 170.0 + der 170.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 768×720: fila 336.0 = izq 167.0 + der 167.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 768×1080: fila 336.0 = izq 167.0 + der 167.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 1024×720: fila 592.0 = izq 295.0 + der 295.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 1024×1080: fila 592.0 = izq 295.0 + der 295.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 1366×720: fila 934.0 = izq 356.2 + der 422.4 + 2 → aire 153.42 px
+INFO A10 /work/pepe par#0 1366×1080: fila 934.0 = izq 466.0 + der 466.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 1920×720: fila 1488.0 = izq 356.2 + der 422.4 + 2 → aire 707.42 px
+INFO A10 /work/pepe par#0 1920×1080: fila 1488.0 = izq 534.3 + der 633.6 + 2 → aire 318.11 px
+PASS A7 /work/pepe par#0 centrado vertical — |aire arriba − aire abajo| máx 0.016 px · |alto de fila − alto de la más alta| máx 0.000 px
+PASS A6 /work/pepe sin scroll horizontal — scrollWidth − clientWidth máx 0 px en 20 muestras
+FAIL A4 /work/pepe ningún bloque más angosto que la columna — columna − bloque más angosto, máx 854.406 px en 20 muestras (4 bloques)
+FAIL A11 /work/pepe un solo ancho para todos los bloques — dispersión del borde izquierdo máx 427.203 px · del derecho máx 427.203 px en 20 muestras · 4 bloques
+INFO A11 /work/pepe 390×720: bordes izq 24.0..24.0 · der 366.0..366.0 · 2 texto, 1 foto, 1 par
+INFO A11 /work/pepe 390×1080: bordes izq 24.0..24.0 · der 366.0..366.0 · 2 texto, 1 foto, 1 par
+INFO A11 /work/pepe 768×720: bordes izq 384.0..384.0 · der 720.0..720.0 · 2 texto, 1 foto, 1 par
+INFO A11 /work/pepe 768×1080: bordes izq 384.0..384.0 · der 720.0..720.0 · 2 texto, 1 foto, 1 par
+INFO A11 /work/pepe 1024×720: bordes izq 384.0..384.0 · der 976.0..976.0 · 2 texto, 1 foto, 1 par
+INFO A11 /work/pepe 1024×1080: bordes izq 384.0..384.0 · der 976.0..976.0 · 2 texto, 1 foto, 1 par
+INFO A11 /work/pepe 1366×720: bordes izq 384.0..534.2 · der 1167.8..1318.0 · 2 texto, 1 foto, 1 par
+INFO A11 /work/pepe 1366×1080: bordes izq 384.0..384.0 · der 1318.0..1318.0 · 2 texto, 1 foto, 1 par
+INFO A11 /work/pepe 1920×720: bordes izq 384.0..811.2 · der 1444.8..1872.0 · 2 texto, 1 foto, 1 par
+INFO A11 /work/pepe 1920×1080: bordes izq 384.0..652.8 · der 1603.2..1872.0 · 2 texto, 1 foto, 1 par
+INFO A9 /work/pepe img#0: tope a Sanity w=2250 · pintada 950 px ×2 = 1901 (original 2250) · tope no muerde
+INFO A9 /work/pepe img#1: tope a Sanity w=1486 · pintada 534 px ×2 = 1069 (original 3241) · tope no muerde
+INFO A9 /work/pepe img#2: tope a Sanity w=1486 · pintada 634 px ×2 = 1268 (original 3456) · tope no muerde
+PASS S alcance de archivos — 6 archivos cambiados contra main, 0 fuera de lo permitido
+
+13/20 aserciones en verde, 7 en rojo

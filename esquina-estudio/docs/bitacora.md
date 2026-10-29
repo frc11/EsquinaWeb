@@ -6002,3 +6002,9 @@ este. Producción sigue sirviendo el `sizes` de 800 y los topes de 1200 / 800.
 ## R5.1-PAR — el tope de alto es de la fila del par (2026-10-29)
 
 `ProjectContentRenderer`: en `dualMedia` el tope de 88svh ya no se aplica a cada imagen sino a la fila (`pairFrame`): el alto natural sale de la foto más alta a media fila, y si el tope muerde, el ancho de la fila se achica y queda centrada, como una foto sola. Las mitades son 50/50 y las imágenes quedan al ras. Defecto medido en `/work/tukumi` con el código viejo: 218,75 px de aire a 1920×1080 y 641,19 px a 1920×720. Gate `r5-aspecto.mjs` extendido (A5 mide imágenes, A10 aire horizontal, A4 contra la fila, ruta `tukumi`): 132/132. Informe: `research/R5.1-PAR.md`. Rama `run/R5.1-par`, sin merge.
+
+## R5.2-SIN-TOPE — todo bloque mide el ancho entero de la columna (2026-10-29)
+
+`ProjectContentRenderer`: se quita el tope de alto de 88svh. Foto sola, GIF y fila del par ocupan el ancho de la columna, igual que el texto; la foto sigue sin recortarse y conserva su proporción. Se borran `pairFrame`, `halfFrame`, `paintedWidth` y las constantes del tope. `sizes` pasa a ser el ancho del hueco y el GIF usa el mismo ancho que una foto sola (antes 1200 fijo, que mordía). El banco cambia A4 («ningún bloque más angosto que la columna») y suma A11 («un solo ancho»): 116/116 en verde, bordes 384,0–1872,0 a 1920 en las tres rutas; plantar el tope de 88svh puso A11 en rojo.
+
+**Decisión del cliente (2026-10-29) y su consecuencia:** pidió que texto, fotos y pares queden sobre los mismos bordes, sabiendo que algunas fotos ya no entrarán en una pantalla y habrá que scrollearlas. Si se sube una foto vertical muy alta, nada la frena: es a propósito, no un error. Peso de las imágenes de `/work/akasha-blends` a 1920 × 1080, DPR 1: 5.371.238 bytes (4.988.349 de GIF). Detalle en `research/R5.2-SIN-TOPE.md`. Rama `run/R5.2-sin-tope`, sin merge.

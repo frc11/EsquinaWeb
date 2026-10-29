@@ -1,5 +1,6 @@
 /**
- * Banco de medición — R5: las imágenes de un proyecto conservan su proporción.
+ * Banco de medición — R5/R5.2: las imágenes de un proyecto conservan su proporción
+ * y todo bloque de contenido mide el ancho entero de la columna.
  *
  *   node tools/bench/r5-aspecto.mjs [salida.json]
  *
@@ -19,7 +20,9 @@
  *   A2  esa proporción no se mueve entre las diez combinaciones, ±0,5 %
  *   A3  nada se recorta: ningún `object-fit: cover`, la imagen pintada cabe en su
  *       caja y la llena (no queda más chica de lo que necesita)
- *   A4  ninguna imagen supera el tope de alto (88svh)
+ *   A4  ningún bloque es más angosto que la columna de contenido (R5.2: sin tope de alto)
+ *   A11 un solo ancho: texto, fotos solas, GIF y filas de par tienen el mismo borde
+ *       izquierdo y derecho, ±1 px
  *   A5  en cada par las dos mitades y las dos imágenes miden lo mismo, ±1 px
  *   A10 sin aire horizontal en el par: izq + der + 2 px = ancho de la fila, ±1 px
  *   A6  sin scroll horizontal
@@ -34,14 +37,15 @@ import { launchChrome } from "./cdp.mjs";
 import { openPage } from "./page.mjs";
 import { startServer } from "./server.mjs";
 
-const ROUTES = ["akasha-blends", "pepe", "tukumi"];
+// R5_ROUTES="pepe" acota la corrida a una ruta (para pruebas rápidas); sin ella, las tres.
+const ROUTES = process.env.R5_ROUTES?.split(",") ?? ["akasha-blends", "pepe", "tukumi"];
 const LOCALES = ["en", "es"];
 const WIDTHS = [390, 768, 1024, 1366, 1920];
 const HEIGHTS = [720, 1080];
 const RATIO_TOL = 0.005; // 0,5 %
 const PAIR_TOL_PX = 1;
 const PAIR_GAP_PX = 2;
-const CAP_VH = 0.88;
+const EDGE_TOL_PX = 1;
 
 // Alcance permitido de la tanda R5 (rutas desde la raíz del repositorio).
 const ALLOWED_SCOPE = [
@@ -143,8 +147,17 @@ const PROBE = `(async () => {
       row: row ? rect(row) : null, halfWidth: half ? half.getBoundingClientRect().width : null,
     };
   });
+  // Bloques de contenido (R5.2): el texto, cada foto o GIF solo y cada fila de par.
+  // Las fotos de un par no cuentan por separado: su fila ya es el bloque.
+  const blocks = Array.from(document.querySelectorAll(
+    "[data-content-text], [data-media-frame]:not([data-media-half] [data-media-frame]), [data-media-row]"
+  )).map((el) => ({
+    kind: el.hasAttribute("data-content-text") ? "texto" : el.hasAttribute("data-media-row") ? "par" : "foto",
+    ...rect(el),
+  }));
+  const column = blocks.length ? rect(document.querySelector("[data-content-text], [data-media-frame], [data-media-row]").parentElement) : null;
   return {
-    images, vh: window.innerHeight, vw: window.innerWidth,
+    blocks, column, images, vh: window.innerHeight, vw: window.innerWidth,
     scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth,
   };
 })()`;
@@ -210,12 +223,6 @@ function assertRoute(slug, { expected, samples }) {
     check("A3", `${name} sin recorte`, covers === 0 && overflow <= RATIO_TOL && fill >= 1 - RATIO_TOL,
       `object-fit:cover en ${covers}/${samples.length} muestras · exceso de la pintada sobre su caja ${pct(Math.max(0, overflow))} · llenado mínimo ${pct(fill)}`);
 
-    // En un par el tope es el de la fila (R5.1): se mide el alto de la fila.
-    const capped = (s) => { const im = s.probe.images[i]; return im.half ? im.row.h : im.frame.h; };
-    const worst = Math.max(...samples.map((s) => capped(s) / (s.probe.vh * CAP_VH)));
-    check("A4", `${name} tope de alto${exp.slot === "half" ? " (de la fila)" : ""}`, worst <= 1 + 0.5 / 600,
-      `alto/tope máximo ${f(worst)} (1 = justo en 88svh)`);
-
     const minW = Math.min(...samples.map((s) => s.probe.images[i].frame.w));
     const widths = samples.filter((s) => s.probe.images[i].declared !== null).map((s) => {
       const im = s.probe.images[i];
@@ -272,6 +279,25 @@ function assertRoute(slug, { expected, samples }) {
   const over = samples.map((s) => s.probe.scrollW - s.probe.clientW);
   check("A6", `${tag} sin scroll horizontal`, Math.max(...over) <= 0,
     `scrollWidth − clientWidth máx ${Math.max(...over)} px en ${samples.length} muestras`);
+
+  // A4 y A11 (R5.2): todos los bloques comparten el ancho de la columna.
+  const narrow = samples.map((s) => Math.max(...s.probe.blocks.map((b) => s.probe.column.w - b.w)));
+  check("A4", `${tag} ningún bloque más angosto que la columna`, Math.max(...narrow) <= EDGE_TOL_PX,
+    `columna − bloque más angosto, máx ${f(Math.max(...narrow), 3)} px en ${samples.length} muestras (${samples[0].probe.blocks.length} bloques)`);
+  const edgeSpread = (s) => {
+    const l = s.probe.blocks.map((b) => b.x), r = s.probe.blocks.map((b) => b.x + b.w);
+    return { l: Math.max(...l) - Math.min(...l), r: Math.max(...r) - Math.min(...r) };
+  };
+  const spreads = samples.map(edgeSpread);
+  const worstL = Math.max(...spreads.map((x) => x.l)), worstR = Math.max(...spreads.map((x) => x.r));
+  check("A11", `${tag} un solo ancho para todos los bloques`, worstL <= EDGE_TOL_PX && worstR <= EDGE_TOL_PX,
+    `dispersión del borde izquierdo máx ${f(worstL, 3)} px · del derecho máx ${f(worstR, 3)} px en ${samples.length} muestras · ${samples[0].probe.blocks.length} bloques`);
+  for (const s of samples) {
+    if (s.locale !== "en") continue;
+    const kinds = s.probe.blocks.reduce((m, b) => m.set(b.kind, (m.get(b.kind) ?? 0) + 1), new Map());
+    const l = s.probe.blocks.map((b) => b.x), r = s.probe.blocks.map((b) => b.x + b.w);
+    console.log(`INFO A11 ${tag} ${s.w}×${s.h}: bordes izq ${f(Math.min(...l), 1)}..${f(Math.max(...l), 1)} · der ${f(Math.min(...r), 1)}..${f(Math.max(...r), 1)} · ${[...kinds].map(([k, n]) => `${n} ${k}`).join(", ")}`);
+  }
 
   // A9: informe
   expected.forEach((exp, i) => {
