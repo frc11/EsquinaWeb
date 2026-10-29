@@ -109,6 +109,45 @@ function mediaFrame(
   };
 }
 
+/*
+  El par (R5.1). El tope de alto es de la FILA, no de cada foto: si cada mitad
+  se topara sola, la foto se angostaría dentro de su mitad (que sigue midiendo
+  el 50 % de la fila) y el sobrante saldría como aire horizontal, doble en el
+  medio. Acá la fila toma su alto natural de la foto más alta a media fila
+  —`(W − 2) / (2 × razón menor)`—, lo topa a 88svh y deja que su ANCHO se achique
+  en proporción, centrada, igual que una foto sola. Las mitades son 50/50 de lo
+  que mida la fila y cada foto llena la suya: ningún aire horizontal.
+
+  La razón menor es la de la foto más alta (la más angosta). Con ella, el ancho
+  de cada mitad pintada es `min((columna − 2) / 2, 88vh × razón menor)`, que es
+  lo que `paintedWidth` ya calcula para `half`.
+*/
+interface PairSpec {
+  rowStyle: CSSProperties;
+  halfFrame: (image: SanityImageLike | undefined) => MediaFrameSpec;
+}
+
+function pairFrame(
+  left: SanityImageLike | undefined,
+  right: SanityImageLike | undefined,
+): PairSpec {
+  const ratio = (image: SanityImageLike | undefined) => {
+    const { width, height } = assetDimensions(image) ?? FALLBACK_DIMENSIONS.half;
+    return width / height;
+  };
+  const narrowest = Math.min(ratio(left), ratio(right));
+  const sizes = `${MOBILE_QUERY} ${paintedWidth("half", ROW_INSET.mobile, narrowest)}, ${paintedWidth("half", ROW_INSET.desktop, narrowest)}`;
+  return {
+    rowStyle: {
+      width: `min(100%, ${ROW_MAX_VH}svh * ${round4(2 * narrowest)} + ${PAIR_GAP}px)`,
+    },
+    halfFrame: (image) => {
+      const { width, height } = assetDimensions(image) ?? FALLBACK_DIMENSIONS.half;
+      return { style: { aspectRatio: `${width} / ${height}` }, sizes };
+    },
+  };
+}
+
 function MediaFrame({
   frame,
   children,
@@ -363,11 +402,16 @@ function DualMedia({ block }: { block: any }) {
   // its image takes its own ratio inside it. The row is as tall as the taller
   // image; the shorter one is centred vertically with the page background above
   // and below. If only one image is set it takes the whole row.
-  const leftFrame = mediaFrame(slotHint, left);
-  const rightFrame = mediaFrame(slotHint, right);
+  // The height cap belongs to the row (see `pairFrame`), not to each image.
+  const pair = slotHint === "half" ? pairFrame(left, right) : null;
+  const leftFrame = pair ? pair.halfFrame(left) : mediaFrame(slotHint, left);
+  const rightFrame = pair ? pair.halfFrame(right) : mediaFrame(slotHint, right);
 
   return (
-    <div className="relative flex w-full items-center gap-[2px] mb-[2px]">
+    <div
+      className="relative mx-auto flex w-full items-center gap-[2px] mb-[2px]"
+      style={pair?.rowStyle}
+    >
       {leftUrl && (
         <figure className="relative m-0 min-w-0 flex-1" data-media-half>
           <MediaFrame frame={leftFrame}>

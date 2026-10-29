@@ -1,0 +1,5 @@
+﻿CORRIDA CORTADA POR MEMORIA — sin resultado, no es evidencia.
+El sistema detuvo la corrida del defecto plantado por falta de memoria (sin tukumi ni resumen).
+Además el plantado era inválido: dejaba el tope de la fila y agregaba el de la imagen,
+así que no reproducía el defecto. La evidencia que ocupa su lugar son las cifras del
+código viejo (stash) en research/R5.1-PAR.md.

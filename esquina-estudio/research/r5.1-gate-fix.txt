@@ -1,0 +1,206 @@
+﻿PASS A0 /work/akasha-blends imágenes renderizadas = imágenes del contenido — API 8, DOM 8 en 20 muestras
+PASS A1 /work/akasha-blends img#0 (1400x700, single) proporción — foto 2.0000 · caja 2.0000..2.0000 (desvío 0.000%) · pintada desvío 0.000% · 20 muestras
+PASS A2 /work/akasha-blends img#0 (1400x700, single) la proporción no se mueve — caja 2.0000..2.0000 · dispersión 0.000% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/akasha-blends img#0 (1400x700, single) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 100.000%
+PASS A4 /work/akasha-blends img#0 (1400x700, single) tope de alto — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/akasha-blends img#0 (1400x700, single) sizes — <img> nativo (GIF): sin sizes, no aplica
+PASS A1 /work/akasha-blends img#1 (5833x2917, single) proporción — foto 1.9997 · caja 1.9997..1.9998 (desvío 0.008%) · pintada desvío 0.317% · 20 muestras
+PASS A2 /work/akasha-blends img#1 (5833x2917, single) la proporción no se mueve — caja 1.9997..1.9998 · dispersión 0.008% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/akasha-blends img#1 (5833x2917, single) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.692%
+PASS A4 /work/akasha-blends img#1 (5833x2917, single) tope de alto — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/akasha-blends img#1 (5833x2917, single) sizes = ancho pintado — declarado − pintado 0.00..0.00 px en 20 muestras (ancho pintado mín 336.0 px)
+PASS A1 /work/akasha-blends img#2 (3456x5184, half) proporción — foto 0.6667 · caja 0.6667..0.6667 (desvío 0.001%) · pintada desvío 0.200% · 20 muestras
+PASS A2 /work/akasha-blends img#2 (3456x5184, half) la proporción no se mueve — caja 0.6667..0.6667 · dispersión 0.001% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/akasha-blends img#2 (3456x5184, half) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.800%
+PASS A4 /work/akasha-blends img#2 (3456x5184, half) tope de alto (de la fila) — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/akasha-blends img#2 (3456x5184, half) sizes = ancho pintado — declarado − pintado 0.00..0.05 px en 20 muestras (ancho pintado mín 167.0 px)
+PASS A1 /work/akasha-blends img#3 (3456x5184, half) proporción — foto 0.6667 · caja 0.6667..0.6667 (desvío 0.001%) · pintada desvío 0.200% · 20 muestras
+PASS A2 /work/akasha-blends img#3 (3456x5184, half) la proporción no se mueve — caja 0.6667..0.6667 · dispersión 0.001% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/akasha-blends img#3 (3456x5184, half) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.800%
+PASS A4 /work/akasha-blends img#3 (3456x5184, half) tope de alto (de la fila) — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/akasha-blends img#3 (3456x5184, half) sizes = ancho pintado — declarado − pintado 0.00..0.05 px en 20 muestras (ancho pintado mín 167.0 px)
+PASS A1 /work/akasha-blends img#4 (6000x4500, single) proporción — foto 1.3333 · caja 1.3333..1.3334 (desvío 0.002%) · pintada desvío 0.195% · 20 muestras
+PASS A2 /work/akasha-blends img#4 (6000x4500, single) la proporción no se mueve — caja 1.3333..1.3334 · dispersión 0.002% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/akasha-blends img#4 (6000x4500, single) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.805%
+PASS A4 /work/akasha-blends img#4 (6000x4500, single) tope de alto — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/akasha-blends img#4 (6000x4500, single) sizes = ancho pintado — declarado − pintado 0.00..0.00 px en 20 muestras (ancho pintado mín 336.0 px)
+PASS A1 /work/akasha-blends img#5 (2881x2161, single) proporción — foto 1.3332 · caja 1.3332..1.3333 (desvío 0.005%) · pintada desvío 0.207% · 20 muestras
+PASS A2 /work/akasha-blends img#5 (2881x2161, single) la proporción no se mueve — caja 1.3332..1.3333 · dispersión 0.005% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/akasha-blends img#5 (2881x2161, single) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.799%
+PASS A4 /work/akasha-blends img#5 (2881x2161, single) tope de alto — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/akasha-blends img#5 (2881x2161, single) sizes = ancho pintado — declarado − pintado 0.00..0.00 px en 20 muestras (ancho pintado mín 336.0 px)
+PASS A1 /work/akasha-blends img#6 (2881x2161, single) proporción — foto 1.3332 · caja 1.3332..1.3333 (desvío 0.005%) · pintada desvío 0.207% · 20 muestras
+PASS A2 /work/akasha-blends img#6 (2881x2161, single) la proporción no se mueve — caja 1.3332..1.3333 · dispersión 0.005% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/akasha-blends img#6 (2881x2161, single) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.799%
+PASS A4 /work/akasha-blends img#6 (2881x2161, single) tope de alto — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/akasha-blends img#6 (2881x2161, single) sizes = ancho pintado — declarado − pintado 0.00..0.00 px en 20 muestras (ancho pintado mín 336.0 px)
+PASS A1 /work/akasha-blends img#7 (5833x2917, single) proporción — foto 1.9997 · caja 1.9997..1.9998 (desvío 0.008%) · pintada desvío 0.317% · 20 muestras
+PASS A2 /work/akasha-blends img#7 (5833x2917, single) la proporción no se mueve — caja 1.9997..1.9998 · dispersión 0.008% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/akasha-blends img#7 (5833x2917, single) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.692%
+PASS A4 /work/akasha-blends img#7 (5833x2917, single) tope de alto — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/akasha-blends img#7 (5833x2917, single) sizes = ancho pintado — declarado − pintado 0.00..0.00 px en 20 muestras (ancho pintado mín 336.0 px)
+PASS A5 /work/akasha-blends par#0 mitades e imágenes iguales — |mitad izq − mitad der| máx 0.016 px · |imagen izq − imagen der| máx 0.016 px en 20 muestras (mitad típica 170.0 px)
+PASS A10 /work/akasha-blends par#0 sin aire horizontal — fila − (izq + der + 2) máx 0.000 px en 20 muestras
+INFO A10 /work/akasha-blends par#0 390×720: fila 342.0 = izq 170.0 + der 170.0 + 2 → aire 0.00 px
+INFO A10 /work/akasha-blends par#0 390×1080: fila 342.0 = izq 170.0 + der 170.0 + 2 → aire 0.00 px
+INFO A10 /work/akasha-blends par#0 768×720: fila 336.0 = izq 167.0 + der 167.0 + 2 → aire 0.00 px
+INFO A10 /work/akasha-blends par#0 768×1080: fila 336.0 = izq 167.0 + der 167.0 + 2 → aire 0.00 px
+INFO A10 /work/akasha-blends par#0 1024×720: fila 592.0 = izq 295.0 + der 295.0 + 2 → aire 0.00 px
+INFO A10 /work/akasha-blends par#0 1024×1080: fila 592.0 = izq 295.0 + der 295.0 + 2 → aire 0.00 px
+INFO A10 /work/akasha-blends par#0 1366×720: fila 846.8 = izq 422.4 + der 422.4 + 2 → aire 0.00 px
+INFO A10 /work/akasha-blends par#0 1366×1080: fila 934.0 = izq 466.0 + der 466.0 + 2 → aire 0.00 px
+INFO A10 /work/akasha-blends par#0 1920×720: fila 846.8 = izq 422.4 + der 422.4 + 2 → aire 0.00 px
+INFO A10 /work/akasha-blends par#0 1920×1080: fila 1269.2 = izq 633.6 + der 633.6 + 2 → aire 0.00 px
+PASS A7 /work/akasha-blends par#0 centrado vertical — |aire arriba − aire abajo| máx 0.016 px · |alto de fila − alto de la más alta| máx 0.000 px
+PASS A6 /work/akasha-blends sin scroll horizontal — scrollWidth − clientWidth máx 0 px en 20 muestras
+INFO A9 /work/akasha-blends img#0: tope a Sanity w=1200 · pintada 1488 px ×2 = 2976 (original 1400) · TOPE MUERDE
+INFO A9 /work/akasha-blends img#1: tope a Sanity w=3840 · pintada 1488 px ×2 = 2976 (original 5833) · tope no muerde
+INFO A9 /work/akasha-blends img#2: tope a Sanity w=1488 · pintada 634 px ×2 = 1268 (original 3456) · tope no muerde
+INFO A9 /work/akasha-blends img#3: tope a Sanity w=1488 · pintada 634 px ×2 = 1268 (original 3456) · tope no muerde
+INFO A9 /work/akasha-blends img#4: tope a Sanity w=2976 · pintada 1267 px ×2 = 2535 (original 6000) · tope no muerde
+INFO A9 /work/akasha-blends img#5: tope a Sanity w=2881 · pintada 1267 px ×2 = 2535 (original 2881) · tope no muerde
+INFO A9 /work/akasha-blends img#6: tope a Sanity w=2881 · pintada 1267 px ×2 = 2535 (original 2881) · tope no muerde
+INFO A9 /work/akasha-blends img#7: tope a Sanity w=3840 · pintada 1488 px ×2 = 2976 (original 5833) · tope no muerde
+PASS A0 /work/pepe imágenes renderizadas = imágenes del contenido — API 3, DOM 3 en 20 muestras
+PASS A1 /work/pepe img#0 (2250x2250, single) proporción — foto 1.0000 · caja 1.0000..1.0000 (desvío 0.000%) · pintada desvío 0.000% · 20 muestras
+PASS A2 /work/pepe img#0 (2250x2250, single) la proporción no se mueve — caja 1.0000..1.0000 · dispersión 0.000% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/pepe img#0 (2250x2250, single) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 100.000%
+PASS A4 /work/pepe img#0 (2250x2250, single) tope de alto — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/pepe img#0 (2250x2250, single) sizes = ancho pintado — declarado − pintado 0.00..0.00 px en 20 muestras (ancho pintado mín 336.0 px)
+PASS A1 /work/pepe img#1 (3241x5765, half) proporción — foto 0.5622 · caja 0.5622..0.5622 (desvío 0.003%) · pintada desvío 0.356% · 20 muestras
+PASS A2 /work/pepe img#1 (3241x5765, half) la proporción no se mueve — caja 0.5622..0.5622 · dispersión 0.003% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/pepe img#1 (3241x5765, half) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.648%
+PASS A4 /work/pepe img#1 (3241x5765, half) tope de alto (de la fila) — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/pepe img#1 (3241x5765, half) sizes = ancho pintado — declarado − pintado 0.00..0.00 px en 20 muestras (ancho pintado mín 167.0 px)
+PASS A1 /work/pepe img#2 (3456x5184, half) proporción — foto 0.6667 · caja 0.6667..0.6667 (desvío 0.001%) · pintada desvío 0.200% · 20 muestras
+PASS A2 /work/pepe img#2 (3456x5184, half) la proporción no se mueve — caja 0.6667..0.6667 · dispersión 0.001% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/pepe img#2 (3456x5184, half) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.800%
+PASS A4 /work/pepe img#2 (3456x5184, half) tope de alto (de la fila) — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/pepe img#2 (3456x5184, half) sizes = ancho pintado — declarado − pintado 0.00..0.00 px en 20 muestras (ancho pintado mín 167.0 px)
+PASS A5 /work/pepe par#0 mitades e imágenes iguales — |mitad izq − mitad der| máx 0.000 px · |imagen izq − imagen der| máx 0.000 px en 20 muestras (mitad típica 170.0 px)
+PASS A10 /work/pepe par#0 sin aire horizontal — fila − (izq + der + 2) máx 0.000 px en 20 muestras
+INFO A10 /work/pepe par#0 390×720: fila 342.0 = izq 170.0 + der 170.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 390×1080: fila 342.0 = izq 170.0 + der 170.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 768×720: fila 336.0 = izq 167.0 + der 167.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 768×1080: fila 336.0 = izq 167.0 + der 167.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 1024×720: fila 592.0 = izq 295.0 + der 295.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 1024×1080: fila 592.0 = izq 295.0 + der 295.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 1366×720: fila 714.4 = izq 356.2 + der 356.2 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 1366×1080: fila 934.0 = izq 466.0 + der 466.0 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 1920×720: fila 714.4 = izq 356.2 + der 356.2 + 2 → aire 0.00 px
+INFO A10 /work/pepe par#0 1920×1080: fila 1070.6 = izq 534.3 + der 534.3 + 2 → aire 0.00 px
+PASS A7 /work/pepe par#0 centrado vertical — |aire arriba − aire abajo| máx 0.016 px · |alto de fila − alto de la más alta| máx 0.000 px
+PASS A6 /work/pepe sin scroll horizontal — scrollWidth − clientWidth máx 0 px en 20 muestras
+INFO A9 /work/pepe img#0: tope a Sanity w=2250 · pintada 950 px ×2 = 1901 (original 2250) · tope no muerde
+INFO A9 /work/pepe img#1: tope a Sanity w=1486 · pintada 534 px ×2 = 1069 (original 3241) · tope no muerde
+INFO A9 /work/pepe img#2: tope a Sanity w=1488 · pintada 534 px ×2 = 1069 (original 3456) · tope no muerde
+PASS A0 /work/tukumi imágenes renderizadas = imágenes del contenido — API 11, DOM 11 en 20 muestras
+PASS A1 /work/tukumi img#0 (2401x1801, single) proporción — foto 1.3331 · caja 1.3332..1.3332 (desvío 0.003%) · pintada desvío 0.209% · 20 muestras
+PASS A2 /work/tukumi img#0 (2401x1801, single) la proporción no se mueve — caja 1.3332..1.3332 · dispersión 0.003% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/tukumi img#0 (2401x1801, single) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.793%
+PASS A4 /work/tukumi img#0 (2401x1801, single) tope de alto — alto/tope máximo 0.9999 (1 = justo en 88svh)
+PASS A8 /work/tukumi img#0 (2401x1801, single) sizes = ancho pintado — declarado − pintado 0.00..0.00 px en 20 muestras (ancho pintado mín 336.0 px)
+PASS A1 /work/tukumi img#1 (1600x2400, half) proporción — foto 0.6667 · caja 0.6667..0.6667 (desvío 0.001%) · pintada desvío 0.069% · 20 muestras
+PASS A2 /work/tukumi img#1 (1600x2400, half) la proporción no se mueve — caja 0.6667..0.6667 · dispersión 0.001% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/tukumi img#1 (1600x2400, half) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.931%
+PASS A4 /work/tukumi img#1 (1600x2400, half) tope de alto (de la fila) — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/tukumi img#1 (1600x2400, half) sizes = ancho pintado — declarado − pintado 0.00..0.05 px en 20 muestras (ancho pintado mín 167.0 px)
+PASS A1 /work/tukumi img#2 (1600x2400, half) proporción — foto 0.6667 · caja 0.6667..0.6667 (desvío 0.001%) · pintada desvío 0.069% · 20 muestras
+PASS A2 /work/tukumi img#2 (1600x2400, half) la proporción no se mueve — caja 0.6667..0.6667 · dispersión 0.001% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/tukumi img#2 (1600x2400, half) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.931%
+PASS A4 /work/tukumi img#2 (1600x2400, half) tope de alto (de la fila) — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/tukumi img#2 (1600x2400, half) sizes = ancho pintado — declarado − pintado 0.00..0.05 px en 20 muestras (ancho pintado mín 167.0 px)
+PASS A1 /work/tukumi img#3 (2400x1800, single) proporción — foto 1.3333 · caja 1.3333..1.3334 (desvío 0.002%) · pintada desvío 0.000% · 20 muestras
+PASS A2 /work/tukumi img#3 (2400x1800, single) la proporción no se mueve — caja 1.3333..1.3334 · dispersión 0.002% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/tukumi img#3 (2400x1800, single) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.998%
+PASS A4 /work/tukumi img#3 (2400x1800, single) tope de alto — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/tukumi img#3 (2400x1800, single) sizes — <img> nativo (GIF): sin sizes, no aplica
+PASS A1 /work/tukumi img#4 (1600x2400, half) proporción — foto 0.6667 · caja 0.6667..0.6667 (desvío 0.001%) · pintada desvío 0.200% · 20 muestras
+PASS A2 /work/tukumi img#4 (1600x2400, half) la proporción no se mueve — caja 0.6667..0.6667 · dispersión 0.001% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/tukumi img#4 (1600x2400, half) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.800%
+PASS A4 /work/tukumi img#4 (1600x2400, half) tope de alto (de la fila) — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/tukumi img#4 (1600x2400, half) sizes = ancho pintado — declarado − pintado 0.00..0.05 px en 20 muestras (ancho pintado mín 167.0 px)
+PASS A1 /work/tukumi img#5 (1600x2400, half) proporción — foto 0.6667 · caja 0.6667..0.6667 (desvío 0.001%) · pintada desvío 0.200% · 20 muestras
+PASS A2 /work/tukumi img#5 (1600x2400, half) la proporción no se mueve — caja 0.6667..0.6667 · dispersión 0.001% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/tukumi img#5 (1600x2400, half) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.800%
+PASS A4 /work/tukumi img#5 (1600x2400, half) tope de alto (de la fila) — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/tukumi img#5 (1600x2400, half) sizes = ancho pintado — declarado − pintado 0.00..0.05 px en 20 muestras (ancho pintado mín 167.0 px)
+PASS A1 /work/tukumi img#6 (2400x1800, single) proporción — foto 1.3333 · caja 1.3333..1.3334 (desvío 0.002%) · pintada desvío 0.000% · 20 muestras
+PASS A2 /work/tukumi img#6 (2400x1800, single) la proporción no se mueve — caja 1.3333..1.3334 · dispersión 0.002% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/tukumi img#6 (2400x1800, single) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.998%
+PASS A4 /work/tukumi img#6 (2400x1800, single) tope de alto — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/tukumi img#6 (2400x1800, single) sizes — <img> nativo (GIF): sin sizes, no aplica
+PASS A1 /work/tukumi img#7 (2400x1800, single) proporción — foto 1.3333 · caja 1.3333..1.3334 (desvío 0.002%) · pintada desvío 0.195% · 20 muestras
+PASS A2 /work/tukumi img#7 (2400x1800, single) la proporción no se mueve — caja 1.3333..1.3334 · dispersión 0.002% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/tukumi img#7 (2400x1800, single) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.805%
+PASS A4 /work/tukumi img#7 (2400x1800, single) tope de alto — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/tukumi img#7 (2400x1800, single) sizes = ancho pintado — declarado − pintado 0.00..0.00 px en 20 muestras (ancho pintado mín 336.0 px)
+PASS A1 /work/tukumi img#8 (1600x2400, half) proporción — foto 0.6667 · caja 0.6667..0.6667 (desvío 0.001%) · pintada desvío 0.200% · 20 muestras
+PASS A2 /work/tukumi img#8 (1600x2400, half) la proporción no se mueve — caja 0.6667..0.6667 · dispersión 0.001% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/tukumi img#8 (1600x2400, half) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.800%
+PASS A4 /work/tukumi img#8 (1600x2400, half) tope de alto (de la fila) — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/tukumi img#8 (1600x2400, half) sizes = ancho pintado — declarado − pintado 0.00..0.05 px en 20 muestras (ancho pintado mín 167.0 px)
+PASS A1 /work/tukumi img#9 (1600x2400, half) proporción — foto 0.6667 · caja 0.6667..0.6667 (desvío 0.001%) · pintada desvío 0.200% · 20 muestras
+PASS A2 /work/tukumi img#9 (1600x2400, half) la proporción no se mueve — caja 0.6667..0.6667 · dispersión 0.001% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/tukumi img#9 (1600x2400, half) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.800%
+PASS A4 /work/tukumi img#9 (1600x2400, half) tope de alto (de la fila) — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/tukumi img#9 (1600x2400, half) sizes = ancho pintado — declarado − pintado 0.00..0.05 px en 20 muestras (ancho pintado mín 167.0 px)
+PASS A1 /work/tukumi img#10 (2400x1800, single) proporción — foto 1.3333 · caja 1.3333..1.3334 (desvío 0.002%) · pintada desvío 0.195% · 20 muestras
+PASS A2 /work/tukumi img#10 (2400x1800, single) la proporción no se mueve — caja 1.3333..1.3334 · dispersión 0.002% entre 10 combinaciones × 2 idiomas
+PASS A3 /work/tukumi img#10 (2400x1800, single) sin recorte — object-fit:cover en 0/20 muestras · exceso de la pintada sobre su caja 0.000% · llenado mínimo 99.805%
+PASS A4 /work/tukumi img#10 (2400x1800, single) tope de alto — alto/tope máximo 1.0000 (1 = justo en 88svh)
+PASS A8 /work/tukumi img#10 (2400x1800, single) sizes = ancho pintado — declarado − pintado 0.00..0.00 px en 20 muestras (ancho pintado mín 336.0 px)
+PASS A5 /work/tukumi par#0 mitades e imágenes iguales — |mitad izq − mitad der| máx 0.016 px · |imagen izq − imagen der| máx 0.016 px en 20 muestras (mitad típica 170.0 px)
+PASS A10 /work/tukumi par#0 sin aire horizontal — fila − (izq + der + 2) máx 0.000 px en 20 muestras
+INFO A10 /work/tukumi par#0 390×720: fila 342.0 = izq 170.0 + der 170.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#0 390×1080: fila 342.0 = izq 170.0 + der 170.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#0 768×720: fila 336.0 = izq 167.0 + der 167.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#0 768×1080: fila 336.0 = izq 167.0 + der 167.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#0 1024×720: fila 592.0 = izq 295.0 + der 295.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#0 1024×1080: fila 592.0 = izq 295.0 + der 295.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#0 1366×720: fila 846.8 = izq 422.4 + der 422.4 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#0 1366×1080: fila 934.0 = izq 466.0 + der 466.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#0 1920×720: fila 846.8 = izq 422.4 + der 422.4 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#0 1920×1080: fila 1269.2 = izq 633.6 + der 633.6 + 2 → aire 0.00 px
+PASS A7 /work/tukumi par#0 centrado vertical — |aire arriba − aire abajo| máx 0.016 px · |alto de fila − alto de la más alta| máx 0.000 px
+PASS A5 /work/tukumi par#2 mitades e imágenes iguales — |mitad izq − mitad der| máx 0.016 px · |imagen izq − imagen der| máx 0.016 px en 20 muestras (mitad típica 170.0 px)
+PASS A10 /work/tukumi par#2 sin aire horizontal — fila − (izq + der + 2) máx 0.000 px en 20 muestras
+INFO A10 /work/tukumi par#2 390×720: fila 342.0 = izq 170.0 + der 170.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#2 390×1080: fila 342.0 = izq 170.0 + der 170.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#2 768×720: fila 336.0 = izq 167.0 + der 167.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#2 768×1080: fila 336.0 = izq 167.0 + der 167.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#2 1024×720: fila 592.0 = izq 295.0 + der 295.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#2 1024×1080: fila 592.0 = izq 295.0 + der 295.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#2 1366×720: fila 846.8 = izq 422.4 + der 422.4 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#2 1366×1080: fila 934.0 = izq 466.0 + der 466.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#2 1920×720: fila 846.8 = izq 422.4 + der 422.4 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#2 1920×1080: fila 1269.2 = izq 633.6 + der 633.6 + 2 → aire 0.00 px
+PASS A7 /work/tukumi par#2 centrado vertical — |aire arriba − aire abajo| máx 0.016 px · |alto de fila − alto de la más alta| máx 0.000 px
+PASS A5 /work/tukumi par#4 mitades e imágenes iguales — |mitad izq − mitad der| máx 0.016 px · |imagen izq − imagen der| máx 0.016 px en 20 muestras (mitad típica 170.0 px)
+PASS A10 /work/tukumi par#4 sin aire horizontal — fila − (izq + der + 2) máx 0.000 px en 20 muestras
+INFO A10 /work/tukumi par#4 390×720: fila 342.0 = izq 170.0 + der 170.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#4 390×1080: fila 342.0 = izq 170.0 + der 170.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#4 768×720: fila 336.0 = izq 167.0 + der 167.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#4 768×1080: fila 336.0 = izq 167.0 + der 167.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#4 1024×720: fila 592.0 = izq 295.0 + der 295.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#4 1024×1080: fila 592.0 = izq 295.0 + der 295.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#4 1366×720: fila 846.8 = izq 422.4 + der 422.4 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#4 1366×1080: fila 934.0 = izq 466.0 + der 466.0 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#4 1920×720: fila 846.8 = izq 422.4 + der 422.4 + 2 → aire 0.00 px
+INFO A10 /work/tukumi par#4 1920×1080: fila 1269.2 = izq 633.6 + der 633.6 + 2 → aire 0.00 px
+PASS A7 /work/tukumi par#4 centrado vertical — |aire arriba − aire abajo| máx 0.016 px · |alto de fila − alto de la más alta| máx 0.000 px
+PASS A6 /work/tukumi sin scroll horizontal — scrollWidth − clientWidth máx 0 px en 20 muestras
+INFO A9 /work/tukumi img#0: tope a Sanity w=2401 · pintada 1267 px ×2 = 2534 (original 2401) · tope no muerde
+INFO A9 /work/tukumi img#1: tope a Sanity w=1488 · pintada 634 px ×2 = 1268 (original 1600) · tope no muerde
+INFO A9 /work/tukumi img#2: tope a Sanity w=1488 · pintada 634 px ×2 = 1268 (original 1600) · tope no muerde
+INFO A9 /work/tukumi img#3: tope a Sanity w=1200 · pintada 1267 px ×2 = 2535 (original 2400) · TOPE MUERDE
+INFO A9 /work/tukumi img#4: tope a Sanity w=1488 · pintada 634 px ×2 = 1268 (original 1600) · tope no muerde
+INFO A9 /work/tukumi img#5: tope a Sanity w=1488 · pintada 634 px ×2 = 1268 (original 1600) · tope no muerde
+INFO A9 /work/tukumi img#6: tope a Sanity w=1200 · pintada 1267 px ×2 = 2535 (original 2400) · TOPE MUERDE
+INFO A9 /work/tukumi img#7: tope a Sanity w=2400 · pintada 1267 px ×2 = 2535 (original 2400) · tope no muerde
+INFO A9 /work/tukumi img#8: tope a Sanity w=1488 · pintada 634 px ×2 = 1268 (original 1600) · tope no muerde
+INFO A9 /work/tukumi img#9: tope a Sanity w=1488 · pintada 634 px ×2 = 1268 (original 1600) · tope no muerde
+INFO A9 /work/tukumi img#10: tope a Sanity w=2400 · pintada 1267 px ×2 = 2535 (original 2400) · tope no muerde
+PASS S alcance de archivos — 4 archivos cambiados contra main, 0 fuera de lo permitido
+
+132/132 aserciones en verde, 0 en rojo

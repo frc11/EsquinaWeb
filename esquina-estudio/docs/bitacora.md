@@ -5998,3 +5998,7 @@ este. Producción sigue sirviendo el `sizes` de 800 y los topes de 1200 / 800.
 ## R5 — las imágenes de proyecto conservan su proporción (2026-10-28)
 
 `ProjectContentRenderer`: la caja de cada imagen (foto sola, GIF y cada mitad del par) toma la proporción de la foto, leída del id del asset de Sanity, y nada se recorta (`object-contain`, ya no `object-cover`). El tope de alto 88svh se aplica al ancho (`min(100%, 88svh × razón)`): si muerde, la foto se angosta y se centra. El par sigue 50/50; la imagen más baja se centra en vertical. `sizes` ahora declara el ancho del marco (medido: 0,00 px de diferencia). Gate: `tools/bench/r5-aspecto.mjs`. Informe: `research/R5-ASPECTO.md`. Los hotspots de Sanity quedan sin efecto en estos bloques. Rama `run/R5-aspecto`, sin merge.
+
+## R5.1-PAR — el tope de alto es de la fila del par (2026-10-29)
+
+`ProjectContentRenderer`: en `dualMedia` el tope de 88svh ya no se aplica a cada imagen sino a la fila (`pairFrame`): el alto natural sale de la foto más alta a media fila, y si el tope muerde, el ancho de la fila se achica y queda centrada, como una foto sola. Las mitades son 50/50 y las imágenes quedan al ras. Defecto medido en `/work/tukumi` con el código viejo: 218,75 px de aire a 1920×1080 y 641,19 px a 1920×720. Gate `r5-aspecto.mjs` extendido (A5 mide imágenes, A10 aire horizontal, A4 contra la fila, ruta `tukumi`): 132/132. Informe: `research/R5.1-PAR.md`. Rama `run/R5.1-par`, sin merge.

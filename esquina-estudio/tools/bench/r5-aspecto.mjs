@@ -20,7 +20,8 @@
  *   A3  nada se recorta: ningún `object-fit: cover`, la imagen pintada cabe en su
  *       caja y la llena (no queda más chica de lo que necesita)
  *   A4  ninguna imagen supera el tope de alto (88svh)
- *   A5  en cada par las dos mitades miden lo mismo, ±1 px
+ *   A5  en cada par las dos mitades y las dos imágenes miden lo mismo, ±1 px
+ *   A10 sin aire horizontal en el par: izq + der + 2 px = ancho de la fila, ±1 px
  *   A6  sin scroll horizontal
  *   A7  en cada par la imagen más baja queda centrada vertical en su mitad
  *   A8  el `sizes` declara el ancho que de verdad se pinta
@@ -33,12 +34,13 @@ import { launchChrome } from "./cdp.mjs";
 import { openPage } from "./page.mjs";
 import { startServer } from "./server.mjs";
 
-const ROUTES = ["akasha-blends", "pepe"];
+const ROUTES = ["akasha-blends", "pepe", "tukumi"];
 const LOCALES = ["en", "es"];
 const WIDTHS = [390, 768, 1024, 1366, 1920];
 const HEIGHTS = [720, 1080];
 const RATIO_TOL = 0.005; // 0,5 %
 const PAIR_TOL_PX = 1;
+const PAIR_GAP_PX = 2;
 const CAP_VH = 0.88;
 
 // Alcance permitido de la tanda R5 (rutas desde la raíz del repositorio).
@@ -208,8 +210,10 @@ function assertRoute(slug, { expected, samples }) {
     check("A3", `${name} sin recorte`, covers === 0 && overflow <= RATIO_TOL && fill >= 1 - RATIO_TOL,
       `object-fit:cover en ${covers}/${samples.length} muestras · exceso de la pintada sobre su caja ${pct(Math.max(0, overflow))} · llenado mínimo ${pct(fill)}`);
 
-    const worst = Math.max(...samples.map((s) => s.probe.images[i].frame.h / (s.probe.vh * CAP_VH)));
-    check("A4", `${name} tope de alto`, worst <= 1 + 0.5 / 600,
+    // En un par el tope es el de la fila (R5.1): se mide el alto de la fila.
+    const capped = (s) => { const im = s.probe.images[i]; return im.half ? im.row.h : im.frame.h; };
+    const worst = Math.max(...samples.map((s) => capped(s) / (s.probe.vh * CAP_VH)));
+    check("A4", `${name} tope de alto${exp.slot === "half" ? " (de la fila)" : ""}`, worst <= 1 + 0.5 / 600,
       `alto/tope máximo ${f(worst)} (1 = justo en 88svh)`);
 
     const minW = Math.min(...samples.map((s) => s.probe.images[i].frame.w));
@@ -240,8 +244,21 @@ function assertRoute(slug, { expected, samples }) {
     const rows = [...pairRows.entries()].filter(([k]) => k.endsWith(`|${rid}`)).map(([, v]) => v).filter((v) => v.length === 2);
     if (!rows.length) continue;
     const diffs = rows.map(([a, b]) => Math.abs(a.halfWidth - b.halfWidth));
-    check("A5", `${tag} par#${rid} mitades iguales`, Math.max(...diffs) <= PAIR_TOL_PX,
-      `|ancho izq − ancho der| máx ${f(Math.max(...diffs), 3)} px en ${rows.length} muestras (mitad típica ${f(rows[0][0].halfWidth, 1)} px)`);
+    const imgDiffs = rows.map(([a, b]) => Math.abs(a.frame.w - b.frame.w));
+    check("A5", `${tag} par#${rid} mitades e imágenes iguales`,
+      Math.max(...diffs) <= PAIR_TOL_PX && Math.max(...imgDiffs) <= PAIR_TOL_PX,
+      `|mitad izq − mitad der| máx ${f(Math.max(...diffs), 3)} px · |imagen izq − imagen der| máx ${f(Math.max(...imgDiffs), 3)} px en ${rows.length} muestras (mitad típica ${f(rows[0][0].halfWidth, 1)} px)`);
+    // A10: la suma de las dos imágenes y el aire de 2 px es el ancho de la fila.
+    const airs = rows.map(([a, b]) => a.row.w - (a.frame.w + b.frame.w + PAIR_GAP_PX));
+    const worstAir = airs.reduce((m, v) => (Math.abs(v) > Math.abs(m) ? v : m), 0);
+    check("A10", `${tag} par#${rid} sin aire horizontal`, Math.abs(worstAir) <= PAIR_TOL_PX,
+      `fila − (izq + der + ${PAIR_GAP_PX}) máx ${f(worstAir, 3)} px en ${rows.length} muestras`);
+    for (const [k, v] of pairRows.entries()) {
+      const [si, r] = k.split("|");
+      if (r !== rid || v.length !== 2 || samples[Number(si)].locale !== "en") continue;
+      const s = samples[Number(si)];
+      console.log(`INFO A10 ${tag} par#${rid} ${s.w}×${s.h}: fila ${f(v[0].row.w, 1)} = izq ${f(v[0].frame.w, 1)} + der ${f(v[1].frame.w, 1)} + ${PAIR_GAP_PX} → aire ${f(v[0].row.w - v[0].frame.w - v[1].frame.w - PAIR_GAP_PX, 2)} px`);
+    }
     const gaps = rows.flatMap((pair) => pair.map((im) => {
       const top = im.frame.y - im.row.y;
       const bottom = im.row.y + im.row.h - (im.frame.y + im.frame.h);
