@@ -5994,3 +5994,7 @@ este. Producción sigue sirviendo el `sizes` de 800 y los topes de 1200 / 800.
 
 - **Commits:** `eef9b42` (Fase 2), `8d3071e` (Fase 3), `e833f2b` (Fase 4),
   `e202d01` (mediciones) y este de registros.
+
+## R5 — las imágenes de proyecto conservan su proporción (2026-10-28)
+
+`ProjectContentRenderer`: la caja de cada imagen (foto sola, GIF y cada mitad del par) toma la proporción de la foto, leída del id del asset de Sanity, y nada se recorta (`object-contain`, ya no `object-cover`). El tope de alto 88svh se aplica al ancho (`min(100%, 88svh × razón)`): si muerde, la foto se angosta y se centra. El par sigue 50/50; la imagen más baja se centra en vertical. `sizes` ahora declara el ancho del marco (medido: 0,00 px de diferencia). Gate: `tools/bench/r5-aspecto.mjs`. Informe: `research/R5-ASPECTO.md`. Los hotspots de Sanity quedan sin efecto en estos bloques. Rama `run/R5-aspecto`, sin merge.

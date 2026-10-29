@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import { PortableText, PortableTextComponents } from "@portabletext/react";
 import { useLocale } from "@/lib/i18n";
@@ -9,28 +10,40 @@ import ImageLoadIndicator, {
   useImageLoad,
 } from "@/components/ui/ImageLoadIndicator";
 
-/* ── El hueco real de cada imagen (R4) ──────────────────────── */
+/* ── La caja de cada imagen (R5) ────────────────────────────── */
 /*
-  `sizes` describe el ancho que ocupa la imagen PINTADA, no el de su caja. Con
-  `object-cover`, una foto más apaisada que la caja se escala hasta llenar el
-  alto y desborda a los costados: lo que hay que pedir es ese ancho escalado.
-  Hasta R4 la foto sola declaraba 800 px para una caja de 1488 a 1920, y el
-  navegador pedía la variante chica y la estiraba.
+  La caja toma la proporción de la foto y la foto nunca se recorta. Hasta R4 la
+  caja era un `aspect-[4/3]` (una fila entera, o cada mitad del par) con
+  `object-cover`: una foto que no fuera 4:3 (2:3 en cada mitad) perdía los
+  bordes. Peor: con un `max-h` en unidades de viewport, cuando el tope mordía la
+  caja dejaba de ser 4:3 y pasaba a ser ancho / alto-topado, o sea que lo que se
+  veía de la foto cambiaba al redimensionar la ventana.
 
-  La geometría es la de `ProjectDetailClient`: debajo de 768 la columna mide
+  La trampa de CSS: `aspect-ratio` con `width: 100%` y `max-height` reproduce el
+  defecto —el ancho queda definido, el alto se topa y la razón se rompe—. Acá el
+  tope es sobre el ANCHO: `min(100%, 88svh × razón)`. El alto sale de la razón y
+  por construcción no pasa de 88svh; si el tope muerde, la foto se angosta y se
+  centra, con el fondo de la página a los lados.
+
+  Un solo helper (`mediaFrame`) arma el marco para los tres caminos —`next/image`,
+  el `<img>` del GIF y las dos mitades del par—. Si no se conocen las dimensiones
+  de una foto, el marco usa la proporción de respaldo del hueco y la imagen va
+  con `object-contain`: nunca `object-cover`.
+
+  `sizes` describe el ancho que ocupa la imagen PINTADA, que ahora es el ancho del
+  marco: el menor entre el de la columna (o el de la mitad) y `88vh × razón`.
+  La geometría de la columna es la de `ProjectDetailClient`: debajo de 768 mide
   `100vw − 48` (`px-6` por lado); de 768 para arriba le restan los dos gutters
   de 48 (`px-12`), el aside de 240 y el gap de 96 → `100vw − 432`. Si esas
-  clases cambian, estos números cambian. La fila es `aspect-[4/3]` con tope de
-  `88svh`, y el par la parte en dos con 2 px de aire.
+  clases cambian, estos números cambian. El par la parte en dos con 2 px de aire.
 
-  El alto del viewport entra en la cuenta —una fila topada por `88svh` es más
-  apaisada, y la foto apaisada desborda menos—, y `sizes` lo puede expresar:
-  admite `vh`, `min()` y `max()` (verificado en Chrome). Se escribe en `vh` y no
-  en `svh`: en un teléfono `vh` es el mayor de los dos, o sea que se equivoca
+  El alto del viewport entra en la cuenta, y `sizes` lo puede expresar: admite
+  `vh`, `min()` y `max()` (verificado en Chrome). Se escribe en `vh` y no en
+  `svh`: en un teléfono `vh` es el mayor de los dos, o sea que se equivoca
   pidiendo de más. Un navegador que no entienda la expresión cae a `100vw`,
   que también es pedir de más: nunca estirar.
 
-  Los términos van dentro de `calc()`/`max()` también por la nota de `sizes` de
+  Los términos van dentro de `min()` también por la nota de `sizes` de
   `src/lib/mobile-layout.ts`: un `vw` suelto le borra a `next/image` los cortes
   chicos del `srcset`.
 */
@@ -41,18 +54,22 @@ const ROW_INSET = { mobile: 48, desktop: 432 } as const;
 const PAIR_GAP = 2;
 const ROW_HEIGHT_RATIO = 3 / 4;
 const ROW_MAX_VH = 88;
-// La proporción más angosta que puede tener la caja (la fila sin topar por
-// alto). Una imagen igual o más angosta la llena a lo ancho y no desborda.
-const SLOT_MIN_ASPECT: Record<MediaSlot, number> = { single: 4 / 3, half: 2 / 3 };
-
-// El `_ref` de un asset de Sanity lleva las dimensiones del original:
-// `image-<hash>-2400x1800-png`. Sin `_ref` (contenido de respaldo) no se sabe.
-const ASSET_REF_RE = /^image-[a-f0-9]+-(\d+)x(\d+)-[a-z]+$/;
 
 interface AssetDimensions {
   width: number;
   height: number;
 }
+
+// La proporción del hueco cuando no se conocen las dimensiones de la foto. El
+// marco la toma y la imagen se contiene dentro: no se recorta.
+const FALLBACK_DIMENSIONS: Record<MediaSlot, AssetDimensions> = {
+  single: { width: 4, height: 3 },
+  half: { width: 2, height: 3 },
+};
+
+// El `_ref` de un asset de Sanity lleva las dimensiones del original:
+// `image-<hash>-2400x1800-png`. Sin `_ref` (contenido de respaldo) no se sabe.
+const ASSET_REF_RE = /^image-[a-f0-9]+-(\d+)x(\d+)-[a-z]+$/;
 
 function assetDimensions(
   image: SanityImageLike | undefined,
@@ -62,9 +79,52 @@ function assetDimensions(
   return match ? { width: Number(match[1]), height: Number(match[2]) } : null;
 }
 
-function assetAspect(image: SanityImageLike | undefined): number | null {
-  const dimensions = assetDimensions(image);
-  return dimensions ? dimensions.width / dimensions.height : null;
+const round4 = (n: number) => Number(n.toFixed(4));
+
+/** El ancho que ocupa la imagen pintada, para `sizes`: el del hueco o el que deja el tope de alto. */
+function paintedWidth(slot: MediaSlot, inset: number, aspect: number): string {
+  const slotWidth =
+    slot === "single" ? `100vw - ${inset}px` : `50vw - ${(inset + PAIR_GAP) / 2}px`;
+  return `min(${slotWidth}, ${ROW_MAX_VH}vh * ${round4(aspect)})`;
+}
+
+interface MediaFrameSpec {
+  style: CSSProperties;
+  sizes: string;
+}
+
+/** El único lugar donde se decide la caja de una imagen de proyecto. */
+function mediaFrame(
+  slot: MediaSlot,
+  image: SanityImageLike | undefined,
+): MediaFrameSpec {
+  const { width, height } = assetDimensions(image) ?? FALLBACK_DIMENSIONS[slot];
+  const aspect = width / height;
+  return {
+    style: {
+      aspectRatio: `${width} / ${height}`,
+      width: `min(100%, ${ROW_MAX_VH}svh * ${round4(aspect)})`,
+    },
+    sizes: `${MOBILE_QUERY} ${paintedWidth(slot, ROW_INSET.mobile, aspect)}, ${paintedWidth(slot, ROW_INSET.desktop, aspect)}`,
+  };
+}
+
+function MediaFrame({
+  frame,
+  children,
+}: {
+  frame: MediaFrameSpec;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      data-media-frame
+      className="relative mx-auto text-off-black"
+      style={frame.style}
+    >
+      {children}
+    </div>
+  );
 }
 
 /*
@@ -84,6 +144,11 @@ function assetAspect(image: SanityImageLike | undefined): number | null {
     · mitad del par 4:5           → 1786
   Tomar el alto máximo estructural (1116) y no el de una ventana de 1080 (950)
   es el margen: cubre cualquier monitor de 1920 por alto que sea.
+
+  R5: sin `object-cover` ya no hay desborde, así que el ancho pintado nunca pasa
+  del hueco (`slotWidth`) y el segundo término de `Math.max` quedó de más. No se
+  tocó: sigue siendo una cota superior, nunca pide de menos, y el tope no es lo
+  que limita la nitidez (la medición está en `research/R5-ASPECTO.md`).
 
   Dos techos más, los dos medidos:
     · **3840**, el `deviceSizes` más grande de `next/image`: el optimizador nunca
@@ -114,9 +179,10 @@ function sanityWidth(slot: MediaSlot, image: SanityImageLike | undefined): numbe
   const dimensions = assetDimensions(image);
   const rowWidth = WORST_VIEWPORT_WIDTH - ROW_INSET.desktop;
   const slotWidth = slot === "single" ? rowWidth : (rowWidth - PAIR_GAP) / 2;
+  const fallback = FALLBACK_DIMENSIONS[slot];
   const aspect = dimensions
     ? dimensions.width / dimensions.height
-    : SLOT_MIN_ASPECT[slot];
+    : fallback.width / fallback.height;
   const needed = Math.ceil(
     Math.max(slotWidth, aspect * rowWidth * ROW_HEIGHT_RATIO) * WORST_DPR,
   );
@@ -151,22 +217,6 @@ const PROJECT_IMAGE_QUALITY = 82;
 // El GIF va como `<img>` nativo y no pasa por el optimizador (así conserva la
 // animación): su tope es peso directo para el visitante. R4 no lo sube.
 const GIF_WIDTH = 1200;
-
-function coverWidth(slot: MediaSlot, inset: number, aspect: number): string {
-  const slotWidth =
-    slot === "single" ? `100vw - ${inset}px` : `50vw - ${(inset + PAIR_GAP) / 2}px`;
-  if (aspect <= SLOT_MIN_ASPECT[slot]) return `calc(${slotWidth})`;
-  // Desborda: el ancho pintado es la proporción por el alto de la fila, que es
-  // el menor entre 3/4 del ancho y el tope de 88vh.
-  const k = (n: number) => Number(n.toFixed(4));
-  return `max(${slotWidth}, min((100vw - ${inset}px) * ${k(ROW_HEIGHT_RATIO * aspect)}, ${ROW_MAX_VH}vh * ${k(aspect)}))`;
-}
-
-/** Sin proporción conocida se asume la de la caja: no desborda. */
-function mediaSizes(slot: MediaSlot, aspect: number | null): string {
-  const a = aspect ?? SLOT_MIN_ASPECT[slot];
-  return `${MOBILE_QUERY} ${coverWidth(slot, ROW_INSET.mobile, a)}, ${coverWidth(slot, ROW_INSET.desktop, a)}`;
-}
 
 /* ── Portable Text overrides ────────────────────────────────── */
 const ptComponents: PortableTextComponents = {
@@ -243,17 +293,19 @@ function SingleMedia({ block }: { block: any }) {
       gifUrl.includes(".gif") ||
       (file?.asset?._ref && file.asset._ref.includes("-gif"));
 
+    const frame = mediaFrame("single", file);
+
     if (isGif) {
       return (
         <figure className="w-full mb-[2px]">
-          <div className="relative w-full aspect-[4/3] max-h-[88svh] mx-auto overflow-hidden">
+          <MediaFrame frame={frame}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={gifUrl}
               alt={caption || t.work.mediaAlt}
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-contain"
             />
-          </div>
+          </MediaFrame>
           {caption && (
             <figcaption className="mt-2 text-[13px] text-gray-brand font-body">
               {caption}
@@ -267,19 +319,19 @@ function SingleMedia({ block }: { block: any }) {
 
     return (
       <figure className="w-full mb-[2px]">
-        <div className="relative w-full aspect-[4/3] max-h-[88svh] mx-auto overflow-hidden text-off-black">
+        <MediaFrame frame={frame}>
           <Image
             src={imageUrl}
             alt={caption || t.work.mediaAlt}
             fill
-            sizes={mediaSizes("single", assetAspect(file))}
+            sizes={frame.sizes}
             quality={PROJECT_IMAGE_QUALITY}
-            className="object-cover"
+            className="object-contain"
             onLoad={single.onLoad}
             onError={single.onError}
           />
           <ImageLoadIndicator show={single.showIndicator} />
-        </div>
+        </MediaFrame>
         {caption && (
           <figcaption className="mt-2 text-[13px] text-gray-brand font-body">
             {caption}
@@ -301,44 +353,53 @@ function DualMedia({ block }: { block: any }) {
   const leftImage = useImageLoad();
   const rightImage = useImageLoad();
   const { left, right } = block;
-  const leftUrl = left ? projectImageUrl("half", left) : null;
-  const rightUrl = right ? projectImageUrl("half", right) : null;
+  const slotHint: MediaSlot = left && right ? "half" : "single";
+  const leftUrl = left ? projectImageUrl(slotHint, left) : null;
+  const rightUrl = right ? projectImageUrl(slotHint, right) : null;
 
   if (!leftUrl && !rightUrl) return null;
 
-  // Same effective height as SingleMedia (full-width 4:3, capped at 88svh):
-  // the row owns the height; each image fills half the width with object-cover.
-  // Thin (2px) horizontal gap between the pair, thin vertical gap below.
+  // Each half keeps exactly half the row (flex-1 from a zero basis, 2px gap) and
+  // its image takes its own ratio inside it. The row is as tall as the taller
+  // image; the shorter one is centred vertically with the page background above
+  // and below. If only one image is set it takes the whole row.
+  const leftFrame = mediaFrame(slotHint, left);
+  const rightFrame = mediaFrame(slotHint, right);
+
   return (
-    <div className="relative flex w-full gap-[2px] aspect-[4/3] max-h-[88svh] mb-[2px]">
+    <div className="relative flex w-full items-center gap-[2px] mb-[2px]">
       {leftUrl && (
-        <figure className="relative m-0 h-full flex-1 overflow-hidden text-off-black">
-          <Image
-            src={leftUrl}
-            alt={t.work.mediaAlt}
-            fill
-            sizes={mediaSizes("half", assetAspect(left))}
-            quality={PROJECT_IMAGE_QUALITY}
-            className="object-cover"
-            onLoad={leftImage.onLoad}
-            onError={leftImage.onError}
-          />
-          <ImageLoadIndicator show={leftImage.showIndicator} />
+        <figure className="relative m-0 min-w-0 flex-1" data-media-half>
+          <MediaFrame frame={leftFrame}>
+            <Image
+              src={leftUrl}
+              alt={t.work.mediaAlt}
+              fill
+              sizes={leftFrame.sizes}
+              quality={PROJECT_IMAGE_QUALITY}
+              className="object-contain"
+              onLoad={leftImage.onLoad}
+              onError={leftImage.onError}
+            />
+            <ImageLoadIndicator show={leftImage.showIndicator} />
+          </MediaFrame>
         </figure>
       )}
       {rightUrl && (
-        <figure className="relative m-0 h-full flex-1 overflow-hidden text-off-black">
-          <Image
-            src={rightUrl}
-            alt={t.work.mediaAlt}
-            fill
-            sizes={mediaSizes("half", assetAspect(right))}
-            quality={PROJECT_IMAGE_QUALITY}
-            className="object-cover"
-            onLoad={rightImage.onLoad}
-            onError={rightImage.onError}
-          />
-          <ImageLoadIndicator show={rightImage.showIndicator} />
+        <figure className="relative m-0 min-w-0 flex-1" data-media-half>
+          <MediaFrame frame={rightFrame}>
+            <Image
+              src={rightUrl}
+              alt={t.work.mediaAlt}
+              fill
+              sizes={rightFrame.sizes}
+              quality={PROJECT_IMAGE_QUALITY}
+              className="object-contain"
+              onLoad={rightImage.onLoad}
+              onError={rightImage.onError}
+            />
+            <ImageLoadIndicator show={rightImage.showIndicator} />
+          </MediaFrame>
         </figure>
       )}
     </div>
